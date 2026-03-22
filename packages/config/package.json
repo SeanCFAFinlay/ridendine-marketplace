@@ -1,0 +1,14 @@
+{
+  "name": "@ridendine/config",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./eslint": "./eslint.config.js",
+    "./typescript": "./tsconfig.json",
+    "./tailwind": "./tailwind.config.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "typescript": "^5.6.0"
+  }
+}
