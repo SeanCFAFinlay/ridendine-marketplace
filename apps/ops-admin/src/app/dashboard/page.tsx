@@ -1,6 +1,8 @@
 import { Card, Badge } from '@ridendine/ui';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 const stats = [
   { label: 'Active Orders', value: '47', change: '+12% from yesterday', color: 'text-blue-400' },
   { label: 'Active Deliveries', value: '23', change: '15 drivers online', color: 'text-green-400' },

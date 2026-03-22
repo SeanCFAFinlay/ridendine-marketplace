@@ -1,5 +1,7 @@
 import { Card, Badge } from '@ridendine/ui';
 
+export const dynamic = 'force-dynamic';
+
 // Placeholder stats
 const stats = [
   { label: 'Active Orders', value: '5', change: '+2 from yesterday' },

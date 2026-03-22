@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { Card, Badge } from '@ridendine/ui';
 
 const weeklyEarnings = [
