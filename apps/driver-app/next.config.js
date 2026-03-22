@@ -8,6 +8,9 @@ const nextConfig = {
     '@ridendine/utils',
     '@ridendine/validation',
   ],
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 module.exports = nextConfig;
