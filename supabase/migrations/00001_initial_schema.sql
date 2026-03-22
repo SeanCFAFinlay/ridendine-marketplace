@@ -4,7 +4,7 @@
 -- ==========================================
 
 -- Enable necessary extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE EXTENSION IF NOT EXISTS "postgis";
 
 -- ==========================================
@@ -13,7 +13,7 @@ CREATE EXTENSION IF NOT EXISTS "postgis";
 
 -- Chef Profiles
 CREATE TABLE chef_profiles (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   display_name VARCHAR(100) NOT NULL,
   bio TEXT,
@@ -27,7 +27,7 @@ CREATE TABLE chef_profiles (
 
 -- Chef Kitchens
 CREATE TABLE chef_kitchens (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chef_id UUID NOT NULL REFERENCES chef_profiles(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   address_line1 VARCHAR(255) NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE chef_kitchens (
 
 -- Chef Storefronts (public-facing)
 CREATE TABLE chef_storefronts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chef_id UUID NOT NULL REFERENCES chef_profiles(id) ON DELETE CASCADE,
   kitchen_id UUID NOT NULL REFERENCES chef_kitchens(id) ON DELETE CASCADE,
   slug VARCHAR(100) NOT NULL UNIQUE,
@@ -67,7 +67,7 @@ CREATE TABLE chef_storefronts (
 
 -- Chef Documents
 CREATE TABLE chef_documents (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chef_id UUID NOT NULL REFERENCES chef_profiles(id) ON DELETE CASCADE,
   document_type VARCHAR(50) NOT NULL,
   document_url TEXT NOT NULL,
@@ -82,7 +82,7 @@ CREATE TABLE chef_documents (
 
 -- Chef Payout Accounts
 CREATE TABLE chef_payout_accounts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chef_id UUID NOT NULL REFERENCES chef_profiles(id) ON DELETE CASCADE,
   stripe_account_id VARCHAR(255),
   is_verified BOOLEAN NOT NULL DEFAULT FALSE,
@@ -93,7 +93,7 @@ CREATE TABLE chef_payout_accounts (
 
 -- Chef Availability
 CREATE TABLE chef_availability (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   storefront_id UUID NOT NULL REFERENCES chef_storefronts(id) ON DELETE CASCADE,
   day_of_week INTEGER NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
   start_time TIME NOT NULL,
@@ -106,7 +106,7 @@ CREATE TABLE chef_availability (
 
 -- Chef Delivery Zones
 CREATE TABLE chef_delivery_zones (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   storefront_id UUID NOT NULL REFERENCES chef_storefronts(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   radius_km DECIMAL(5, 2),
@@ -126,7 +126,7 @@ CREATE TABLE chef_delivery_zones (
 
 -- Menu Categories
 CREATE TABLE menu_categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   storefront_id UUID NOT NULL REFERENCES chef_storefronts(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   description TEXT,
@@ -138,7 +138,7 @@ CREATE TABLE menu_categories (
 
 -- Menu Items
 CREATE TABLE menu_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   category_id UUID NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
   storefront_id UUID NOT NULL REFERENCES chef_storefronts(id) ON DELETE CASCADE,
   name VARCHAR(200) NOT NULL,
@@ -156,7 +156,7 @@ CREATE TABLE menu_items (
 
 -- Menu Item Options (e.g., "Size", "Spice Level")
 CREATE TABLE menu_item_options (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   menu_item_id UUID NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   is_required BOOLEAN NOT NULL DEFAULT FALSE,
@@ -168,7 +168,7 @@ CREATE TABLE menu_item_options (
 
 -- Menu Item Option Values (e.g., "Small", "Medium", "Large")
 CREATE TABLE menu_item_option_values (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   option_id UUID NOT NULL REFERENCES menu_item_options(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   price_adjustment DECIMAL(10, 2) NOT NULL DEFAULT 0,
@@ -180,7 +180,7 @@ CREATE TABLE menu_item_option_values (
 
 -- Menu Item Availability (per-item schedule overrides)
 CREATE TABLE menu_item_availability (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   menu_item_id UUID NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
   day_of_week INTEGER NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
   start_time TIME,
@@ -196,7 +196,7 @@ CREATE TABLE menu_item_availability (
 
 -- Customers
 CREATE TABLE customers (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   first_name VARCHAR(50) NOT NULL,
   last_name VARCHAR(50) NOT NULL,
@@ -210,7 +210,7 @@ CREATE TABLE customers (
 
 -- Customer Addresses
 CREATE TABLE customer_addresses (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
   label VARCHAR(50) NOT NULL,
   address_line1 VARCHAR(255) NOT NULL,
@@ -229,7 +229,7 @@ CREATE TABLE customer_addresses (
 
 -- Carts
 CREATE TABLE carts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
   storefront_id UUID NOT NULL REFERENCES chef_storefronts(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -239,7 +239,7 @@ CREATE TABLE carts (
 
 -- Cart Items
 CREATE TABLE cart_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   cart_id UUID NOT NULL REFERENCES carts(id) ON DELETE CASCADE,
   menu_item_id UUID NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
   quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
@@ -252,7 +252,7 @@ CREATE TABLE cart_items (
 
 -- Favorites
 CREATE TABLE favorites (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
   storefront_id UUID NOT NULL REFERENCES chef_storefronts(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -265,7 +265,7 @@ CREATE TABLE favorites (
 
 -- Orders
 CREATE TABLE orders (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_number VARCHAR(20) NOT NULL UNIQUE,
   customer_id UUID NOT NULL REFERENCES customers(id),
   storefront_id UUID NOT NULL REFERENCES chef_storefronts(id),
@@ -293,7 +293,7 @@ CREATE TABLE orders (
 
 -- Order Items
 CREATE TABLE order_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   menu_item_id UUID NOT NULL REFERENCES menu_items(id),
   menu_item_name VARCHAR(200) NOT NULL,
@@ -306,7 +306,7 @@ CREATE TABLE order_items (
 
 -- Order Item Modifiers
 CREATE TABLE order_item_modifiers (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_item_id UUID NOT NULL REFERENCES order_items(id) ON DELETE CASCADE,
   option_name VARCHAR(100) NOT NULL,
   value_name VARCHAR(100) NOT NULL,
@@ -316,7 +316,7 @@ CREATE TABLE order_item_modifiers (
 
 -- Order Status History
 CREATE TABLE order_status_history (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   status VARCHAR(30) NOT NULL,
   notes TEXT,
@@ -326,7 +326,7 @@ CREATE TABLE order_status_history (
 
 -- Reviews
 CREATE TABLE reviews (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   customer_id UUID NOT NULL REFERENCES customers(id),
   storefront_id UUID NOT NULL REFERENCES chef_storefronts(id),
@@ -342,7 +342,7 @@ CREATE TABLE reviews (
 
 -- Promo Codes
 CREATE TABLE promo_codes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR(50) NOT NULL UNIQUE,
   description TEXT,
   discount_type VARCHAR(20) NOT NULL CHECK (discount_type IN ('percentage', 'fixed')),
@@ -360,7 +360,7 @@ CREATE TABLE promo_codes (
 
 -- Support Tickets
 CREATE TABLE support_tickets (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID REFERENCES orders(id),
   customer_id UUID REFERENCES customers(id),
   chef_id UUID REFERENCES chef_profiles(id),
@@ -381,7 +381,7 @@ CREATE TABLE support_tickets (
 
 -- Drivers
 CREATE TABLE drivers (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   first_name VARCHAR(50) NOT NULL,
   last_name VARCHAR(50) NOT NULL,
@@ -396,7 +396,7 @@ CREATE TABLE drivers (
 
 -- Driver Documents
 CREATE TABLE driver_documents (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   driver_id UUID NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
   document_type VARCHAR(50) NOT NULL,
   document_url TEXT NOT NULL,
@@ -411,7 +411,7 @@ CREATE TABLE driver_documents (
 
 -- Driver Vehicles
 CREATE TABLE driver_vehicles (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   driver_id UUID NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
   vehicle_type VARCHAR(20) NOT NULL CHECK (vehicle_type IN ('car', 'motorcycle', 'bicycle', 'scooter')),
   make VARCHAR(50),
@@ -426,7 +426,7 @@ CREATE TABLE driver_vehicles (
 
 -- Driver Shifts
 CREATE TABLE driver_shifts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   driver_id UUID NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
   started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   ended_at TIMESTAMPTZ,
@@ -439,7 +439,7 @@ CREATE TABLE driver_shifts (
 
 -- Driver Presence (real-time status)
 CREATE TABLE driver_presence (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   driver_id UUID NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
   status VARCHAR(20) NOT NULL DEFAULT 'offline' CHECK (status IN ('offline', 'online', 'busy')),
   current_lat DECIMAL(10, 8),
@@ -452,7 +452,7 @@ CREATE TABLE driver_presence (
 
 -- Driver Locations (historical tracking)
 CREATE TABLE driver_locations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   driver_id UUID NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
   shift_id UUID REFERENCES driver_shifts(id),
   lat DECIMAL(10, 8) NOT NULL,
@@ -465,7 +465,7 @@ CREATE TABLE driver_locations (
 
 -- Driver Earnings
 CREATE TABLE driver_earnings (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   driver_id UUID NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
   delivery_id UUID NOT NULL,
   shift_id UUID REFERENCES driver_shifts(id),
@@ -478,7 +478,7 @@ CREATE TABLE driver_earnings (
 
 -- Driver Payouts
 CREATE TABLE driver_payouts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   driver_id UUID NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
   payout_run_id UUID,
   amount DECIMAL(10, 2) NOT NULL,
@@ -496,7 +496,7 @@ CREATE TABLE driver_payouts (
 
 -- Deliveries
 CREATE TABLE deliveries (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   driver_id UUID REFERENCES drivers(id),
   status VARCHAR(30) NOT NULL DEFAULT 'pending' CHECK (status IN (
@@ -528,7 +528,7 @@ CREATE TABLE deliveries (
 
 -- Delivery Assignments (offers sent to drivers)
 CREATE TABLE delivery_assignments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   delivery_id UUID NOT NULL REFERENCES deliveries(id) ON DELETE CASCADE,
   driver_id UUID NOT NULL REFERENCES drivers(id),
   offered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -541,7 +541,7 @@ CREATE TABLE delivery_assignments (
 
 -- Delivery Events (audit log)
 CREATE TABLE delivery_events (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   delivery_id UUID NOT NULL REFERENCES deliveries(id) ON DELETE CASCADE,
   event_type VARCHAR(50) NOT NULL,
   event_data JSONB,
@@ -552,7 +552,7 @@ CREATE TABLE delivery_events (
 
 -- Delivery Tracking Events (GPS breadcrumbs)
 CREATE TABLE delivery_tracking_events (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   delivery_id UUID NOT NULL REFERENCES deliveries(id) ON DELETE CASCADE,
   driver_id UUID NOT NULL REFERENCES drivers(id),
   lat DECIMAL(10, 8) NOT NULL,
@@ -567,7 +567,7 @@ CREATE TABLE delivery_tracking_events (
 
 -- Platform Users (ops/admin)
 CREATE TABLE platform_users (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   email VARCHAR(255) NOT NULL,
   name VARCHAR(100) NOT NULL,
@@ -580,7 +580,7 @@ CREATE TABLE platform_users (
 
 -- Admin Notes
 CREATE TABLE admin_notes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   entity_type VARCHAR(20) NOT NULL CHECK (entity_type IN ('chef', 'customer', 'driver', 'order', 'delivery')),
   entity_id UUID NOT NULL,
   note TEXT NOT NULL,
@@ -590,7 +590,7 @@ CREATE TABLE admin_notes (
 
 -- Notifications
 CREATE TABLE notifications (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   type VARCHAR(50) NOT NULL,
   title VARCHAR(255) NOT NULL,
@@ -603,7 +603,7 @@ CREATE TABLE notifications (
 
 -- Audit Logs
 CREATE TABLE audit_logs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   actor_type VARCHAR(20) NOT NULL CHECK (actor_type IN ('user', 'system', 'admin')),
   actor_id UUID,
   action VARCHAR(100) NOT NULL,
@@ -618,7 +618,7 @@ CREATE TABLE audit_logs (
 
 -- Payout Runs
 CREATE TABLE payout_runs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   run_type VARCHAR(20) NOT NULL CHECK (run_type IN ('chef', 'driver')),
   status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
   period_start TIMESTAMPTZ NOT NULL,
