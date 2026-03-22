@@ -17,10 +17,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<User | null>(null);
   const [session, setSession] = React.useState<Session | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [supabase, setSupabase] = React.useState<ReturnType<typeof createBrowserClient> | null>(null);
 
-  const supabase = React.useMemo(() => createBrowserClient(), []);
+  // Initialize client only on the client side
+  React.useEffect(() => {
+    const client = createBrowserClient();
+    setSupabase(client);
+  }, []);
 
   React.useEffect(() => {
+    if (!supabase) return;
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -43,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase]);
 
   const signOut = React.useCallback(async () => {
+    if (!supabase) return;
     await supabase.auth.signOut();
   }, [supabase]);
 

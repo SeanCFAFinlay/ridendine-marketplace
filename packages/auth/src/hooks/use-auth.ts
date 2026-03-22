@@ -1,16 +1,25 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { createBrowserClient } from '@ridendine/db';
 
 export function useAuth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [supabase, setSupabase] = useState<ReturnType<typeof createBrowserClient> | null>(null);
 
-  const supabase = createBrowserClient();
+  // Initialize client only on the client side
+  useEffect(() => {
+    const client = createBrowserClient();
+    setSupabase(client);
+  }, []);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
+      if (!supabase) {
+        return { success: false, error: 'Auth not initialized' };
+      }
+
       setLoading(true);
       setError(null);
 
@@ -39,6 +48,10 @@ export function useAuth() {
 
   const signUp = useCallback(
     async (email: string, password: string, metadata?: Record<string, unknown>) => {
+      if (!supabase) {
+        return { success: false, error: 'Auth not initialized' };
+      }
+
       setLoading(true);
       setError(null);
 
@@ -69,6 +82,10 @@ export function useAuth() {
   );
 
   const signOut = useCallback(async () => {
+    if (!supabase) {
+      return { success: false, error: 'Auth not initialized' };
+    }
+
     setLoading(true);
     setError(null);
 
@@ -92,6 +109,10 @@ export function useAuth() {
 
   const resetPassword = useCallback(
     async (email: string) => {
+      if (!supabase) {
+        return { success: false, error: 'Auth not initialized' };
+      }
+
       setLoading(true);
       setError(null);
 
