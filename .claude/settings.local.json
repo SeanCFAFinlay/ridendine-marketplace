@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(copy:*)"
+      "Bash(copy:*)",
+      "Bash(gh repo create:*)"
     ]
   }
 }

@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { createBrowserClient } from '@ridendine/db';

@@ -2,12 +2,15 @@ import { Suspense } from 'react';
 import { Header } from '@/components/layout/header';
 import { ChefsList } from '@/components/chefs/chefs-list';
 import { ChefsFilters } from '@/components/chefs/chefs-filters';
-import { PageLoader } from '@ridendine/ui';
+import { Spinner } from '@ridendine/ui';
 
 export const metadata = {
   title: 'Browse Chefs - Ridendine',
   description: 'Discover local home chefs and explore their unique menus.',
 };
+
+// Opt out of static generation due to auth context requirements
+export const dynamic = 'force-dynamic';
 
 export default function ChefsPage() {
   return (
@@ -30,7 +33,7 @@ export default function ChefsPage() {
 
           {/* Chefs Grid */}
           <div className="flex-1">
-            <Suspense fallback={<PageLoader />}>
+            <Suspense fallback={<div className="flex justify-center py-12"><Spinner /></div>}>
               <ChefsList />
             </Suspense>
           </div>

@@ -3,6 +3,9 @@ import { Button } from '@ridendine/ui';
 import { Header } from '@/components/layout/header';
 import { FeaturedChefs } from '@/components/home/featured-chefs';
 
+// Opt out of static generation due to auth context requirements
+export const dynamic = 'force-dynamic';
+
 export default function HomePage() {
   return (
     <div className="min-h-screen">

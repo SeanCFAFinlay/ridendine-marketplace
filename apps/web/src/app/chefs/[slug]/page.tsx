@@ -7,10 +7,30 @@ interface ChefPageProps {
   params: Promise<{ slug: string }>;
 }
 
+interface StorefrontData {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  cuisineTypes: string[];
+  averageRating?: number | null;
+  totalReviews: number;
+  estimatedPrepTimeMin: number;
+  estimatedPrepTimeMax: number;
+  minOrderAmount: number;
+  coverImageUrl?: string | null;
+  logoUrl?: string | null;
+  chef: {
+    id: string;
+    displayName: string;
+    profileImageUrl?: string | null;
+  };
+}
+
 // Placeholder data - will be replaced with real data from Supabase
-async function getStorefront(slug: string) {
+async function getStorefront(slug: string): Promise<StorefrontData | null> {
   // Simulated API call
-  const storefronts: Record<string, object> = {
+  const storefronts: Record<string, StorefrontData> = {
     'chef-maria': {
       id: '1',
       slug: 'chef-maria',
@@ -51,7 +71,7 @@ export default async function ChefPage({ params }: ChefPageProps) {
         <StorefrontHeader storefront={storefront} />
 
         <div className="container py-8">
-          <StorefrontMenu storefrontId={(storefront as { id: string }).id} />
+          <StorefrontMenu storefrontId={storefront.id} />
         </div>
       </main>
     </div>

@@ -43,3 +43,6 @@ supabase/.temp/
 # Misc
 *.log
 *.tsbuildinfo
+
+.vercel
+.env*.local

@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ridendine/db": "workspace:*"
+    "@ridendine/db": "workspace:*",
+    "@supabase/supabase-js": "^2.45.0"
   },
   "peerDependencies": {
     "react": "^18.0.0"
