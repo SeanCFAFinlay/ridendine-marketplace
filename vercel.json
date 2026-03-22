@@ -1,7 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "pnpm install",
-  "buildCommand": "pnpm turbo build --filter=@ridendine/chef-admin",
-  "outputDirectory": "apps/chef-admin/.next",
-  "framework": "nextjs"
-}
