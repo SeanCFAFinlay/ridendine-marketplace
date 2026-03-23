@@ -6,66 +6,93 @@ import { createServerClient, getStorefrontByChefId, getOrdersByStorefront } from
 export const dynamic = 'force-dynamic';
 
 async function getChefStorefront() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(cookieStore);
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
 
-  const result: any = await supabase
-    .from('chef_profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single();
+    const result: any = await supabase
+      .from('chef_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
 
-  if (result.error || !result.data) return null;
+    if (result.error || !result.data) return null;
 
-  return await getStorefrontByChefId(supabase as any, result.data.id);
+    return await getStorefrontByChefId(supabase as any, result.data.id);
+  } catch (error) {
+    console.error('Error getting chef storefront:', error);
+    return null;
+  }
 }
 
 async function getDashboardData(storefrontId: string) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(cookieStore);
 
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const allOrders = await getOrdersByStorefront(supabase as any, storefrontId);
-  const recentOrders = allOrders.slice(0, 5);
+    let allOrders: any[] = [];
+    try {
+      allOrders = await getOrdersByStorefront(supabase as any, storefrontId);
+    } catch (e) {
+      console.log('No orders found');
+    }
 
-  const activeOrders = allOrders.filter(o =>
-    ['pending', 'accepted', 'preparing', 'ready_for_pickup'].includes(o.status)
-  );
+    const recentOrders = allOrders.slice(0, 5);
 
-  const todayOrders = allOrders.filter(o =>
-    new Date(o.created_at) >= today
-  );
+    const activeOrders = allOrders.filter(o =>
+      ['pending', 'accepted', 'preparing', 'ready_for_pickup'].includes(o.status)
+    );
 
-  const monthOrders = allOrders.filter(o =>
-    new Date(o.created_at) >= monthStart
-  );
+    const todayOrders = allOrders.filter(o =>
+      new Date(o.created_at) >= today
+    );
 
-  const todayRevenue = todayOrders.reduce((sum, o) => sum + o.total, 0);
+    const monthOrders = allOrders.filter(o =>
+      new Date(o.created_at) >= monthStart
+    );
 
-  const { data: customers }: any = await supabase
-    .from('customers')
-    .select('id, first_name, last_name')
-    .in('id', recentOrders.map(o => o.customer_id));
+    const todayRevenue = todayOrders.reduce((sum, o) => sum + (o.total || 0), 0);
 
-  const ordersWithCustomers = recentOrders.map((order: any) => ({
-    ...order,
-    customer: customers?.find((c: any) => c.id === order.customer_id),
-  }));
+    let customers: any[] = [];
+    if (recentOrders.length > 0) {
+      try {
+        const { data }: any = await supabase
+          .from('customers')
+          .select('id, first_name, last_name')
+          .in('id', recentOrders.map(o => o.customer_id));
+        customers = data || [];
+      } catch (e) {
+        console.log('Could not fetch customers');
+      }
+    }
 
-  return {
-    stats: {
-      activeOrders: activeOrders.length,
-      todayRevenue,
-      monthOrders: monthOrders.length,
-    },
-    recentOrders: ordersWithCustomers,
-  };
+    const ordersWithCustomers = recentOrders.map((order: any) => ({
+      ...order,
+      customer: customers?.find((c: any) => c.id === order.customer_id),
+    }));
+
+    return {
+      stats: {
+        activeOrders: activeOrders.length,
+        todayRevenue,
+        monthOrders: monthOrders.length,
+      },
+      recentOrders: ordersWithCustomers,
+    };
+  } catch (error) {
+    console.error('Error getting dashboard data:', error);
+    return {
+      stats: { activeOrders: 0, todayRevenue: 0, monthOrders: 0 },
+      recentOrders: [],
+    };
+  }
 }
 
 export default async function DashboardPage() {
@@ -83,9 +110,9 @@ export default async function DashboardPage() {
 
   const statsData = [
     { label: 'Active Orders', value: stats.activeOrders.toString(), change: 'Orders in progress' },
-    { label: "Today's Revenue", value: `$${stats.todayRevenue.toFixed(2)}`, change: 'Revenue today' },
+    { label: "Today's Revenue", value: `$${(stats.todayRevenue / 100).toFixed(2)}`, change: 'Revenue today' },
     { label: 'Total Orders (Month)', value: stats.monthOrders.toString(), change: 'This month' },
-    { label: 'Average Rating', value: storefront.average_rating?.toFixed(1) || 'N/A', change: `${storefront.total_reviews} reviews` },
+    { label: 'Average Rating', value: storefront.average_rating?.toFixed(1) || 'N/A', change: `${storefront.total_reviews || 0} reviews` },
   ];
 
   return (
@@ -142,7 +169,7 @@ export default async function DashboardPage() {
                         {order.status.replace(/_/g, ' ')}
                       </Badge>
                     </td>
-                    <td className="py-3 text-gray-900">${order.total.toFixed(2)}</td>
+                    <td className="py-3 text-gray-900">${((order.total || 0) / 100).toFixed(2)}</td>
                     <td className="py-3 text-gray-500">
                       {new Date(order.created_at).toLocaleTimeString('en-US', {
                         hour: 'numeric',
