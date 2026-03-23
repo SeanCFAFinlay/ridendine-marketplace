@@ -1,63 +1,44 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { Card, Avatar, Badge } from '@ridendine/ui';
+import { createServerClient, getActiveStorefronts } from '@ridendine/db';
 
-// Placeholder data - will be replaced with real data from Supabase
-const placeholderChefs = [
-  {
-    id: '1',
-    slug: 'chef-maria',
-    name: "Maria's Kitchen",
-    chefName: 'Maria Garcia',
-    cuisineTypes: ['Mexican', 'Latin'],
-    averageRating: 4.8,
-    totalReviews: 124,
-    estimatedPrepTimeMin: 20,
-    estimatedPrepTimeMax: 35,
-    coverImageUrl: null,
-    logoUrl: null,
-  },
-  {
-    id: '2',
-    slug: 'thai-home',
-    name: 'Thai Home Cooking',
-    chefName: 'Suda Patel',
-    cuisineTypes: ['Thai', 'Asian'],
-    averageRating: 4.9,
-    totalReviews: 89,
-    estimatedPrepTimeMin: 25,
-    estimatedPrepTimeMax: 40,
-    coverImageUrl: null,
-    logoUrl: null,
-  },
-  {
-    id: '3',
-    slug: 'italian-nonna',
-    name: "Nonna's Table",
-    chefName: 'Rosa Lombardi',
-    cuisineTypes: ['Italian', 'Mediterranean'],
-    averageRating: 4.7,
-    totalReviews: 156,
-    estimatedPrepTimeMin: 30,
-    estimatedPrepTimeMax: 45,
-    coverImageUrl: null,
-    logoUrl: null,
-  },
-];
+export async function FeaturedChefs() {
+  const cookieStore = cookies();
+  const supabase = createServerClient(cookieStore);
 
-export function FeaturedChefs() {
+  let chefs: Awaited<ReturnType<typeof getActiveStorefronts>> = [];
+
+  try {
+    chefs = await getActiveStorefronts(supabase as any, { limit: 6 });
+  } catch (error) {
+    console.error('Failed to fetch featured chefs:', error);
+  }
+
+  if (chefs.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">No chefs available at the moment. Check back soon!</p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {placeholderChefs.map((chef) => (
+      {chefs.map((chef) => (
         <Link key={chef.id} href={`/chefs/${chef.slug}`}>
           <Card className="overflow-hidden transition-shadow hover:shadow-md" padding="none">
             {/* Cover Image */}
-            <div className="h-32 bg-gradient-to-br from-brand-100 to-brand-200" />
+            <div
+              className="h-32 bg-gradient-to-br from-brand-100 to-brand-200"
+              style={chef.cover_image_url ? { backgroundImage: `url(${chef.cover_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+            />
 
             {/* Content */}
             <div className="p-4">
               <div className="-mt-12 mb-3 flex items-end gap-3">
                 <Avatar
-                  src={chef.logoUrl}
+                  src={chef.logo_url}
                   alt={chef.name}
                   fallback={chef.name}
                   size="lg"
@@ -67,24 +48,28 @@ export function FeaturedChefs() {
                   <svg className="h-4 w-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
-                  <span className="text-sm font-medium">{chef.averageRating}</span>
-                  <span className="text-sm text-gray-500">({chef.totalReviews})</span>
+                  <span className="text-sm font-medium">{chef.average_rating?.toFixed(1) || 'New'}</span>
+                  {chef.total_reviews > 0 && (
+                    <span className="text-sm text-gray-500">({chef.total_reviews})</span>
+                  )}
                 </div>
               </div>
 
               <h3 className="font-semibold text-gray-900">{chef.name}</h3>
-              <p className="text-sm text-gray-500">by {chef.chefName}</p>
+              <p className="text-sm text-gray-500">by {chef.chef_profiles?.display_name || 'Chef'}</p>
 
-              <div className="mt-3 flex flex-wrap gap-1">
-                {chef.cuisineTypes.map((cuisine) => (
-                  <Badge key={cuisine} variant="default">
-                    {cuisine}
-                  </Badge>
-                ))}
-              </div>
+              {chef.cuisine_types && chef.cuisine_types.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {chef.cuisine_types.slice(0, 3).map((cuisine) => (
+                    <Badge key={cuisine} variant="default">
+                      {cuisine}
+                    </Badge>
+                  ))}
+                </div>
+              )}
 
               <p className="mt-3 text-sm text-gray-500">
-                {chef.estimatedPrepTimeMin}-{chef.estimatedPrepTimeMax} min
+                {chef.estimated_prep_time_min || 15}-{chef.estimated_prep_time_max || 45} min
               </p>
             </div>
           </Card>

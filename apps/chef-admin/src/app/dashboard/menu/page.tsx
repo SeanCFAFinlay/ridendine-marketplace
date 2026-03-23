@@ -1,38 +1,64 @@
-'use client';
+import { cookies } from 'next/headers';
+import { createServerClient, getStorefrontByChefId } from '@ridendine/db';
+import { MenuList } from '@/components/menu/menu-list';
 
 export const dynamic = 'force-dynamic';
 
-import { Card, Badge, Button } from '@ridendine/ui';
+async function getChefStorefront() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
 
-const menuCategories = [
-  {
-    id: 'c1',
-    name: 'Appetizers',
-    items: [
-      { id: 'm1', name: 'Guacamole & Chips', price: 8.99, isAvailable: true },
-      { id: 'm2', name: 'Queso Fundido', price: 10.99, isAvailable: true },
-    ],
-  },
-  {
-    id: 'c2',
-    name: 'Main Courses',
-    items: [
-      { id: 'm3', name: 'Carne Asada Plate', price: 18.99, isAvailable: true },
-      { id: 'm4', name: 'Enchiladas Verdes', price: 15.99, isAvailable: true },
-      { id: 'm5', name: 'Fish Tacos', price: 14.99, isAvailable: false },
-    ],
-  },
-  {
-    id: 'c3',
-    name: 'Desserts',
-    items: [
-      { id: 'm6', name: 'Churros', price: 6.99, isAvailable: true },
-      { id: 'm7', name: 'Tres Leches', price: 7.99, isAvailable: true },
-    ],
-  },
-];
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
 
-export default function MenuPage() {
+  const { data: chefProfile }: any = await supabase
+    .from('chef_profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!chefProfile) return null;
+
+  return await getStorefrontByChefId(supabase as any, chefProfile.id);
+}
+
+async function getMenuData(storefrontId: string) {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+
+  const { data: menuItems }: any = await supabase
+    .from('menu_items')
+    .select('*')
+    .eq('storefront_id', storefrontId)
+    .order('sort_order', { ascending: true });
+
+  const { data: categories }: any = await supabase
+    .from('menu_categories')
+    .select('*')
+    .eq('storefront_id', storefrontId)
+    .order('sort_order', { ascending: true });
+
+  const grouped = categories?.map((category: any) => ({
+    ...category,
+    items: menuItems?.filter((item: any) => item.category_id === category.id) || [],
+  })) || [];
+
+  return grouped;
+}
+
+export default async function MenuPage() {
+  const storefront = await getChefStorefront();
+
+  if (!storefront) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <p className="text-gray-500">No storefront found. Please complete your setup.</p>
+      </div>
+    );
+  }
+
+  const menuCategories = await getMenuData(storefront.id);
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -40,48 +66,9 @@ export default function MenuPage() {
           <h1 className="text-2xl font-bold text-gray-900">Menu</h1>
           <p className="mt-1 text-gray-500">Manage your menu categories and items</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline">Add Category</Button>
-          <Button>Add Item</Button>
-        </div>
       </div>
 
-      <div className="mt-6 space-y-6">
-        {menuCategories.map((category) => (
-          <Card key={category.id}>
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h2 className="font-semibold text-gray-900">{category.name}</h2>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm">Edit</Button>
-                <Button variant="ghost" size="sm">Reorder</Button>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              {category.items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between rounded-lg border border-gray-100 p-3"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-lg bg-gray-100" />
-                    <div>
-                      <p className="font-medium text-gray-900">{item.name}</p>
-                      <p className="text-sm text-gray-500">${item.price.toFixed(2)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant={item.isAvailable ? 'success' : 'default'}>
-                      {item.isAvailable ? 'Available' : 'Unavailable'}
-                    </Badge>
-                    <Button variant="outline" size="sm">Edit</Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        ))}
-      </div>
+      <MenuList categories={menuCategories} />
     </div>
   );
 }

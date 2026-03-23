@@ -1,12 +1,6 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
 import { AuthProvider } from '@ridendine/auth';
 import './globals.css';
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-});
 
 export const metadata: Metadata = {
   title: 'Ridendine Driver',
@@ -33,8 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-gray-100 font-sans antialiased">
+    <html lang="en">
+      <body className="min-h-screen bg-[#FAFAFA] font-sans antialiased">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

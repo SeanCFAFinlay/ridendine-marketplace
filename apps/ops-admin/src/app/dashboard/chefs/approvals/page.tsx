@@ -1,97 +1,72 @@
-'use client';
+import { Card, Badge } from '@ridendine/ui';
+import { cookies } from 'next/headers';
+import { createServerClient, getPendingChefApprovals } from '@ridendine/db';
+import { DashboardLayout } from '@/components/DashboardLayout';
 
 export const dynamic = 'force-dynamic';
 
-import { Card, Badge, Button, Avatar } from '@ridendine/ui';
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((word) => word.charAt(0))
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
 
-const pendingChefs = [
-  {
-    id: '1',
-    name: 'Thai Kitchen Express',
-    chefName: 'Suda Patel',
-    email: 'suda@example.com',
-    phone: '(555) 123-4567',
-    cuisineTypes: ['Thai', 'Asian'],
-    appliedAt: '2024-01-18',
-    documentsComplete: true,
-    city: 'Austin, TX',
-  },
-  {
-    id: '2',
-    name: 'Soul Food Heaven',
-    chefName: 'James Washington',
-    email: 'james@example.com',
-    phone: '(555) 234-5678',
-    cuisineTypes: ['Southern', 'American'],
-    appliedAt: '2024-01-17',
-    documentsComplete: false,
-    city: 'Houston, TX',
-  },
-  {
-    id: '3',
-    name: 'Mediterranean Delights',
-    chefName: 'Elena Papadopoulos',
-    email: 'elena@example.com',
-    phone: '(555) 345-6789',
-    cuisineTypes: ['Mediterranean', 'Greek'],
-    appliedAt: '2024-01-16',
-    documentsComplete: true,
-    city: 'Dallas, TX',
-  },
-];
+export default async function ChefApprovalsPage() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
 
-export default function ChefApprovalsPage() {
+  const pendingChefs = await getPendingChefApprovals(supabase as any);
+
   return (
-    <div className="min-h-screen p-8">
+    <DashboardLayout>
       <div className="mx-auto max-w-5xl">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Chef Approvals</h1>
-          <p className="mt-1 text-gray-400">Review and approve new chef applications</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Chef Approvals</h1>
+            <p className="mt-2 text-gray-400">Review and approve new chef applications</p>
+          </div>
+          <Badge className="bg-[#E85D26] text-white">
+            {pendingChefs.length} Pending
+          </Badge>
         </div>
 
-        <div className="mt-8 space-y-4">
+        <div className="space-y-4">
           {pendingChefs.map((chef) => (
-            <Card key={chef.id} className="bg-gray-800 border-gray-700">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex gap-4">
-                  <Avatar
-                    alt={chef.chefName}
-                    fallback={chef.chefName}
-                    size="lg"
-                  />
-                  <div>
-                    <h3 className="font-semibold text-white">{chef.name}</h3>
-                    <p className="text-sm text-gray-400">by {chef.chefName}</p>
-                    <p className="text-sm text-gray-500">{chef.email} • {chef.phone}</p>
-                    <p className="text-sm text-gray-500">{chef.city}</p>
-
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {chef.cuisineTypes.map((cuisine) => (
-                        <Badge key={cuisine} variant="default">{cuisine}</Badge>
-                      ))}
-                    </div>
-
-                    <div className="mt-2 flex items-center gap-2">
-                      <Badge variant={chef.documentsComplete ? 'success' : 'warning'}>
-                        {chef.documentsComplete ? 'Documents Complete' : 'Documents Pending'}
-                      </Badge>
-                      <span className="text-xs text-gray-500">Applied {chef.appliedAt}</span>
-                    </div>
-                  </div>
+            <Card key={chef.id} className="border-gray-800 bg-[#16213e] p-6">
+              <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+                <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-[#E85D26] text-xl font-bold text-white">
+                  {getInitials(chef.display_name)}
                 </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-white">{chef.display_name}</h3>
+                  {chef.phone && (
+                    <p className="mt-1 text-sm text-gray-400">{chef.phone}</p>
+                  )}
 
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">View Details</Button>
-                  <Button variant="destructive" size="sm">Reject</Button>
-                  <Button variant="success" size="sm" disabled={!chef.documentsComplete}>
-                    Approve
-                  </Button>
+                  {chef.bio && (
+                    <p className="mt-3 text-sm text-gray-300">{chef.bio}</p>
+                  )}
+
+                  <div className="mt-4 flex items-center gap-3">
+                    <Badge variant="warning">Pending Review</Badge>
+                    <span className="text-xs text-gray-500">
+                      Applied {new Date(chef.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
                 </div>
               </div>
             </Card>
           ))}
+          {pendingChefs.length === 0 && (
+            <div className="rounded-lg border border-gray-800 bg-[#16213e] py-16 text-center">
+              <p className="text-gray-400">No pending chef approvals</p>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

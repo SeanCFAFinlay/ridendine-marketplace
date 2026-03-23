@@ -1,97 +1,102 @@
-'use client';
+import { Card, Badge } from '@ridendine/ui';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@ridendine/db';
+import { DashboardLayout } from '@/components/DashboardLayout';
 
 export const dynamic = 'force-dynamic';
 
-import { Card, Badge, Button } from '@ridendine/ui';
+function getDeliveryStatusVariant(
+  status: string
+): 'success' | 'warning' | 'error' | 'info' | 'default' {
+  switch (status) {
+    case 'delivered':
+    case 'completed':
+      return 'success';
+    case 'picked_up':
+    case 'en_route_to_dropoff':
+      return 'info';
+    case 'assigned':
+    case 'accepted':
+    case 'en_route_to_pickup':
+      return 'warning';
+    default:
+      return 'default';
+  }
+}
 
-const activeDeliveries = [
-  { id: '1', order: 'RD-ABC123', driver: 'Carlos M.', status: 'en_route_to_pickup', pickup: "Maria's Kitchen", dropoff: '123 Main St', eta: '5 min' },
-  { id: '2', order: 'RD-DEF456', driver: 'Ahmed K.', status: 'picked_up', pickup: 'Thai Home', dropoff: '456 Oak Ave', eta: '12 min' },
-  { id: '3', order: 'RD-GHI789', driver: 'Jessica L.', status: 'en_route_to_dropoff', pickup: "Nonna's Table", dropoff: '789 Pine Rd', eta: '3 min' },
-];
+function formatDeliveryStatus(status: string): string {
+  return status
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
 
-const onlineDrivers = [
-  { id: 'd1', name: 'Carlos Martinez', status: 'busy', deliveries: 1, earnings: 45.50 },
-  { id: 'd2', name: 'Ahmed Khan', status: 'busy', deliveries: 2, earnings: 72.00 },
-  { id: 'd3', name: 'Jessica Lee', status: 'busy', deliveries: 3, earnings: 98.25 },
-  { id: 'd4', name: 'David Chen', status: 'available', deliveries: 0, earnings: 0 },
-  { id: 'd5', name: 'Maria Santos', status: 'available', deliveries: 1, earnings: 28.00 },
-];
+export default async function DeliveriesPage() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
 
-export default function DeliveriesPage() {
+  // Fetch deliveries with order info
+  const { data: deliveriesData } = await supabase
+    .from('deliveries')
+    .select('*, orders!inner(order_number, total)')
+    .in('status', [
+      'assigned',
+      'accepted',
+      'en_route_to_pickup',
+      'picked_up',
+      'en_route_to_dropoff',
+    ])
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  const deliveries = (deliveriesData || []) as any[];
+
   return (
-    <div className="min-h-screen p-8">
-      <div className="mx-auto max-w-6xl">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Delivery Overview</h1>
-          <p className="mt-1 text-gray-400">Monitor active deliveries and driver status</p>
+    <DashboardLayout>
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white">Delivery Overview</h1>
+          <p className="mt-2 text-gray-400">Monitor active deliveries and driver status</p>
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6">
           {/* Active Deliveries */}
-          <Card className="bg-gray-800 border-gray-700">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-white">Active Deliveries</h2>
-              <Badge variant="info">{activeDeliveries.length} active</Badge>
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">Active Deliveries</h2>
+              <Badge className="bg-[#E85D26] text-white">
+                {deliveries.length} Active
+              </Badge>
             </div>
-            <div className="mt-4 space-y-3">
-              {activeDeliveries.map((delivery) => (
-                <div key={delivery.id} className="rounded-lg border border-gray-700 p-3">
+            <div className="space-y-3">
+              {deliveries.map((delivery) => (
+                <div
+                  key={delivery.id}
+                  className="rounded-lg border border-gray-800 bg-[#1a1a2e] p-4"
+                >
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-white">{delivery.order}</span>
-                    <Badge
-                      variant={
-                        delivery.status === 'picked_up' ? 'success' :
-                        delivery.status === 'en_route_to_dropoff' ? 'primary' : 'info'
-                      }
-                    >
-                      {delivery.status.replace(/_/g, ' ')}
+                    <span className="font-mono font-medium text-white">
+                      {delivery.orders?.order_number}
+                    </span>
+                    <Badge variant={getDeliveryStatusVariant(delivery.status)}>
+                      {formatDeliveryStatus(delivery.status)}
                     </Badge>
                   </div>
-                  <p className="mt-1 text-sm text-gray-400">
-                    Driver: {delivery.driver}
+                  <p className="mt-1 text-sm text-gray-500">
+                    {delivery.pickup_address} → {delivery.dropoff_address}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    {delivery.pickup} → {delivery.dropoff}
+                  <p className="mt-2 font-medium text-white">
+                    ${((delivery.orders?.total ?? 0) / 100).toFixed(2)}
                   </p>
-                  <p className="text-sm text-green-400">ETA: {delivery.eta}</p>
                 </div>
               ))}
-            </div>
-          </Card>
-
-          {/* Online Drivers */}
-          <Card className="bg-gray-800 border-gray-700">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-white">Online Drivers</h2>
-              <Badge variant="success">{onlineDrivers.length} online</Badge>
-            </div>
-            <div className="mt-4 space-y-2">
-              {onlineDrivers.map((driver) => (
-                <div key={driver.id} className="flex items-center justify-between rounded-lg border border-gray-700 p-3">
-                  <div>
-                    <p className="font-medium text-white">{driver.name}</p>
-                    <p className="text-sm text-gray-400">
-                      {driver.deliveries} deliveries today • ${driver.earnings.toFixed(2)}
-                    </p>
-                  </div>
-                  <Badge variant={driver.status === 'available' ? 'success' : 'warning'}>
-                    {driver.status}
-                  </Badge>
-                </div>
-              ))}
+              {deliveries.length === 0 && (
+                <div className="py-8 text-center text-gray-400">No active deliveries</div>
+              )}
             </div>
           </Card>
         </div>
-
-        {/* Map Placeholder */}
-        <Card className="mt-6 bg-gray-800 border-gray-700">
-          <h2 className="font-semibold text-white">Live Map</h2>
-          <div className="mt-4 flex h-64 items-center justify-center rounded-lg bg-gray-700">
-            <p className="text-gray-400">Map integration placeholder</p>
-          </div>
-        </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

@@ -1,75 +1,108 @@
-'use client';
+import { Card, Badge } from '@ridendine/ui';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@ridendine/db';
+import { DashboardLayout } from '@/components/DashboardLayout';
 
 export const dynamic = 'force-dynamic';
 
-import { Card, Badge, Button } from '@ridendine/ui';
+function getStatusVariant(
+  status: string
+): 'success' | 'warning' | 'error' | 'info' | 'default' {
+  switch (status) {
+    case 'delivered':
+    case 'completed':
+      return 'success';
+    case 'preparing':
+    case 'accepted':
+      return 'info';
+    case 'pending':
+      return 'warning';
+    case 'cancelled':
+    case 'failed':
+      return 'error';
+    default:
+      return 'default';
+  }
+}
 
-const orders = [
-  { id: '1', number: 'RD-ABC123', chef: "Maria's Kitchen", customer: 'John D.', status: 'preparing', total: 45.99, time: '12:30 PM' },
-  { id: '2', number: 'RD-DEF456', chef: 'Thai Home', customer: 'Sarah M.', status: 'pending', total: 32.50, time: '12:45 PM' },
-  { id: '3', number: 'RD-GHI789', chef: "Nonna's Table", customer: 'Mike R.', status: 'in_transit', total: 28.00, time: '1:00 PM' },
-  { id: '4', number: 'RD-JKL012', chef: 'Soul Kitchen', customer: 'Lisa K.', status: 'delivered', total: 52.00, time: '11:30 AM' },
-];
+function formatStatus(status: string): string {
+  return status
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
 
-export default function OrdersPage() {
+export default async function OrdersPage() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+
+  // Fetch orders with storefront info
+  const { data: ordersData } = await supabase
+    .from('orders')
+    .select('*, chef_storefronts(name)')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  const orders = (ordersData || []) as any[];
+
   return (
-    <div className="min-h-screen p-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="flex items-center justify-between">
+    <DashboardLayout>
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Order Overview</h1>
-            <p className="mt-1 text-gray-400">Monitor all platform orders</p>
+            <h1 className="text-3xl font-bold text-white">Order Overview</h1>
+            <p className="mt-2 text-gray-400">Monitor all platform orders</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">Export</Button>
-            <Button variant="outline" size="sm">Filter</Button>
-          </div>
+          <Badge className="bg-[#E85D26] text-white">{orders.length} Orders</Badge>
         </div>
 
-        <Card className="mt-8 bg-gray-800 border-gray-700">
+        <Card className="border-gray-800 bg-[#16213e]">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-700 text-left text-sm text-gray-400">
-                  <th className="pb-3 font-medium">Order</th>
-                  <th className="pb-3 font-medium">Chef</th>
-                  <th className="pb-3 font-medium">Customer</th>
-                  <th className="pb-3 font-medium">Status</th>
-                  <th className="pb-3 font-medium">Total</th>
-                  <th className="pb-3 font-medium">Time</th>
-                  <th className="pb-3 font-medium">Actions</th>
+                <tr className="border-b border-gray-800 text-left text-sm text-gray-400">
+                  <th className="pb-4 pl-6 font-medium">Order Number</th>
+                  <th className="pb-4 font-medium">Chef Storefront</th>
+                  <th className="pb-4 font-medium">Status</th>
+                  <th className="pb-4 font-medium">Total</th>
+                  <th className="pb-4 pr-6 font-medium">Created</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
                 {orders.map((order) => (
-                  <tr key={order.id} className="border-b border-gray-700/50">
-                    <td className="py-3 font-medium text-white">{order.number}</td>
-                    <td className="py-3 text-gray-300">{order.chef}</td>
-                    <td className="py-3 text-gray-300">{order.customer}</td>
-                    <td className="py-3">
-                      <Badge
-                        variant={
-                          order.status === 'delivered' ? 'success' :
-                          order.status === 'in_transit' ? 'primary' :
-                          order.status === 'preparing' ? 'info' :
-                          'warning'
-                        }
-                      >
-                        {order.status.replace('_', ' ')}
+                  <tr key={order.id} className="border-b border-gray-800/50">
+                    <td className="py-4 pl-6 font-mono font-medium text-white">
+                      {order.order_number}
+                    </td>
+                    <td className="py-4 text-gray-300">
+                      {order.chef_storefronts?.name ?? 'N/A'}
+                    </td>
+                    <td className="py-4">
+                      <Badge variant={getStatusVariant(order.status)}>
+                        {formatStatus(order.status)}
                       </Badge>
                     </td>
-                    <td className="py-3 text-gray-300">${order.total.toFixed(2)}</td>
-                    <td className="py-3 text-gray-400">{order.time}</td>
-                    <td className="py-3">
-                      <Button variant="ghost" size="sm">View</Button>
+                    <td className="py-4 font-medium text-white">
+                      ${(order.total / 100).toFixed(2)}
+                    </td>
+                    <td className="py-4 pr-6 text-gray-400">
+                      {new Date(order.created_at).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {orders.length === 0 && (
+              <div className="py-12 text-center text-gray-400">No orders found</div>
+            )}
           </div>
         </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
