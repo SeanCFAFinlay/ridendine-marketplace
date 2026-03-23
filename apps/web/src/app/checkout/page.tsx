@@ -3,8 +3,13 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 import { Header } from '@/components/layout/header';
 import { Button, Card, Input } from '@ridendine/ui';
+import { StripePaymentForm } from '@/components/checkout/stripe-payment-form';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface CartItem {
   id: string;
@@ -29,6 +34,22 @@ interface Address {
   postal_code: string;
 }
 
+interface OrderBreakdown {
+  subtotal: number;
+  deliveryFee: number;
+  serviceFee: number;
+  tax: number;
+  tip: number;
+  discount: number;
+}
+
+const TIP_OPTIONS = [
+  { label: 'No tip', value: 0 },
+  { label: '10%', percent: 10 },
+  { label: '15%', percent: 15 },
+  { label: '20%', percent: 20 },
+];
+
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -37,19 +58,25 @@ function CheckoutContent() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>('');
-  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [tip, setTip] = useState(0);
+  const [customTip, setCustomTip] = useState('');
+  const [promoCode, setPromoCode] = useState('');
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // Stripe state
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [breakdown, setBreakdown] = useState<OrderBreakdown | null>(null);
+  const [checkoutStep, setCheckoutStep] = useState<'details' | 'payment'>('details');
+  const [creatingPayment, setCreatingPayment] = useState(false);
 
   useEffect(() => {
     async function loadData() {
       if (!storefrontId) return;
 
       try {
-        // Fetch cart
         const cartRes = await fetch(`/api/cart?storefrontId=${storefrontId}`);
         const cartData = await cartRes.json();
 
@@ -68,7 +95,6 @@ function CheckoutContent() {
           });
         }
 
-        // Fetch addresses
         const addressRes = await fetch('/api/addresses');
         const addressData = await addressRes.json();
 
@@ -93,45 +119,62 @@ function CheckoutContent() {
   }, [storefrontId]);
 
   const subtotal = cart?.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) ?? 0;
-  const deliveryFee = deliveryType === 'delivery' ? 399 : 0;
-  const serviceFee = Math.round(subtotal * 0.1);
-  const total = subtotal + deliveryFee + serviceFee + tip;
 
-  const handleSubmitOrder = async () => {
-    if (deliveryType === 'delivery' && !selectedAddress) {
+  const calculateTip = () => {
+    if (customTip) {
+      return Math.round(parseFloat(customTip) * 100) || 0;
+    }
+    return tip;
+  };
+
+  const handleProceedToPayment = async () => {
+    if (!selectedAddress) {
       setError('Please select a delivery address');
       return;
     }
 
-    setSubmitting(true);
+    setCreatingPayment(true);
     setError('');
 
     try {
-      const response = await fetch('/api/orders', {
+      const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           storefrontId,
-          deliveryAddressId: deliveryType === 'delivery' ? selectedAddress : null,
-          deliveryType,
+          deliveryAddressId: selectedAddress,
           specialInstructions: deliveryInstructions,
-          tip,
+          tip: calculateTip(),
+          promoCode: promoCode || null,
         }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        router.push(`/orders/${result.data.order.id}/confirmation`);
+        setClientSecret(result.data.clientSecret);
+        setOrderId(result.data.orderId);
+        setBreakdown(result.data.breakdown);
+        setCheckoutStep('payment');
       } else {
-        setError(result.error || 'Failed to place order');
+        setError(result.error || 'Failed to create checkout');
       }
     } catch (err) {
-      console.error('Order error:', err);
-      setError('Failed to place order. Please try again.');
+      console.error('Checkout error:', err);
+      setError('Failed to create checkout. Please try again.');
     } finally {
-      setSubmitting(false);
+      setCreatingPayment(false);
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    if (orderId) {
+      router.push(`/order-confirmation/${orderId}`);
+    }
+  };
+
+  const handlePaymentError = (errorMessage: string) => {
+    setError(errorMessage);
   };
 
   if (loading) {
@@ -158,170 +201,230 @@ function CheckoutContent() {
     );
   }
 
+  const displayBreakdown = breakdown || {
+    subtotal,
+    deliveryFee: 399,
+    serviceFee: Math.round(subtotal * 0.08),
+    tax: Math.round((subtotal + Math.round(subtotal * 0.08)) * 0.13),
+    tip: calculateTip(),
+    discount: 0,
+  };
+
+  const total = displayBreakdown.subtotal + displayBreakdown.deliveryFee +
+    displayBreakdown.serviceFee + displayBreakdown.tax + displayBreakdown.tip - displayBreakdown.discount;
+
   return (
     <main className="container py-8">
       <h1 className="text-2xl font-bold text-gray-900">Checkout</h1>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        {/* Checkout Form */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Delivery Type */}
-          <Card>
-            <h2 className="font-semibold text-gray-900">Delivery Method</h2>
-            <div className="mt-4 flex gap-4">
-              <button
-                onClick={() => setDeliveryType('delivery')}
-                className={`flex-1 rounded-lg border-2 p-4 text-center transition-colors ${
-                  deliveryType === 'delivery'
-                    ? 'border-[#E85D26] bg-orange-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <svg className="mx-auto h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                </svg>
-                <p className="mt-2 font-medium">Delivery</p>
-                <p className="text-sm text-gray-500">$3.99 fee</p>
-              </button>
-              <button
-                onClick={() => setDeliveryType('pickup')}
-                className={`flex-1 rounded-lg border-2 p-4 text-center transition-colors ${
-                  deliveryType === 'pickup'
-                    ? 'border-[#E85D26] bg-orange-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <svg className="mx-auto h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                <p className="mt-2 font-medium">Pickup</p>
-                <p className="text-sm text-gray-500">Free</p>
-              </button>
-            </div>
-          </Card>
-
-          {/* Delivery Address */}
-          {deliveryType === 'delivery' && (
-            <Card>
-              <h2 className="font-semibold text-gray-900">Delivery Address</h2>
-              <div className="mt-4 space-y-3">
-                {addresses.map((address) => (
-                  <label
-                    key={address.id}
-                    className={`flex cursor-pointer items-start gap-3 rounded-lg border-2 p-4 transition-colors ${
-                      selectedAddress === address.id
-                        ? 'border-[#E85D26] bg-orange-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="address"
-                      value={address.id}
-                      checked={selectedAddress === address.id}
-                      onChange={(e) => setSelectedAddress(e.target.value)}
-                      className="mt-1 h-4 w-4 accent-[#E85D26]"
-                    />
-                    <div>
-                      <p className="font-medium text-gray-900">{address.label}</p>
-                      <p className="text-sm text-gray-500">
-                        {address.street_address}, {address.city}, {address.state} {address.postal_code}
-                      </p>
-                    </div>
+          {checkoutStep === 'details' ? (
+            <>
+              {/* Delivery Address */}
+              <Card>
+                <h2 className="font-semibold text-gray-900">Delivery Address</h2>
+                <div className="mt-4 space-y-3">
+                  {addresses.map((address) => (
+                    <label
+                      key={address.id}
+                      className={`flex cursor-pointer items-start gap-3 rounded-lg border-2 p-4 transition-colors ${
+                        selectedAddress === address.id
+                          ? 'border-[#E85D26] bg-orange-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="address"
+                        value={address.id}
+                        checked={selectedAddress === address.id}
+                        onChange={(e) => setSelectedAddress(e.target.value)}
+                        className="mt-1 h-4 w-4 accent-[#E85D26]"
+                      />
+                      <div>
+                        <p className="font-medium text-gray-900">{address.label}</p>
+                        <p className="text-sm text-gray-500">
+                          {address.street_address}, {address.city}, {address.state} {address.postal_code}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
+                  {addresses.length === 0 && (
+                    <p className="text-gray-500">No saved addresses. Please add an address in your account settings.</p>
+                  )}
+                </div>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Delivery Instructions (optional)
                   </label>
-                ))}
-                {addresses.length === 0 && (
-                  <p className="text-gray-500">No saved addresses. Please add an address in your account settings.</p>
-                )}
-              </div>
+                  <Input
+                    value={deliveryInstructions}
+                    onChange={(e) => setDeliveryInstructions(e.target.value)}
+                    placeholder="Apartment number, gate code, etc."
+                    className="mt-1"
+                  />
+                </div>
+              </Card>
 
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  Delivery Instructions (optional)
-                </label>
-                <Input
-                  value={deliveryInstructions}
-                  onChange={(e) => setDeliveryInstructions(e.target.value)}
-                  placeholder="Apartment number, gate code, etc."
-                  className="mt-1"
-                />
-              </div>
+              {/* Tip */}
+              <Card>
+                <h2 className="font-semibold text-gray-900">Add a Tip for Your Driver</h2>
+                <div className="mt-4 grid grid-cols-4 gap-3">
+                  {TIP_OPTIONS.map((option) => {
+                    const tipValue = option.percent
+                      ? Math.round(subtotal * (option.percent / 100))
+                      : (option.value ?? 0);
+                    const isSelected = !customTip && tip === tipValue;
+
+                    return (
+                      <button
+                        key={option.label}
+                        onClick={() => {
+                          setTip(tipValue);
+                          setCustomTip('');
+                        }}
+                        className={`rounded-lg border-2 py-3 text-center transition-colors ${
+                          isSelected
+                            ? 'border-[#E85D26] bg-orange-50 font-medium'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <span className="block text-sm">{option.label}</span>
+                        {option.percent && (
+                          <span className="block text-xs text-gray-500">
+                            ${(tipValue / 100).toFixed(2)}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-3">
+                  <Input
+                    type="number"
+                    value={customTip}
+                    onChange={(e) => {
+                      setCustomTip(e.target.value);
+                      setTip(0);
+                    }}
+                    placeholder="Custom tip amount"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+              </Card>
+
+              {/* Promo Code */}
+              <Card>
+                <h2 className="font-semibold text-gray-900">Promo Code</h2>
+                <div className="mt-4 flex gap-2">
+                  <Input
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    placeholder="Enter promo code"
+                    className="flex-1"
+                  />
+                  <Button variant="secondary">Apply</Button>
+                </div>
+              </Card>
+
+              {/* Order Items */}
+              <Card>
+                <h2 className="font-semibold text-gray-900">Order Summary</h2>
+                <div className="mt-4 divide-y">
+                  {cart.items.map((item) => (
+                    <div key={item.id} className="flex items-center gap-4 py-3">
+                      <div className="h-12 w-12 rounded-lg bg-gray-100 flex-shrink-0">
+                        {item.image_url && (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className="h-full w-full rounded-lg object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{item.name}</p>
+                        <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                      </div>
+                      <p className="font-medium">${((item.price * item.quantity) / 100).toFixed(2)}</p>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </>
+          ) : (
+            /* Payment Step */
+            <Card>
+              <h2 className="font-semibold text-gray-900 mb-6">Payment Details</h2>
+              {clientSecret && (
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret,
+                    appearance: {
+                      theme: 'stripe',
+                      variables: {
+                        colorPrimary: '#E85D26',
+                      },
+                    },
+                  }}
+                >
+                  <StripePaymentForm
+                    orderId={orderId!}
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                  />
+                </Elements>
+              )}
+              <button
+                onClick={() => setCheckoutStep('details')}
+                className="mt-4 text-sm text-[#E85D26] hover:underline"
+              >
+                ← Back to order details
+              </button>
             </Card>
           )}
-
-          {/* Tip */}
-          <Card>
-            <h2 className="font-semibold text-gray-900">Add a Tip</h2>
-            <div className="mt-4 flex gap-3">
-              {[0, 200, 300, 500].map((amount) => (
-                <button
-                  key={amount}
-                  onClick={() => setTip(amount)}
-                  className={`flex-1 rounded-lg border-2 py-2 text-center transition-colors ${
-                    tip === amount
-                      ? 'border-[#E85D26] bg-orange-50 font-medium'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  {amount === 0 ? 'No tip' : `$${(amount / 100).toFixed(2)}`}
-                </button>
-              ))}
-            </div>
-          </Card>
-
-          {/* Order Items */}
-          <Card>
-            <h2 className="font-semibold text-gray-900">Order Summary</h2>
-            <div className="mt-4 divide-y">
-              {cart.items.map((item) => (
-                <div key={item.id} className="flex items-center gap-4 py-3">
-                  <div className="h-12 w-12 rounded-lg bg-gray-100 flex-shrink-0">
-                    {item.image_url && (
-                      <img
-                        src={item.image_url}
-                        alt={item.name}
-                        className="h-full w-full rounded-lg object-cover"
-                      />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{item.name}</p>
-                    <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
-                  </div>
-                  <p className="font-medium">${((item.price * item.quantity) / 100).toFixed(2)}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
         </div>
 
-        {/* Order Total */}
+        {/* Order Total Sidebar */}
         <div>
           <Card className="sticky top-24">
             <h2 className="font-semibold text-gray-900">Payment Summary</h2>
             <div className="mt-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="text-gray-900">${(subtotal / 100).toFixed(2)}</span>
+                <span className="text-gray-900">${(displayBreakdown.subtotal / 100).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Delivery fee</span>
-                <span className="text-gray-900">${(deliveryFee / 100).toFixed(2)}</span>
+                <span className="text-gray-900">${(displayBreakdown.deliveryFee / 100).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Service fee</span>
-                <span className="text-gray-900">${(serviceFee / 100).toFixed(2)}</span>
+                <span className="text-gray-600">Service fee (8%)</span>
+                <span className="text-gray-900">${(displayBreakdown.serviceFee / 100).toFixed(2)}</span>
               </div>
-              {tip > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">HST (13%)</span>
+                <span className="text-gray-900">${(displayBreakdown.tax / 100).toFixed(2)}</span>
+              </div>
+              {displayBreakdown.tip > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Tip</span>
-                  <span className="text-gray-900">${(tip / 100).toFixed(2)}</span>
+                  <span className="text-gray-900">${(displayBreakdown.tip / 100).toFixed(2)}</span>
+                </div>
+              )}
+              {displayBreakdown.discount > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Discount</span>
+                  <span>-${(displayBreakdown.discount / 100).toFixed(2)}</span>
                 </div>
               )}
               <div className="border-t border-gray-200 pt-2">
-                <div className="flex justify-between font-semibold">
+                <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span>${(total / 100).toFixed(2)}</span>
+                  <span className="text-[#E85D26]">${(total / 100).toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -330,13 +433,16 @@ function CheckoutContent() {
               <p className="mt-4 text-sm text-red-600">{error}</p>
             )}
 
-            <Button
-              onClick={handleSubmitOrder}
-              disabled={submitting || (deliveryType === 'delivery' && !selectedAddress)}
-              className="mt-4 w-full"
-            >
-              {submitting ? 'Placing Order...' : 'Place Order'}
-            </Button>
+            {checkoutStep === 'details' && (
+              <Button
+                onClick={handleProceedToPayment}
+                disabled={creatingPayment || !selectedAddress}
+                className="mt-4 w-full"
+                size="lg"
+              >
+                {creatingPayment ? 'Processing...' : 'Continue to Payment'}
+              </Button>
+            )}
 
             <p className="mt-4 text-center text-xs text-gray-500">
               By placing this order, you agree to our Terms of Service

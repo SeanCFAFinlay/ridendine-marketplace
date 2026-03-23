@@ -1,0 +1,30 @@
+'use client';
+
+import dynamic from 'next/dynamic';
+import { DashboardLayout } from '@/components/DashboardLayout';
+
+const LiveMap = dynamic(() => import('@/components/map/live-map'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[600px] bg-[#16213e] animate-pulse rounded-lg flex items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#E85D26] border-t-transparent" />
+    </div>
+  ),
+});
+
+export default function MapPage() {
+  return (
+    <DashboardLayout>
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-white">Live Map</h1>
+          <p className="mt-2 text-gray-400">Real-time driver and delivery tracking</p>
+        </div>
+
+        <div className="bg-[#16213e] rounded-lg border border-gray-800 overflow-hidden" style={{ height: '70vh' }}>
+          <LiveMap />
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}

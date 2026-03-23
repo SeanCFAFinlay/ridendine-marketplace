@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, Button, Badge } from '@ridendine/ui';
 import type { Delivery } from '@ridendine/db';
+import { useLocationTracker } from '@/hooks/use-location-tracker';
 
 type DeliveryStatus = 'accepted' | 'en_route_to_pickup' | 'arrived_at_pickup' | 'picked_up' | 'en_route_to_dropoff' | 'arrived_at_dropoff';
 
@@ -15,6 +16,20 @@ interface DeliveryDetailProps {
 export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps) {
   const router = useRouter();
   const [status, setStatus] = useState<DeliveryStatus>(delivery.status as DeliveryStatus);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [signature, setSignature] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+
+  // Location tracking
+  useLocationTracker({
+    driverId: delivery.driver_id || '',
+    isOnline: true,
+    updateInterval: 15000,
+  });
 
   const getStatusSteps = () => {
     const steps = [
@@ -35,19 +50,52 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
 
   const getNextAction = (): { label: string; nextStatus: DeliveryStatus } | null => {
     const actions: Record<DeliveryStatus, { label: string; nextStatus: DeliveryStatus } | null> = {
-      accepted: { label: 'Start Navigation', nextStatus: 'en_route_to_pickup' },
+      accepted: { label: 'Start Navigation to Pickup', nextStatus: 'en_route_to_pickup' },
       en_route_to_pickup: { label: 'Arrived at Restaurant', nextStatus: 'arrived_at_pickup' },
       arrived_at_pickup: { label: 'Confirm Pickup', nextStatus: 'picked_up' },
-      picked_up: { label: 'Start Delivery', nextStatus: 'en_route_to_dropoff' },
+      picked_up: { label: 'Start Navigation to Customer', nextStatus: 'en_route_to_dropoff' },
       en_route_to_dropoff: { label: 'Arrived at Customer', nextStatus: 'arrived_at_dropoff' },
       arrived_at_dropoff: null,
     };
     return actions[status];
   };
 
+  // Open Google Maps navigation
+  const openNavigation = (address: string, lat?: number | null, lng?: number | null) => {
+    let url: string;
+
+    if (lat && lng) {
+      // Use coordinates if available
+      url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+    } else {
+      // Fall back to address
+      const encodedAddress = encodeURIComponent(address);
+      url = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}&travelmode=driving`;
+    }
+
+    // Try to open in Google Maps app on mobile
+    if (/android/i.test(navigator.userAgent)) {
+      window.location.href = `google.navigation:q=${lat},${lng}`;
+    } else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+      window.location.href = `comgooglemaps://?daddr=${lat},${lng}&directionsmode=driving`;
+      setTimeout(() => {
+        window.open(url, '_blank');
+      }, 500);
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
   const handleAction = async () => {
     const action = getNextAction();
     if (!action) return;
+
+    // If starting navigation, open maps first
+    if (action.nextStatus === 'en_route_to_pickup') {
+      openNavigation(delivery.pickup_address, delivery.pickup_lat, delivery.pickup_lng);
+    } else if (action.nextStatus === 'en_route_to_dropoff') {
+      openNavigation(delivery.dropoff_address, delivery.dropoff_lat, delivery.dropoff_lng);
+    }
 
     try {
       const response = await fetch(`/api/deliveries/${delivery.id}`, {
@@ -68,12 +116,118 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
     }
   };
 
+  // Photo capture
+  const handlePhotoCapture = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhoto(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Signature canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !showCompletionModal) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+  }, [showCompletionModal]);
+
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    setIsDrawing(true);
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    ctx.beginPath();
+    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+  };
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    ctx.stroke();
+  };
+
+  const handleCanvasMouseUp = () => {
+    setIsDrawing(false);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      setSignature(canvas.toDataURL('image/png'));
+    }
+  };
+
+  const handleCanvasTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    setIsDrawing(true);
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    if (!touch) return;
+    ctx.beginPath();
+    ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+  };
+
+  const handleCanvasTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    if (!touch) return;
+    ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+    ctx.stroke();
+  };
+
+  const clearSignature = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setSignature(null);
+  };
+
   const handleComplete = async () => {
+    setIsUploading(true);
+
     try {
       const response = await fetch(`/api/deliveries/${delivery.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'delivered' }),
+        body: JSON.stringify({
+          status: 'delivered',
+          proof_photo: photo,
+          signature: signature,
+          completed_at: new Date().toISOString(),
+        }),
       });
 
       if (!response.ok) {
@@ -85,6 +239,8 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
     } catch (error) {
       console.error('Error completing delivery:', error);
       alert('Failed to complete delivery');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -131,13 +287,30 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
         </p>
       </div>
 
-      {/* Map Placeholder */}
-      <div className="flex h-48 items-center justify-center bg-[#e5e7eb]">
-        <p className="text-[14px] text-[#6b7280]">Map / Navigation View</p>
+      {/* Navigation Button */}
+      <div className="p-4">
+        <Button
+          variant="outline"
+          className="w-full rounded-lg border-blue-500 text-blue-600 hover:bg-blue-50"
+          onClick={() => {
+            const isPickup = status.includes('pickup') || status === 'accepted';
+            if (isPickup) {
+              openNavigation(delivery.pickup_address, delivery.pickup_lat, delivery.pickup_lng);
+            } else {
+              openNavigation(delivery.dropoff_address, delivery.dropoff_lat, delivery.dropoff_lng);
+            }
+          }}
+        >
+          <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Open in Google Maps
+        </Button>
       </div>
 
       {/* Destination Card */}
-      <div className="p-4">
+      <div className="p-4 pt-0">
         <Card className="border-0 shadow-sm">
           {status.includes('pickup') || status === 'accepted' ? (
             <>
@@ -149,7 +322,12 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
               <p className="mt-1 text-[14px] leading-relaxed text-[#6b7280]">
                 {delivery.pickup_address}
               </p>
-              <Button variant="outline" size="sm" className="mt-4 rounded-lg">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 rounded-lg"
+                onClick={() => window.open(`tel:${(delivery as any).pickup_phone || ''}`, '_self')}
+              >
                 Call Restaurant
               </Button>
             </>
@@ -166,11 +344,16 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
               {order?.special_instructions && (
                 <div className="mt-4 rounded-lg bg-[#fef3c7] p-4">
                   <p className="text-[14px] leading-relaxed text-[#92400e]">
-                    {order.special_instructions}
+                    Note: {order.special_instructions}
                   </p>
                 </div>
               )}
-              <Button variant="outline" size="sm" className="mt-4 rounded-lg">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 rounded-lg"
+                onClick={() => window.open(`tel:${order?.customer_phone || ''}`, '_self')}
+              >
                 Call Customer
               </Button>
             </>
@@ -196,6 +379,12 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
               </span>
             </div>
             <div className="flex justify-between text-[14px]">
+              <span className="text-[#6b7280]">Tip</span>
+              <span className="font-medium text-[#1a1a1a]">
+                ${((delivery as any).driver_tip || 0).toFixed(2)}
+              </span>
+            </div>
+            <div className="border-t pt-2 flex justify-between text-[14px]">
               <span className="text-[#6b7280]">Your Earnings</span>
               <span className="font-semibold text-[#22c55e]">
                 ${delivery.driver_payout.toFixed(2)}
@@ -210,7 +399,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
         {status === 'arrived_at_dropoff' ? (
           <Button
             className="w-full rounded-lg bg-[#22c55e] py-4 text-[15px] font-semibold hover:bg-[#16a34a]"
-            onClick={handleComplete}
+            onClick={() => setShowCompletionModal(true)}
           >
             Complete Delivery
           </Button>
@@ -223,6 +412,98 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
           </Button>
         ) : null}
       </div>
+
+      {/* Completion Modal */}
+      {showCompletionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6">
+            <h2 className="text-xl font-bold text-gray-900">Complete Delivery</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Please take a photo and collect customer signature
+            </p>
+
+            {/* Photo Capture */}
+            <div className="mt-4">
+              <p className="text-sm font-medium text-gray-700">Proof of Delivery Photo</p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              {photo ? (
+                <div className="mt-2 relative">
+                  <img src={photo} alt="Proof" className="w-full rounded-lg" />
+                  <button
+                    onClick={() => setPhoto(null)}
+                    className="absolute top-2 right-2 rounded-full bg-red-500 p-1 text-white"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handlePhotoCapture}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-6 text-gray-600 hover:border-gray-400"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Take Photo
+                </button>
+              )}
+            </div>
+
+            {/* Signature Pad */}
+            <div className="mt-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-700">Customer Signature (optional)</p>
+                {signature && (
+                  <button onClick={clearSignature} className="text-sm text-red-500">
+                    Clear
+                  </button>
+                )}
+              </div>
+              <canvas
+                ref={canvasRef}
+                width={300}
+                height={150}
+                className="mt-2 w-full rounded-lg border border-gray-300 touch-none"
+                onMouseDown={handleCanvasMouseDown}
+                onMouseMove={handleCanvasMouseMove}
+                onMouseUp={handleCanvasMouseUp}
+                onMouseLeave={handleCanvasMouseUp}
+                onTouchStart={handleCanvasTouchStart}
+                onTouchMove={handleCanvasTouchMove}
+                onTouchEnd={handleCanvasMouseUp}
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-6 flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowCompletionModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-[#22c55e] hover:bg-[#16a34a]"
+                onClick={handleComplete}
+                disabled={!photo || isUploading}
+              >
+                {isUploading ? 'Completing...' : 'Complete'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

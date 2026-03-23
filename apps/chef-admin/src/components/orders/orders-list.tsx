@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, Badge, Button } from '@ridendine/ui';
+import { createBrowserClient } from '@ridendine/db';
 
 interface Order {
   id: string;
@@ -30,15 +31,107 @@ interface OrdersListProps {
   initialOrders: Order[];
 }
 
+const ACCEPT_TIMEOUT_MS = 8 * 60 * 1000; // 8 minutes
+
+function CountdownTimer({ createdAt, onExpire }: { createdAt: string; onExpire: () => void }) {
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+
+  useEffect(() => {
+    const orderTime = new Date(createdAt).getTime();
+    const deadline = orderTime + ACCEPT_TIMEOUT_MS;
+
+    const updateTimer = () => {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        setTimeLeft(0);
+        onExpire();
+      } else {
+        setTimeLeft(remaining);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [createdAt, onExpire]);
+
+  const minutes = Math.floor(timeLeft / 60000);
+  const seconds = Math.floor((timeLeft % 60000) / 1000);
+
+  const isUrgent = timeLeft < 2 * 60 * 1000; // Less than 2 minutes
+
+  if (timeLeft <= 0) {
+    return <span className="text-red-600 font-medium">Expired</span>;
+  }
+
+  return (
+    <span className={`font-mono font-bold ${isUrgent ? 'text-red-600 animate-pulse' : 'text-orange-600'}`}>
+      {minutes}:{seconds.toString().padStart(2, '0')}
+    </span>
+  );
+}
+
 export function OrdersList({ initialOrders }: OrdersListProps) {
   const [filter, setFilter] = useState<string>('all');
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [playSound, setPlaySound] = useState(false);
+
+  const supabase = createBrowserClient();
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('chef-orders')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newOrder = payload.new as Order;
+            setOrders((prev) => [newOrder, ...prev]);
+            setPlaySound(true);
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedOrder = payload.new as Order;
+            setOrders((prev) =>
+              prev.map((o) => (o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o))
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase]);
+
+  // Play notification sound for new orders
+  useEffect(() => {
+    if (playSound) {
+      const audio = new Audio('/sounds/new-order.mp3');
+      audio.play().catch(() => {}); // Ignore if audio fails
+      setPlaySound(false);
+    }
+  }, [playSound]);
 
   useEffect(() => {
     setOrders(initialOrders);
   }, [initialOrders]);
+
+  const handleOrderExpire = useCallback(async (orderId: string) => {
+    // Auto-reject expired orders
+    await fetch(`/api/orders/${orderId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'expired' }),
+    });
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: 'expired' } : o))
+    );
+  }, []);
 
   const filteredOrders = filter === 'all'
     ? orders
@@ -115,21 +208,31 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
           </Card>
         ) : (
           filteredOrders.map((order) => (
-            <Card key={order.id}>
+            <Card key={order.id} className={order.status === 'pending' ? 'border-2 border-orange-400 shadow-lg' : ''}>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-gray-900">{order.order_number}</span>
                     <Badge
                       variant={
                         order.status === 'pending' ? 'warning' :
                         order.status === 'accepted' ? 'info' :
                         order.status === 'preparing' ? 'info' :
-                        order.status === 'ready_for_pickup' ? 'success' : 'default'
+                        order.status === 'ready_for_pickup' ? 'success' :
+                        order.status === 'expired' ? 'error' : 'default'
                       }
                     >
                       {order.status.replace(/_/g, ' ')}
                     </Badge>
+                    {order.status === 'pending' && (
+                      <div className="flex items-center gap-1 rounded-full bg-orange-100 px-2 py-1 text-xs">
+                        <span className="text-orange-800">Accept in:</span>
+                        <CountdownTimer
+                          createdAt={order.created_at}
+                          onExpire={() => handleOrderExpire(order.id)}
+                        />
+                      </div>
+                    )}
                   </div>
                   {order.customer && (
                     <p className="mt-1 text-sm text-gray-600">

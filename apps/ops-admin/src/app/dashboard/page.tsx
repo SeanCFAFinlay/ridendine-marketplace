@@ -3,6 +3,10 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { createServerClient, getPendingChefApprovals } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { RealTimeStats } from '@/components/dashboard/real-time-stats';
+import { RevenueChart } from '@/components/dashboard/revenue-chart';
+import { OrdersHeatmap } from '@/components/dashboard/orders-heatmap';
+import { AlertsPanel } from '@/components/dashboard/alerts-panel';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,99 +14,208 @@ async function getDashboardStats() {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [ordersResult, deliveriesResult, chefApprovalsResult, revenueResult] = await Promise.all([
+  const [
+    ordersResult,
+    todayOrdersResult,
+    yesterdayOrdersResult,
+    activeDeliveriesResult,
+    chefApprovalsResult,
+    todayRevenueResult,
+    yesterdayRevenueResult,
+    monthRevenueResult,
+    driversResult,
+    onlineDriversResult,
+    chefsResult,
+    customersResult,
+    avgDeliveryTimeResult,
+  ] = await Promise.all([
     supabase.from('orders').select('*', { count: 'exact', head: true }),
+    supabase.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
+    supabase.from('orders').select('*', { count: 'exact', head: true })
+      .gte('created_at', yesterday.toISOString())
+      .lt('created_at', today.toISOString()),
     supabase.from('deliveries').select('*', { count: 'exact', head: true }).in('status', [
-      'assigned',
-      'accepted',
-      'en_route_to_pickup',
-      'picked_up',
-      'en_route_to_dropoff',
+      'assigned', 'accepted', 'en_route_to_pickup', 'picked_up', 'en_route_to_dropoff',
     ]),
     getPendingChefApprovals(supabase as any),
-    supabase
-      .from('orders')
-      .select('total')
-      .gte('created_at', today.toISOString())
+    supabase.from('orders').select('total').gte('created_at', today.toISOString()).eq('payment_status', 'completed'),
+    supabase.from('orders').select('total')
+      .gte('created_at', yesterday.toISOString())
+      .lt('created_at', today.toISOString())
       .eq('payment_status', 'completed'),
+    supabase.from('orders').select('total').gte('created_at', monthAgo.toISOString()).eq('payment_status', 'completed'),
+    supabase.from('driver_profiles').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+    supabase.from('driver_presence').select('*', { count: 'exact', head: true }).eq('status', 'online'),
+    supabase.from('chef_storefronts').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('customers').select('*', { count: 'exact', head: true }),
+    supabase.from('deliveries').select('actual_delivery_time_minutes').not('actual_delivery_time_minutes', 'is', null).limit(100),
   ]);
 
-  const todayRevenue = (revenueResult.data as Array<{ total: number }> || []).reduce((sum, order) => sum + (order.total || 0), 0);
+  const todayRevenue = (todayRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
+  const yesterdayRevenue = (yesterdayRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
+  const monthRevenue = (monthRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
+
+  const deliveryTimes = (avgDeliveryTimeResult.data as Array<{ actual_delivery_time_minutes: number }> || []);
+  const avgDeliveryTime = deliveryTimes.length > 0
+    ? deliveryTimes.reduce((sum, d) => sum + d.actual_delivery_time_minutes, 0) / deliveryTimes.length
+    : 0;
+
+  const revenueGrowth = yesterdayRevenue > 0
+    ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
+    : 0;
+
+  const orderGrowth = (yesterdayOrdersResult.count || 0) > 0
+    ? (((todayOrdersResult.count || 0) - (yesterdayOrdersResult.count || 0)) / (yesterdayOrdersResult.count || 1)) * 100
+    : 0;
 
   return {
     totalOrders: ordersResult.count ?? 0,
-    activeDeliveries: deliveriesResult.count ?? 0,
+    todayOrders: todayOrdersResult.count ?? 0,
+    activeDeliveries: activeDeliveriesResult.count ?? 0,
     pendingApprovals: chefApprovalsResult.length,
     todayRevenue,
+    monthRevenue,
+    revenueGrowth,
+    orderGrowth,
+    totalDrivers: driversResult.count ?? 0,
+    onlineDrivers: onlineDriversResult.count ?? 0,
+    activeChefs: chefsResult.count ?? 0,
+    totalCustomers: customersResult.count ?? 0,
+    avgDeliveryTime: Math.round(avgDeliveryTime),
+    platformFee: monthRevenue * 0.15,
   };
 }
 
 export default async function DashboardPage() {
   const stats = await getDashboardStats();
 
-  const statCards = [
+  const primaryStats = [
     {
-      label: 'Total Orders',
-      value: stats.totalOrders.toString(),
-      change: 'All time',
+      label: "Today's Revenue",
+      value: `$${stats.todayRevenue.toFixed(2)}`,
+      change: `${stats.revenueGrowth >= 0 ? '+' : ''}${stats.revenueGrowth.toFixed(1)}%`,
+      changeType: stats.revenueGrowth >= 0 ? 'positive' : 'negative',
+      color: 'text-emerald-400',
+    },
+    {
+      label: "Today's Orders",
+      value: stats.todayOrders.toString(),
+      change: `${stats.orderGrowth >= 0 ? '+' : ''}${stats.orderGrowth.toFixed(1)}%`,
+      changeType: stats.orderGrowth >= 0 ? 'positive' : 'negative',
       color: 'text-blue-400',
     },
     {
       label: 'Active Deliveries',
       value: stats.activeDeliveries.toString(),
-      change: 'In progress',
+      change: 'In progress now',
+      changeType: 'neutral',
+      color: 'text-purple-400',
+    },
+    {
+      label: 'Drivers Online',
+      value: `${stats.onlineDrivers}/${stats.totalDrivers}`,
+      change: `${Math.round((stats.onlineDrivers / Math.max(stats.totalDrivers, 1)) * 100)}% available`,
+      changeType: 'neutral',
       color: 'text-green-400',
-    },
-    {
-      label: 'Pending Approvals',
-      value: stats.pendingApprovals.toString(),
-      change: 'Awaiting review',
-      color: 'text-[#E85D26]',
-    },
-    {
-      label: "Today's Revenue",
-      value: `$${(stats.todayRevenue / 100).toFixed(2)}`,
-      change: 'Completed orders',
-      color: 'text-emerald-400',
     },
   ];
 
+  const secondaryStats = [
+    { label: 'Monthly Revenue', value: `$${stats.monthRevenue.toFixed(2)}` },
+    { label: 'Platform Earnings (15%)', value: `$${stats.platformFee.toFixed(2)}` },
+    { label: 'Active Chefs', value: stats.activeChefs.toString() },
+    { label: 'Total Customers', value: stats.totalCustomers.toLocaleString() },
+    { label: 'Avg Delivery Time', value: `${stats.avgDeliveryTime} min` },
+    { label: 'Pending Approvals', value: stats.pendingApprovals.toString() },
+  ];
+
   const quickActions = [
-    { href: '/dashboard/chefs/approvals', label: 'Chef Approvals', count: stats.pendingApprovals },
-    { href: '/dashboard/orders', label: 'Order Overview', count: stats.totalOrders },
-    { href: '/dashboard/deliveries', label: 'Delivery Status', count: stats.activeDeliveries },
+    { href: '/dashboard/chefs/approvals', label: 'Chef Approvals', count: stats.pendingApprovals, urgent: stats.pendingApprovals > 0 },
+    { href: '/dashboard/map', label: 'Live Map', count: stats.activeDeliveries },
+    { href: '/dashboard/orders', label: 'All Orders', count: stats.totalOrders },
+    { href: '/dashboard/drivers', label: 'Manage Drivers', count: stats.totalDrivers },
   ];
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Operations Dashboard</h1>
-          <p className="mt-2 text-gray-400">Real-time platform overview</p>
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Operations Command Center</h1>
+            <p className="mt-1 text-gray-400">Real-time platform monitoring</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="flex h-3 w-3 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+            <span className="text-sm text-green-400">Live</span>
+          </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {statCards.map((stat) => (
+        {/* Primary Stats */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {primaryStats.map((stat) => (
             <Card key={stat.label} className="border-gray-800 bg-[#16213e] p-6">
               <p className="text-sm text-gray-400">{stat.label}</p>
-              <p className={`mt-2 text-4xl font-bold ${stat.color}`}>{stat.value}</p>
-              <p className="mt-1 text-xs text-gray-500">{stat.change}</p>
+              <p className={`mt-2 text-3xl font-bold ${stat.color}`}>{stat.value}</p>
+              <p className={`mt-1 text-sm ${
+                stat.changeType === 'positive' ? 'text-green-400' :
+                stat.changeType === 'negative' ? 'text-red-400' : 'text-gray-500'
+              }`}>
+                {stat.change}
+              </p>
             </Card>
           ))}
         </div>
 
+        {/* Real-time updates and alerts */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <RealTimeStats />
+          </div>
+          <div>
+            <AlertsPanel pendingApprovals={stats.pendingApprovals} />
+          </div>
+        </div>
+
+        {/* Charts */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <RevenueChart />
+          <OrdersHeatmap />
+        </div>
+
+        {/* Secondary Stats */}
+        <Card className="border-gray-800 bg-[#16213e] p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Platform Overview</h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+            {secondaryStats.map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p className="text-2xl font-bold text-white">{stat.value}</p>
+                <p className="text-xs text-gray-400 mt-1">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
         {/* Quick Actions */}
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {quickActions.map((action) => (
             <Link key={action.href} href={action.href}>
-              <Card className="cursor-pointer border-gray-800 bg-[#16213e] p-6 transition-all hover:border-[#E85D26] hover:shadow-lg">
+              <Card className={`cursor-pointer border-gray-800 bg-[#16213e] p-6 transition-all hover:border-[#E85D26] hover:shadow-lg ${
+                action.urgent ? 'border-orange-500 animate-pulse' : ''
+              }`}>
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-white">{action.label}</span>
-                  <Badge className="bg-[#E85D26] text-white">{action.count}</Badge>
+                  <Badge className={action.urgent ? 'bg-orange-500 text-white' : 'bg-gray-700 text-gray-300'}>
+                    {action.count}
+                  </Badge>
                 </div>
               </Card>
             </Link>
