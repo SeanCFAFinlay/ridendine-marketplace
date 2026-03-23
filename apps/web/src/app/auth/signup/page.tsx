@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@ridendine/auth';
-import { Button, Input, Card, Spinner } from '@ridendine/ui';
+import { Button, Input } from '@ridendine/ui';
+import { AuthLayout } from '../../../components/auth/auth-layout';
+import { PasswordStrength } from '../../../components/auth/password-strength';
 
-function SignupForm() {
+export default function SignupPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const role = searchParams.get('role');
   const { signUp, loading, error } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -19,6 +19,7 @@ function SignupForm() {
     password: '',
     confirmPassword: '',
   });
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [validationError, setValidationError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,11 +27,18 @@ function SignupForm() {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+    setValidationError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError('');
+
+    // Validation
+    if (!agreedToTerms) {
+      setValidationError('You must agree to the Terms of Service');
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setValidationError('Passwords do not match');
@@ -45,67 +53,59 @@ function SignupForm() {
     const result = await signUp(formData.email, formData.password, {
       first_name: formData.firstName,
       last_name: formData.lastName,
-      role: role || 'customer',
+      role: 'customer',
     });
 
     if (result.success) {
-      router.push('/auth/verify-email');
+      router.push('/chefs');
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
-      <Card className="w-full max-w-md">
-        <div className="text-center">
-          <Link href="/" className="text-2xl font-bold text-brand-600">
-            Ridendine
-          </Link>
-          <h1 className="mt-4 text-xl font-semibold text-gray-900">
-            {role === 'chef' ? 'Become a Chef' : 'Create your account'}
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {role === 'chef'
-              ? 'Start sharing your culinary creations'
-              : 'Join Ridendine today'}
-          </p>
+    <AuthLayout
+      title="Create your account"
+      subtitle="Join Ridendine and discover amazing home chefs"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {(error || validationError) && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error || validationError}
+          </div>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="First Name"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleChange}
+            placeholder="John"
+            required
+            autoComplete="given-name"
+          />
+          <Input
+            label="Last Name"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleChange}
+            placeholder="Doe"
+            required
+            autoComplete="family-name"
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-          {(error || validationError) && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-              {error || validationError}
-            </div>
-          )}
+        <Input
+          label="Email"
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="you@example.com"
+          required
+          autoComplete="email"
+        />
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="First name"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              placeholder="John"
-              required
-            />
-            <Input
-              label="Last name"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              placeholder="Doe"
-              required
-            />
-          </div>
-
-          <Input
-            label="Email"
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="you@example.com"
-            required
-          />
-
+        <div>
           <Input
             label="Password"
             type="password"
@@ -115,45 +115,61 @@ function SignupForm() {
             placeholder="••••••••"
             hint="At least 8 characters"
             required
+            autoComplete="new-password"
           />
+          <PasswordStrength password={formData.password} />
+        </div>
 
-          <Input
-            label="Confirm password"
-            type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            placeholder="••••••••"
-            required
+        <Input
+          label="Confirm Password"
+          type="password"
+          name="confirmPassword"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          placeholder="••••••••"
+          required
+          autoComplete="new-password"
+        />
+
+        <div className="flex items-start gap-2">
+          <input
+            type="checkbox"
+            id="terms"
+            checked={agreedToTerms}
+            onChange={(e) => setAgreedToTerms(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#E85D26] focus:ring-[#E85D26] focus:ring-offset-0"
           />
+          <label htmlFor="terms" className="text-sm text-slate-600">
+            I agree to the{' '}
+            <Link href="/terms" className="font-medium text-[#E85D26] hover:text-[#D04D16]">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link href="/privacy" className="font-medium text-[#E85D26] hover:text-[#D04D16]">
+              Privacy Policy
+            </Link>
+          </label>
+        </div>
 
-          <Button type="submit" className="w-full" loading={loading}>
-            {role === 'chef' ? 'Apply to become a chef' : 'Create account'}
-          </Button>
-        </form>
+        <Button
+          type="submit"
+          className="w-full bg-[#E85D26] hover:bg-[#D04D16]"
+          size="lg"
+          loading={loading}
+        >
+          Create account
+        </Button>
+      </form>
 
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Already have an account?{' '}
-          <Link href="/auth/login" className="text-brand-600 hover:text-brand-700">
-            Sign in
-          </Link>
-        </p>
-
-        <p className="mt-4 text-center text-xs text-gray-400">
-          By signing up, you agree to our{' '}
-          <Link href="/terms" className="underline">Terms of Service</Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="underline">Privacy Policy</Link>
-        </p>
-      </Card>
-    </div>
-  );
-}
-
-export default function SignupPage() {
-  return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Spinner /></div>}>
-      <SignupForm />
-    </Suspense>
+      <p className="mt-6 text-center text-sm text-slate-600">
+        Already have an account?{' '}
+        <Link
+          href="/auth/login"
+          className="font-medium text-[#E85D26] hover:text-[#D04D16] transition-colors"
+        >
+          Sign in
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

@@ -1,18 +1,19 @@
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr';
 import type { Database } from '../generated/database.types';
 
+type CookieStore = {
+  get: (name: string) => { value: string } | undefined;
+  set: (name: string, value: string, options?: object) => void;
+  delete: (name: string) => void;
+};
+
 /**
  * Create a Supabase client for server-side usage (API routes, server components).
  * Requires cookies to be passed for session management.
  * This client respects RLS policies.
  */
-export function createServerClient(
-  cookieStore: {
-    get: (name: string) => { value: string } | undefined;
-    set: (name: string, value: string, options?: object) => void;
-    delete: (name: string) => void;
-  }
-) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function createServerClient(cookieStore: CookieStore): any {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 

@@ -14,7 +14,11 @@ const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Overview', icon: '📊' },
   { href: '/dashboard/orders', label: 'Orders', icon: '📦' },
   { href: '/dashboard/deliveries', label: 'Deliveries', icon: '🚗' },
-  { href: '/dashboard/chefs/approvals', label: 'Chef Approvals', icon: '👨‍🍳' },
+  { href: '/dashboard/chefs', label: 'Chefs', icon: '👨‍🍳' },
+  { href: '/dashboard/chefs/approvals', label: 'Chef Approvals', icon: '✅' },
+  { href: '/dashboard/drivers', label: 'Drivers', icon: '🚚' },
+  { href: '/dashboard/customers', label: 'Customers', icon: '👥' },
+  { href: '/dashboard/support', label: 'Support', icon: '💬' },
 ];
 
 interface DashboardLayoutProps {

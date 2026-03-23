@@ -12,8 +12,32 @@ interface DriverDashboardProps {
 
 export default function DriverDashboard({ driver, activeDeliveries }: DriverDashboardProps) {
   const [isOnline, setIsOnline] = useState(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
 
   const currentDelivery = activeDeliveries[0];
+
+  const toggleOnlineStatus = async () => {
+    setIsTogglingStatus(true);
+    try {
+      const newStatus = isOnline ? 'offline' : 'online';
+      const response = await fetch('/api/driver/presence', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+
+      setIsOnline(!isOnline);
+    } catch (error) {
+      console.error('Error toggling status:', error);
+      alert('Failed to update online status');
+    } finally {
+      setIsTogglingStatus(false);
+    }
+  };
 
   const todayStats = {
     deliveries: 0,
@@ -35,10 +59,11 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
           </div>
           <Button
             variant={isOnline ? 'secondary' : 'default'}
-            onClick={() => setIsOnline(!isOnline)}
+            onClick={toggleOnlineStatus}
+            disabled={isTogglingStatus}
             className="rounded-lg px-6"
           >
-            Go {isOnline ? 'Offline' : 'Online'}
+            {isTogglingStatus ? 'Updating...' : `Go ${isOnline ? 'Offline' : 'Online'}`}
           </Button>
         </div>
       </div>

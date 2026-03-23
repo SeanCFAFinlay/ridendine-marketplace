@@ -14,7 +14,14 @@ export const updateCustomerProfileSchema = z.object({
 
 export const createCustomerAddressSchema = z.object({
   label: z.string().min(1, 'Label is required').max(50),
-  ...addressSchema.shape,
+  addressLine1: z.string().min(1, 'Address is required'),
+  addressLine2: z.string().nullable().optional(),
+  city: z.string().min(1, 'City is required'),
+  state: z.string().min(1, 'State is required'),
+  postalCode: z.string().min(1, 'Postal code is required'),
+  country: z.string().default('US'),
+  lat: z.number().nullable().optional(),
+  lng: z.number().nullable().optional(),
   deliveryInstructions: z.string().max(500).nullable().optional(),
   isDefault: z.boolean().default(false),
 });

@@ -1,4 +1,8 @@
-import type { SupabaseClient as BaseSupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../generated/database.types';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-export type SupabaseClient = BaseSupabaseClient<Database>;
+// Flexible type that accepts both @supabase/supabase-js and @supabase/ssr clients
+export type SupabaseClient = {
+  from: (table: string) => any;
+  auth: any;
+  rpc: (fn: string, params?: any) => any;
+};

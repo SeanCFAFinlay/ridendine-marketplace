@@ -8,4 +8,8 @@ export * from './menu.repository';
 export * from './customer.repository';
 export * from './order.repository';
 export * from './driver.repository';
+export * from './driver-presence.repository';
 export * from './delivery.repository';
+export * from './support.repository';
+export * from './cart.repository';
+export * from './address.repository';

@@ -2,6 +2,7 @@ import type { SupabaseClient } from '../client/types';
 import type { Tables } from '../generated/database.types';
 
 export type Order = Tables<'orders'>;
+export type OrderItem = Tables<'order_items'>;
 
 export async function getOrderById(
   client: SupabaseClient,
@@ -138,6 +139,33 @@ export async function getActiveOrdersForChef(
     .eq('storefront_id', storefrontId)
     .in('status', ['pending', 'accepted', 'preparing', 'ready_for_pickup'])
     .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createOrderItem(
+  client: SupabaseClient,
+  item: Omit<OrderItem, 'id' | 'created_at' | 'updated_at'>
+): Promise<OrderItem> {
+  const { data, error } = await client
+    .from('order_items')
+    .insert(item)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createOrderItems(
+  client: SupabaseClient,
+  items: Omit<OrderItem, 'id' | 'created_at' | 'updated_at'>[]
+): Promise<OrderItem[]> {
+  const { data, error } = await client
+    .from('order_items')
+    .insert(items)
+    .select();
 
   if (error) throw error;
   return data;

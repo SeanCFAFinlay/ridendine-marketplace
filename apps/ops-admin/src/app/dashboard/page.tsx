@@ -10,7 +10,10 @@ async function getDashboardStats() {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
-  const [ordersResult, deliveriesResult, chefApprovalsResult] = await Promise.all([
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const [ordersResult, deliveriesResult, chefApprovalsResult, revenueResult] = await Promise.all([
     supabase.from('orders').select('*', { count: 'exact', head: true }),
     supabase.from('deliveries').select('*', { count: 'exact', head: true }).in('status', [
       'assigned',
@@ -20,12 +23,20 @@ async function getDashboardStats() {
       'en_route_to_dropoff',
     ]),
     getPendingChefApprovals(supabase as any),
+    supabase
+      .from('orders')
+      .select('total')
+      .gte('created_at', today.toISOString())
+      .eq('payment_status', 'completed'),
   ]);
+
+  const todayRevenue = (revenueResult.data as Array<{ total: number }> || []).reduce((sum, order) => sum + (order.total || 0), 0);
 
   return {
     totalOrders: ordersResult.count ?? 0,
     activeDeliveries: deliveriesResult.count ?? 0,
     pendingApprovals: chefApprovalsResult.length,
+    todayRevenue,
   };
 }
 
@@ -46,15 +57,15 @@ export default async function DashboardPage() {
       color: 'text-green-400',
     },
     {
-      label: 'Pending Chef Approvals',
+      label: 'Pending Approvals',
       value: stats.pendingApprovals.toString(),
       change: 'Awaiting review',
       color: 'text-[#E85D26]',
     },
     {
-      label: 'Platform Health',
-      value: '100%',
-      change: 'All systems operational',
+      label: "Today's Revenue",
+      value: `$${(stats.todayRevenue / 100).toFixed(2)}`,
+      change: 'Completed orders',
       color: 'text-emerald-400',
     },
   ];

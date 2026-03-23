@@ -47,13 +47,45 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
 
   const handleAction = async () => {
     const action = getNextAction();
-    if (action) {
+    if (!action) return;
+
+    try {
+      const response = await fetch(`/api/deliveries/${delivery.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: action.nextStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update delivery status');
+      }
+
       setStatus(action.nextStatus);
+      router.refresh();
+    } catch (error) {
+      console.error('Error updating delivery:', error);
+      alert('Failed to update delivery status');
     }
   };
 
-  const handleComplete = () => {
-    router.push('/');
+  const handleComplete = async () => {
+    try {
+      const response = await fetch(`/api/deliveries/${delivery.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'delivered' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to complete delivery');
+      }
+
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      console.error('Error completing delivery:', error);
+      alert('Failed to complete delivery');
+    }
   };
 
   const steps = getStatusSteps();

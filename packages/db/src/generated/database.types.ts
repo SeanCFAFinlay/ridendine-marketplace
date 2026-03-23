@@ -384,6 +384,429 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_addresses: {
+        Row: {
+          id: string
+          customer_id: string
+          label: string
+          street_address: string
+          city: string
+          state: string
+          postal_code: string
+          country: string
+          lat: number | null
+          lng: number | null
+          delivery_instructions: string | null
+          is_default: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id: string
+          label: string
+          street_address: string
+          city: string
+          state: string
+          postal_code: string
+          country?: string
+          lat?: number | null
+          lng?: number | null
+          delivery_instructions?: string | null
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string
+          label?: string
+          street_address?: string
+          city?: string
+          state?: string
+          postal_code?: string
+          country?: string
+          lat?: number | null
+          lng?: number | null
+          delivery_instructions?: string | null
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      carts: {
+        Row: {
+          id: string
+          customer_id: string
+          storefront_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id: string
+          storefront_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string
+          storefront_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cart_items: {
+        Row: {
+          id: string
+          cart_id: string
+          menu_item_id: string
+          quantity: number
+          unit_price: number
+          special_instructions: string | null
+          selected_options: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          cart_id: string
+          menu_item_id: string
+          quantity: number
+          unit_price: number
+          special_instructions?: string | null
+          selected_options?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          cart_id?: string
+          menu_item_id?: string
+          quantity?: number
+          unit_price?: number
+          special_instructions?: string | null
+          selected_options?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          id: string
+          order_id: string
+          menu_item_id: string
+          quantity: number
+          unit_price: number
+          subtotal: number
+          special_instructions: string | null
+          selected_options: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          menu_item_id: string
+          quantity: number
+          unit_price: number
+          subtotal?: number
+          special_instructions?: string | null
+          selected_options?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          menu_item_id?: string
+          quantity?: number
+          unit_price?: number
+          subtotal?: number
+          special_instructions?: string | null
+          selected_options?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      menu_categories: {
+        Row: {
+          id: string
+          storefront_id: string
+          name: string
+          description: string | null
+          sort_order: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          storefront_id: string
+          name: string
+          description?: string | null
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          storefront_id?: string
+          name?: string
+          description?: string | null
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          id: string
+          user_id: string
+          order_id: string | null
+          subject: string
+          description: string
+          status: string
+          priority: string
+          category: string | null
+          assigned_to: string | null
+          resolved_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          order_id?: string | null
+          subject: string
+          description: string
+          status?: string
+          priority?: string
+          category?: string | null
+          assigned_to?: string | null
+          resolved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          order_id?: string | null
+          subject?: string
+          description?: string
+          status?: string
+          priority?: string
+          category?: string | null
+          assigned_to?: string | null
+          resolved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_users: {
+        Row: {
+          id: string
+          user_id: string
+          role: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          role: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          role?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      driver_presence: {
+        Row: {
+          id: string
+          driver_id: string
+          status: string
+          last_location_lat: number | null
+          last_location_lng: number | null
+          last_updated_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          driver_id: string
+          status?: string
+          last_location_lat?: number | null
+          last_location_lng?: number | null
+          last_updated_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          driver_id?: string
+          status?: string
+          last_location_lat?: number | null
+          last_location_lng?: number | null
+          last_updated_at?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      chef_kitchens: {
+        Row: {
+          id: string
+          chef_id: string
+          name: string
+          street_address: string
+          city: string
+          state: string
+          postal_code: string
+          lat: number | null
+          lng: number | null
+          is_verified: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          chef_id: string
+          name: string
+          street_address: string
+          city: string
+          state: string
+          postal_code: string
+          lat?: number | null
+          lng?: number | null
+          is_verified?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          chef_id?: string
+          name?: string
+          street_address?: string
+          city?: string
+          state?: string
+          postal_code?: string
+          lat?: number | null
+          lng?: number | null
+          is_verified?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          id: string
+          order_id: string
+          customer_id: string
+          storefront_id: string
+          rating: number
+          comment: string | null
+          is_visible: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          customer_id: string
+          storefront_id: string
+          rating: number
+          comment?: string | null
+          is_visible?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          customer_id?: string
+          storefront_id?: string
+          rating?: number
+          comment?: string | null
+          is_visible?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      driver_earnings: {
+        Row: {
+          id: string
+          driver_id: string
+          delivery_id: string
+          amount: number
+          type: string
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          driver_id: string
+          delivery_id: string
+          amount: number
+          type?: string
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          driver_id?: string
+          delivery_id?: string
+          amount?: number
+          type?: string
+          status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      order_status_history: {
+        Row: {
+          id: string
+          order_id: string
+          status: string
+          changed_by: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          status: string
+          changed_by?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          status?: string
+          changed_by?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, Badge, Button } from '@ridendine/ui';
 
 interface MenuItem {
@@ -10,6 +11,7 @@ interface MenuItem {
   image_url: string | null;
   is_available: boolean;
   is_featured: boolean;
+  category_id: string;
 }
 
 interface MenuCategory {
@@ -23,12 +25,87 @@ interface MenuListProps {
   categories: MenuCategory[];
 }
 
-export function MenuList({ categories }: MenuListProps) {
+export function MenuList({ categories: initialCategories }: MenuListProps) {
+  const [categories, setCategories] = useState<MenuCategory[]>(initialCategories);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showItemModal, setShowItemModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCategories(initialCategories);
+  }, [initialCategories]);
+
+  const toggleAvailability = async (itemId: string, currentStatus: boolean) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/menu/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_available: !currentStatus }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update item');
+      }
+
+      const { menuItem: updatedItem } = await response.json();
+      setCategories(categories.map(cat => ({
+        ...cat,
+        items: cat.items.map(item => item.id === itemId ? updatedItem : item),
+      })));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteItem = async (itemId: string) => {
+    if (!confirm('Are you sure you want to delete this item?')) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/menu/${itemId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete item');
+      }
+
+      setCategories(categories.map(cat => ({
+        ...cat,
+        items: cat.items.filter(item => item.id !== itemId),
+      })));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
-      <div className="mt-6 flex gap-2">
-        <Button variant="outline">Add Category</Button>
-        <Button>Add Item</Button>
+      {error && (
+        <div className="mb-4 rounded-lg bg-red-50 p-4">
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+
+      <div className="mt-6 flex gap-2 flex-wrap">
+        <Button variant="outline" onClick={() => setShowCategoryModal(true)}>
+          Add Category
+        </Button>
+        <Button onClick={() => setShowItemModal(true)}>Add Item</Button>
       </div>
 
       <div className="mt-6 space-y-6">
@@ -49,8 +126,16 @@ export function MenuList({ categories }: MenuListProps) {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm">Edit</Button>
-                  <Button variant="ghost" size="sm">Reorder</Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedCategoryId(category.id);
+                      setShowItemModal(true);
+                    }}
+                  >
+                    Add Item
+                  </Button>
                 </div>
               </div>
 
@@ -89,18 +174,42 @@ export function MenuList({ categories }: MenuListProps) {
                             )}
                           </div>
                           {item.description && (
-                            <p className="mt-0.5 text-sm text-gray-500">{item.description}</p>
+                            <p className="mt-0.5 text-sm text-gray-500 line-clamp-2">{item.description}</p>
                           )}
                           <p className="mt-1 text-sm font-medium text-[#E85D26]">
                             ${item.price.toFixed(2)}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant={item.is_available ? 'success' : 'default'}>
-                          {item.is_available ? 'Available' : 'Unavailable'}
-                        </Badge>
-                        <Button variant="outline" size="sm">Edit</Button>
+                      <div className="flex items-center gap-3 flex-wrap justify-end">
+                        <button
+                          onClick={() => toggleAvailability(item.id, item.is_available)}
+                          disabled={loading}
+                          className="focus:outline-none"
+                        >
+                          <Badge variant={item.is_available ? 'success' : 'default'}>
+                            {item.is_available ? 'Available' : 'Unavailable'}
+                          </Badge>
+                        </button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingItem(item);
+                            setShowItemModal(true);
+                          }}
+                          disabled={loading}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteItem(item.id)}
+                          disabled={loading}
+                        >
+                          Delete
+                        </Button>
                       </div>
                     </div>
                   ))
@@ -110,6 +219,277 @@ export function MenuList({ categories }: MenuListProps) {
           ))
         )}
       </div>
+
+      {showCategoryModal && (
+        <CategoryModal
+          onClose={() => setShowCategoryModal(false)}
+          onSuccess={(newCategory) => {
+            setCategories([...categories, { ...newCategory, items: [] }]);
+            setShowCategoryModal(false);
+          }}
+        />
+      )}
+
+      {showItemModal && (
+        <ItemModal
+          categories={categories}
+          selectedCategoryId={selectedCategoryId}
+          editingItem={editingItem}
+          onClose={() => {
+            setShowItemModal(false);
+            setEditingItem(null);
+            setSelectedCategoryId(null);
+          }}
+          onSuccess={(item) => {
+            if (editingItem) {
+              setCategories(categories.map(cat => ({
+                ...cat,
+                items: cat.items.map(i => i.id === item.id ? item : i),
+              })));
+            } else {
+              setCategories(categories.map(cat =>
+                cat.id === item.category_id
+                  ? { ...cat, items: [...cat.items, item] }
+                  : cat
+              ));
+            }
+            setShowItemModal(false);
+            setEditingItem(null);
+            setSelectedCategoryId(null);
+          }}
+        />
+      )}
     </>
+  );
+}
+
+function CategoryModal({ onClose, onSuccess }: {
+  onClose: () => void;
+  onSuccess: (category: any) => void;
+}) {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/menu/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create category');
+      }
+
+      const { category } = await response.json();
+      onSuccess(category);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <div className="w-full max-w-md rounded-lg bg-white p-6">
+        <h2 className="text-lg font-semibold text-gray-900">Add Category</h2>
+        {error && (
+          <div className="mt-2 rounded-lg bg-red-50 p-3">
+            <p className="text-sm text-red-800">{error}</p>
+          </div>
+        )}
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Description (optional)</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              rows={3}
+            />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Creating...' : 'Create'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function ItemModal({ categories, selectedCategoryId, editingItem, onClose, onSuccess }: {
+  categories: MenuCategory[];
+  selectedCategoryId: string | null;
+  editingItem: MenuItem | null;
+  onClose: () => void;
+  onSuccess: (item: MenuItem) => void;
+}) {
+  const [name, setName] = useState(editingItem?.name || '');
+  const [description, setDescription] = useState(editingItem?.description || '');
+  const [price, setPrice] = useState(editingItem?.price.toString() || '');
+  const [categoryId, setCategoryId] = useState(selectedCategoryId || editingItem?.category_id || categories[0]?.id || '');
+  const [imageUrl, setImageUrl] = useState(editingItem?.image_url || '');
+  const [isAvailable, setIsAvailable] = useState(editingItem?.is_available ?? true);
+  const [isFeatured, setIsFeatured] = useState(editingItem?.is_featured ?? false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const url = editingItem ? `/api/menu/${editingItem.id}` : '/api/menu';
+      const method = editingItem ? 'PATCH' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          description: description || null,
+          price: parseFloat(price),
+          category_id: categoryId,
+          image_url: imageUrl || null,
+          is_available: isAvailable,
+          is_featured: isFeatured,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to save item');
+      }
+
+      const { menuItem } = await response.json();
+      onSuccess(menuItem);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 overflow-y-auto">
+      <div className="w-full max-w-md rounded-lg bg-white p-6 my-8">
+        <h2 className="text-lg font-semibold text-gray-900">
+          {editingItem ? 'Edit Item' : 'Add Menu Item'}
+        </h2>
+        {error && (
+          <div className="mt-2 rounded-lg bg-red-50 p-3">
+            <p className="text-sm text-red-800">{error}</p>
+          </div>
+        )}
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              rows={3}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Price</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Category</label>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              required
+            >
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Image URL (optional)</label>
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={isAvailable}
+                onChange={(e) => setIsAvailable(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm text-gray-700">Available</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={isFeatured}
+                onChange={(e) => setIsFeatured(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm text-gray-700">Featured</span>
+            </label>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Saving...' : editingItem ? 'Save' : 'Create'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
