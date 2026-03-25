@@ -2,8 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm turbo build --filter=@ridendine/web",
-  "outputDirectory": "apps/web/.next",
+  "buildCommand": "pnpm turbo build --filter=@ridendine/ops-admin",
+  "outputDirectory": "apps/ops-admin/.next",
   "env": {
     "BYPASS_AUTH": "true"
   }
