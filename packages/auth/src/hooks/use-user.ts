@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { createBrowserClient } from '@ridendine/db';
 
@@ -17,11 +17,22 @@ export function useUser(): AuthState {
     loading: true,
   });
 
+  const supabase = useMemo(() => createBrowserClient(), []);
+
   useEffect(() => {
-    const supabase = createBrowserClient();
+    if (!supabase) {
+      setState({
+        user: null,
+        session: null,
+        loading: false,
+      });
+      return;
+    }
+
+    const db = supabase;
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    db.auth.getSession().then(({ data: { session } }) => {
       setState({
         user: session?.user ?? null,
         session,
@@ -32,7 +43,7 @@ export function useUser(): AuthState {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = db.auth.onAuthStateChange((_event, session) => {
       setState({
         user: session?.user ?? null,
         session,
@@ -43,7 +54,7 @@ export function useUser(): AuthState {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
   return state;
 }

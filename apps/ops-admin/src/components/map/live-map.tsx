@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { createBrowserClient } from '@ridendine/db';
@@ -35,11 +35,15 @@ export default function LiveMap() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [filter, setFilter] = useState<'all' | 'online' | 'busy' | 'offline'>('all');
 
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   const fetchData = useCallback(async () => {
+    if (!supabase) return;
+
+    const db = supabase;
+
     // Fetch drivers with presence data
-    const { data: driverData } = await supabase
+    const { data: driverData } = await db
       .from('driver_profiles')
       .select(`
         id,
@@ -68,7 +72,7 @@ export default function LiveMap() {
     }
 
     // Fetch active deliveries
-    const { data: deliveryData } = await supabase
+    const { data: deliveryData } = await db
       .from('deliveries')
       .select(`
         id,
@@ -118,9 +122,12 @@ export default function LiveMap() {
 
   // Subscribe to real-time updates
   useEffect(() => {
+    if (!supabase) return;
+
+    const db = supabase;
     fetchData();
 
-    const channel = supabase
+    const channel = db
       .channel('live-map')
       .on(
         'postgres_changes',
@@ -137,7 +144,7 @@ export default function LiveMap() {
     const interval = setInterval(fetchData, 30000);
 
     return () => {
-      supabase.removeChannel(channel);
+      db.removeChannel(channel);
       clearInterval(interval);
     };
   }, [fetchData, supabase]);

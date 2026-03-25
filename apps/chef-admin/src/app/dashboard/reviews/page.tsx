@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, Badge, Button } from '@ridendine/ui';
 import { createBrowserClient } from '@ridendine/db';
 
@@ -28,16 +28,23 @@ export default function ReviewsPage() {
   const [response, setResponse] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    const db = supabase;
+
     async function fetchReviews() {
       setLoading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await db.auth.getUser();
       if (!user) return;
 
-      const { data: chefProfile } = await supabase
+      const { data: chefProfile } = await db
         .from('chef_profiles')
         .select('id')
         .eq('user_id', user.id)
@@ -45,7 +52,7 @@ export default function ReviewsPage() {
 
       if (!chefProfile) return;
 
-      const { data: storefront } = await supabase
+      const { data: storefront } = await db
         .from('chef_storefronts')
         .select('id, average_rating, total_reviews')
         .eq('chef_id', chefProfile.id)
@@ -53,7 +60,7 @@ export default function ReviewsPage() {
 
       if (!storefront) return;
 
-      const { data: reviewsData } = await supabase
+      const { data: reviewsData } = await db
         .from('reviews')
         .select(`
           id,
@@ -103,7 +110,7 @@ export default function ReviewsPage() {
   }, [supabase]);
 
   const handleRespond = async (reviewId: string) => {
-    if (!response.trim()) return;
+    if (!response.trim() || !supabase) return;
 
     setSubmitting(true);
 

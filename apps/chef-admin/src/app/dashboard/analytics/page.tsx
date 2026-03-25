@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@ridendine/ui';
 import { createBrowserClient } from '@ridendine/db';
 
@@ -22,17 +22,24 @@ export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month');
 
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    const db = supabase;
+
     async function fetchAnalytics() {
       setLoading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await db.auth.getUser();
       if (!user) return;
 
       // Get chef profile and storefront
-      const { data: chefProfile } = await supabase
+      const { data: chefProfile } = await db
         .from('chef_profiles')
         .select('id')
         .eq('user_id', user.id)
@@ -40,7 +47,7 @@ export default function AnalyticsPage() {
 
       if (!chefProfile) return;
 
-      const { data: storefront } = await supabase
+      const { data: storefront } = await db
         .from('chef_storefronts')
         .select('id')
         .eq('chef_id', chefProfile.id)
@@ -61,7 +68,7 @@ export default function AnalyticsPage() {
       }
 
       // Fetch all orders for this storefront
-      const { data: ordersData } = await supabase
+      const { data: ordersData } = await db
         .from('orders')
         .select('id, total, status, created_at')
         .eq('storefront_id', storefront.id)
@@ -71,7 +78,7 @@ export default function AnalyticsPage() {
       const orders = (ordersData || []) as OrderData[];
 
       // Fetch order items for top items
-      const { data: orderItems } = await supabase
+      const { data: orderItems } = await db
         .from('order_items')
         .select(`
           quantity,

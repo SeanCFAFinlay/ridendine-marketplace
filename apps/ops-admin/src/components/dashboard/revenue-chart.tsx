@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@ridendine/ui';
 import { createBrowserClient } from '@ridendine/db';
 
@@ -15,16 +15,23 @@ export function RevenueChart() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'7d' | '30d'>('7d');
 
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    const db = supabase;
+
     async function fetchData() {
       setLoading(true);
 
       const days = period === '7d' ? 7 : 30;
       const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-      const { data: orders } = await supabase
+      const { data: orders } = await db
         .from('orders')
         .select('total, created_at')
         .gte('created_at', startDate.toISOString())
@@ -86,7 +93,11 @@ export function RevenueChart() {
         </div>
       </div>
 
-      {loading ? (
+      {!supabase ? (
+        <div className="h-48 flex items-center justify-center">
+          <p className="text-gray-400 text-center">Revenue data unavailable</p>
+        </div>
+      ) : loading ? (
         <div className="h-48 flex items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#E85D26] border-t-transparent" />
         </div>

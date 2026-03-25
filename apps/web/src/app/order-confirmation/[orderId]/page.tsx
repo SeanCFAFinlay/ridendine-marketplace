@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -90,11 +90,19 @@ export default function OrderConfirmationPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   const fetchOrder = useCallback(async () => {
+    if (!supabase) {
+      setError('Unable to connect to server');
+      setLoading(false);
+      return;
+    }
+
+    const db = supabase;
+
     try {
-      const { data: orderData, error: orderError } = await supabase
+      const { data: orderData, error: orderError } = await db
         .from('orders')
         .select(`
           *,
@@ -108,7 +116,7 @@ export default function OrderConfirmationPage() {
       setOrder(orderData);
 
       // Fetch delivery info
-      const { data: deliveryData } = await (supabase as any)
+      const { data: deliveryData } = await (db as any)
         .from('deliveries')
         .select(`
           *,
@@ -122,7 +130,7 @@ export default function OrderConfirmationPage() {
 
         // If driver assigned, fetch their location
         if ((deliveryData as Delivery).driver_id) {
-          const { data: presenceData } = await (supabase as any)
+          const { data: presenceData } = await (db as any)
             .from('driver_presence')
             .select('current_lat, current_lng')
             .eq('driver_id', (deliveryData as Delivery).driver_id)
@@ -145,10 +153,13 @@ export default function OrderConfirmationPage() {
   }, [orderId, supabase]);
 
   useEffect(() => {
+    if (!supabase) return;
+
+    const db = supabase;
     fetchOrder();
 
     // Set up real-time subscription for order updates
-    const orderChannel = supabase
+    const orderChannel = db
       .channel(`order-${orderId}`)
       .on(
         'postgres_changes',
@@ -167,7 +178,7 @@ export default function OrderConfirmationPage() {
     // Poll for driver location every 15 seconds
     const locationInterval = setInterval(() => {
       if (delivery?.driver_id) {
-        (supabase as any)
+        (db as any)
           .from('driver_presence')
           .select('current_lat, current_lng')
           .eq('driver_id', delivery.driver_id)
@@ -181,7 +192,7 @@ export default function OrderConfirmationPage() {
     }, 15000);
 
     return () => {
-      supabase.removeChannel(orderChannel);
+      db.removeChannel(orderChannel);
       clearInterval(locationInterval);
     };
   }, [orderId, supabase, fetchOrder, delivery?.driver_id]);

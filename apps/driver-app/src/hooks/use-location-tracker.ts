@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { createBrowserClient } from '@ridendine/db';
 
 interface UseLocationTrackerProps {
@@ -18,11 +18,11 @@ export function useLocationTracker({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   const updateLocation = useCallback(
     async (lat: number, lng: number) => {
-      if (!driverId) return;
+      if (!driverId || !supabase) return;
 
       try {
         // Update driver_presence table

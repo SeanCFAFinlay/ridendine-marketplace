@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, Badge, Button } from '@ridendine/ui';
 import { createBrowserClient } from '@ridendine/db';
 
@@ -79,11 +79,14 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
   const [error, setError] = useState<string | null>(null);
   const [playSound, setPlaySound] = useState(false);
 
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   // Subscribe to real-time updates
   useEffect(() => {
-    const channel = supabase
+    if (!supabase) return;
+
+    const db = supabase;
+    const channel = db
       .channel('chef-orders')
       .on(
         'postgres_changes',
@@ -104,7 +107,7 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      db.removeChannel(channel);
     };
   }, [supabase]);
 

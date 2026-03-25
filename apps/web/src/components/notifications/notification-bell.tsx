@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createBrowserClient } from '@ridendine/db';
 
 interface Notification {
@@ -19,18 +19,25 @@ export function NotificationBell() {
   const [loading, setLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    const db = supabase;
+
     async function fetchNotifications() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await db.auth.getUser();
       if (!user) {
         setLoading(false);
         return;
       }
 
-      const { data } = await (supabase as any)
+      const { data } = await (db as any)
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
@@ -46,7 +53,7 @@ export function NotificationBell() {
     fetchNotifications();
 
     // Subscribe to new notifications
-    const channel = supabase
+    const channel = db
       .channel('user-notifications')
       .on(
         'postgres_changes',
@@ -67,7 +74,7 @@ export function NotificationBell() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      db.removeChannel(channel);
     };
   }, [supabase]);
 
@@ -84,6 +91,7 @@ export function NotificationBell() {
   }, []);
 
   const markAsRead = async (notificationId: string) => {
+    if (!supabase) return;
     await (supabase as any)
       .from('notifications')
       .update({ read: true })
@@ -95,6 +103,7 @@ export function NotificationBell() {
   };
 
   const markAllAsRead = async () => {
+    if (!supabase) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 

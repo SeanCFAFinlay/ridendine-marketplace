@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@ridendine/ui';
 import { createBrowserClient } from '@ridendine/db';
 
@@ -8,15 +8,22 @@ export function OrdersHeatmap() {
   const [hourlyData, setHourlyData] = useState<number[]>(Array(24).fill(0));
   const [loading, setLoading] = useState(true);
 
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    const db = supabase;
+
     async function fetchData() {
       setLoading(true);
 
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-      const { data: orders } = await supabase
+      const { data: orders } = await db
         .from('orders')
         .select('created_at')
         .gte('created_at', weekAgo.toISOString());

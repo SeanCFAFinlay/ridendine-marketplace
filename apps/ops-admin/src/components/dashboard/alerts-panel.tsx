@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, Badge } from '@ridendine/ui';
 import { createBrowserClient } from '@ridendine/db';
 import Link from 'next/link';
@@ -22,9 +22,28 @@ export function AlertsPanel({ pendingApprovals }: AlertsPanelProps) {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   useEffect(() => {
+    if (!supabase) {
+      // Still show pending approvals alert even without supabase connection
+      if (pendingApprovals > 0) {
+        setAlerts([{
+          id: 'pending-approvals',
+          type: 'urgent',
+          title: `${pendingApprovals} Chef Approval${pendingApprovals > 1 ? 's' : ''} Pending`,
+          message: 'Review and approve new chef applications',
+          link: '/dashboard/chefs/approvals',
+          time: 'Now',
+        }]);
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Capture supabase in closure for TypeScript
+    const db = supabase;
+
     async function fetchAlerts() {
       const generatedAlerts: Alert[] = [];
 
@@ -42,7 +61,7 @@ export function AlertsPanel({ pendingApprovals }: AlertsPanelProps) {
 
       // Check for stuck deliveries (longer than 60 min)
       const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      const { data: stuckDeliveries } = await supabase
+      const { data: stuckDeliveries } = await db
         .from('deliveries')
         .select('id', { count: 'exact', head: true })
         .in('status', ['assigned', 'accepted', 'en_route_to_pickup'])
@@ -60,7 +79,7 @@ export function AlertsPanel({ pendingApprovals }: AlertsPanelProps) {
       }
 
       // Check driver availability
-      const { count: onlineDrivers } = await supabase
+      const { count: onlineDrivers } = await db
         .from('driver_presence')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'online');
@@ -78,7 +97,7 @@ export function AlertsPanel({ pendingApprovals }: AlertsPanelProps) {
 
       // Check for unassigned orders
       const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-      const { count: unassignedOrders } = await supabase
+      const { count: unassignedOrders } = await db
         .from('orders')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'ready_for_pickup')
@@ -99,7 +118,7 @@ export function AlertsPanel({ pendingApprovals }: AlertsPanelProps) {
       // Check for low-rated deliveries today
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const { count: lowRatings } = await supabase
+      const { count: lowRatings } = await db
         .from('reviews')
         .select('*', { count: 'exact', head: true })
         .lte('rating', 2)

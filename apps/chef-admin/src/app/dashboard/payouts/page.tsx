@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, Badge, Button } from '@ridendine/ui';
 import { createBrowserClient } from '@ridendine/db';
 
@@ -28,17 +28,24 @@ export default function PayoutsPage() {
   const [pendingBalance, setPendingBalance] = useState(0);
   const [availableBalance, setAvailableBalance] = useState(0);
 
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    const db = supabase;
+
     async function fetchPayoutData() {
       setLoading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await db.auth.getUser();
       if (!user) return;
 
       // Get chef profile
-      const { data: chefProfile } = await supabase
+      const { data: chefProfile } = await db
         .from('chef_profiles')
         .select('id')
         .eq('user_id', user.id)
@@ -47,7 +54,7 @@ export default function PayoutsPage() {
       if (!chefProfile) return;
 
       // Get payout account
-      const { data: payoutAccount } = await supabase
+      const { data: payoutAccount } = await db
         .from('chef_payout_accounts')
         .select('*')
         .eq('chef_id', chefProfile.id)
@@ -56,7 +63,7 @@ export default function PayoutsPage() {
       setAccount(payoutAccount);
 
       // Get payouts
-      const { data: payoutsData } = await supabase
+      const { data: payoutsData } = await db
         .from('chef_payouts')
         .select('*')
         .eq('chef_id', chefProfile.id)
@@ -67,7 +74,7 @@ export default function PayoutsPage() {
       }
 
       // Get storefront for balance calculation
-      const { data: storefront } = await supabase
+      const { data: storefront } = await db
         .from('chef_storefronts')
         .select('id')
         .eq('chef_id', chefProfile.id)
@@ -75,7 +82,7 @@ export default function PayoutsPage() {
 
       if (storefront) {
         // Calculate pending and available balance from completed orders
-        const { data: orders } = await supabase
+        const { data: orders } = await db
           .from('orders')
           .select('total, status, created_at, chef_payout')
           .eq('storefront_id', storefront.id)

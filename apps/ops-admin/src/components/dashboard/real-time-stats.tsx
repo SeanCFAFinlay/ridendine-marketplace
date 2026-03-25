@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@ridendine/ui';
 import { createBrowserClient } from '@ridendine/db';
 
@@ -16,15 +16,23 @@ export function RealTimeStats() {
   const [recentOrders, setRecentOrders] = useState<RealtimeOrder[]>([]);
   const [ordersPerMinute, setOrdersPerMinute] = useState(0);
   const [currentRevenue, setCurrentRevenue] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
 
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   useEffect(() => {
+    if (!supabase) {
+      return;
+    }
+
+    const db = supabase;
+    setIsConnected(true);
+
     // Fetch initial data
     async function fetchInitial() {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
-      const { data } = await supabase
+      const { data } = await db
         .from('orders')
         .select('id, order_number, total, status, created_at')
         .gte('created_at', fiveMinutesAgo)
@@ -41,7 +49,7 @@ export function RealTimeStats() {
     fetchInitial();
 
     // Subscribe to new orders
-    const channel = supabase
+    const channel = db
       .channel('realtime-orders')
       .on(
         'postgres_changes',
@@ -66,7 +74,7 @@ export function RealTimeStats() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      db.removeChannel(channel);
     };
   }, [supabase]);
 
@@ -86,6 +94,24 @@ export function RealTimeStats() {
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
+
+  if (!isConnected && !supabase) {
+    return (
+      <Card className="border-gray-800 bg-[#16213e] p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-white">Real-Time Activity</h3>
+          <div className="flex items-center gap-2 text-sm">
+            <div className="h-2 w-2 rounded-full bg-yellow-500" />
+            <span className="text-yellow-400">Offline</span>
+          </div>
+        </div>
+        <div className="py-8 text-center">
+          <p className="text-gray-400">Real-time updates unavailable</p>
+          <p className="text-gray-500 text-sm mt-1">Data shown is from server fetch</p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-gray-800 bg-[#16213e] p-6">
