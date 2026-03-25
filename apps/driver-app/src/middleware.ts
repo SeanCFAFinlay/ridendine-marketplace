@@ -7,6 +7,14 @@ const PUBLIC_ROUTES = ['/auth/login', '/auth/signup'];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // DEVELOPMENT BYPASS: Allow access without auth when BYPASS_AUTH is set
+  // Remove this in production or set BYPASS_AUTH=false
+  const bypassAuth = process.env.BYPASS_AUTH === 'true' || process.env.NODE_ENV === 'development';
+
+  if (bypassAuth) {
+    return NextResponse.next();
+  }
+
   // Create response
   let response = NextResponse.next({
     request: {

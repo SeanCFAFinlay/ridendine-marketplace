@@ -2,5 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "cd ../.. && pnpm install",
-  "buildCommand": "cd ../.. && pnpm turbo build --filter=@ridendine/driver-app"
+  "buildCommand": "cd ../.. && pnpm turbo build --filter=@ridendine/driver-app",
+  "outputDirectory": ".next",
+  "env": {
+    "BYPASS_AUTH": "true"
+  }
 }

@@ -111,8 +111,18 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
   // Play notification sound for new orders
   useEffect(() => {
     if (playSound) {
-      const audio = new Audio('/sounds/new-order.mp3');
-      audio.play().catch(() => {}); // Ignore if audio fails
+      // Gracefully handle audio notification
+      // Sound file can be added to public/sounds/new-order.mp3 when available
+      try {
+        const audio = new Audio('/sounds/new-order.mp3');
+        audio.play().catch(() => {
+          // Silent fail if audio file not found or autoplay blocked
+          console.debug('Audio notification unavailable');
+        });
+      } catch (error) {
+        // Silent fail if Audio API not available
+        console.debug('Audio API unavailable');
+      }
       setPlaySound(false);
     }
   }, [playSound]);
