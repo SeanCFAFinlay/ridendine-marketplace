@@ -16,6 +16,7 @@
     "@ridendine/ui": "workspace:*",
     "@ridendine/utils": "workspace:*",
     "@ridendine/validation": "workspace:*",
+    "zod": "^3.23.0",
     "@stripe/react-stripe-js": "^5.6.1",
     "@stripe/stripe-js": "^8.11.0",
     "@supabase/ssr": "^0.5.0",
