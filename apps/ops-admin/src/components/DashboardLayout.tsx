@@ -12,6 +12,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Overview', icon: '📊' },
+  { href: '/dashboard/map', label: 'Live Map', icon: '🗺️' },
   { href: '/dashboard/orders', label: 'Orders', icon: '📦' },
   { href: '/dashboard/deliveries', label: 'Deliveries', icon: '🚗' },
   { href: '/dashboard/chefs', label: 'Chefs', icon: '👨‍🍳' },
@@ -19,6 +20,8 @@ const navItems: NavItem[] = [
   { href: '/dashboard/drivers', label: 'Drivers', icon: '🚚' },
   { href: '/dashboard/customers', label: 'Customers', icon: '👥' },
   { href: '/dashboard/support', label: 'Support', icon: '💬' },
+  { href: '/dashboard/analytics', label: 'Analytics', icon: '📈' },
+  { href: '/dashboard/settings', label: 'Settings', icon: '⚙️' },
 ];
 
 interface DashboardLayoutProps {

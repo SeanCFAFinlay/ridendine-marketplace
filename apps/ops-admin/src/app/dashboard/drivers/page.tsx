@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, Badge } from '@ridendine/ui';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
@@ -111,6 +112,12 @@ export default function DriversPage() {
                   </td>
                   <td className="py-4 pr-6">
                     <div className="flex gap-2">
+                      <Link
+                        href={`/dashboard/drivers/${driver.id}`}
+                        className="rounded bg-[#E85D26] px-3 py-1 text-xs text-white transition-colors hover:bg-[#d54d1a]"
+                      >
+                        View
+                      </Link>
                       {driver.status === 'pending' && (
                         <>
                           <button

@@ -14,7 +14,7 @@ export async function getServerUser(): Promise<User | null> {
       const cookie = cookieStore.get(name);
       return cookie ? { value: cookie.value } : undefined;
     },
-    set: (name: string, value: string, options: object) => {
+    set: (name: string, value: string, options?: object) => {
       try {
         cookieStore.set(name, value, options);
       } catch {

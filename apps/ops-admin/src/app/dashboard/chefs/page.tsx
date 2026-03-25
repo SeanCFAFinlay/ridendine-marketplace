@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, Badge } from '@ridendine/ui';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
@@ -111,7 +112,13 @@ export default function ChefsPage() {
                   <td className="py-4 text-gray-400">
                     {new Date(chef.created_at).toLocaleDateString()}
                   </td>
-                  <td className="py-4 pr-6">
+                  <td className="py-4 pr-6 flex gap-2">
+                    <Link
+                      href={`/dashboard/chefs/${chef.id}`}
+                      className="rounded bg-[#E85D26] px-3 py-1 text-xs text-white transition-colors hover:bg-[#d54d1a]"
+                    >
+                      View
+                    </Link>
                     <button
                       onClick={() => handleSuspend(chef.id, chef.status)}
                       className="rounded bg-gray-700 px-3 py-1 text-xs text-white transition-colors hover:bg-gray-600"

@@ -1,5 +1,5 @@
 {
-  "extends": "@ridendine/config/typescript",
+  "extends": "../config/tsconfig.json",
   "compilerOptions": {
     "jsx": "react-jsx",
     "outDir": "./dist",

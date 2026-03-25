@@ -1,6 +1,7 @@
 'use client';
 
 import { Card } from '@ridendine/ui';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
@@ -59,7 +60,8 @@ export default function CustomersPage() {
                 <th className="pb-4 pl-6 font-medium">Name</th>
                 <th className="pb-4 font-medium">Email</th>
                 <th className="pb-4 font-medium">Phone</th>
-                <th className="pb-4 pr-6 font-medium">Joined</th>
+                <th className="pb-4 font-medium">Joined</th>
+                <th className="pb-4 pr-6 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="text-sm">
@@ -70,8 +72,16 @@ export default function CustomersPage() {
                   </td>
                   <td className="py-4 text-gray-300">{customer.email}</td>
                   <td className="py-4 text-gray-300">{customer.phone || 'N/A'}</td>
-                  <td className="py-4 pr-6 text-gray-400">
+                  <td className="py-4 text-gray-400">
                     {new Date(customer.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="py-4 pr-6">
+                    <Link
+                      href={`/dashboard/customers/${customer.id}`}
+                      className="text-[#E85D26] hover:underline"
+                    >
+                      View
+                    </Link>
                   </td>
                 </tr>
               ))}

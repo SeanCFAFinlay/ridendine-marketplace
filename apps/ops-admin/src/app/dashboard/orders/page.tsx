@@ -1,4 +1,5 @@
 import { Card, Badge } from '@ridendine/ui';
+import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -65,7 +66,8 @@ export default async function OrdersPage() {
                   <th className="pb-4 font-medium">Chef Storefront</th>
                   <th className="pb-4 font-medium">Status</th>
                   <th className="pb-4 font-medium">Total</th>
-                  <th className="pb-4 pr-6 font-medium">Created</th>
+                  <th className="pb-4 font-medium">Created</th>
+                  <th className="pb-4 pr-6 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
@@ -85,13 +87,21 @@ export default async function OrdersPage() {
                     <td className="py-4 font-medium text-white">
                       ${(order.total / 100).toFixed(2)}
                     </td>
-                    <td className="py-4 pr-6 text-gray-400">
+                    <td className="py-4 text-gray-400">
                       {new Date(order.created_at).toLocaleString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         hour: 'numeric',
                         minute: '2-digit',
                       })}
+                    </td>
+                    <td className="py-4 pr-6">
+                      <Link
+                        href={`/dashboard/orders/${order.id}`}
+                        className="text-[#E85D26] hover:underline"
+                      >
+                        View
+                      </Link>
                     </td>
                   </tr>
                 ))}

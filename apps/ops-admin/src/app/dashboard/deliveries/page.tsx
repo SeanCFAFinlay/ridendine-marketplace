@@ -1,4 +1,5 @@
 import { Card, Badge } from '@ridendine/ui';
+import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -70,9 +71,10 @@ export default async function DeliveriesPage() {
             </div>
             <div className="space-y-3">
               {deliveries.map((delivery) => (
-                <div
+                <Link
                   key={delivery.id}
-                  className="rounded-lg border border-gray-800 bg-[#1a1a2e] p-4"
+                  href={`/dashboard/deliveries/${delivery.id}`}
+                  className="block rounded-lg border border-gray-800 bg-[#1a1a2e] p-4 transition-colors hover:border-[#E85D26]"
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-mono font-medium text-white">
@@ -85,10 +87,13 @@ export default async function DeliveriesPage() {
                   <p className="mt-1 text-sm text-gray-500">
                     {delivery.pickup_address} → {delivery.dropoff_address}
                   </p>
-                  <p className="mt-2 font-medium text-white">
-                    ${((delivery.orders?.total ?? 0) / 100).toFixed(2)}
-                  </p>
-                </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="font-medium text-white">
+                      ${((delivery.orders?.total ?? 0) / 100).toFixed(2)}
+                    </span>
+                    <span className="text-sm text-[#E85D26]">View Details →</span>
+                  </div>
+                </Link>
               ))}
               {deliveries.length === 0 && (
                 <div className="py-8 text-center text-gray-400">No active deliveries</div>
