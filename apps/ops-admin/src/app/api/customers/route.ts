@@ -39,8 +39,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate a placeholder user_id for ops-admin created customers
-    const placeholderUserId = `ops-created-${Date.now()}`;
+    // Generate a UUID for ops-admin created customers
+    const placeholderUserId = crypto.randomUUID();
 
     const { data: customer, error: customerError } = await supabase
       .from('customers')

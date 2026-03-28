@@ -48,8 +48,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate a placeholder user_id for ops-admin created drivers
-    const placeholderUserId = `ops-created-${Date.now()}`;
+    // Generate a UUID for ops-admin created drivers
+    const placeholderUserId = crypto.randomUUID();
 
     const { data: driver, error: driverError } = await supabase
       .from('drivers')

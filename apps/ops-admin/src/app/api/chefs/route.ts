@@ -61,8 +61,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate a placeholder user_id for ops-admin created chefs
-    const placeholderUserId = `ops-created-${Date.now()}`;
+    // Generate a UUID for ops-admin created chefs
+    const placeholderUserId = crypto.randomUUID();
 
     // Create a new chef profile (storefront is created when chef sets up kitchen)
     const { data: chef, error: chefError } = await supabase
