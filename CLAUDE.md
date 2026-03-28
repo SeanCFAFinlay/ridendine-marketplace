@@ -63,3 +63,11 @@ pnpm db:generate      # Generate Supabase types
 - Pages: `src/app/[route]/page.tsx` (App Router)
 - API: `src/app/api/[route]/route.ts`
 - Repositories: `packages/db/src/repositories/[domain].repository.ts`
+
+## Documentation
+
+For detailed platform information, see:
+- `docs/PLATFORM_OVERVIEW.md` - All 56 pages across 4 apps
+- `docs/ORDER_FLOW.md` - Order lifecycle and status workflow
+- `docs/DATABASE_SCHEMA.md` - All 36 Supabase tables
+- `docs/APP_CONNECTIONS.md` - How apps connect and communicate

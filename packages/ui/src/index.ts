@@ -14,3 +14,4 @@ export * from './components/spinner';
 export * from './components/avatar';
 export * from './components/empty-state';
 export * from './components/error-state';
+export * from './components/modal';
