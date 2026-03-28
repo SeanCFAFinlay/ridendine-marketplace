@@ -5,6 +5,18 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
+    // Debug: check if env vars are available
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Missing Supabase env vars:', {
+        url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        key: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      });
+      return NextResponse.json(
+        { error: 'Server configuration error - missing Supabase credentials' },
+        { status: 500 }
+      );
+    }
+
     const supabase = createAdminClient();
 
     const { searchParams } = new URL(request.url);
@@ -27,8 +39,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ data });
   } catch (error) {
+    console.error('GET /api/chefs error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }
