@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient, getAllSupportTickets, createSupportTicket } from '@ridendine/db';
+import { createAdminClient, getAllSupportTickets, createSupportTicket, type SupabaseClient } from '@ridendine/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
+    const supabase = createAdminClient() as unknown as SupabaseClient;
 
     const tickets = await getAllSupportTickets(supabase);
     return NextResponse.json({ data: tickets });
@@ -22,8 +20,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
+    const supabase = createAdminClient() as unknown as SupabaseClient;
 
     const ticket = await createSupportTicket(supabase, body);
     return NextResponse.json({ data: ticket }, { status: 201 });

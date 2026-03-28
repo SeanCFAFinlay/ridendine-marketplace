@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient, assignDriver } from '@ridendine/db';
+import { createAdminClient, assignDriver, type SupabaseClient } from '@ridendine/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,8 +10,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
+    const supabase = createAdminClient() as unknown as SupabaseClient;
 
     if (body.driverId) {
       const delivery = await assignDriver(supabase, id, body.driverId);

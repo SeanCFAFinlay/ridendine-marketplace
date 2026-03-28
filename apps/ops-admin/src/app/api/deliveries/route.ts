@@ -1,20 +1,18 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@ridendine/db';
+import { createAdminClient } from '@ridendine/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
+    const supabase = createAdminClient();
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
 
     let query = supabase
       .from('deliveries')
-      .select('*, orders(order_number, customer_id), drivers(first_name, last_name)')
+      .select('*, orders(order_number, total), drivers(first_name, last_name)')
       .order('created_at', { ascending: false });
 
     if (status) {

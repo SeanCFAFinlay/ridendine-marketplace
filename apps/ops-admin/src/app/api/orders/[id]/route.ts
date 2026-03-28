@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient, getOrderById, updateOrderStatus } from '@ridendine/db';
+import { createAdminClient, getOrderById, updateOrderStatus, type SupabaseClient } from '@ridendine/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,8 +9,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
+    const supabase = createAdminClient() as unknown as SupabaseClient;
 
     const order = await getOrderById(supabase, id);
 
@@ -35,8 +33,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
+    const supabase = createAdminClient() as unknown as SupabaseClient;
 
     if (body.status) {
       const order = await updateOrderStatus(supabase, id, body.status);
