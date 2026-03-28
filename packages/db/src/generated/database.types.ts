@@ -18,7 +18,7 @@ export type Database = {
       chef_profiles: {
         Row: {
           id: string
-          user_id: string
+          user_id: string | null
           display_name: string
           bio: string | null
           profile_image_url: string | null
@@ -29,7 +29,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          user_id: string
+          user_id?: string | null
           display_name: string
           bio?: string | null
           profile_image_url?: string | null
@@ -40,7 +40,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          user_id?: string
+          user_id?: string | null
           display_name?: string
           bio?: string | null
           profile_image_url?: string | null
@@ -234,7 +234,7 @@ export type Database = {
       customers: {
         Row: {
           id: string
-          user_id: string
+          user_id: string | null
           first_name: string
           last_name: string
           phone: string | null
@@ -245,7 +245,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          user_id: string
+          user_id?: string | null
           first_name: string
           last_name: string
           phone?: string | null
@@ -256,7 +256,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          user_id?: string
+          user_id?: string | null
           first_name?: string
           last_name?: string
           phone?: string | null
@@ -270,7 +270,7 @@ export type Database = {
       drivers: {
         Row: {
           id: string
-          user_id: string
+          user_id: string | null
           first_name: string
           last_name: string
           phone: string
@@ -282,7 +282,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          user_id: string
+          user_id?: string | null
           first_name: string
           last_name: string
           phone: string
@@ -294,7 +294,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          user_id?: string
+          user_id?: string | null
           first_name?: string
           last_name?: string
           phone?: string
