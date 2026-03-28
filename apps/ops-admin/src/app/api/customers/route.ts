@@ -39,13 +39,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate a UUID for ops-admin created customers
-    const placeholderUserId = crypto.randomUUID();
-
+    // Create customer (user_id is null for admin-created customers)
     const { data: customer, error: customerError } = await supabase
       .from('customers')
       .insert({
-        user_id: placeholderUserId,
+        user_id: null,
         first_name,
         last_name,
         email,
