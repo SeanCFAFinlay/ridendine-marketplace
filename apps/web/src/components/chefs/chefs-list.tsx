@@ -4,7 +4,7 @@ import { Card, Avatar, Badge } from '@ridendine/ui';
 import { createServerClient, getActiveStorefronts } from '@ridendine/db';
 
 export async function ChefsList() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
   let chefs: Awaited<ReturnType<typeof getActiveStorefronts>> = [];

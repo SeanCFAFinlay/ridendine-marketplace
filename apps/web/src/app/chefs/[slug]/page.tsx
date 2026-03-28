@@ -11,7 +11,7 @@ interface ChefPageProps {
 
 export default async function ChefPage({ params }: ChefPageProps) {
   const { slug } = await params;
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
   const storefront = await getStorefrontBySlug(supabase as any, slug);

@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { createServerClient } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { notFound } from 'next/navigation';
+import { OrderStatusActions } from './status-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,8 +73,9 @@ const statusColors: Record<string, string> = {
   refunded: 'bg-gray-500',
 };
 
-export default async function OrderDetailPage({ params }: { params: { id: string } }) {
-  const data = await getOrderDetails(params.id);
+export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: orderId } = await params;
+  const data = await getOrderDetails(orderId);
 
   if (!data) {
     notFound();
@@ -247,20 +249,10 @@ export default async function OrderDetailPage({ params }: { params: { id: string
         )}
 
         {/* Actions */}
-        <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Actions</h2>
-          <div className="flex gap-3">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              Update Status
-            </button>
-            <button className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
-              Issue Refund
-            </button>
-            <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-              Cancel Order
-            </button>
-          </div>
-        </Card>
+        <OrderStatusActions
+          orderId={order.id}
+          currentStatus={order.status}
+        />
       </div>
     </DashboardLayout>
   );

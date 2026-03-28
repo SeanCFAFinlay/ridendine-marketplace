@@ -51,19 +51,20 @@ export async function getUserRoles(
   }
 
   // Check platform user (ops/admin)
-  // Note: This table may not exist in the generated types yet
-  // Uncomment when platform_users table is created
-  /*
-  const { data: platformUser } = await client
-    .from('platform_users')
-    .select('id, role')
-    .eq('user_id', userId)
-    .single();
+  try {
+    const { data: platformUser } = await client
+      .from('platform_users')
+      .select('id, role, is_active')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .single();
 
-  if (platformUser) {
-    roles.push(platformUser.role as UserRole);
+    if (platformUser && platformUser.role) {
+      roles.push(platformUser.role as UserRole);
+    }
+  } catch {
+    // Platform user table query failed - user is not an admin
   }
-  */
 
   return {
     isCustomer: roles.includes('customer'),

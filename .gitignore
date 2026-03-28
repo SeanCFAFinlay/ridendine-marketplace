@@ -8,10 +8,12 @@ dist/
 build/
 out/
 
-# Environment
+# Environment - NEVER commit secrets
 .env
 .env.local
 .env.*.local
+.env.vercel
+.env.production
 
 # IDE
 .vscode/

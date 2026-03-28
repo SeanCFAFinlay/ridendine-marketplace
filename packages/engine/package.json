@@ -1,0 +1,26 @@
+{
+  "name": "@ridendine/engine",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./orders": "./src/services/orders.service.ts",
+    "./chefs": "./src/services/chefs.service.ts",
+    "./customers": "./src/services/customers.service.ts",
+    "./permissions": "./src/services/permissions.service.ts",
+    "./storage": "./src/services/storage.service.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ridendine/db": "workspace:*",
+    "@ridendine/types": "workspace:*",
+    "@ridendine/validation": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

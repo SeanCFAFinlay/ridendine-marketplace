@@ -173,6 +173,9 @@ importers:
       '@ridendine/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@ridendine/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
       '@ridendine/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -258,6 +261,9 @@ importers:
       '@ridendine/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@ridendine/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
       '@ridendine/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -366,6 +372,22 @@ importers:
       '@ridendine/types':
         specifier: workspace:*
         version: link:../types
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+
+  packages/engine:
+    dependencies:
+      '@ridendine/db':
+        specifier: workspace:*
+        version: link:../db
+      '@ridendine/types':
+        specifier: workspace:*
+        version: link:../types
+      '@ridendine/validation':
+        specifier: workspace:*
+        version: link:../validation
+    devDependencies:
       typescript:
         specifier: ^5.6.0
         version: 5.9.3

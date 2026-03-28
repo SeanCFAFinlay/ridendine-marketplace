@@ -15,6 +15,7 @@
   "dependencies": {
     "@ridendine/auth": "workspace:*",
     "@ridendine/db": "workspace:*",
+    "@ridendine/engine": "workspace:*",
     "@ridendine/types": "workspace:*",
     "@ridendine/ui": "workspace:*",
     "@ridendine/utils": "workspace:*",
