@@ -19,6 +19,7 @@ const navItems: NavItem[] = [
   { href: '/dashboard/chefs/approvals', label: 'Chef Approvals', icon: '✅' },
   { href: '/dashboard/drivers', label: 'Drivers', icon: '🚚' },
   { href: '/dashboard/customers', label: 'Customers', icon: '👥' },
+  { href: '/dashboard/finance', label: 'Finance', icon: '💰' },
   { href: '/dashboard/support', label: 'Support', icon: '💬' },
   { href: '/dashboard/analytics', label: 'Analytics', icon: '📈' },
   { href: '/dashboard/settings', label: 'Settings', icon: '⚙️' },

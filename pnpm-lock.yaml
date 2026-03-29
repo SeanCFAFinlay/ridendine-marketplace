@@ -39,6 +39,9 @@ importers:
       '@ridendine/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@ridendine/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
       '@ridendine/types':
         specifier: workspace:*
         version: link:../../packages/types

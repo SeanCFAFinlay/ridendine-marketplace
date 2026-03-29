@@ -17,5 +17,8 @@ export * from './services/permissions.service';
 // Storage services
 export * from './services/storage.service';
 
+// Dispatch services
+export * from './services/dispatch.service';
+
 // Constants
 export * from './constants';

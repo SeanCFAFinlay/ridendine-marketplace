@@ -5,7 +5,7 @@ import { Card, Button } from '@ridendine/ui';
 
 interface ChefProfile {
   id: string;
-  user_id: string;
+  user_id: string | null;
   display_name: string;
   bio: string | null;
   profile_image_url: string | null;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient, getOrderById, updateOrderStatus, getStorefrontByChefId } from '@ridendine/db';
+import { dispatchOrder } from '@ridendine/engine';
 
 export async function GET(
   request: NextRequest,
@@ -104,6 +105,16 @@ export async function PATCH(
     }
 
     const updatedOrder = await updateOrderStatus(supabase as any, params.id, status);
+
+    // Dispatch to driver when order is ready for pickup
+    if (status === 'ready_for_pickup') {
+      const dispatchResult = await dispatchOrder(supabase as any, params.id);
+      if (dispatchResult.success) {
+        console.log(`Order ${params.id} dispatched to driver ${dispatchResult.driverId}`);
+      } else {
+        console.log(`Dispatch pending for order ${params.id}: ${dispatchResult.error}`);
+      }
+    }
 
     return NextResponse.json({ order: updatedOrder });
   } catch (error) {
