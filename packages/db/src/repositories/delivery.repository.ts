@@ -156,3 +156,58 @@ export async function getDeliveryHistory(
   if (error) throw error;
   return data;
 }
+
+// ==========================================
+// DELIVERY TRACKING EVENTS
+// ==========================================
+
+export interface DeliveryTrackingEvent {
+  id: string;
+  delivery_id: string;
+  driver_id: string;
+  lat: number;
+  lng: number;
+  accuracy: number | null;
+  recorded_at: string;
+}
+
+export async function createDeliveryTrackingEvent(
+  client: SupabaseClient,
+  event: {
+    delivery_id: string;
+    driver_id: string;
+    lat: number;
+    lng: number;
+    accuracy?: number | null;
+  }
+): Promise<DeliveryTrackingEvent> {
+  const { data, error } = await client
+    .from('delivery_tracking_events')
+    .insert({
+      delivery_id: event.delivery_id,
+      driver_id: event.driver_id,
+      lat: event.lat,
+      lng: event.lng,
+      accuracy: event.accuracy ?? null,
+      recorded_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as DeliveryTrackingEvent;
+}
+
+export async function getDeliveryTrackingEvents(
+  client: SupabaseClient,
+  deliveryId: string
+): Promise<DeliveryTrackingEvent[]> {
+  const { data, error } = await client
+    .from('delivery_tracking_events')
+    .select('*')
+    .eq('delivery_id', deliveryId)
+    .order('recorded_at', { ascending: true });
+
+  if (error) throw error;
+  return data as DeliveryTrackingEvent[];
+}

@@ -32,6 +32,15 @@ export const updateDriverLocationSchema = coordinatesSchema.extend({
   speed: z.number().min(0).nullable().optional(),
 });
 
+export const locationUpdateSchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  accuracy: z.number().min(0).nullable().optional(),
+  heading: z.number().min(0).max(360).nullable().optional(),
+  speed: z.number().min(0).nullable().optional(),
+  deliveryId: z.string().uuid().nullable().optional(),
+});
+
 export const goOnlineSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
@@ -69,6 +78,7 @@ export type UpdateDriverProfileInput = z.infer<typeof updateDriverProfileSchema>
 export type CreateDriverVehicleInput = z.infer<typeof createDriverVehicleSchema>;
 export type UpdateDriverVehicleInput = z.infer<typeof updateDriverVehicleSchema>;
 export type UpdateDriverLocationInput = z.infer<typeof updateDriverLocationSchema>;
+export type LocationUpdateInput = z.infer<typeof locationUpdateSchema>;
 export type GoOnlineInput = z.infer<typeof goOnlineSchema>;
 export type RespondToDeliveryOfferInput = z.infer<typeof respondToDeliveryOfferSchema>;
 export type ConfirmPickupInput = z.infer<typeof confirmPickupSchema>;

@@ -13,3 +13,4 @@ export * from './delivery.repository';
 export * from './support.repository';
 export * from './cart.repository';
 export * from './address.repository';
+export * from './promo.repository';

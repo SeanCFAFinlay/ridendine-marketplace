@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import Stripe from 'stripe';
-import { createServerClient, getCartWithItems, createOrder, createOrderItems, clearCart, createDelivery } from '@ridendine/db';
+import { createServerClient, getCartWithItems, createOrder, createOrderItems, clearCart, createDelivery, validatePromoCode } from '@ridendine/db';
 import { getCurrentCustomer, handleApiError } from '@/lib/auth-helpers';
 import { generateOrderNumber } from '@/lib/order-helpers';
 
@@ -49,11 +49,16 @@ export async function POST(request: Request): Promise<NextResponse> {
       0
     );
 
-    // Apply promo code discount (placeholder - would check database)
+    // Apply promo code discount
     let discount = 0;
+    let promoCodeId: string | null = null;
     if (promoCode) {
-      // TODO: Validate promo code from database
-      // For now, just a placeholder
+      const validation = await validatePromoCode(supabase as any, promoCode, subtotal);
+      if (!validation.valid) {
+        return NextResponse.json({ error: validation.error }, { status: 400 });
+      }
+      discount = validation.discount ?? 0;
+      promoCodeId = validation.promoId ?? null;
     }
 
     // Calculate fees
@@ -151,6 +156,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         order_number: orderNumber,
         customer_id: customer.id,
         storefront_id: storefrontId,
+        ...(promoCodeId && { promo_code_id: promoCodeId }),
       },
     });
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
-import { createAdminClient } from '@ridendine/db';
+import { createAdminClient, incrementPromoCodeUsage } from '@ridendine/db';
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -46,6 +46,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         const orderId = paymentIntent.metadata.order_id;
+        const promoCodeId = paymentIntent.metadata.promo_code_id;
 
         if (orderId) {
           // Update order payment status
@@ -53,6 +54,11 @@ export async function POST(request: Request): Promise<NextResponse> {
             .from('orders')
             .update({ payment_status: 'completed' })
             .eq('id', orderId);
+
+          // Increment promo code usage if one was applied
+          if (promoCodeId) {
+            await incrementPromoCodeUsage(supabase as any, promoCodeId);
+          }
 
           // Clear the cart
           const { data: order } = await supabase
@@ -114,6 +120,47 @@ export async function POST(request: Request): Promise<NextResponse> {
             .from('orders')
             .update({ payment_status: 'failed', status: 'cancelled' })
             .eq('id', orderId);
+        }
+        break;
+      }
+
+      case 'charge.refunded': {
+        const charge = event.data.object as Stripe.Charge;
+        const paymentIntentId = charge.payment_intent as string;
+
+        if (paymentIntentId) {
+          // Find order by payment_intent_id
+          const { data: order } = await supabase
+            .from('orders')
+            .select('id, customer_id, total')
+            .eq('payment_intent_id', paymentIntentId)
+            .single();
+
+          if (order) {
+            // Determine if full or partial refund
+            const refundedAmount = charge.amount_refunded;
+            const totalAmount = charge.amount;
+            const paymentStatus = refundedAmount >= totalAmount ? 'refunded' : 'partial_refunded';
+
+            // Update order payment status
+            await supabase
+              .from('orders')
+              .update({
+                payment_status: paymentStatus,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', order.id);
+
+            // Create notification for customer
+            await (supabase as any).from('notifications').insert({
+              user_id: order.customer_id,
+              type: 'refund',
+              title: paymentStatus === 'refunded' ? 'Refund Processed' : 'Partial Refund Processed',
+              body: `A refund of $${(refundedAmount / 100).toFixed(2)} has been issued to your payment method.`,
+              data: { order_id: order.id, refund_amount: refundedAmount },
+              read: false,
+            });
+          }
         }
         break;
       }
