@@ -13,7 +13,7 @@ interface Order {
   order_number: string;
   status: string;
   created_at: string;
-  total_amount: number;
+  total: number;
   storefront_id: string;
   chef_storefronts?: {
     name: string;
@@ -57,7 +57,7 @@ export default function OrdersPage() {
             order_number,
             status,
             created_at,
-            total_amount,
+            total,
             storefront_id,
             chef_storefronts (
               name,
@@ -162,7 +162,7 @@ export default function OrdersPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="font-semibold text-gray-900">
-                      {formatCurrencyFromDollars(order.total_amount / 100)}
+                      ${Number(order.total).toFixed(2)}
                     </span>
                     <Link href={`/account/orders/${order.id}`}>
                       <Button variant="outline" size="sm">

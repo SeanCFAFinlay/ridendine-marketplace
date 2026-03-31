@@ -2,8 +2,8 @@ import { Header } from '@/components/layout/header';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Terms of Service | Ridendine',
-  description: 'Ridendine terms of service - the rules and guidelines for using our platform.',
+  title: 'Terms of Service | RideNDine',
+  description: 'RideNDine terms of service - the rules and guidelines for using our platform.',
 };
 
 export default function TermsPage() {

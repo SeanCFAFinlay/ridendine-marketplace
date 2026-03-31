@@ -4,8 +4,12 @@ import { CartProvider } from '@/contexts/cart-context';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Ridendine - Home-Cooked Meals Delivered',
-  description: 'Discover authentic home-cooked meals from local chefs in your area.',
+  title: 'RideNDine - Home-Cooked Meals Delivered',
+  description: 'Discover authentic home-cooked meals from local chefs in your neighbourhood. Support home chefs while enjoying delicious food delivered fresh.',
+  icons: {
+    icon: '/logo-icon.png',
+    apple: '/logo-icon.png',
+  },
 };
 
 export default function RootLayout({

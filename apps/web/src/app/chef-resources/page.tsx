@@ -4,8 +4,8 @@ import { Header } from '@/components/layout/header';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Chef Resources - Ridendine',
-  description: 'Helpful guides and resources for Ridendine chefs',
+  title: 'Chef Resources - RideNDine',
+  description: 'Helpful guides and resources for RideNDine chefs',
 };
 
 const resources = [

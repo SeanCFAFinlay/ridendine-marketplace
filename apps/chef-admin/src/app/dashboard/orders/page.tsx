@@ -28,20 +28,29 @@ async function getOrdersWithCustomers(storefrontId: string) {
 
   const orders = await getOrdersByStorefront(supabase as any, storefrontId);
 
-  const { data: customers }: any = await supabase
-    .from('customers')
-    .select('id, first_name, last_name, phone')
-    .in('id', orders.map((o: any) => o.customer_id));
+  if (orders.length === 0) return [];
 
-  const { data: addresses }: any = await supabase
-    .from('delivery_addresses')
-    .select('id, street_address, city')
-    .in('id', orders.map((o: any) => o.delivery_address_id));
+  const customerIds = [...new Set(orders.map((o: any) => o.customer_id).filter(Boolean))];
+  const { data: customers }: any = customerIds.length > 0
+    ? await supabase
+        .from('customers')
+        .select('id, first_name, last_name, phone')
+        .in('id', customerIds)
+    : { data: [] };
+
+  // Fixed: use customer_addresses table with correct column names
+  const addressIds = [...new Set(orders.map((o: any) => o.delivery_address_id).filter(Boolean))];
+  const { data: addresses }: any = addressIds.length > 0
+    ? await supabase
+        .from('customer_addresses')
+        .select('id, address_line1, address_line2, city, state, postal_code')
+        .in('id', addressIds)
+    : { data: [] };
 
   return orders.map((order: any) => ({
     ...order,
-    customer: customers?.find((c: any) => c.id === order.customer_id),
-    address: addresses?.find((a: any) => a.id === order.delivery_address_id),
+    customer: customers?.find((c: any) => c.id === order.customer_id) || null,
+    address: addresses?.find((a: any) => a.id === order.delivery_address_id) || null,
   }));
 }
 

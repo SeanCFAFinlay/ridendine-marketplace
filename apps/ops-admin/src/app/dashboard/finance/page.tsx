@@ -140,7 +140,7 @@ export default async function FinancePage() {
           <Card className="border-gray-800 bg-[#16213e] p-6">
             <p className="text-sm text-gray-400">Total GMV</p>
             <p className="mt-2 text-3xl font-bold text-emerald-400">
-              ${(data.totalGMV / 100).toFixed(2)}
+              ${Number(data.totalGMV).toFixed(2)}
             </p>
             <p className="mt-1 text-sm text-gray-500">All-time gross merchandise value</p>
           </Card>
@@ -148,7 +148,7 @@ export default async function FinancePage() {
           <Card className="border-gray-800 bg-[#16213e] p-6">
             <p className="text-sm text-gray-400">Platform Commission (15%)</p>
             <p className="mt-2 text-3xl font-bold text-blue-400">
-              ${(data.platformCommission / 100).toFixed(2)}
+              ${Number(data.platformCommission).toFixed(2)}
             </p>
             <p className="mt-1 text-sm text-gray-500">All-time platform earnings</p>
           </Card>
@@ -156,7 +156,7 @@ export default async function FinancePage() {
           <Card className="border-gray-800 bg-[#16213e] p-6">
             <p className="text-sm text-gray-400">This Week Revenue</p>
             <p className="mt-2 text-3xl font-bold text-purple-400">
-              ${(data.thisWeekRevenue / 100).toFixed(2)}
+              ${Number(data.thisWeekRevenue).toFixed(2)}
             </p>
             <p className={`mt-1 text-sm ${data.weekOverWeekGrowth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {data.weekOverWeekGrowth >= 0 ? '+' : ''}{data.weekOverWeekGrowth.toFixed(1)}% vs last week
@@ -166,7 +166,7 @@ export default async function FinancePage() {
           <Card className="border-gray-800 bg-[#16213e] p-6">
             <p className="text-sm text-gray-400">Monthly Revenue</p>
             <p className="mt-2 text-3xl font-bold text-orange-400">
-              ${(data.monthRevenue / 100).toFixed(2)}
+              ${Number(data.monthRevenue).toFixed(2)}
             </p>
             <p className="mt-1 text-sm text-gray-500">Last 30 days</p>
           </Card>
@@ -199,7 +199,7 @@ export default async function FinancePage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-lg font-semibold text-emerald-400">
-                        ${(chef.pending / 100).toFixed(2)}
+                        ${Number(chef.pending).toFixed(2)}
                       </span>
                       <button className="rounded-lg bg-[#E85D26] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#d14d1a] transition-colors">
                         Pay Now
@@ -235,7 +235,7 @@ export default async function FinancePage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-lg font-semibold text-emerald-400">
-                        ${(driver.pending / 100).toFixed(2)}
+                        ${Number(driver.pending).toFixed(2)}
                       </span>
                       <button className="rounded-lg bg-[#E85D26] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#d14d1a] transition-colors">
                         Pay Driver

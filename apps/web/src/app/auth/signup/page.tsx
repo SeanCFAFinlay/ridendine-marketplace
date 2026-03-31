@@ -64,7 +64,7 @@ export default function SignupPage() {
   return (
     <AuthLayout
       title="Create your account"
-      subtitle="Join Ridendine and discover amazing home chefs"
+      subtitle="Join RideNDine and discover amazing home chefs"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {(error || validationError) && (

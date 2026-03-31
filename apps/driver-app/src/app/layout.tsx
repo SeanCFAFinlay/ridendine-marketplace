@@ -3,13 +3,17 @@ import { AuthProvider } from '@ridendine/auth';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Ridendine Driver',
-  description: 'Deliver with Ridendine',
+  title: 'RideNDine Driver',
+  description: 'Deliver with RideNDine — earn on your schedule',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/logo-icon.png',
+    apple: '/logo-icon.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Ridendine Driver',
+    title: 'RideNDine Driver',
   },
 };
 
@@ -18,7 +22,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#ed751b',
+  themeColor: '#E85D26',
 };
 
 export default function RootLayout({

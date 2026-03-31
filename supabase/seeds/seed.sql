@@ -1,585 +1,530 @@
--- ==========================================
--- RIDENDINE COMPLETE SEED DATA
--- Hamilton, ON - Chef-First Food Delivery
--- ==========================================
+-- ============================================================
+-- RideNDine Seed Data — Schema-Compliant
+-- 3 Chefs | 3 Storefronts | 15 Dishes | 2 Customers | 2 Drivers | 6 Orders
+-- ============================================================
 
--- Clear existing data (in reverse dependency order)
-TRUNCATE TABLE delivery_tracking_events CASCADE;
-TRUNCATE TABLE delivery_events CASCADE;
-TRUNCATE TABLE delivery_assignments CASCADE;
-TRUNCATE TABLE deliveries CASCADE;
-TRUNCATE TABLE driver_earnings CASCADE;
-TRUNCATE TABLE driver_payouts CASCADE;
-TRUNCATE TABLE driver_locations CASCADE;
-TRUNCATE TABLE driver_shifts CASCADE;
-TRUNCATE TABLE driver_presence CASCADE;
-TRUNCATE TABLE driver_vehicles CASCADE;
-TRUNCATE TABLE driver_documents CASCADE;
-TRUNCATE TABLE drivers CASCADE;
-TRUNCATE TABLE reviews CASCADE;
-TRUNCATE TABLE order_status_history CASCADE;
-TRUNCATE TABLE order_item_modifiers CASCADE;
-TRUNCATE TABLE order_items CASCADE;
-TRUNCATE TABLE orders CASCADE;
-TRUNCATE TABLE cart_items CASCADE;
-TRUNCATE TABLE carts CASCADE;
-TRUNCATE TABLE favorites CASCADE;
-TRUNCATE TABLE customer_addresses CASCADE;
-TRUNCATE TABLE customers CASCADE;
-TRUNCATE TABLE menu_item_availability CASCADE;
-TRUNCATE TABLE menu_item_option_values CASCADE;
-TRUNCATE TABLE menu_item_options CASCADE;
-TRUNCATE TABLE menu_items CASCADE;
-TRUNCATE TABLE menu_categories CASCADE;
-TRUNCATE TABLE chef_delivery_zones CASCADE;
-TRUNCATE TABLE chef_availability CASCADE;
-TRUNCATE TABLE chef_storefronts CASCADE;
-TRUNCATE TABLE chef_kitchens CASCADE;
-TRUNCATE TABLE chef_documents CASCADE;
-TRUNCATE TABLE chef_payout_accounts CASCADE;
-TRUNCATE TABLE chef_profiles CASCADE;
-TRUNCATE TABLE support_tickets CASCADE;
-TRUNCATE TABLE promo_codes CASCADE;
-TRUNCATE TABLE platform_users CASCADE;
-TRUNCATE TABLE notifications CASCADE;
-TRUNCATE TABLE admin_notes CASCADE;
-TRUNCATE TABLE audit_logs CASCADE;
+-- ============================================================
+-- SECTION 1: AUTH USERS
+-- ============================================================
 
--- ==========================================
--- CHEF PROFILES (5 Chefs in Hamilton, ON)
--- ==========================================
-
--- Note: user_ids will be updated when actual auth users are created
--- Using predictable UUIDs for easy reference
-
-INSERT INTO chef_profiles (id, user_id, display_name, bio, phone, status, profile_image_url)
+INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
 VALUES
-  ('chef-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000001',
-   'Maria Garcia',
-   'Bringing authentic Mexican flavors from my grandmother''s kitchen to your table in Hamilton. Every dish tells a story of tradition, love, and the vibrant streets of Oaxaca. I use only fresh, locally-sourced ingredients combined with traditional spices imported from Mexico.',
-   '(905) 555-1234', 'approved',
-   'https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=200'),
-
-  ('chef-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000002',
-   'Suda Patel',
-   'Thai cuisine enthusiast sharing the vibrant flavors of Bangkok right here in Hamilton. From the bustling street food markets to royal palace recipes, I bring authentic Thai cooking with fresh herbs and bold spices. Pad Thai is my specialty, but my green curry will transport you straight to Thailand!',
-   '(905) 555-2345', 'approved',
-   'https://images.unsplash.com/photo-1566554273541-37a9ca77b91f?w=200'),
-
-  ('chef-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000003',
-   'Rosa Lombardi',
-   'Third-generation Italian cook. My Nonna taught me the secrets of handmade pasta and slow-cooked sauces in our family kitchen in Calabria. Every meal at Nonna''s Table is made with amore and the finest Italian ingredients. I make my pasta fresh daily!',
-   '(905) 555-3456', 'approved',
-   'https://images.unsplash.com/photo-1583394293214-28ez22893f0a?w=200'),
-
-  ('chef-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000004',
-   'Ahmed Hassan',
-   'Growing up in Cairo, I learned to cook from my mother and aunts. The Spice Route brings authentic Middle Eastern flavors to Hamilton - from perfectly seasoned shawarma to creamy hummus made fresh daily. My falafel recipe has been in my family for four generations.',
-   '(905) 555-4567', 'approved',
-   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200'),
-
-  ('chef-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000005',
-   'Jin Park',
-   'Seoul Kitchen brings the bold, exciting flavors of Korean cuisine to Hamilton. From crispy Korean fried chicken to sizzling bibimbap, I create dishes that honor traditional recipes while adding my own creative twist. Come taste the heat of Korean spices!',
-   '(905) 555-5678', 'approved',
-   'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200')
+  ('11111111-1111-1111-1111-111111111111', 'sean@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
+   '{"provider":"email","providers":["email"],"role":"chef"}',
+   '{"display_name":"Sean","role":"chef"}', false, 'authenticated'),
+  ('22222222-2222-2222-2222-222222222222', 'tuan@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
+   '{"provider":"email","providers":["email"],"role":"chef"}',
+   '{"display_name":"Tuan","role":"chef"}', false, 'authenticated'),
+  ('33333333-3333-3333-3333-333333333333', 'ryo@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
+   '{"provider":"email","providers":["email"],"role":"chef"}',
+   '{"display_name":"Ryo","role":"chef"}', false, 'authenticated'),
+  ('44444444-4444-4444-4444-444444444444', 'alice@example.com', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
+   '{"provider":"email","providers":["email"],"role":"customer"}',
+   '{"display_name":"Alice","role":"customer"}', false, 'authenticated'),
+  ('55555555-5555-5555-5555-555555555555', 'bob@example.com', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
+   '{"provider":"email","providers":["email"],"role":"customer"}',
+   '{"display_name":"Bob","role":"customer"}', false, 'authenticated'),
+  ('66666666-6666-6666-6666-666666666666', 'mike.driver@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
+   '{"provider":"email","providers":["email"],"role":"driver"}',
+   '{"display_name":"Mike Chen","role":"driver"}', false, 'authenticated'),
+  ('77777777-7777-7777-7777-777777777777', 'sarah.driver@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
+   '{"provider":"email","providers":["email"],"role":"driver"}',
+   '{"display_name":"Sarah Kim","role":"driver"}', false, 'authenticated')
 ON CONFLICT (id) DO NOTHING;
 
--- ==========================================
--- CHEF KITCHENS (Hamilton, ON addresses)
--- ==========================================
+-- ============================================================
+-- SECTION 2: CHEF PROFILES
+-- ============================================================
 
-INSERT INTO chef_kitchens (id, chef_id, name, address_line1, city, state, postal_code, country, lat, lng, is_verified)
+INSERT INTO chef_profiles (id, user_id, display_name, phone, bio, status, created_at, updated_at)
 VALUES
-  ('kitchen-1111-1111-1111-111111111111', 'chef-1111-1111-1111-111111111111',
-   'Maria''s Home Kitchen', '456 James Street North', 'Hamilton', 'ON', 'L8R 2L3', 'CA',
-   43.2650, -79.8680, true),
-
-  ('kitchen-2222-2222-2222-222222222222', 'chef-2222-2222-2222-222222222222',
-   'Suda''s Kitchen', '123 King Street East', 'Hamilton', 'ON', 'L8N 1A9', 'CA',
-   43.2530, -79.8620, true),
-
-  ('kitchen-3333-3333-3333-333333333333', 'chef-3333-3333-3333-333333333333',
-   'Nonna''s Kitchen', '789 Locke Street South', 'Hamilton', 'ON', 'L8P 4B4', 'CA',
-   43.2480, -79.8760, true),
-
-  ('kitchen-4444-4444-4444-444444444444', 'chef-4444-4444-4444-444444444444',
-   'Spice Route Kitchen', '321 Ottawa Street North', 'Hamilton', 'ON', 'L8H 3Z5', 'CA',
-   43.2580, -79.8320, true),
-
-  ('kitchen-5555-5555-5555-555555555555', 'chef-5555-5555-5555-555555555555',
-   'Seoul Kitchen', '567 Barton Street East', 'Hamilton', 'ON', 'L8L 2Y8', 'CA',
-   43.2620, -79.8450, true)
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+   '11111111-1111-1111-1111-111111111111',
+   'Sean',
+   '+1 (905) 555-0101',
+   'Hamilton-born chef with a passion for bold comfort food. Every dish is made with love and a whole lot of flavour.',
+   'approved',
+   NOW() - INTERVAL '90 days', NOW()),
+  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+   '22222222-2222-2222-2222-222222222222',
+   'Tuan',
+   '+1 (905) 555-0202',
+   'Authentic Vietnamese royal cuisine from Huế. Slow-cooked broths, hand-crafted noodle soups, and traditional family recipes.',
+   'approved',
+   NOW() - INTERVAL '60 days', NOW()),
+  ('cccccccc-cccc-cccc-cccc-cccccccccccc',
+   '33333333-3333-3333-3333-333333333333',
+   'Ryo',
+   '+1 (905) 555-0303',
+   'Osaka-trained home chef bringing Japanese precision to Hamilton kitchens. Tonkotsu ramen, katsu, and gyudon crafted with care.',
+   'approved',
+   NOW() - INTERVAL '45 days', NOW())
 ON CONFLICT (id) DO NOTHING;
 
--- ==========================================
--- CHEF STOREFRONTS
--- ==========================================
+-- ============================================================
+-- SECTION 3: CHEF KITCHENS (required FK for storefronts)
+-- ============================================================
 
-INSERT INTO chef_storefronts (id, chef_id, kitchen_id, slug, name, description, cuisine_types, is_active, is_featured, average_rating, total_reviews, min_order_amount, estimated_prep_time_min, estimated_prep_time_max, cover_image_url, logo_url)
+INSERT INTO chef_kitchens (id, chef_id, name, address_line1, city, state, postal_code, country, is_verified, created_at, updated_at)
 VALUES
-  ('store-1111-1111-1111-111111111111', 'chef-1111-1111-1111-111111111111', 'kitchen-1111-1111-1111-111111111111',
-   'marias-kitchen', 'Maria''s Kitchen',
-   'Authentic Mexican cuisine made with love and traditional family recipes passed down through generations. From street tacos to rich mole sauces, experience the true taste of Mexico.',
-   ARRAY['Mexican', 'Latin'], true, true, 4.8, 47, 15.00, 20, 35,
-   'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800',
-   'https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=200'),
-
-  ('store-2222-2222-2222-222222222222', 'chef-2222-2222-2222-222222222222', 'kitchen-2222-2222-2222-222222222222',
-   'thai-home-cooking', 'Thai Home Cooking',
-   'Experience the authentic flavors of Thailand. From pad thai to green curry, every dish is crafted with traditional techniques and fresh ingredients.',
-   ARRAY['Thai', 'Asian'], true, true, 4.9, 38, 12.00, 25, 40,
-   'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=800',
-   'https://images.unsplash.com/photo-1566554273541-37a9ca77b91f?w=200'),
-
-  ('store-3333-3333-3333-333333333333', 'chef-3333-3333-3333-333333333333', 'kitchen-3333-3333-3333-333333333333',
-   'nonnas-table', 'Nonna''s Table',
-   'Classic Italian comfort food. Handmade pasta, rich sauces, and recipes that have been in our family for generations. Every meal is made with amore!',
-   ARRAY['Italian', 'Mediterranean'], true, true, 4.7, 52, 18.00, 30, 45,
-   'https://images.unsplash.com/photo-1498579150354-977475b7ea0b?w=800',
-   'https://images.unsplash.com/photo-1583394293214-28ek22893f0a?w=200'),
-
-  ('store-4444-4444-4444-444444444444', 'chef-4444-4444-4444-444444444444', 'kitchen-4444-4444-4444-444444444444',
-   'spice-route', 'Spice Route',
-   'Authentic Middle Eastern cuisine featuring perfectly seasoned shawarma, creamy hummus, and crispy falafel. Recipes passed down through four generations.',
-   ARRAY['Middle Eastern', 'Mediterranean'], true, true, 4.6, 41, 14.00, 20, 35,
-   'https://images.unsplash.com/photo-1547424850-4bfc7e88e8a2?w=800',
-   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200'),
-
-  ('store-5555-5555-5555-555555555555', 'chef-5555-5555-5555-555555555555', 'kitchen-5555-5555-5555-555555555555',
-   'seoul-kitchen', 'Seoul Kitchen',
-   'Bold, exciting Korean flavors. From crispy Korean fried chicken to sizzling bibimbap, taste the heat and passion of Seoul in every bite.',
-   ARRAY['Korean', 'Asian'], true, true, 4.8, 35, 15.00, 25, 40,
-   'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=800',
-   'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200')
+  ('kit-eby-0001-0000-0000-000000000001',
+   'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+   'Every Bite Yum Kitchen',
+   '123 King St W', 'Hamilton', 'ON', 'L8P 1A1', 'CA',
+   true, NOW() - INTERVAL '90 days', NOW()),
+  ('kit-hgp-0002-0000-0000-000000000002',
+   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+   'HOÀNG GIA PHỞ Kitchen',
+   '456 Barton St E', 'Hamilton', 'ON', 'L8L 2Y5', 'CA',
+   true, NOW() - INTERVAL '60 days', NOW()),
+  ('kit-coo-0003-0000-0000-000000000003',
+   'cccccccc-cccc-cccc-cccc-cccccccccccc',
+   'COOCO Kitchen',
+   '789 Concession St', 'Hamilton', 'ON', 'L8V 1C9', 'CA',
+   true, NOW() - INTERVAL '45 days', NOW())
 ON CONFLICT (id) DO NOTHING;
 
--- ==========================================
--- CHEF AVAILABILITY (Mon-Fri 11am-8pm, Sat 10am-9pm)
--- ==========================================
+-- ============================================================
+-- SECTION 4: CHEF STOREFRONTS
+-- ============================================================
 
--- Maria's Kitchen
-INSERT INTO chef_availability (id, storefront_id, day_of_week, start_time, end_time, is_available) VALUES
-  (gen_random_uuid(), 'store-1111-1111-1111-111111111111', 0, '10:00', '21:00', true), -- Sunday
-  (gen_random_uuid(), 'store-1111-1111-1111-111111111111', 1, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-1111-1111-1111-111111111111', 2, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-1111-1111-1111-111111111111', 3, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-1111-1111-1111-111111111111', 4, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-1111-1111-1111-111111111111', 5, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-1111-1111-1111-111111111111', 6, '10:00', '21:00', true);
-
--- Thai Home Cooking
-INSERT INTO chef_availability (id, storefront_id, day_of_week, start_time, end_time, is_available) VALUES
-  (gen_random_uuid(), 'store-2222-2222-2222-222222222222', 0, '10:00', '21:00', true),
-  (gen_random_uuid(), 'store-2222-2222-2222-222222222222', 1, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-2222-2222-2222-222222222222', 2, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-2222-2222-2222-222222222222', 3, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-2222-2222-2222-222222222222', 4, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-2222-2222-2222-222222222222', 5, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-2222-2222-2222-222222222222', 6, '10:00', '21:00', true);
-
--- Nonna's Table
-INSERT INTO chef_availability (id, storefront_id, day_of_week, start_time, end_time, is_available) VALUES
-  (gen_random_uuid(), 'store-3333-3333-3333-333333333333', 0, '10:00', '21:00', true),
-  (gen_random_uuid(), 'store-3333-3333-3333-333333333333', 1, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-3333-3333-3333-333333333333', 2, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-3333-3333-3333-333333333333', 3, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-3333-3333-3333-333333333333', 4, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-3333-3333-3333-333333333333', 5, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-3333-3333-3333-333333333333', 6, '10:00', '21:00', true);
-
--- Spice Route
-INSERT INTO chef_availability (id, storefront_id, day_of_week, start_time, end_time, is_available) VALUES
-  (gen_random_uuid(), 'store-4444-4444-4444-444444444444', 0, '10:00', '21:00', true),
-  (gen_random_uuid(), 'store-4444-4444-4444-444444444444', 1, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-4444-4444-4444-444444444444', 2, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-4444-4444-4444-444444444444', 3, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-4444-4444-4444-444444444444', 4, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-4444-4444-4444-444444444444', 5, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-4444-4444-4444-444444444444', 6, '10:00', '21:00', true);
-
--- Seoul Kitchen
-INSERT INTO chef_availability (id, storefront_id, day_of_week, start_time, end_time, is_available) VALUES
-  (gen_random_uuid(), 'store-5555-5555-5555-555555555555', 0, '10:00', '21:00', true),
-  (gen_random_uuid(), 'store-5555-5555-5555-555555555555', 1, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-5555-5555-5555-555555555555', 2, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-5555-5555-5555-555555555555', 3, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-5555-5555-5555-555555555555', 4, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-5555-5555-5555-555555555555', 5, '11:00', '20:00', true),
-  (gen_random_uuid(), 'store-5555-5555-5555-555555555555', 6, '10:00', '21:00', true);
-
--- ==========================================
--- CHEF DELIVERY ZONES (5km radius, $3.99 fee, free over $30)
--- ==========================================
-
-INSERT INTO chef_delivery_zones (id, storefront_id, name, radius_km, delivery_fee, min_order_for_free_delivery, estimated_delivery_min, estimated_delivery_max, is_active)
+INSERT INTO chef_storefronts (
+  id, chef_id, kitchen_id, slug, name, description, cuisine_types,
+  cover_image_url, logo_url,
+  is_active, is_featured,
+  estimated_prep_time_min, estimated_prep_time_max,
+  min_order_amount,
+  average_rating, total_reviews,
+  created_at, updated_at
+)
 VALUES
-  (gen_random_uuid(), 'store-1111-1111-1111-111111111111', 'Hamilton Downtown', 5.0, 3.99, 30.00, 25, 45, true),
-  (gen_random_uuid(), 'store-2222-2222-2222-222222222222', 'Hamilton Downtown', 5.0, 3.99, 30.00, 25, 45, true),
-  (gen_random_uuid(), 'store-3333-3333-3333-333333333333', 'Hamilton Downtown', 5.0, 3.99, 30.00, 25, 45, true),
-  (gen_random_uuid(), 'store-4444-4444-4444-444444444444', 'Hamilton Downtown', 5.0, 3.99, 30.00, 25, 45, true),
-  (gen_random_uuid(), 'store-5555-5555-5555-555555555555', 'Hamilton Downtown', 5.0, 3.99, 30.00, 25, 45, true);
+  -- Every Bite Yum (Sean)
+  ('dddddddd-dddd-dddd-dddd-dddddddddddd',
+   'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+   'kit-eby-0001-0000-0000-000000000001',
+   'every-bite-yum',
+   'Every Bite Yum',
+   'Bold comfort food made with love. Smash burgers, Nashville hot chicken, and creative Canadian-fusion dishes that make every bite count.',
+   ARRAY['Comfort Food', 'Canadian', 'Fusion', 'Burgers'],
+   'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=80',
+   NULL,
+   true, true,
+   25, 45,
+   20.00,
+   4.8, 24,
+   NOW() - INTERVAL '90 days', NOW()),
 
--- ==========================================
--- MENU CATEGORIES
--- ==========================================
+  -- HOÀNG GIA PHỞ (Tuan)
+  ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+   'kit-hgp-0002-0000-0000-000000000002',
+   'hoang-gia-pho',
+   'HOÀNG GIA PHỞ',
+   'Authentic Vietnamese royal cuisine from Huế. Slow-cooked broths simmered for 12+ hours, hand-crafted noodle soups, and traditional dishes that bring the flavours of Vietnam to your door.',
+   ARRAY['Vietnamese', 'Phở', 'Noodle Soups', 'Asian'],
+   'https://images.unsplash.com/photo-1555126634-323283e090fa?w=800&q=80',
+   NULL,
+   true, true,
+   30, 60,
+   25.00,
+   4.9, 38,
+   NOW() - INTERVAL '60 days', NOW()),
 
--- Maria's Kitchen Categories
-INSERT INTO menu_categories (id, storefront_id, name, description, sort_order, is_active) VALUES
-  ('cat-maria-1', 'store-1111-1111-1111-111111111111', 'Appetizers', 'Start your meal with our delicious Mexican starters', 1, true),
-  ('cat-maria-2', 'store-1111-1111-1111-111111111111', 'Main Courses', 'Hearty traditional Mexican dishes', 2, true),
-  ('cat-maria-3', 'store-1111-1111-1111-111111111111', 'Desserts', 'Sweet endings to your meal', 3, true),
-  ('cat-maria-4', 'store-1111-1111-1111-111111111111', 'Drinks', 'Refreshing Mexican beverages', 4, true);
+  -- COOCO (Ryo)
+  ('ffffffff-ffff-ffff-ffff-ffffffffffff',
+   'cccccccc-cccc-cccc-cccc-cccccccccccc',
+   'kit-coo-0003-0000-0000-000000000003',
+   'cooco',
+   'COOCO',
+   'Japanese home cooking elevated. Osaka-trained precision meets Hamilton hospitality — tonkotsu ramen, gyudon, and chicken katsu curry crafted with care and authentic ingredients.',
+   ARRAY['Japanese', 'Ramen', 'Katsu', 'Asian'],
+   'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&q=80',
+   NULL,
+   true, true,
+   20, 40,
+   20.00,
+   4.7, 19,
+   NOW() - INTERVAL '45 days', NOW())
+ON CONFLICT (id) DO NOTHING;
 
--- Thai Home Cooking Categories
-INSERT INTO menu_categories (id, storefront_id, name, description, sort_order, is_active) VALUES
-  ('cat-thai-1', 'store-2222-2222-2222-222222222222', 'Starters', 'Thai appetizers and soups', 1, true),
-  ('cat-thai-2', 'store-2222-2222-2222-222222222222', 'Noodles & Rice', 'Classic Thai noodle and rice dishes', 2, true),
-  ('cat-thai-3', 'store-2222-2222-2222-222222222222', 'Curries', 'Authentic Thai curries', 3, true),
-  ('cat-thai-4', 'store-2222-2222-2222-222222222222', 'Desserts & Drinks', 'Sweet treats and beverages', 4, true);
+-- ============================================================
+-- SECTION 5: MENU CATEGORIES
+-- ============================================================
 
--- Nonna's Table Categories
-INSERT INTO menu_categories (id, storefront_id, name, description, sort_order, is_active) VALUES
-  ('cat-nonna-1', 'store-3333-3333-3333-333333333333', 'Antipasti', 'Italian starters', 1, true),
-  ('cat-nonna-2', 'store-3333-3333-3333-333333333333', 'Pasta', 'Handmade pasta dishes', 2, true),
-  ('cat-nonna-3', 'store-3333-3333-3333-333333333333', 'Secondi', 'Main courses', 3, true),
-  ('cat-nonna-4', 'store-3333-3333-3333-333333333333', 'Dolci', 'Italian desserts', 4, true);
-
--- Spice Route Categories
-INSERT INTO menu_categories (id, storefront_id, name, description, sort_order, is_active) VALUES
-  ('cat-spice-1', 'store-4444-4444-4444-444444444444', 'Mezze', 'Middle Eastern appetizers', 1, true),
-  ('cat-spice-2', 'store-4444-4444-4444-444444444444', 'Grilled Plates', 'Shawarma and kebabs', 2, true),
-  ('cat-spice-3', 'store-4444-4444-4444-444444444444', 'Wraps & Sandwiches', 'Handheld favorites', 3, true),
-  ('cat-spice-4', 'store-4444-4444-4444-444444444444', 'Sweets & Drinks', 'Desserts and beverages', 4, true);
-
--- Seoul Kitchen Categories
-INSERT INTO menu_categories (id, storefront_id, name, description, sort_order, is_active) VALUES
-  ('cat-seoul-1', 'store-5555-5555-5555-555555555555', 'Appetizers', 'Korean starters', 1, true),
-  ('cat-seoul-2', 'store-5555-5555-5555-555555555555', 'Rice Bowls', 'Bibimbap and rice dishes', 2, true),
-  ('cat-seoul-3', 'store-5555-5555-5555-555555555555', 'Fried Chicken', 'Korean fried chicken', 3, true),
-  ('cat-seoul-4', 'store-5555-5555-5555-555555555555', 'Stews & Noodles', 'Comforting Korean dishes', 4, true),
-  ('cat-seoul-5', 'store-5555-5555-5555-555555555555', 'Desserts', 'Korean sweets', 5, true);
-
--- ==========================================
--- MENU ITEMS - MARIA'S KITCHEN
--- ==========================================
-
-INSERT INTO menu_items (id, category_id, storefront_id, name, description, price, is_available, is_featured, dietary_tags, prep_time_minutes, sort_order, image_url) VALUES
-  -- Appetizers
-  ('item-maria-1', 'cat-maria-1', 'store-1111-1111-1111-111111111111', 'Guacamole & Chips', 'Fresh made guacamole with ripe avocados, cilantro, lime, and house-made tortilla chips', 8.99, true, true, ARRAY['Vegan', 'Gluten-Free'], 10, 1, 'https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=400'),
-  ('item-maria-2', 'cat-maria-1', 'store-1111-1111-1111-111111111111', 'Queso Fundido', 'Melted Oaxacan cheese with chorizo and roasted peppers, served with warm tortillas', 10.99, true, false, ARRAY[]::TEXT[], 12, 2, 'https://images.unsplash.com/photo-1628557043824-01bb7dd8d7ff?w=400'),
-  -- Main Courses
-  ('item-maria-3', 'cat-maria-2', 'store-1111-1111-1111-111111111111', 'Tacos Al Pastor', 'Three tacos with marinated pork, pineapple, onion, and cilantro on corn tortillas', 14.99, true, true, ARRAY[]::TEXT[], 15, 1, 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400'),
-  ('item-maria-4', 'cat-maria-2', 'store-1111-1111-1111-111111111111', 'Enchiladas Verdes', 'Three chicken enchiladas smothered in tangy green tomatillo sauce with crema and queso fresco', 15.99, true, false, ARRAY[]::TEXT[], 20, 2, 'https://images.unsplash.com/photo-1534352956036-cd81e27dd615?w=400'),
-  ('item-maria-5', 'cat-maria-2', 'store-1111-1111-1111-111111111111', 'Tamales', 'Three handmade tamales - choice of chicken, pork, or cheese', 12.99, true, false, ARRAY['Gluten-Free'], 25, 3, 'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=400'),
-  ('item-maria-6', 'cat-maria-2', 'store-1111-1111-1111-111111111111', 'Pozole Rojo', 'Traditional pork and hominy stew in rich red chile broth with all the fixings', 14.99, true, true, ARRAY['Gluten-Free'], 20, 4, 'https://images.unsplash.com/photo-1608039755401-742074f0548d?w=400'),
-  -- Desserts
-  ('item-maria-7', 'cat-maria-3', 'store-1111-1111-1111-111111111111', 'Churros', 'Crispy cinnamon sugar churros served with rich chocolate dipping sauce', 7.99, true, true, ARRAY['Vegetarian'], 10, 1, 'https://images.unsplash.com/photo-1624371414361-a5e3c29f86d1?w=400'),
-  ('item-maria-8', 'cat-maria-3', 'store-1111-1111-1111-111111111111', 'Tres Leches', 'Traditional three-milk sponge cake topped with whipped cream', 8.99, true, false, ARRAY['Vegetarian'], 5, 2, 'https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=400'),
-  -- Drinks
-  ('item-maria-9', 'cat-maria-4', 'store-1111-1111-1111-111111111111', 'Horchata', 'Creamy rice drink with cinnamon and vanilla', 3.99, true, false, ARRAY['Vegan', 'Gluten-Free'], 3, 1, 'https://images.unsplash.com/photo-1541658016709-82535e94bc69?w=400'),
-  ('item-maria-10', 'cat-maria-4', 'store-1111-1111-1111-111111111111', 'Jamaica', 'Refreshing hibiscus tea sweetened with cane sugar', 3.49, true, false, ARRAY['Vegan', 'Gluten-Free'], 3, 2, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400');
-
--- ==========================================
--- MENU ITEMS - THAI HOME COOKING
--- ==========================================
-
-INSERT INTO menu_items (id, category_id, storefront_id, name, description, price, is_available, is_featured, dietary_tags, prep_time_minutes, sort_order, image_url) VALUES
-  -- Starters
-  ('item-thai-1', 'cat-thai-1', 'store-2222-2222-2222-222222222222', 'Tom Yum Soup', 'Spicy and sour soup with shrimp, mushrooms, lemongrass, and kaffir lime', 11.99, true, true, ARRAY['Gluten-Free'], 15, 1, 'https://images.unsplash.com/photo-1548943487-a2e4e43b4853?w=400'),
-  ('item-thai-2', 'cat-thai-1', 'store-2222-2222-2222-222222222222', 'Fresh Spring Rolls', 'Rice paper rolls filled with vegetables and shrimp, served with peanut sauce', 8.99, true, false, ARRAY['Gluten-Free'], 10, 2, 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400'),
-  -- Noodles & Rice
-  ('item-thai-3', 'cat-thai-2', 'store-2222-2222-2222-222222222222', 'Pad Thai', 'Classic stir-fried rice noodles with shrimp, egg, bean sprouts, and peanuts', 14.99, true, true, ARRAY['Gluten-Free'], 18, 1, 'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400'),
-  ('item-thai-4', 'cat-thai-2', 'store-2222-2222-2222-222222222222', 'Pad See Ew', 'Wide rice noodles stir-fried with chicken, Chinese broccoli, and sweet soy', 13.99, true, false, ARRAY[]::TEXT[], 18, 2, 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400'),
-  ('item-thai-5', 'cat-thai-2', 'store-2222-2222-2222-222222222222', 'Pineapple Fried Rice', 'Fragrant fried rice with pineapple, cashews, and curry powder', 13.99, true, false, ARRAY['Vegetarian'], 15, 3, 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400'),
-  -- Curries
-  ('item-thai-6', 'cat-thai-3', 'store-2222-2222-2222-222222222222', 'Green Curry', 'Creamy coconut curry with Thai basil, bamboo shoots, and bell peppers', 15.99, true, true, ARRAY['Gluten-Free'], 20, 1, 'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400'),
-  ('item-thai-7', 'cat-thai-3', 'store-2222-2222-2222-222222222222', 'Massaman Curry', 'Rich curry with potatoes, peanuts, and your choice of protein', 16.99, true, false, ARRAY['Gluten-Free'], 25, 2, 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400'),
-  -- Desserts & Drinks
-  ('item-thai-8', 'cat-thai-4', 'store-2222-2222-2222-222222222222', 'Mango Sticky Rice', 'Sweet coconut sticky rice topped with fresh mango slices', 8.99, true, true, ARRAY['Vegan', 'Gluten-Free'], 10, 1, 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400'),
-  ('item-thai-9', 'cat-thai-4', 'store-2222-2222-2222-222222222222', 'Thai Iced Tea', 'Sweet and creamy Thai tea with condensed milk', 4.99, true, false, ARRAY['Vegetarian', 'Gluten-Free'], 5, 2, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400'),
-  ('item-thai-10', 'cat-thai-4', 'store-2222-2222-2222-222222222222', 'Coconut Ice Cream', 'Homemade coconut ice cream served in a coconut shell', 6.99, true, false, ARRAY['Vegetarian', 'Gluten-Free'], 5, 3, 'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=400');
-
--- ==========================================
--- MENU ITEMS - NONNA'S TABLE
--- ==========================================
-
-INSERT INTO menu_items (id, category_id, storefront_id, name, description, price, is_available, is_featured, dietary_tags, prep_time_minutes, sort_order, image_url) VALUES
-  -- Antipasti
-  ('item-nonna-1', 'cat-nonna-1', 'store-3333-3333-3333-333333333333', 'Bruschetta', 'Toasted bread topped with fresh tomatoes, basil, and garlic', 8.99, true, false, ARRAY['Vegan'], 8, 1, 'https://images.unsplash.com/photo-1572695157366-5e585ab2b69f?w=400'),
-  ('item-nonna-2', 'cat-nonna-1', 'store-3333-3333-3333-333333333333', 'Arancini', 'Crispy fried risotto balls stuffed with mozzarella, served with marinara', 10.99, true, true, ARRAY['Vegetarian'], 12, 2, 'https://images.unsplash.com/photo-1595295333158-4742f28fbd85?w=400'),
-  ('item-nonna-3', 'cat-nonna-1', 'store-3333-3333-3333-333333333333', 'Minestrone', 'Hearty vegetable soup with pasta and beans', 11.99, true, false, ARRAY['Vegetarian'], 15, 3, 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400'),
-  -- Pasta
-  ('item-nonna-4', 'cat-nonna-2', 'store-3333-3333-3333-333333333333', 'Lasagna', 'Classic lasagna with layers of pasta, meat sauce, ricotta, and mozzarella', 17.99, true, true, ARRAY[]::TEXT[], 30, 1, 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400'),
-  ('item-nonna-5', 'cat-nonna-2', 'store-3333-3333-3333-333333333333', 'Pasta Carbonara', 'Spaghetti with crispy pancetta, egg, parmesan, and black pepper', 16.99, true, true, ARRAY[]::TEXT[], 20, 2, 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400'),
-  ('item-nonna-6', 'cat-nonna-2', 'store-3333-3333-3333-333333333333', 'Fettuccine Alfredo', 'Fresh fettuccine tossed in creamy parmesan sauce', 15.99, true, false, ARRAY['Vegetarian'], 18, 3, 'https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=400'),
-  ('item-nonna-7', 'cat-nonna-2', 'store-3333-3333-3333-333333333333', 'Spaghetti Bolognese', 'Spaghetti with slow-cooked meat sauce', 16.99, true, false, ARRAY[]::TEXT[], 20, 4, 'https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?w=400'),
-  -- Secondi
-  ('item-nonna-8', 'cat-nonna-3', 'store-3333-3333-3333-333333333333', 'Chicken Parmesan', 'Breaded chicken cutlet with marinara and melted mozzarella, served with pasta', 18.99, true, true, ARRAY[]::TEXT[], 25, 1, 'https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?w=400'),
-  -- Dolci
-  ('item-nonna-9', 'cat-nonna-4', 'store-3333-3333-3333-333333333333', 'Tiramisu', 'Classic Italian dessert with espresso-soaked ladyfingers and mascarpone cream', 8.99, true, true, ARRAY['Vegetarian'], 5, 1, 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400'),
-  ('item-nonna-10', 'cat-nonna-4', 'store-3333-3333-3333-333333333333', 'Panna Cotta', 'Silky vanilla cream topped with fresh berries', 7.99, true, false, ARRAY['Vegetarian', 'Gluten-Free'], 5, 2, 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400'),
-  ('item-nonna-11', 'cat-nonna-4', 'store-3333-3333-3333-333333333333', 'Cannoli', 'Crispy pastry shells filled with sweet ricotta cream', 6.99, true, false, ARRAY['Vegetarian'], 5, 3, 'https://images.unsplash.com/photo-1626198226928-4f7d9e11e0ec?w=400');
-
--- ==========================================
--- MENU ITEMS - SPICE ROUTE
--- ==========================================
-
-INSERT INTO menu_items (id, category_id, storefront_id, name, description, price, is_available, is_featured, dietary_tags, prep_time_minutes, sort_order, image_url) VALUES
-  -- Mezze
-  ('item-spice-1', 'cat-spice-1', 'store-4444-4444-4444-444444444444', 'Hummus & Pita', 'Creamy chickpea dip with warm pita bread and olive oil', 9.99, true, true, ARRAY['Vegan'], 8, 1, 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=400'),
-  ('item-spice-2', 'cat-spice-1', 'store-4444-4444-4444-444444444444', 'Baba Ganoush', 'Smoky roasted eggplant dip with tahini and pita', 9.99, true, false, ARRAY['Vegan'], 10, 2, 'https://images.unsplash.com/photo-1547516508-1fc9e67c3e5f?w=400'),
-  ('item-spice-3', 'cat-spice-1', 'store-4444-4444-4444-444444444444', 'Falafel Plate', 'Crispy chickpea fritters with tahini sauce and pickled vegetables', 11.99, true, true, ARRAY['Vegan'], 15, 3, 'https://images.unsplash.com/photo-1593001874117-c99c800e3eb6?w=400'),
-  -- Grilled Plates
-  ('item-spice-4', 'cat-spice-2', 'store-4444-4444-4444-444444444444', 'Shawarma Plate', 'Marinated chicken shawarma with rice, salad, hummus, and garlic sauce', 15.99, true, true, ARRAY['Gluten-Free'], 18, 1, 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=400'),
-  ('item-spice-5', 'cat-spice-2', 'store-4444-4444-4444-444444444444', 'Mixed Grill', 'Combination of chicken, lamb, and beef kebabs with rice and salad', 19.99, true, true, ARRAY['Gluten-Free'], 25, 2, 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400'),
-  ('item-spice-6', 'cat-spice-2', 'store-4444-4444-4444-444444444444', 'Lamb Kofta', 'Spiced ground lamb skewers with rice and tahini sauce', 17.99, true, false, ARRAY['Gluten-Free'], 20, 3, 'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=400'),
-  -- Wraps
-  ('item-spice-7', 'cat-spice-3', 'store-4444-4444-4444-444444444444', 'Falafel Wrap', 'Falafel, hummus, vegetables, and tahini in warm pita', 12.99, true, true, ARRAY['Vegan'], 12, 1, 'https://images.unsplash.com/photo-1621852004158-f3bc188ace2d?w=400'),
-  ('item-spice-8', 'cat-spice-3', 'store-4444-4444-4444-444444444444', 'Chicken Shawarma Wrap', 'Shawarma chicken with garlic sauce, pickles, and vegetables', 13.99, true, false, ARRAY[]::TEXT[], 12, 2, 'https://images.unsplash.com/photo-1626700051175-6ac254a276b4?w=400'),
-  -- Sweets
-  ('item-spice-9', 'cat-spice-4', 'store-4444-4444-4444-444444444444', 'Baklava', 'Flaky phyllo pastry with honey, pistachios, and walnuts', 6.99, true, true, ARRAY['Vegetarian'], 5, 1, 'https://images.unsplash.com/photo-1519676867240-f03562e64548?w=400'),
-  ('item-spice-10', 'cat-spice-4', 'store-4444-4444-4444-444444444444', 'Mint Tea', 'Traditional Moroccan mint tea', 3.99, true, false, ARRAY['Vegan', 'Gluten-Free'], 5, 2, 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400');
-
--- ==========================================
--- MENU ITEMS - SEOUL KITCHEN
--- ==========================================
-
-INSERT INTO menu_items (id, category_id, storefront_id, name, description, price, is_available, is_featured, dietary_tags, prep_time_minutes, sort_order, image_url) VALUES
-  -- Appetizers
-  ('item-seoul-1', 'cat-seoul-1', 'store-5555-5555-5555-555555555555', 'Kimchi Pancake', 'Crispy savory pancake with kimchi and scallions', 10.99, true, true, ARRAY['Vegetarian'], 15, 1, 'https://images.unsplash.com/photo-1580651315530-69c8e0026377?w=400'),
-  ('item-seoul-2', 'cat-seoul-1', 'store-5555-5555-5555-555555555555', 'Korean Dumplings', 'Pan-fried pork and vegetable dumplings with dipping sauce', 9.99, true, false, ARRAY[]::TEXT[], 12, 2, 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=400'),
-  -- Rice Bowls
-  ('item-seoul-3', 'cat-seoul-2', 'store-5555-5555-5555-555555555555', 'Bibimbap', 'Mixed rice bowl with vegetables, beef, fried egg, and gochujang', 14.99, true, true, ARRAY['Gluten-Free'], 18, 1, 'https://images.unsplash.com/photo-1553163147-622ab57be1c7?w=400'),
-  ('item-seoul-4', 'cat-seoul-2', 'store-5555-5555-5555-555555555555', 'Bulgogi Rice Bowl', 'Marinated beef bulgogi over steamed rice with vegetables', 15.99, true, true, ARRAY['Gluten-Free'], 20, 2, 'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=400'),
-  -- Fried Chicken
-  ('item-seoul-5', 'cat-seoul-3', 'store-5555-5555-5555-555555555555', 'Korean Fried Chicken', 'Double-fried crispy chicken with sweet and spicy gochujang glaze', 16.99, true, true, ARRAY[]::TEXT[], 25, 1, 'https://images.unsplash.com/photo-1575932444877-5106bee2a599?w=400'),
-  ('item-seoul-6', 'cat-seoul-3', 'store-5555-5555-5555-555555555555', 'Soy Garlic Chicken', 'Korean fried chicken glazed with soy garlic sauce', 16.99, true, false, ARRAY[]::TEXT[], 25, 2, 'https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?w=400'),
-  -- Stews & Noodles
-  ('item-seoul-7', 'cat-seoul-4', 'store-5555-5555-5555-555555555555', 'Kimchi Jjigae', 'Spicy kimchi stew with pork and tofu', 13.99, true, true, ARRAY['Gluten-Free'], 20, 1, 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=400'),
-  ('item-seoul-8', 'cat-seoul-4', 'store-5555-5555-5555-555555555555', 'Japchae', 'Sweet potato glass noodles stir-fried with vegetables and beef', 13.99, true, false, ARRAY['Gluten-Free'], 18, 2, 'https://images.unsplash.com/photo-1583224994076-0d5cbe0c6e6f?w=400'),
-  ('item-seoul-9', 'cat-seoul-4', 'store-5555-5555-5555-555555555555', 'Soon Dubu Jjigae', 'Silken tofu stew with seafood in spicy broth', 14.99, true, false, ARRAY['Gluten-Free'], 20, 3, 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400'),
-  -- Desserts
-  ('item-seoul-10', 'cat-seoul-5', 'store-5555-5555-5555-555555555555', 'Bingsu', 'Shaved ice dessert with sweet red beans, mochi, and condensed milk', 8.99, true, true, ARRAY['Vegetarian', 'Gluten-Free'], 10, 1, 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400'),
-  ('item-seoul-11', 'cat-seoul-5', 'store-5555-5555-5555-555555555555', 'Hotteok', 'Sweet pancakes filled with brown sugar, cinnamon, and nuts', 6.99, true, false, ARRAY['Vegetarian'], 12, 2, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400');
-
--- ==========================================
--- CUSTOMERS (3 customers in Hamilton)
--- ==========================================
-
-INSERT INTO customers (id, user_id, first_name, last_name, email, phone)
+INSERT INTO menu_categories (id, storefront_id, name, description, sort_order, is_active, created_at, updated_at)
 VALUES
-  ('cust-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000010', 'John', 'Smith', 'john@example.com', '(905) 555-1111'),
-  ('cust-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000011', 'Sarah', 'Johnson', 'sarah@example.com', '(905) 555-2222'),
-  ('cust-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000012', 'Mike', 'Chen', 'mike@example.com', '(905) 555-3333')
+  ('cat-eby-01', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'Burgers & Sandwiches', 'Hand-crafted smash burgers and loaded sandwiches', 1, true, NOW(), NOW()),
+  ('cat-eby-02', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'Chicken', 'Nashville hot, crispy, and saucy chicken dishes', 2, true, NOW(), NOW()),
+  ('cat-hgp-01', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Phở & Noodle Soups', 'Slow-cooked broths and hand-crafted noodle soups', 1, true, NOW(), NOW()),
+  ('cat-hgp-02', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Rice & Vermicelli', 'Traditional rice and vermicelli dishes', 2, true, NOW(), NOW()),
+  ('cat-coo-01', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'Ramen & Soups', 'Rich tonkotsu and shoyu ramen bowls', 1, true, NOW(), NOW()),
+  ('cat-coo-02', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'Rice Bowls', 'Hearty Japanese rice bowl dishes', 2, true, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO customer_addresses (id, customer_id, label, address_line1, city, state, postal_code, country, lat, lng, is_default)
+-- ============================================================
+-- SECTION 6: MENU ITEMS (5 per storefront = 15 total)
+-- ============================================================
+
+INSERT INTO menu_items (
+  id, storefront_id, category_id, name, description,
+  price, image_url, is_available, is_featured,
+  dietary_tags, prep_time_minutes, sort_order,
+  created_at, updated_at
+)
 VALUES
-  ('addr-1111-1111-1111-111111111111', 'cust-1111-1111-1111-111111111111', 'Home', '100 Main Street West', 'Hamilton', 'ON', 'L8P 1H6', 'CA', 43.2550, -79.8700, true),
-  ('addr-1111-2222-2222-222222222222', 'cust-1111-1111-1111-111111111111', 'Work', '1 James Street South', 'Hamilton', 'ON', 'L8P 4R5', 'CA', 43.2570, -79.8710, false),
-  ('addr-2222-1111-1111-111111111111', 'cust-2222-2222-2222-222222222222', 'Home', '250 King Street East', 'Hamilton', 'ON', 'L8N 1B9', 'CA', 43.2530, -79.8550, true),
-  ('addr-3333-1111-1111-111111111111', 'cust-3333-3333-3333-333333333333', 'Home', '500 Upper James Street', 'Hamilton', 'ON', 'L9A 4X3', 'CA', 43.2350, -79.8650, true)
+  -- EVERY BITE YUM (Sean) — 5 dishes
+  ('item-eby-01', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'cat-eby-01',
+   'Classic Smash Burger',
+   'Double smash patties, American cheese, caramelized onions, house sauce, brioche bun. Crispy edges, juicy centre.',
+   18.99, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80',
+   true, true, ARRAY[]::text[], 20, 1, NOW(), NOW()),
+
+  ('item-eby-02', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'cat-eby-01',
+   'BBQ Bacon Smash Burger',
+   'Double smash patties, crispy bacon, aged cheddar, smoky BBQ sauce, pickled jalapeños, brioche bun.',
+   21.99, 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=600&q=80',
+   true, false, ARRAY[]::text[], 22, 2, NOW(), NOW()),
+
+  ('item-eby-03', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'cat-eby-02',
+   'Nashville Hot Chicken Sandwich',
+   'Crispy fried chicken thigh, Nashville hot sauce, coleslaw, pickles, brioche bun. Spicy, crunchy, and addictive.',
+   19.99, 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=600&q=80',
+   true, true, ARRAY[]::text[], 25, 3, NOW(), NOW()),
+
+  ('item-eby-04', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'cat-eby-02',
+   'Crispy Chicken Tenders (4pc)',
+   'Hand-breaded chicken tenders, golden crispy, served with your choice of dipping sauce.',
+   16.99, 'https://images.unsplash.com/photo-1562967914-608f82629710?w=600&q=80',
+   true, false, ARRAY[]::text[], 20, 4, NOW(), NOW()),
+
+  ('item-eby-05', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'cat-eby-01',
+   'Mushroom Swiss Smash Burger',
+   'Double smash patties, sautéed mushrooms, Swiss cheese, garlic aioli, arugula, brioche bun.',
+   20.99, 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=600&q=80',
+   true, false, ARRAY[]::text[], 22, 5, NOW(), NOW()),
+
+  -- HOÀNG GIA PHỞ (Tuan) — 5 dishes
+  ('item-hgp-01', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'cat-hgp-01',
+   'Beef Phở (Phở Bò)',
+   'Slow-simmered beef bone broth (12+ hours), rice noodles, tender beef slices, brisket, and meatballs. Serves 2.',
+   28.00, 'https://images.unsplash.com/photo-1555126634-323283e090fa?w=600&q=80',
+   true, true, ARRAY['Gluten-Free Option']::text[], 45, 1, NOW(), NOW()),
+
+  ('item-hgp-02', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'cat-hgp-01',
+   'Chicken Phở (Phở Gà)',
+   'Light and fragrant chicken broth, rice noodles, poached chicken breast, fresh ginger. Serves 2.',
+   26.00, 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&q=80',
+   true, false, ARRAY['Gluten-Free Option']::text[], 40, 2, NOW(), NOW()),
+
+  ('item-hgp-03', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'cat-hgp-01',
+   'Authentic Huế Beef Noodle Soup (Bún Bò Huế)',
+   'Spicy lemongrass beef broth, thick round noodles, beef shank, pork hock. A royal dish from the ancient capital of Huế. Serves 2.',
+   32.00, 'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=600&q=80',
+   true, true, ARRAY[]::text[], 50, 3, NOW(), NOW()),
+
+  ('item-hgp-04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'cat-hgp-02',
+   'Stir-Fried Pork Vermicelli (Bún Thịt Xào)',
+   'Grilled lemongrass pork, crispy spring rolls, vermicelli noodles, fresh herbs, pickled vegetables, house fish sauce dressing. Serves 2.',
+   24.00, 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80',
+   true, false, ARRAY[]::text[], 30, 4, NOW(), NOW()),
+
+  ('item-hgp-05', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'cat-hgp-02',
+   'Vietnamese Beef Stew (Bò Kho)',
+   'Slow-braised beef shank in aromatic lemongrass and star anise broth. Served with bánh mì or noodles. Serves 2.',
+   30.00, 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
+   true, false, ARRAY[]::text[], 45, 5, NOW(), NOW()),
+
+  -- COOCO (Ryo) — 5 dishes
+  ('item-coo-01', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'cat-coo-01',
+   'Tonkotsu Ramen',
+   'Rich, creamy pork bone broth simmered for 18 hours, thin ramen noodles, chashu pork belly, soft-boiled marinated egg, nori, bamboo shoots.',
+   22.00, 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&q=80',
+   true, true, ARRAY[]::text[], 25, 1, NOW(), NOW()),
+
+  ('item-coo-02', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'cat-coo-01',
+   'Shoyu Ramen',
+   'Clear soy-based chicken broth, wavy noodles, chicken chashu, marinated egg, menma, nori, and scallions.',
+   20.00, 'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=600&q=80',
+   true, false, ARRAY[]::text[], 20, 2, NOW(), NOW()),
+
+  ('item-coo-03', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'cat-coo-02',
+   'Chicken Katsu Curry',
+   'Crispy panko-breaded chicken cutlet over Japanese short-grain rice, topped with rich golden curry sauce. Served with pickled daikon.',
+   21.00, 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80',
+   true, true, ARRAY[]::text[], 25, 3, NOW(), NOW()),
+
+  ('item-coo-04', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'cat-coo-02',
+   'Gyudon (Beef Rice Bowl)',
+   'Thinly sliced beef and onions simmered in sweet dashi-soy broth, served over steamed Japanese rice with a soft-poached egg.',
+   19.00, 'https://images.unsplash.com/photo-1562967914-608f82629710?w=600&q=80',
+   true, false, ARRAY[]::text[], 20, 4, NOW(), NOW()),
+
+  ('item-coo-05', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'cat-coo-02',
+   'Karaage Chicken Don',
+   'Japanese fried chicken marinated in soy, ginger, and sake, served over steamed rice with Japanese mayo and teriyaki drizzle.',
+   20.00, 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=600&q=80',
+   true, false, ARRAY[]::text[], 22, 5, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
--- ==========================================
--- DRIVERS (2 drivers)
--- ==========================================
+-- ============================================================
+-- SECTION 7: CUSTOMERS
+-- ============================================================
 
-INSERT INTO drivers (id, user_id, first_name, last_name, phone, email, status)
+INSERT INTO customers (id, user_id, first_name, last_name, email, phone, created_at, updated_at)
 VALUES
-  ('driver-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000020', 'Tom', 'Wilson', '(905) 555-7777', 'tom@example.com', 'approved'),
-  ('driver-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000021', 'Lisa', 'Brown', '(905) 555-8888', 'lisa@example.com', 'approved')
+  ('cust-0001-0000-0000-0000-000000000001', '44444444-4444-4444-4444-444444444444',
+   'Alice', 'Thompson', 'alice@example.com', '+1 (905) 555-1001',
+   NOW() - INTERVAL '30 days', NOW()),
+  ('cust-0002-0000-0000-0000-000000000002', '55555555-5555-5555-5555-555555555555',
+   'Bob', 'Martinez', 'bob@example.com', '+1 (905) 555-1002',
+   NOW() - INTERVAL '20 days', NOW())
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO driver_vehicles (id, driver_id, vehicle_type, make, model, year, color, license_plate, is_active)
+-- ============================================================
+-- SECTION 8: CUSTOMER ADDRESSES
+-- ============================================================
+
+INSERT INTO customer_addresses (id, customer_id, label, address_line1, city, state, postal_code, country, is_default, created_at, updated_at)
 VALUES
-  ('vehicle-1111-1111-1111-111111111111', 'driver-1111-1111-1111-111111111111', 'car', 'Toyota', 'Camry', 2020, 'Silver', 'ABCD 123', true),
-  ('vehicle-2222-2222-2222-222222222222', 'driver-2222-2222-2222-222222222222', 'car', 'Honda', 'Civic', 2019, 'Blue', 'EFGH 456', true)
+  ('addr-0001-0000-0000-0000-000000000001',
+   'cust-0001-0000-0000-0000-000000000001',
+   'Home', '10 Main St W', 'Hamilton', 'ON', 'L8P 1H1', 'CA',
+   true, NOW(), NOW()),
+  ('addr-0002-0000-0000-0000-000000000002',
+   'cust-0002-0000-0000-0000-000000000002',
+   'Home', '25 Dundurn St N', 'Hamilton', 'ON', 'L8R 3E2', 'CA',
+   true, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO driver_presence (id, driver_id, status, current_lat, current_lng)
+-- ============================================================
+-- SECTION 9: DRIVERS (using 'drivers' table per schema)
+-- ============================================================
+
+INSERT INTO drivers (id, user_id, first_name, last_name, phone, email, status, created_at, updated_at)
 VALUES
-  ('presence-1111-1111-1111-111111111111', 'driver-1111-1111-1111-111111111111', 'online', 43.2560, -79.8690),
-  ('presence-2222-2222-2222-222222222222', 'driver-2222-2222-2222-222222222222', 'online', 43.2540, -79.8650)
-ON CONFLICT (driver_id) DO UPDATE SET status = EXCLUDED.status;
-
--- ==========================================
--- ORDERS (15 total with mix of statuses)
--- ==========================================
-
--- Generate order number function
-CREATE OR REPLACE FUNCTION generate_order_number() RETURNS TEXT AS $$
-BEGIN
-  RETURN 'RD-' || LPAD(FLOOR(RANDOM() * 1000000)::TEXT, 6, '0');
-END;
-$$ LANGUAGE plpgsql;
-
--- 5 Completed/Delivered Orders
-INSERT INTO orders (id, order_number, customer_id, storefront_id, delivery_address_id, status, subtotal, delivery_fee, service_fee, tax, tip, total, payment_status, special_instructions, created_at) VALUES
-  ('order-0001-0001-0001-000000000001', 'RD-100001', 'cust-1111-1111-1111-111111111111', 'store-1111-1111-1111-111111111111', 'addr-1111-1111-1111-111111111111', 'delivered', 32.97, 3.99, 2.50, 4.28, 5.00, 48.74, 'completed', NULL, NOW() - INTERVAL '7 days'),
-  ('order-0002-0002-0002-000000000002', 'RD-100002', 'cust-2222-2222-2222-222222222222', 'store-2222-2222-2222-222222222222', 'addr-2222-1111-1111-111111111111', 'delivered', 41.97, 0.00, 2.50, 5.78, 7.00, 57.25, 'completed', 'Extra spicy please!', NOW() - INTERVAL '5 days'),
-  ('order-0003-0003-0003-000000000003', 'RD-100003', 'cust-3333-3333-3333-333333333333', 'store-3333-3333-3333-333333333333', 'addr-3333-1111-1111-111111111111', 'delivered', 51.96, 3.99, 2.50, 7.60, 8.00, 74.05, 'completed', NULL, NOW() - INTERVAL '4 days'),
-  ('order-0004-0004-0004-000000000004', 'RD-100004', 'cust-1111-1111-1111-111111111111', 'store-4444-4444-4444-444444444444', 'addr-1111-1111-1111-111111111111', 'delivered', 35.97, 3.99, 2.50, 5.52, 6.00, 53.98, 'completed', 'No onions', NOW() - INTERVAL '3 days'),
-  ('order-0005-0005-0005-000000000005', 'RD-100005', 'cust-2222-2222-2222-222222222222', 'store-5555-5555-5555-555555555555', 'addr-2222-1111-1111-111111111111', 'delivered', 45.96, 0.00, 2.50, 6.30, 7.00, 61.76, 'completed', NULL, NOW() - INTERVAL '2 days'),
-
--- 3 Preparing Orders
-  ('order-0006-0006-0006-000000000006', 'RD-100006', 'cust-3333-3333-3333-333333333333', 'store-1111-1111-1111-111111111111', 'addr-3333-1111-1111-111111111111', 'preparing', 27.98, 3.99, 2.50, 4.48, 5.00, 43.95, 'completed', NULL, NOW() - INTERVAL '30 minutes'),
-  ('order-0007-0007-0007-000000000007', 'RD-100007', 'cust-1111-1111-1111-111111111111', 'store-2222-2222-2222-222222222222', 'addr-1111-1111-1111-111111111111', 'preparing', 30.97, 0.00, 2.50, 4.35, 4.00, 41.82, 'completed', 'Medium spice level', NOW() - INTERVAL '25 minutes'),
-  ('order-0008-0008-0008-000000000008', 'RD-100008', 'cust-2222-2222-2222-222222222222', 'store-5555-5555-5555-555555555555', 'addr-2222-1111-1111-111111111111', 'preparing', 31.97, 3.99, 2.50, 5.00, 5.00, 48.46, 'completed', NULL, NOW() - INTERVAL '20 minutes'),
-
--- 2 Pending Orders
-  ('order-0009-0009-0009-000000000009', 'RD-100009', 'cust-3333-3333-3333-333333333333', 'store-3333-3333-3333-333333333333', 'addr-3333-1111-1111-111111111111', 'pending', 34.97, 3.99, 2.50, 5.39, 0.00, 46.85, 'completed', NULL, NOW() - INTERVAL '10 minutes'),
-  ('order-0010-0010-0010-000000000010', 'RD-100010', 'cust-1111-1111-1111-111111111111', 'store-4444-4444-4444-444444444444', 'addr-1111-1111-1111-111111111111', 'pending', 25.98, 3.99, 2.50, 4.22, 4.00, 40.69, 'completed', NULL, NOW() - INTERVAL '5 minutes'),
-
--- 2 In Transit / Picked Up Orders
-  ('order-0011-0011-0011-000000000011', 'RD-100011', 'cust-2222-2222-2222-222222222222', 'store-1111-1111-1111-111111111111', 'addr-2222-1111-1111-111111111111', 'picked_up', 29.97, 3.99, 2.50, 4.74, 5.00, 46.20, 'completed', NULL, NOW() - INTERVAL '15 minutes'),
-  ('order-0012-0012-0012-000000000012', 'RD-100012', 'cust-3333-3333-3333-333333333333', 'store-2222-2222-2222-222222222222', 'addr-3333-1111-1111-111111111111', 'in_transit', 26.98, 3.99, 2.50, 4.35, 4.00, 41.82, 'completed', NULL, NOW() - INTERVAL '12 minutes'),
-
--- 2 Ready for Pickup Orders
-  ('order-0013-0013-0013-000000000013', 'RD-100013', 'cust-1111-1111-1111-111111111111', 'store-3333-3333-3333-333333333333', 'addr-1111-1111-1111-111111111111', 'ready_for_pickup', 42.96, 0.00, 2.50, 5.91, 6.00, 57.37, 'completed', NULL, NOW() - INTERVAL '18 minutes'),
-  ('order-0014-0014-0014-000000000014', 'RD-100014', 'cust-2222-2222-2222-222222222222', 'store-4444-4444-4444-444444444444', 'addr-2222-1111-1111-111111111111', 'ready_for_pickup', 31.97, 3.99, 2.50, 5.00, 5.00, 48.46, 'completed', NULL, NOW() - INTERVAL '22 minutes'),
-
--- 1 Cancelled Order
-  ('order-0015-0015-0015-000000000015', 'RD-100015', 'cust-3333-3333-3333-333333333333', 'store-5555-5555-5555-555555555555', 'addr-3333-1111-1111-111111111111', 'cancelled', 28.97, 3.99, 2.50, 4.61, 0.00, 40.07, 'refunded', 'Customer requested cancellation', NOW() - INTERVAL '1 day')
+  ('drv-00001-0000-0000-0000-000000000001',
+   '66666666-6666-6666-6666-666666666666',
+   'Mike', 'Chen', '+1 (905) 555-2001', 'mike.driver@ridendine.ca',
+   'approved', NOW() - INTERVAL '60 days', NOW()),
+  ('drv-00002-0000-0000-0000-000000000002',
+   '77777777-7777-7777-7777-777777777777',
+   'Sarah', 'Kim', '+1 (905) 555-2002', 'sarah.driver@ridendine.ca',
+   'approved', NOW() - INTERVAL '40 days', NOW())
 ON CONFLICT (id) DO NOTHING;
 
--- ==========================================
--- ORDER ITEMS
--- ==========================================
+-- ============================================================
+-- SECTION 10: DRIVER VEHICLES
+-- ============================================================
 
-INSERT INTO order_items (id, order_id, menu_item_id, menu_item_name, quantity, unit_price, total_price, special_instructions) VALUES
-  -- Order 1 items (Maria's Kitchen)
-  ('oi-0001-0001', 'order-0001-0001-0001-000000000001', 'item-maria-3', 'Tacos Al Pastor', 1, 14.99, 14.99, NULL),
-  ('oi-0001-0002', 'order-0001-0001-0001-000000000001', 'item-maria-1', 'Guacamole & Chips', 1, 8.99, 8.99, NULL),
-  ('oi-0001-0003', 'order-0001-0001-0001-000000000001', 'item-maria-9', 'Horchata', 2, 3.99, 7.98, NULL),
-
-  -- Order 2 items (Thai Home Cooking)
-  ('oi-0002-0001', 'order-0002-0002-0002-000000000002', 'item-thai-3', 'Pad Thai', 1, 14.99, 14.99, NULL),
-  ('oi-0002-0002', 'order-0002-0002-0002-000000000002', 'item-thai-6', 'Green Curry', 1, 15.99, 15.99, 'Extra spicy'),
-  ('oi-0002-0003', 'order-0002-0002-0002-000000000002', 'item-thai-8', 'Mango Sticky Rice', 1, 8.99, 8.99, NULL),
-
-  -- Order 3 items (Nonna's Table)
-  ('oi-0003-0001', 'order-0003-0003-0003-000000000003', 'item-nonna-4', 'Lasagna', 1, 17.99, 17.99, NULL),
-  ('oi-0003-0002', 'order-0003-0003-0003-000000000003', 'item-nonna-5', 'Pasta Carbonara', 1, 16.99, 16.99, NULL),
-  ('oi-0003-0003', 'order-0003-0003-0003-000000000003', 'item-nonna-9', 'Tiramisu', 2, 8.99, 17.98, NULL),
-
-  -- Order 4 items (Spice Route)
-  ('oi-0004-0001', 'order-0004-0004-0004-000000000004', 'item-spice-4', 'Shawarma Plate', 1, 15.99, 15.99, NULL),
-  ('oi-0004-0002', 'order-0004-0004-0004-000000000004', 'item-spice-1', 'Hummus & Pita', 1, 9.99, 9.99, NULL),
-  ('oi-0004-0003', 'order-0004-0004-0004-000000000004', 'item-spice-9', 'Baklava', 1, 6.99, 6.99, NULL),
-
-  -- Order 5 items (Seoul Kitchen)
-  ('oi-0005-0001', 'order-0005-0005-0005-000000000005', 'item-seoul-5', 'Korean Fried Chicken', 1, 16.99, 16.99, NULL),
-  ('oi-0005-0002', 'order-0005-0005-0005-000000000005', 'item-seoul-3', 'Bibimbap', 1, 14.99, 14.99, NULL),
-  ('oi-0005-0003', 'order-0005-0005-0005-000000000005', 'item-seoul-7', 'Kimchi Jjigae', 1, 13.99, 13.99, NULL),
-
-  -- Order 6 items
-  ('oi-0006-0001', 'order-0006-0006-0006-000000000006', 'item-maria-4', 'Enchiladas Verdes', 1, 15.99, 15.99, NULL),
-  ('oi-0006-0002', 'order-0006-0006-0006-000000000006', 'item-maria-7', 'Churros', 1, 7.99, 7.99, NULL),
-
-  -- Order 7 items
-  ('oi-0007-0001', 'order-0007-0007-0007-000000000007', 'item-thai-3', 'Pad Thai', 1, 14.99, 14.99, NULL),
-  ('oi-0007-0002', 'order-0007-0007-0007-000000000007', 'item-thai-1', 'Tom Yum Soup', 1, 11.99, 11.99, NULL),
-
-  -- Order 8 items
-  ('oi-0008-0001', 'order-0008-0008-0008-000000000008', 'item-seoul-4', 'Bulgogi Rice Bowl', 1, 15.99, 15.99, NULL),
-  ('oi-0008-0002', 'order-0008-0008-0008-000000000008', 'item-seoul-1', 'Kimchi Pancake', 1, 10.99, 10.99, NULL),
-
-  -- Order 9 items
-  ('oi-0009-0001', 'order-0009-0009-0009-000000000009', 'item-nonna-4', 'Lasagna', 1, 17.99, 17.99, NULL),
-  ('oi-0009-0002', 'order-0009-0009-0009-000000000009', 'item-nonna-6', 'Fettuccine Alfredo', 1, 15.99, 15.99, NULL),
-
-  -- Order 10 items
-  ('oi-0010-0001', 'order-0010-0010-0010-000000000010', 'item-spice-4', 'Shawarma Plate', 1, 15.99, 15.99, NULL),
-  ('oi-0010-0002', 'order-0010-0010-0010-000000000010', 'item-spice-10', 'Mint Tea', 2, 3.99, 7.98, NULL),
-
-  -- Order 11 items
-  ('oi-0011-0001', 'order-0011-0011-0011-000000000011', 'item-maria-3', 'Tacos Al Pastor', 2, 14.99, 29.98, NULL),
-
-  -- Order 12 items
-  ('oi-0012-0001', 'order-0012-0012-0012-000000000012', 'item-thai-3', 'Pad Thai', 1, 14.99, 14.99, NULL),
-  ('oi-0012-0002', 'order-0012-0012-0012-000000000012', 'item-thai-9', 'Thai Iced Tea', 2, 4.99, 9.98, NULL),
-
-  -- Order 13 items
-  ('oi-0013-0001', 'order-0013-0013-0013-000000000013', 'item-nonna-5', 'Pasta Carbonara', 2, 16.99, 33.98, NULL),
-  ('oi-0013-0002', 'order-0013-0013-0013-000000000013', 'item-nonna-9', 'Tiramisu', 1, 8.99, 8.99, NULL),
-
-  -- Order 14 items
-  ('oi-0014-0001', 'order-0014-0014-0014-000000000014', 'item-spice-5', 'Mixed Grill', 1, 19.99, 19.99, NULL),
-  ('oi-0014-0002', 'order-0014-0014-0014-000000000014', 'item-spice-1', 'Hummus & Pita', 1, 9.99, 9.99, NULL),
-
-  -- Order 15 items (cancelled)
-  ('oi-0015-0001', 'order-0015-0015-0015-000000000015', 'item-seoul-5', 'Korean Fried Chicken', 1, 16.99, 16.99, NULL),
-  ('oi-0015-0002', 'order-0015-0015-0015-000000000015', 'item-seoul-10', 'Bingsu', 1, 8.99, 8.99, NULL)
-ON CONFLICT (id) DO NOTHING;
-
--- ==========================================
--- DELIVERIES (8 linked to orders)
--- ==========================================
-
-INSERT INTO deliveries (id, order_id, driver_id, status, pickup_address, pickup_lat, pickup_lng, dropoff_address, dropoff_lat, dropoff_lng, delivery_fee, driver_payout, distance_km) VALUES
-  -- Delivered
-  ('del-0001', 'order-0001-0001-0001-000000000001', 'driver-1111-1111-1111-111111111111', 'delivered', '456 James Street North, Hamilton, ON', 43.2650, -79.8680, '100 Main Street West, Hamilton, ON', 43.2550, -79.8700, 3.99, 5.50, 2.1),
-  ('del-0002', 'order-0002-0002-0002-000000000002', 'driver-2222-2222-2222-222222222222', 'delivered', '123 King Street East, Hamilton, ON', 43.2530, -79.8620, '250 King Street East, Hamilton, ON', 43.2530, -79.8550, 0.00, 4.50, 1.5),
-  ('del-0003', 'order-0003-0003-0003-000000000003', 'driver-1111-1111-1111-111111111111', 'delivered', '789 Locke Street South, Hamilton, ON', 43.2480, -79.8760, '500 Upper James Street, Hamilton, ON', 43.2350, -79.8650, 3.99, 6.00, 2.8),
-  ('del-0004', 'order-0004-0004-0004-000000000004', 'driver-2222-2222-2222-222222222222', 'delivered', '321 Ottawa Street North, Hamilton, ON', 43.2580, -79.8320, '100 Main Street West, Hamilton, ON', 43.2550, -79.8700, 3.99, 7.00, 3.5),
-  ('del-0005', 'order-0005-0005-0005-000000000005', 'driver-1111-1111-1111-111111111111', 'delivered', '567 Barton Street East, Hamilton, ON', 43.2620, -79.8450, '250 King Street East, Hamilton, ON', 43.2530, -79.8550, 0.00, 5.00, 2.0),
-
-  -- In Transit
-  ('del-0011', 'order-0011-0011-0011-000000000011', 'driver-1111-1111-1111-111111111111', 'picked_up', '456 James Street North, Hamilton, ON', 43.2650, -79.8680, '250 King Street East, Hamilton, ON', 43.2530, -79.8550, 3.99, 5.50, 2.2),
-  ('del-0012', 'order-0012-0012-0012-000000000012', 'driver-2222-2222-2222-222222222222', 'en_route_to_dropoff', '123 King Street East, Hamilton, ON', 43.2530, -79.8620, '500 Upper James Street, Hamilton, ON', 43.2350, -79.8650, 3.99, 6.50, 3.0),
-
-  -- Assigned (ready for pickup)
-  ('del-0013', 'order-0013-0013-0013-000000000013', 'driver-1111-1111-1111-111111111111', 'assigned', '789 Locke Street South, Hamilton, ON', 43.2480, -79.8760, '100 Main Street West, Hamilton, ON', 43.2550, -79.8700, 0.00, 4.00, 1.8)
-ON CONFLICT (id) DO NOTHING;
-
--- ==========================================
--- REVIEWS (10 reviews, ratings 4-5 stars)
--- ==========================================
-
-INSERT INTO reviews (id, order_id, customer_id, storefront_id, rating, comment, is_visible, created_at) VALUES
-  ('rev-0001', 'order-0001-0001-0001-000000000001', 'cust-1111-1111-1111-111111111111', 'store-1111-1111-1111-111111111111', 5, 'Absolutely delicious tacos! The al pastor was perfectly marinated and the salsa was fresh. Will definitely order again!', true, NOW() - INTERVAL '6 days'),
-  ('rev-0002', 'order-0002-0002-0002-000000000002', 'cust-2222-2222-2222-222222222222', 'store-2222-2222-2222-222222222222', 5, 'Best Pad Thai I''ve had outside of Thailand! The green curry was also amazing. Highly recommend!', true, NOW() - INTERVAL '4 days'),
-  ('rev-0003', 'order-0003-0003-0003-000000000003', 'cust-3333-3333-3333-333333333333', 'store-3333-3333-3333-333333333333', 4, 'Great Italian food! The lasagna was hearty and the tiramisu was divine. Only minor issue was delivery took a bit longer than expected.', true, NOW() - INTERVAL '3 days'),
-  ('rev-0004', 'order-0004-0004-0004-000000000004', 'cust-1111-1111-1111-111111111111', 'store-4444-4444-4444-444444444444', 5, 'The shawarma was incredible! So flavorful and generous portions. The hummus was the creamiest I''ve ever had.', true, NOW() - INTERVAL '2 days'),
-  ('rev-0005', 'order-0005-0005-0005-000000000005', 'cust-2222-2222-2222-222222222222', 'store-5555-5555-5555-555555555555', 5, 'Korean fried chicken was crispy perfection! The bibimbap was fresh and delicious. Love this place!', true, NOW() - INTERVAL '1 day'),
-  ('rev-0006', 'order-0001-0001-0001-000000000001', 'cust-2222-2222-2222-222222222222', 'store-1111-1111-1111-111111111111', 4, 'Really good Mexican food. The churros were a nice sweet ending!', true, NOW() - INTERVAL '8 days'),
-  ('rev-0007', 'order-0002-0002-0002-000000000002', 'cust-3333-3333-3333-333333333333', 'store-2222-2222-2222-222222222222', 5, 'Tom Yum soup was so authentic! Reminded me of my trip to Bangkok.', true, NOW() - INTERVAL '7 days'),
-  ('rev-0008', 'order-0003-0003-0003-000000000003', 'cust-1111-1111-1111-111111111111', 'store-3333-3333-3333-333333333333', 5, 'Pasta carbonara was restaurant quality! Rosa really knows her Italian cuisine.', true, NOW() - INTERVAL '6 days'),
-  ('rev-0009', 'order-0004-0004-0004-000000000004', 'cust-2222-2222-2222-222222222222', 'store-4444-4444-4444-444444444444', 4, 'Great falafel! Wish the portion was slightly bigger but taste was perfect.', true, NOW() - INTERVAL '5 days'),
-  ('rev-0010', 'order-0005-0005-0005-000000000005', 'cust-1111-1111-1111-111111111111', 'store-5555-5555-5555-555555555555', 5, 'Kimchi jjigae was so comforting! Perfect for a cold Hamilton day.', true, NOW() - INTERVAL '4 days')
-ON CONFLICT (id) DO NOTHING;
-
--- ==========================================
--- PROMO CODES
--- ==========================================
-
-INSERT INTO promo_codes (id, code, description, discount_type, discount_value, min_order_amount, usage_limit, is_active)
+INSERT INTO driver_vehicles (id, driver_id, vehicle_type, make, model, year, color, license_plate, is_active, created_at, updated_at)
 VALUES
-  ('promo-0001', 'WELCOME10', 'Welcome discount - 10% off your first order', 'percentage', 10, 15.00, 1000, true),
-  ('promo-0002', 'FREESHIP', 'Free delivery on orders over $25', 'fixed', 5.00, 25.00, NULL, true),
-  ('promo-0003', 'HAMILTON20', '20% off for Hamilton residents', 'percentage', 20, 20.00, 500, true)
+  ('veh-00001-0000-0000-0000-000000000001',
+   'drv-00001-0000-0000-0000-000000000001',
+   'car', 'Toyota', 'Corolla', 2021, 'Silver', 'ABCD 123',
+   true, NOW(), NOW()),
+  ('veh-00002-0000-0000-0000-000000000002',
+   'drv-00002-0000-0000-0000-000000000002',
+   'car', 'Honda', 'Civic', 2020, 'Blue', 'EFGH 456',
+   true, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
--- ==========================================
--- PLATFORM USERS (Ops Admin)
--- ==========================================
+-- ============================================================
+-- SECTION 11: ORDERS (schema-compliant with delivery_address_id)
+-- ============================================================
 
-INSERT INTO platform_users (id, user_id, email, name, role, is_active)
+INSERT INTO orders (
+  id, order_number, customer_id, storefront_id, delivery_address_id,
+  status, payment_status,
+  subtotal, delivery_fee, service_fee, tax, tip, total,
+  special_instructions,
+  created_at, updated_at
+)
 VALUES
-  ('platform-0001', '00000000-0000-0000-0000-000000000030', 'ops@ridendine.ca', 'Ops Admin', 'ops_admin', true)
+  -- Order 1: Every Bite Yum - delivered
+  ('ord-00001-0000-0000-0000-000000000001', 'RND-001',
+   'cust-0001-0000-0000-0000-000000000001',
+   'dddddddd-dddd-dddd-dddd-dddddddddddd',
+   'addr-0001-0000-0000-0000-000000000001',
+   'delivered', 'completed',
+   40.98, 5.00, 2.00, 5.98, 2.00, 55.96,
+   'Please ring doorbell',
+   NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days' + INTERVAL '45 minutes'),
+
+  -- Order 2: HOÀNG GIA PHỞ - delivered
+  ('ord-00002-0000-0000-0000-000000000002', 'RND-002',
+   'cust-0002-0000-0000-0000-000000000002',
+   'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+   'addr-0002-0000-0000-0000-000000000002',
+   'delivered', 'completed',
+   58.00, 5.00, 2.00, 8.19, 3.00, 76.19,
+   'Extra herbs please',
+   NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days' + INTERVAL '55 minutes'),
+
+  -- Order 3: COOCO - delivered
+  ('ord-00003-0000-0000-0000-000000000003', 'RND-003',
+   'cust-0001-0000-0000-0000-000000000001',
+   'ffffffff-ffff-ffff-ffff-ffffffffffff',
+   'addr-0001-0000-0000-0000-000000000001',
+   'delivered', 'completed',
+   43.00, 5.00, 2.00, 6.24, 2.00, 58.24,
+   NULL,
+   NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days' + INTERVAL '40 minutes'),
+
+  -- Order 4: Every Bite Yum - preparing
+  ('ord-00004-0000-0000-0000-000000000004', 'RND-004',
+   'cust-0002-0000-0000-0000-000000000002',
+   'dddddddd-dddd-dddd-dddd-dddddddddddd',
+   'addr-0002-0000-0000-0000-000000000002',
+   'preparing', 'pending',
+   39.98, 5.00, 2.00, 5.82, 0.00, 52.80,
+   NULL,
+   NOW() - INTERVAL '30 minutes', NOW() - INTERVAL '20 minutes'),
+
+  -- Order 5: HOÀNG GIA PHỞ - pending
+  ('ord-00005-0000-0000-0000-000000000005', 'RND-005',
+   'cust-0001-0000-0000-0000-000000000001',
+   'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+   'addr-0001-0000-0000-0000-000000000001',
+   'pending', 'pending',
+   54.00, 5.00, 2.00, 7.65, 0.00, 68.65,
+   'No spice please',
+   NOW() - INTERVAL '10 minutes', NOW() - INTERVAL '10 minutes'),
+
+  -- Order 6: COOCO - ready_for_pickup
+  ('ord-00006-0000-0000-0000-000000000006', 'RND-006',
+   'cust-0002-0000-0000-0000-000000000002',
+   'ffffffff-ffff-ffff-ffff-ffffffffffff',
+   'addr-0002-0000-0000-0000-000000000002',
+   'ready_for_pickup', 'pending',
+   41.00, 5.00, 2.00, 5.97, 0.00, 53.97,
+   NULL,
+   NOW() - INTERVAL '45 minutes', NOW() - INTERVAL '15 minutes')
 ON CONFLICT (id) DO NOTHING;
 
--- ==========================================
--- SUPPORT TICKETS (Sample)
--- ==========================================
+-- ============================================================
+-- SECTION 12: ORDER ITEMS (using menu_item_name per schema)
+-- ============================================================
 
-INSERT INTO support_tickets (id, order_id, customer_id, subject, description, status, priority, created_at)
+INSERT INTO order_items (id, order_id, menu_item_id, menu_item_name, quantity, unit_price, total_price, created_at)
 VALUES
-  ('ticket-0001', 'order-0015-0015-0015-000000000015', 'cust-3333-3333-3333-333333333333', 'Order Cancellation Refund', 'I cancelled my order but haven''t received my refund yet. Order number RD-100015.', 'open', 'medium', NOW() - INTERVAL '23 hours'),
-  ('ticket-0002', NULL, 'cust-1111-1111-1111-111111111111', 'Can''t update delivery address', 'I''m trying to add a new delivery address but the save button doesn''t work.', 'in_progress', 'low', NOW() - INTERVAL '2 days')
+  ('oi-001-01', 'ord-00001-0000-0000-0000-000000000001', 'item-eby-01', 'Classic Smash Burger', 1, 18.99, 18.99, NOW() - INTERVAL '5 days'),
+  ('oi-001-02', 'ord-00001-0000-0000-0000-000000000001', 'item-eby-03', 'Nashville Hot Chicken Sandwich', 1, 19.99, 19.99, NOW() - INTERVAL '5 days'),
+  ('oi-002-01', 'ord-00002-0000-0000-0000-000000000002', 'item-hgp-01', 'Beef Phở (Phở Bò)', 1, 28.00, 28.00, NOW() - INTERVAL '3 days'),
+  ('oi-002-02', 'ord-00002-0000-0000-0000-000000000002', 'item-hgp-03', 'Authentic Huế Beef Noodle Soup (Bún Bò Huế)', 1, 32.00, 32.00, NOW() - INTERVAL '3 days'),
+  ('oi-003-01', 'ord-00003-0000-0000-0000-000000000003', 'item-coo-01', 'Tonkotsu Ramen', 1, 22.00, 22.00, NOW() - INTERVAL '2 days'),
+  ('oi-003-02', 'ord-00003-0000-0000-0000-000000000003', 'item-coo-03', 'Chicken Katsu Curry', 1, 21.00, 21.00, NOW() - INTERVAL '2 days'),
+  ('oi-004-01', 'ord-00004-0000-0000-0000-000000000004', 'item-eby-02', 'BBQ Bacon Smash Burger', 1, 21.99, 21.99, NOW() - INTERVAL '30 minutes'),
+  ('oi-004-02', 'ord-00004-0000-0000-0000-000000000004', 'item-eby-04', 'Crispy Chicken Tenders (4pc)', 1, 16.99, 16.99, NOW() - INTERVAL '30 minutes'),
+  ('oi-005-01', 'ord-00005-0000-0000-0000-000000000005', 'item-hgp-02', 'Chicken Phở (Phở Gà)', 1, 26.00, 26.00, NOW() - INTERVAL '10 minutes'),
+  ('oi-005-02', 'ord-00005-0000-0000-0000-000000000005', 'item-hgp-04', 'Stir-Fried Pork Vermicelli (Bún Thịt Xào)', 1, 24.00, 24.00, NOW() - INTERVAL '10 minutes'),
+  ('oi-006-01', 'ord-00006-0000-0000-0000-000000000006', 'item-coo-04', 'Gyudon (Beef Rice Bowl)', 1, 19.00, 19.00, NOW() - INTERVAL '45 minutes'),
+  ('oi-006-02', 'ord-00006-0000-0000-0000-000000000006', 'item-coo-05', 'Karaage Chicken Don', 1, 20.00, 20.00, NOW() - INTERVAL '45 minutes')
 ON CONFLICT (id) DO NOTHING;
 
--- Drop the helper function
-DROP FUNCTION IF EXISTS generate_order_number();
+-- ============================================================
+-- SECTION 13: ORDER STATUS HISTORY
+-- ============================================================
+
+INSERT INTO order_status_history (id, order_id, status, notes, created_at)
+VALUES
+  ('osh-001-01', 'ord-00001-0000-0000-0000-000000000001', 'pending', 'Order placed by customer', NOW() - INTERVAL '5 days'),
+  ('osh-001-02', 'ord-00001-0000-0000-0000-000000000001', 'accepted', 'Order accepted by chef', NOW() - INTERVAL '5 days' + INTERVAL '5 minutes'),
+  ('osh-001-03', 'ord-00001-0000-0000-0000-000000000001', 'preparing', 'Chef started preparing', NOW() - INTERVAL '5 days' + INTERVAL '10 minutes'),
+  ('osh-001-04', 'ord-00001-0000-0000-0000-000000000001', 'ready_for_pickup', 'Order ready for pickup', NOW() - INTERVAL '5 days' + INTERVAL '30 minutes'),
+  ('osh-001-05', 'ord-00001-0000-0000-0000-000000000001', 'picked_up', 'Driver picked up order', NOW() - INTERVAL '5 days' + INTERVAL '35 minutes'),
+  ('osh-001-06', 'ord-00001-0000-0000-0000-000000000001', 'delivered', 'Order delivered successfully', NOW() - INTERVAL '5 days' + INTERVAL '45 minutes'),
+  ('osh-002-01', 'ord-00002-0000-0000-0000-000000000002', 'pending', 'Order placed by customer', NOW() - INTERVAL '3 days'),
+  ('osh-002-02', 'ord-00002-0000-0000-0000-000000000002', 'accepted', 'Order accepted by chef', NOW() - INTERVAL '3 days' + INTERVAL '8 minutes'),
+  ('osh-002-03', 'ord-00002-0000-0000-0000-000000000002', 'preparing', 'Chef started preparing', NOW() - INTERVAL '3 days' + INTERVAL '12 minutes'),
+  ('osh-002-04', 'ord-00002-0000-0000-0000-000000000002', 'ready_for_pickup', 'Order ready for pickup', NOW() - INTERVAL '3 days' + INTERVAL '40 minutes'),
+  ('osh-002-05', 'ord-00002-0000-0000-0000-000000000002', 'picked_up', 'Driver picked up order', NOW() - INTERVAL '3 days' + INTERVAL '48 minutes'),
+  ('osh-002-06', 'ord-00002-0000-0000-0000-000000000002', 'delivered', 'Order delivered successfully', NOW() - INTERVAL '3 days' + INTERVAL '55 minutes'),
+  ('osh-003-01', 'ord-00003-0000-0000-0000-000000000003', 'pending', 'Order placed', NOW() - INTERVAL '2 days'),
+  ('osh-003-02', 'ord-00003-0000-0000-0000-000000000003', 'accepted', 'Accepted', NOW() - INTERVAL '2 days' + INTERVAL '5 minutes'),
+  ('osh-003-03', 'ord-00003-0000-0000-0000-000000000003', 'preparing', 'Preparing', NOW() - INTERVAL '2 days' + INTERVAL '10 minutes'),
+  ('osh-003-04', 'ord-00003-0000-0000-0000-000000000003', 'ready_for_pickup', 'Ready', NOW() - INTERVAL '2 days' + INTERVAL '28 minutes'),
+  ('osh-003-05', 'ord-00003-0000-0000-0000-000000000003', 'picked_up', 'Picked up', NOW() - INTERVAL '2 days' + INTERVAL '32 minutes'),
+  ('osh-003-06', 'ord-00003-0000-0000-0000-000000000003', 'delivered', 'Delivered', NOW() - INTERVAL '2 days' + INTERVAL '40 minutes'),
+  ('osh-004-01', 'ord-00004-0000-0000-0000-000000000004', 'pending', 'Order placed', NOW() - INTERVAL '30 minutes'),
+  ('osh-004-02', 'ord-00004-0000-0000-0000-000000000004', 'accepted', 'Accepted by chef', NOW() - INTERVAL '25 minutes'),
+  ('osh-004-03', 'ord-00004-0000-0000-0000-000000000004', 'preparing', 'Chef is preparing now', NOW() - INTERVAL '20 minutes'),
+  ('osh-005-01', 'ord-00005-0000-0000-0000-000000000005', 'pending', 'Order placed', NOW() - INTERVAL '10 minutes'),
+  ('osh-006-01', 'ord-00006-0000-0000-0000-000000000006', 'pending', 'Order placed', NOW() - INTERVAL '45 minutes'),
+  ('osh-006-02', 'ord-00006-0000-0000-0000-000000000006', 'accepted', 'Accepted', NOW() - INTERVAL '40 minutes'),
+  ('osh-006-03', 'ord-00006-0000-0000-0000-000000000006', 'preparing', 'Preparing', NOW() - INTERVAL '35 minutes'),
+  ('osh-006-04', 'ord-00006-0000-0000-0000-000000000006', 'ready_for_pickup', 'Ready for pickup — awaiting driver', NOW() - INTERVAL '15 minutes')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- SECTION 14: DELIVERIES (using 'drivers' FK per schema)
+-- ============================================================
+
+INSERT INTO deliveries (
+  id, order_id, driver_id, status,
+  pickup_address, dropoff_address,
+  distance_km, delivery_fee, driver_payout,
+  created_at, updated_at
+)
+VALUES
+  ('del-00001-0000-0000-0000-000000000001',
+   'ord-00001-0000-0000-0000-000000000001',
+   'drv-00001-0000-0000-0000-000000000001',
+   'delivered',
+   '123 King St W, Hamilton, ON L8P 1A1',
+   '10 Main St W, Hamilton, ON L8P 1H1',
+   3.2, 5.00, 8.50,
+   NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days' + INTERVAL '45 minutes'),
+
+  ('del-00002-0000-0000-0000-000000000002',
+   'ord-00002-0000-0000-0000-000000000002',
+   'drv-00002-0000-0000-0000-000000000002',
+   'delivered',
+   '456 Barton St E, Hamilton, ON L8L 2Y5',
+   '25 Dundurn St N, Hamilton, ON L8R 3E2',
+   4.1, 5.00, 9.50,
+   NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days' + INTERVAL '55 minutes'),
+
+  ('del-00003-0000-0000-0000-000000000003',
+   'ord-00003-0000-0000-0000-000000000003',
+   'drv-00001-0000-0000-0000-000000000001',
+   'delivered',
+   '789 Concession St, Hamilton, ON L8V 1C9',
+   '10 Main St W, Hamilton, ON L8P 1H1',
+   2.9, 5.00, 7.50,
+   NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days' + INTERVAL '40 minutes'),
+
+  ('del-00006-0000-0000-0000-000000000006',
+   'ord-00006-0000-0000-0000-000000000006',
+   'drv-00001-0000-0000-0000-000000000001',
+   'assigned',
+   '789 Concession St, Hamilton, ON L8V 1C9',
+   '25 Dundurn St N, Hamilton, ON L8R 3E2',
+   2.8, 5.00, 7.50,
+   NOW() - INTERVAL '15 minutes', NOW() - INTERVAL '15 minutes')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- SECTION 15: REVIEWS
+-- ============================================================
+
+INSERT INTO reviews (id, order_id, customer_id, storefront_id, rating, comment, created_at, updated_at)
+VALUES
+  ('rev-00001-0000-0000-0000-000000000001',
+   'ord-00001-0000-0000-0000-000000000001',
+   'cust-0001-0000-0000-0000-000000000001',
+   'dddddddd-dddd-dddd-dddd-dddddddddddd',
+   5, 'Best smash burger I''ve ever had! The caramelized onions were perfect. Will definitely order again.',
+   NOW() - INTERVAL '5 days' + INTERVAL '2 hours', NOW()),
+  ('rev-00002-0000-0000-0000-000000000002',
+   'ord-00002-0000-0000-0000-000000000002',
+   'cust-0002-0000-0000-0000-000000000002',
+   'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+   5, 'The Bún Bò Huế was absolutely incredible. Authentic flavours, generous portions, and delivered hot. Tuan is amazing!',
+   NOW() - INTERVAL '3 days' + INTERVAL '2 hours', NOW()),
+  ('rev-00003-0000-0000-0000-000000000003',
+   'ord-00003-0000-0000-0000-000000000003',
+   'cust-0001-0000-0000-0000-000000000001',
+   'ffffffff-ffff-ffff-ffff-ffffffffffff',
+   5, 'The tonkotsu ramen broth was so rich and creamy. You can tell it was simmered for hours. Ryo is a true craftsman.',
+   NOW() - INTERVAL '2 days' + INTERVAL '2 hours', NOW())
+ON CONFLICT (id) DO NOTHING;

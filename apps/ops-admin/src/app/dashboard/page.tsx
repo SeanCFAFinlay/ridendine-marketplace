@@ -69,7 +69,7 @@ async function getDashboardStats() {
     }
 
     try {
-      const driversResult = await supabase.from('driver_profiles').select('*', { count: 'exact', head: true }).eq('status', 'approved');
+      const driversResult = await supabase.from('drivers').select('*', { count: 'exact', head: true }).eq('status', 'approved');
       totalDrivers = driversResult.count ?? 0;
     } catch (e) {
       console.log('Driver profiles not available');

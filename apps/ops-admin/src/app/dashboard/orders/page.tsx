@@ -188,7 +188,7 @@ export default function OrdersPage() {
                       </Badge>
                     </td>
                     <td className="py-4 font-medium text-white">
-                      ${(order.total / 100).toFixed(2)}
+                      ${Number(order.total).toFixed(2)}
                     </td>
                     <td className="py-4 text-gray-400">
                       {new Date(order.created_at).toLocaleString('en-US', {

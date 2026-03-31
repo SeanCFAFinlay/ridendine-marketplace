@@ -27,7 +27,8 @@ interface Order {
     address: string;
   };
   customer_addresses: {
-    street_address: string;
+    address_line1: string;
+    address_line2?: string | null;
     city: string;
     state: string;
     postal_code: string;
@@ -41,7 +42,7 @@ interface Delivery {
   pickup_address: string;
   dropoff_address: string;
   estimated_dropoff_at: string | null;
-  driver_profiles?: {
+  drivers?: {
     first_name: string;
     last_name: string;
     phone: string;
@@ -106,8 +107,8 @@ export default function OrderConfirmationPage() {
         .from('orders')
         .select(`
           *,
-          chef_storefronts (name, address),
-          customer_addresses (street_address, city, state, postal_code)
+          chef_storefronts (name),
+          customer_addresses (address_line1, address_line2, city, state, postal_code)
         `)
         .eq('id', orderId)
         .single();
@@ -120,7 +121,7 @@ export default function OrderConfirmationPage() {
         .from('deliveries')
         .select(`
           *,
-          driver_profiles (first_name, last_name, phone)
+          drivers (first_name, last_name, phone)
         `)
         .eq('order_id', orderId)
         .single();
@@ -328,16 +329,16 @@ export default function OrderConfirmationPage() {
                   dropoffAddress={delivery.dropoff_address}
                 />
               </div>
-              {delivery.driver_profiles && (
+              {delivery.drivers && (
                 <div className="mt-4 flex items-center justify-between border-t pt-4">
                   <div>
                     <p className="font-medium text-gray-900">
-                      {delivery.driver_profiles.first_name} {delivery.driver_profiles.last_name}
+                      {delivery.drivers!.first_name} {delivery.drivers!.last_name}
                     </p>
                     <p className="text-sm text-gray-500">Your Driver</p>
                   </div>
                   <a
-                    href={`tel:${delivery.driver_profiles.phone}`}
+                    href={`tel:${delivery.drivers!.phone}`}
                     className="flex items-center gap-2 rounded-full bg-[#E85D26] px-4 py-2 text-white hover:bg-[#D04D16]"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -361,14 +362,14 @@ export default function OrderConfirmationPage() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Delivery Address</span>
                 <span className="font-medium text-right">
-                  {order.customer_addresses?.street_address}<br />
+                  {order.customer_addresses?.address_line1}{order.customer_addresses?.address_line2 ? `, ${order.customer_addresses.address_line2}` : ''}<br />
                   {order.customer_addresses?.city}, {order.customer_addresses?.state}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Order Total</span>
                 <span className="font-semibold text-[#E85D26]">
-                  ${(order.total / 100).toFixed(2)}
+                  ${Number(order.total).toFixed(2)}
                 </span>
               </div>
             </div>

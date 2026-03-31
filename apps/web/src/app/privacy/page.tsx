@@ -2,8 +2,8 @@ import { Header } from '@/components/layout/header';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Privacy Policy | Ridendine',
-  description: 'Ridendine privacy policy - how we collect, use, and protect your personal information.',
+  title: 'Privacy Policy | RideNDine',
+  description: 'RideNDine privacy policy - how we collect, use, and protect your personal information.',
 };
 
 export default function PrivacyPage() {

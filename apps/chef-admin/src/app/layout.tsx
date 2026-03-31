@@ -1,16 +1,14 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import { AuthProvider } from '@ridendine/auth';
 import './globals.css';
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-});
-
 export const metadata: Metadata = {
-  title: 'Chef Dashboard - Ridendine',
-  description: 'Manage your storefront, menu, and orders on Ridendine.',
+  title: 'Chef Dashboard - RideNDine',
+  description: 'Manage your storefront, menu, and orders on RideNDine.',
+  icons: {
+    icon: '/logo-icon.png',
+    apple: '/logo-icon.png',
+  },
 };
 
 export default function RootLayout({
@@ -19,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <body className="min-h-screen bg-[#FAFAFA] font-sans antialiased">
         <AuthProvider>{children}</AuthProvider>
       </body>

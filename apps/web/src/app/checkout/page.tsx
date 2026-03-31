@@ -28,7 +28,8 @@ interface Cart {
 interface Address {
   id: string;
   label: string;
-  street_address: string;
+  address_line1: string;
+  address_line2?: string | null;
   city: string;
   state: string;
   postal_code: string;
@@ -203,9 +204,9 @@ function CheckoutContent() {
 
   const displayBreakdown = breakdown || {
     subtotal,
-    deliveryFee: 399,
-    serviceFee: Math.round(subtotal * 0.08),
-    tax: Math.round((subtotal + Math.round(subtotal * 0.08)) * 0.13),
+    deliveryFee: 5.00,
+    serviceFee: Math.round(subtotal * 0.08 * 100) / 100,
+    tax: Math.round((subtotal + Math.round(subtotal * 0.08 * 100) / 100) * 0.13 * 100) / 100,
     tip: calculateTip(),
     discount: 0,
   };
@@ -245,7 +246,7 @@ function CheckoutContent() {
                       <div>
                         <p className="font-medium text-gray-900">{address.label}</p>
                         <p className="text-sm text-gray-500">
-                          {address.street_address}, {address.city}, {address.state} {address.postal_code}
+                          {address.address_line1}{address.address_line2 ? `, ${address.address_line2}` : ''}, {address.city}, {address.state} {address.postal_code}
                         </p>
                       </div>
                     </label>
@@ -293,7 +294,7 @@ function CheckoutContent() {
                         <span className="block text-sm">{option.label}</span>
                         {option.percent && (
                           <span className="block text-xs text-gray-500">
-                            ${(tipValue / 100).toFixed(2)}
+                            ${Number(tipValue).toFixed(2)}
                           </span>
                         )}
                       </button>
@@ -348,7 +349,7 @@ function CheckoutContent() {
                         <p className="font-medium text-gray-900">{item.name}</p>
                         <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                       </div>
-                      <p className="font-medium">${((item.price * item.quantity) / 100).toFixed(2)}</p>
+                      <p className="font-medium">${Number(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
@@ -395,36 +396,36 @@ function CheckoutContent() {
             <div className="mt-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="text-gray-900">${(displayBreakdown.subtotal / 100).toFixed(2)}</span>
+                <span className="text-gray-900">${Number(displayBreakdown.subtotal).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Delivery fee</span>
-                <span className="text-gray-900">${(displayBreakdown.deliveryFee / 100).toFixed(2)}</span>
+                <span className="text-gray-900">${Number(displayBreakdown.deliveryFee).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Service fee (8%)</span>
-                <span className="text-gray-900">${(displayBreakdown.serviceFee / 100).toFixed(2)}</span>
+                <span className="text-gray-900">${Number(displayBreakdown.serviceFee).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">HST (13%)</span>
-                <span className="text-gray-900">${(displayBreakdown.tax / 100).toFixed(2)}</span>
+                <span className="text-gray-900">${Number(displayBreakdown.tax).toFixed(2)}</span>
               </div>
               {displayBreakdown.tip > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Tip</span>
-                  <span className="text-gray-900">${(displayBreakdown.tip / 100).toFixed(2)}</span>
+                  <span className="text-gray-900">${Number(displayBreakdown.tip).toFixed(2)}</span>
                 </div>
               )}
               {displayBreakdown.discount > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Discount</span>
-                  <span>-${(displayBreakdown.discount / 100).toFixed(2)}</span>
+                  <span>-${Number(displayBreakdown.discount).toFixed(2)}</span>
                 </div>
               )}
               <div className="border-t border-gray-200 pt-2">
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span className="text-[#E85D26]">${(total / 100).toFixed(2)}</span>
+                  <span className="text-[#E85D26]">${Number(total).toFixed(2)}</span>
                 </div>
               </div>
             </div>

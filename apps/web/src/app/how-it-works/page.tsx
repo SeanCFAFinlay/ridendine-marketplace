@@ -3,8 +3,8 @@ import { Card } from '@ridendine/ui';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'How It Works | Ridendine',
-  description: 'Learn how to order delicious homemade food from local chefs on Ridendine.',
+  title: 'How It Works | RideNDine',
+  description: 'Learn how to order delicious homemade food from local chefs on RideNDine.',
 };
 
 export default function HowItWorksPage() {

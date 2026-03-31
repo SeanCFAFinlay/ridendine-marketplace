@@ -65,7 +65,7 @@ export default function SignupPage() {
 
   return (
     <AuthLayout
-      title="Become a Ridendine Chef"
+      title="Become a RideNDine Chef"
       subtitle="Join our community of home chefs"
     >
       <form onSubmit={handleSubmit} className="space-y-4">

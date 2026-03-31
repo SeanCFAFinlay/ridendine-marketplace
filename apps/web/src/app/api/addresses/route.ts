@@ -47,11 +47,12 @@ export async function POST(request: Request) {
     const address = await createAddress(supabase, {
       customer_id: customer.id,
       label: validated.label,
-      street_address: validated.addressLine1,
+      address_line1: validated.addressLine1,           // Fixed: was street_address
+      address_line2: validated.addressLine2 || null,   // Fixed: was missing
       city: validated.city,
       state: validated.state,
       postal_code: validated.postalCode,
-      country: validated.country || 'US',
+      country: validated.country || 'CA',
       lat: validated.lat || null,
       lng: validated.lng || null,
       delivery_instructions: validated.deliveryInstructions || null,
@@ -97,7 +98,10 @@ export async function PATCH(request: Request) {
       updates.label = validated.label;
     }
     if (validated.addressLine1 !== undefined) {
-      updates.street_address = validated.addressLine1;
+      updates.address_line1 = validated.addressLine1;  // Fixed: was street_address
+    }
+    if (validated.addressLine2 !== undefined) {
+      updates.address_line2 = validated.addressLine2;  // Fixed: was missing
     }
     if (validated.city !== undefined) {
       updates.city = validated.city;

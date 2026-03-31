@@ -106,23 +106,26 @@ export async function POST(request: Request) {
 
     await clearCart(supabase, cart.id);
 
-    // Get storefront address for pickup
+    // Get storefront kitchen address for pickup
     const { data: storefront } = await supabase
       .from('chef_storefronts')
-      .select('address')
+      .select('name, chef_kitchens(address_line1, city, state, postal_code)')
       .eq('id', storefrontId)
       .single();
 
     // Get delivery address
     const { data: deliveryAddress } = await supabase
       .from('customer_addresses')
-      .select('street_address, city, state, postal_code')
+      .select('address_line1, address_line2, city, state, postal_code')
       .eq('id', deliveryAddressId)
       .single();
 
-    const pickupAddr = storefront?.address || 'Pickup address';
+    const kitchen = (storefront as any)?.chef_kitchens;
+    const pickupAddr = kitchen
+      ? `${kitchen.address_line1}, ${kitchen.city}, ${kitchen.state} ${kitchen.postal_code}`
+      : (storefront?.name || 'Pickup address');
     const dropoffAddr = deliveryAddress
-      ? `${deliveryAddress.street_address}, ${deliveryAddress.city}, ${deliveryAddress.state} ${deliveryAddress.postal_code}`
+      ? `${deliveryAddress.address_line1}${deliveryAddress.address_line2 ? ` ${deliveryAddress.address_line2}` : ''}, ${deliveryAddress.city}, ${deliveryAddress.state} ${deliveryAddress.postal_code}`
       : 'Delivery address';
 
     const delivery = await createDelivery(supabase, {
@@ -141,7 +144,7 @@ export async function POST(request: Request) {
       actual_dropoff_at: null,
       distance_km: null,
       delivery_fee: deliveryFee,
-      driver_payout: Math.round(deliveryFee * 0.8),
+      driver_payout: Number((deliveryFee * 0.8).toFixed(2)),
       pickup_photo_url: null,
       dropoff_photo_url: null,
       customer_signature_url: null,
