@@ -92,7 +92,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   for (const item of navItems) {
     if (item.section) currentSection = item.section;
     if (!sections[currentSection]) sections[currentSection] = [];
-    sections[currentSection].push(item);
+    sections[currentSection]!.push(item);
   }
 
   return (

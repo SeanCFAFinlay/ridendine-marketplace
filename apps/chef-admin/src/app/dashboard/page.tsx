@@ -162,7 +162,7 @@ export default async function DashboardPage() {
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {storefront.chef_profiles?.display_name || 'Chef'} 👋
+          Welcome back, Chef 👋
         </h1>
         <p className="mt-1 text-gray-500">
           Here&apos;s what&apos;s happening with <span className="font-medium text-gray-700">{storefront.name}</span> today.

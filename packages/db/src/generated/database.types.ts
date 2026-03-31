@@ -389,7 +389,8 @@ export type Database = {
           id: string
           customer_id: string
           label: string
-          street_address: string
+          address_line1: string
+          address_line2: string | null
           city: string
           state: string
           postal_code: string
@@ -405,7 +406,8 @@ export type Database = {
           id?: string
           customer_id: string
           label: string
-          street_address: string
+          address_line1: string
+          address_line2?: string | null
           city: string
           state: string
           postal_code: string
@@ -421,7 +423,8 @@ export type Database = {
           id?: string
           customer_id?: string
           label?: string
-          street_address?: string
+          address_line1?: string
+          address_line2?: string | null
           city?: string
           state?: string
           postal_code?: string

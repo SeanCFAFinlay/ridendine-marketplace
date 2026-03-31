@@ -85,7 +85,7 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
           </div>
           <div className="text-right">
             <p className="text-sm font-semibold text-gray-900">
-              {driver?.display_name || 'Driver'}
+              {driver ? `${driver.first_name} ${driver.last_name}` : 'Driver'}
             </p>
             <p className="text-xs text-gray-400">Hamilton, ON</p>
           </div>
