@@ -1,26 +1,38 @@
 {
   "name": "@ridendine/engine",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./orders": "./src/services/orders.service.ts",
-    "./chefs": "./src/services/chefs.service.ts",
-    "./customers": "./src/services/customers.service.ts",
-    "./permissions": "./src/services/permissions.service.ts",
-    "./storage": "./src/services/storage.service.ts"
+    "./core": "./src/core/index.ts",
+    "./orders": "./src/orchestrators/order.orchestrator.ts",
+    "./kitchen": "./src/orchestrators/kitchen.engine.ts",
+    "./dispatch": "./src/orchestrators/dispatch.engine.ts",
+    "./commerce": "./src/orchestrators/commerce.engine.ts",
+    "./support": "./src/orchestrators/support.engine.ts",
+    "./services/orders": "./src/services/orders.service.ts",
+    "./services/chefs": "./src/services/chefs.service.ts",
+    "./services/customers": "./src/services/customers.service.ts",
+    "./services/permissions": "./src/services/permissions.service.ts",
+    "./services/storage": "./src/services/storage.service.ts",
+    "./services/dispatch": "./src/services/dispatch.service.ts",
+    "./constants": "./src/constants.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@ridendine/db": "workspace:*",
     "@ridendine/types": "workspace:*",
-    "@ridendine/validation": "workspace:*"
+    "@ridendine/validation": "workspace:*",
+    "@supabase/supabase-js": "^2.45.0"
   },
   "devDependencies": {
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^1.0.0"
   }
 }

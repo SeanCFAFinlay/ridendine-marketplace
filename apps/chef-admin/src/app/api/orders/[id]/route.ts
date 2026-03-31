@@ -1,124 +1,202 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient, getOrderById, updateOrderStatus, getStorefrontByChefId } from '@ridendine/db';
-import { dispatchOrder } from '@ridendine/engine';
+// ==========================================
+// CHEF-ADMIN ORDER API
+// Powered by Central Engine
+// ==========================================
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+import { NextRequest } from 'next/server';
+import { createAdminClient } from '@ridendine/db';
+import {
+  getEngine,
+  getChefActorContext,
+  verifyChefOwnsOrder,
+  errorResponse,
+  successResponse,
+} from '@/lib/engine';
+import type { OrderRejectReason } from '@ridendine/types';
+
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
+    const { id: orderId } = await params;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const chefContext = await getChefActorContext();
+    if (!chefContext) {
+      return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
     }
 
-    const order = await getOrderById(supabase as any, params.id);
-    if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    // Verify chef owns this order
+    const ownsOrder = await verifyChefOwnsOrder(chefContext.storefrontId, orderId);
+    if (!ownsOrder) {
+      return errorResponse('FORBIDDEN', 'This order does not belong to your storefront', 403);
     }
 
-    const { data: chefProfile }: any = await supabase
-      .from('chef_profiles')
-      .select('id')
-      .eq('user_id', user.id)
+    const adminClient = createAdminClient();
+
+    // Get order with related data
+    const { data: order, error } = await adminClient
+      .from('orders')
+      .select(`
+        *,
+        customer:customers (
+          id, first_name, last_name, phone, email
+        ),
+        delivery_address:customer_addresses (
+          address_line1, address_line2, city, state, postal_code, lat, lng,
+          delivery_instructions
+        ),
+        items:order_items (
+          id, quantity, unit_price, total_price, special_instructions,
+          menu_item:menu_items (id, name, description)
+        ),
+        delivery:deliveries (
+          id, status, driver_id,
+          driver:drivers (first_name, last_name, phone)
+        )
+      `)
+      .eq('id', orderId)
       .single();
 
-    if (!chefProfile) {
-      return NextResponse.json({ error: 'Chef profile not found' }, { status: 404 });
+    if (error || !order) {
+      return errorResponse('NOT_FOUND', 'Order not found', 404);
     }
 
-    const storefront = await getStorefrontByChefId(supabase as any, chefProfile.id);
-    if (!storefront || storefront.id !== order.storefront_id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // Get allowed actions for this chef
+    const engine = getEngine();
+    const allowedActions = await engine.orders.getAllowedActions(orderId, 'chef_user');
 
-    const { data: customer }: any = await supabase
-      .from('customers')
-      .select('id, first_name, last_name, phone, email')
-      .eq('id', order.customer_id)
-      .single();
-
-    const { data: address }: any = order.delivery_address_id
-      ? await supabase
-          .from('delivery_addresses')
-          .select('id, street_address, city, state, postal_code')
-          .eq('id', order.delivery_address_id)
-          .single()
-      : { data: null };
-
-    return NextResponse.json({
-      order: {
-        ...order,
-        customer,
-        address,
-      },
+    return successResponse({
+      order,
+      allowedActions,
     });
   } catch (error) {
     console.error('Error fetching order:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
+    const { id: orderId } = await params;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const chefContext = await getChefActorContext();
+    if (!chefContext) {
+      return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
     }
 
-    const order = await getOrderById(supabase as any, params.id);
-    if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-    }
-
-    const { data: chefProfile }: any = await supabase
-      .from('chef_profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!chefProfile) {
-      return NextResponse.json({ error: 'Chef profile not found' }, { status: 404 });
-    }
-
-    const storefront = await getStorefrontByChefId(supabase as any, chefProfile.id);
-    if (!storefront || storefront.id !== order.storefront_id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // Verify chef owns this order
+    const ownsOrder = await verifyChefOwnsOrder(chefContext.storefrontId, orderId);
+    if (!ownsOrder) {
+      return errorResponse('FORBIDDEN', 'This order does not belong to your storefront', 403);
     }
 
     const body = await request.json();
-    const { status } = body;
+    const { action, ...actionParams } = body;
 
-    const validStatuses = ['accepted', 'rejected', 'preparing', 'ready_for_pickup'];
-    if (!status || !validStatuses.includes(status)) {
-      return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
-    }
+    const engine = getEngine();
+    const { actor } = chefContext;
 
-    const updatedOrder = await updateOrderStatus(supabase as any, params.id, status);
-
-    // Dispatch to driver when order is ready for pickup
-    if (status === 'ready_for_pickup') {
-      const dispatchResult = await dispatchOrder(supabase as any, params.id);
-      if (dispatchResult.success) {
-        console.log(`Order ${params.id} dispatched to driver ${dispatchResult.driverId}`);
-      } else {
-        console.log(`Dispatch pending for order ${params.id}: ${dispatchResult.error}`);
+    switch (action) {
+      case 'accept': {
+        const result = await engine.orders.acceptOrder(
+          orderId,
+          actionParams.estimatedPrepMinutes || 20,
+          actor
+        );
+        if (!result.success) {
+          return errorResponse(result.error!.code, result.error!.message);
+        }
+        return successResponse(result.data);
       }
-    }
 
-    return NextResponse.json({ order: updatedOrder });
+      case 'reject': {
+        if (!actionParams.reason) {
+          return errorResponse('MISSING_REASON', 'Rejection reason is required');
+        }
+        const result = await engine.orders.rejectOrder(
+          orderId,
+          actionParams.reason as OrderRejectReason,
+          actionParams.notes,
+          actor
+        );
+        if (!result.success) {
+          return errorResponse(result.error!.code, result.error!.message);
+        }
+        return successResponse(result.data);
+      }
+
+      case 'start_preparing': {
+        const result = await engine.orders.startPreparing(orderId, actor);
+        if (!result.success) {
+          return errorResponse(result.error!.code, result.error!.message);
+        }
+        return successResponse(result.data);
+      }
+
+      case 'mark_ready': {
+        const result = await engine.orders.markReady(orderId, actor);
+        if (!result.success) {
+          return errorResponse(result.error!.code, result.error!.message);
+        }
+
+        // After marking ready, request dispatch
+        await engine.dispatch.requestDispatch(orderId, { userId: 'system', role: 'system' });
+
+        return successResponse(result.data);
+      }
+
+      case 'update_prep_time': {
+        if (!actionParams.estimatedPrepMinutes) {
+          return errorResponse('MISSING_TIME', 'Estimated prep time is required');
+        }
+        const result = await engine.kitchen.updatePrepTime(
+          orderId,
+          actionParams.estimatedPrepMinutes,
+          actor
+        );
+        if (!result.success) {
+          return errorResponse(result.error!.code, result.error!.message);
+        }
+        return successResponse({ updated: true });
+      }
+
+      // Legacy status-based update for backwards compatibility
+      case undefined: {
+        const { status } = body;
+        if (!status) {
+          return errorResponse('MISSING_ACTION', 'Action or status is required');
+        }
+
+        // Map legacy status to action
+        const statusActionMap: Record<string, string> = {
+          accepted: 'accept',
+          preparing: 'start_preparing',
+          ready_for_pickup: 'mark_ready',
+          rejected: 'reject',
+        };
+
+        const mappedAction = statusActionMap[status];
+        if (!mappedAction) {
+          return errorResponse('INVALID_STATUS', `Invalid status: ${status}`);
+        }
+
+        // Recursive call with mapped action
+        const newBody = { action: mappedAction, ...actionParams };
+        const newRequest = new Request(request.url, {
+          method: 'PATCH',
+          headers: request.headers,
+          body: JSON.stringify(newBody),
+        });
+        return PATCH(newRequest as NextRequest, { params });
+      }
+
+      default:
+        return errorResponse('INVALID_ACTION', `Unknown action: ${action}`);
+    }
   } catch (error) {
     console.error('Error updating order:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }

@@ -1,62 +1,70 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient, getStorefrontByChefId, updateStorefront } from '@ridendine/db';
+// ==========================================
+// CHEF-ADMIN STOREFRONT API
+// Powered by Central Engine
+// ==========================================
 
-export async function GET(request: NextRequest) {
+import { NextRequest } from 'next/server';
+import { createAdminClient } from '@ridendine/db';
+import {
+  getEngine,
+  getChefActorContext,
+  errorResponse,
+  successResponse,
+} from '@/lib/engine';
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * GET /api/storefront
+ * Get current chef's storefront
+ */
+export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const chefContext = await getChefActorContext();
+    if (!chefContext) {
+      return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
     }
 
-    const { data: chefProfile }: any = await supabase
-      .from('chef_profiles')
-      .select('id')
-      .eq('user_id', user.id)
+    const adminClient = createAdminClient();
+
+    // Get storefront with kitchen info
+    const { data: storefront, error } = await adminClient
+      .from('chef_storefronts')
+      .select(`
+        *,
+        kitchen:chef_kitchens (
+          id,
+          address,
+          lat,
+          lng,
+          is_verified
+        )
+      `)
+      .eq('id', chefContext.storefrontId)
       .single();
 
-    if (!chefProfile) {
-      return NextResponse.json({ error: 'Chef profile not found' }, { status: 404 });
+    if (error || !storefront) {
+      return errorResponse('NOT_FOUND', 'Storefront not found', 404);
     }
 
-    const storefront = await getStorefrontByChefId(supabase as any, chefProfile.id);
-    if (!storefront) {
-      return NextResponse.json({ error: 'Storefront not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ storefront });
+    return successResponse({
+      storefront,
+    });
   } catch (error) {
     console.error('Error fetching storefront:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }
 
+/**
+ * PATCH /api/storefront
+ * Update storefront settings
+ */
 export async function PATCH(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { data: chefProfile }: any = await supabase
-      .from('chef_profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!chefProfile) {
-      return NextResponse.json({ error: 'Chef profile not found' }, { status: 404 });
-    }
-
-    const storefront = await getStorefrontByChefId(supabase as any, chefProfile.id);
-    if (!storefront) {
-      return NextResponse.json({ error: 'Storefront not found' }, { status: 404 });
+    const chefContext = await getChefActorContext();
+    if (!chefContext) {
+      return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
     }
 
     const body = await request.json();
@@ -68,9 +76,14 @@ export async function PATCH(request: NextRequest) {
       estimated_prep_time_min,
       estimated_prep_time_max,
       is_active,
+      accepting_orders,
     } = body;
 
-    const updates: any = {};
+    const adminClient = createAdminClient();
+    const engine = getEngine();
+
+    // Build updates object
+    const updates: Record<string, unknown> = {};
     if (name !== undefined) updates.name = name;
     if (description !== undefined) updates.description = description;
     if (cuisine_types !== undefined) updates.cuisine_types = cuisine_types;
@@ -78,12 +91,37 @@ export async function PATCH(request: NextRequest) {
     if (estimated_prep_time_min !== undefined) updates.estimated_prep_time_min = estimated_prep_time_min;
     if (estimated_prep_time_max !== undefined) updates.estimated_prep_time_max = estimated_prep_time_max;
     if (is_active !== undefined) updates.is_active = is_active;
+    if (accepting_orders !== undefined) updates.accepting_orders = accepting_orders;
 
-    const updatedStorefront = await updateStorefront(supabase as any, storefront.id, updates);
+    if (Object.keys(updates).length === 0) {
+      return errorResponse('NO_UPDATES', 'No fields to update');
+    }
 
-    return NextResponse.json({ storefront: updatedStorefront });
+    updates.updated_at = new Date().toISOString();
+
+    const { data: storefront, error } = await adminClient
+      .from('chef_storefronts')
+      .update(updates)
+      .eq('id', chefContext.storefrontId)
+      .select()
+      .single();
+
+    if (error) {
+      return errorResponse('UPDATE_ERROR', error.message);
+    }
+
+    // Log the update via audit
+    await engine.audit.log({
+      action: 'update',
+      entityType: 'storefront',
+      entityId: chefContext.storefrontId,
+      actor: chefContext.actor,
+      afterState: updates,
+    });
+
+    return successResponse({ storefront });
   } catch (error) {
     console.error('Error updating storefront:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }

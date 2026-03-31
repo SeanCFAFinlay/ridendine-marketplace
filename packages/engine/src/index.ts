@@ -1,23 +1,23 @@
 // ==========================================
-// RIDENDINE ENGINE - SHARED BUSINESS LOGIC
+// RIDENDINE ENGINE - CENTRAL BUSINESS LOGIC
 // ==========================================
 
-// Order services
+// Core engine factory and utilities
+export * from './core';
+
+// Domain orchestrators
+export * from './orchestrators/order.orchestrator';
+export * from './orchestrators/kitchen.engine';
+export * from './orchestrators/dispatch.engine';
+export * from './orchestrators/commerce.engine';
+export * from './orchestrators/support.engine';
+
+// Legacy services (for backwards compatibility)
 export * from './services/orders.service';
-
-// Chef services
 export * from './services/chefs.service';
-
-// Customer services
 export * from './services/customers.service';
-
-// Permission services
 export * from './services/permissions.service';
-
-// Storage services
 export * from './services/storage.service';
-
-// Dispatch services
 export * from './services/dispatch.service';
 
 // Constants

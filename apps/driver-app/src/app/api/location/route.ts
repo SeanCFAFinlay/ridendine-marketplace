@@ -1,49 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import {
-  createServerClient,
-  getDriverByUserId,
-  updateDriverLocation,
-  createDeliveryTrackingEvent,
-  getDeliveryById,
-  type SupabaseClient,
-} from '@ridendine/db';
+// ==========================================
+// DRIVER-APP LOCATION API
+// Powered by Central Engine
+// ==========================================
+
+import { NextRequest } from 'next/server';
+import { createAdminClient } from '@ridendine/db';
 import { locationUpdateSchema } from '@ridendine/validation';
+import {
+  getEngine,
+  getDriverActorContext,
+  errorResponse,
+  successResponse,
+} from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
+// Rate limiting (in-memory, per-instance)
 const RATE_LIMIT_MS = 5000;
 const locationUpdateTimestamps = new Map<string, number>();
 
+/**
+ * POST /api/location
+ * Update driver's current location
+ */
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore) as unknown as SupabaseClient;
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const driverContext = await getDriverActorContext();
+    if (!driverContext) {
+      return errorResponse('UNAUTHORIZED', 'Not authenticated or not approved', 401);
     }
 
-    const driver = await getDriverByUserId(supabase, user.id);
+    const { driverId } = driverContext;
 
-    if (!driver) {
-      return NextResponse.json(
-        { error: 'Driver profile not found' },
-        { status: 404 }
-      );
-    }
-
-    const lastUpdate = locationUpdateTimestamps.get(driver.id);
+    // Rate limit check
+    const lastUpdate = locationUpdateTimestamps.get(driverId);
     const now = Date.now();
     if (lastUpdate && now - lastUpdate < RATE_LIMIT_MS) {
-      return NextResponse.json(
-        { error: 'Rate limit exceeded. Please wait before sending another update.' },
-        { status: 429 }
+      return errorResponse(
+        'RATE_LIMITED',
+        'Please wait before sending another update',
+        429
       );
     }
 
@@ -51,51 +47,99 @@ export async function POST(request: NextRequest) {
     const validationResult = locationUpdateSchema.safeParse(body);
 
     if (!validationResult.success) {
-      return NextResponse.json(
-        { error: 'Invalid request body', details: validationResult.error.flatten() },
-        { status: 400 }
+      return errorResponse(
+        'VALIDATION_ERROR',
+        'Invalid request body',
+        400
       );
     }
 
     const { lat, lng, accuracy, heading, speed, deliveryId } = validationResult.data;
 
-    await updateDriverLocation(supabase, driver.id, lat, lng);
+    const adminClient = createAdminClient();
+    const engine = getEngine();
 
-    await (supabase as any).from('driver_locations').insert({
-      driver_id: driver.id,
+    // Update driver's current location in driver_presence
+    await adminClient
+      .from('driver_presence')
+      .upsert({
+        driver_id: driverId,
+        current_lat: lat,
+        current_lng: lng,
+        last_location_at: new Date().toISOString(),
+      }, {
+        onConflict: 'driver_id',
+      });
+
+    // Record location history
+    await (adminClient as any).from('driver_locations').insert({
+      driver_id: driverId,
       lat,
       lng,
+      accuracy,
+      heading,
+      speed,
       recorded_at: new Date().toISOString(),
     });
 
+    // If actively delivering, create tracking event
     if (deliveryId) {
-      const delivery = await getDeliveryById(supabase, deliveryId);
-      if (delivery && delivery.driver_id === driver.id) {
-        await createDeliveryTrackingEvent(supabase, {
-          delivery_id: deliveryId,
-          driver_id: driver.id,
-          lat,
-          lng,
-          accuracy,
-        });
+      // Verify driver owns this delivery
+      const { data: delivery } = await adminClient
+        .from('deliveries')
+        .select('driver_id, status')
+        .eq('id', deliveryId)
+        .single();
+
+      if (delivery && delivery.driver_id === driverId) {
+        // Only track if delivery is in an active status
+        const activeStatuses = [
+          'assigned',
+          'en_route_to_pickup',
+          'arrived_at_pickup',
+          'picked_up',
+          'en_route_to_dropoff',
+          'arrived_at_dropoff',
+        ];
+
+        if (activeStatuses.includes(delivery.status)) {
+          await (adminClient as any).from('delivery_tracking_events').insert({
+            delivery_id: deliveryId,
+            driver_id: driverId,
+            lat,
+            lng,
+            accuracy,
+            recorded_at: new Date().toISOString(),
+          });
+
+          // Emit realtime event for customer tracking
+          engine.events.emit(
+            'driver_location_updated',
+            'delivery',
+            deliveryId,
+            {
+              lat,
+              lng,
+              heading,
+              speed,
+              deliveryStatus: delivery.status,
+            },
+            driverContext.actor
+          );
+          await engine.events.flush();
+        }
       }
     }
 
-    locationUpdateTimestamps.set(driver.id, now);
+    locationUpdateTimestamps.set(driverId, now);
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        lat,
-        lng,
-        timestamp: new Date().toISOString(),
-      },
+    return successResponse({
+      lat,
+      lng,
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Error updating location:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }

@@ -7,6 +7,7 @@ const nextConfig = {
     '@ridendine/types',
     '@ridendine/utils',
     '@ridendine/validation',
+    '@ridendine/engine',
   ],
   images: {
     remotePatterns: [

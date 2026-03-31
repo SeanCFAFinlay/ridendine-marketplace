@@ -7,7 +7,16 @@ const nextConfig = {
     '@ridendine/types',
     '@ridendine/utils',
     '@ridendine/validation',
+    '@ridendine/engine',
   ],
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+    ],
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },

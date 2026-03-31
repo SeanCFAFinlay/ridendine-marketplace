@@ -1,61 +1,93 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient, getStorefrontByChefId, getOrdersByStorefront } from '@ridendine/db';
+// ==========================================
+// CHEF-ADMIN ORDERS LIST API
+// Powered by Central Engine
+// ==========================================
 
-export async function GET(request: NextRequest) {
+import { createAdminClient } from '@ridendine/db';
+import {
+  getEngine,
+  getChefActorContext,
+  errorResponse,
+  successResponse,
+} from '@/lib/engine';
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * GET /api/orders
+ * Get all orders for the chef's storefront
+ */
+export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const chefContext = await getChefActorContext();
+    if (!chefContext) {
+      return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
     }
 
-    const { data: chefProfile }: any = await supabase
-      .from('chef_profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
+    const adminClient = createAdminClient();
 
-    if (!chefProfile) {
-      return NextResponse.json({ error: 'Chef profile not found' }, { status: 404 });
+    // Get orders for this storefront with related data
+    const { data: orders, error } = await adminClient
+      .from('orders')
+      .select(`
+        id,
+        order_number,
+        status,
+        total,
+        subtotal,
+        tip,
+        delivery_fee,
+        service_fee,
+        tax,
+        special_instructions,
+        estimated_ready_at,
+        created_at,
+        updated_at,
+        customer_id,
+        delivery_address_id
+      `)
+      .eq('storefront_id', chefContext.storefrontId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return errorResponse('FETCH_ERROR', error.message);
     }
-
-    const storefront = await getStorefrontByChefId(supabase as any, chefProfile.id);
-    if (!storefront) {
-      return NextResponse.json({ error: 'Storefront not found' }, { status: 404 });
-    }
-
-    const orders = await getOrdersByStorefront(supabase as any, storefront.id);
 
     // Enrich with customer data
-    const customerIds = [...new Set(orders.map((o: any) => o.customer_id).filter(Boolean))];
-    const { data: customers }: any = customerIds.length > 0
-      ? await supabase
+    const customerIds = [...new Set(orders.map((o) => o.customer_id).filter(Boolean))];
+    const { data: customers } = customerIds.length > 0
+      ? await adminClient
           .from('customers')
           .select('id, first_name, last_name, phone, email')
           .in('id', customerIds)
       : { data: [] };
 
-    // Enrich with delivery address data (correct table name: customer_addresses)
-    const addressIds = [...new Set(orders.map((o: any) => o.delivery_address_id).filter(Boolean))];
-    const { data: addresses }: any = addressIds.length > 0
-      ? await supabase
+    // Enrich with delivery address data
+    const addressIds = [...new Set(orders.map((o) => o.delivery_address_id).filter(Boolean))];
+    const { data: addresses } = addressIds.length > 0
+      ? await adminClient
           .from('customer_addresses')
           .select('id, address_line1, address_line2, city, state, postal_code, country')
           .in('id', addressIds)
       : { data: [] };
 
-    const ordersWithDetails = orders.map((order: any) => ({
-      ...order,
-      customer: customers?.find((c: any) => c.id === order.customer_id) || null,
-      address: addresses?.find((a: any) => a.id === order.delivery_address_id) || null,
-    }));
+    // Get allowed actions for each order
+    const engine = getEngine();
+    const ordersWithDetails = await Promise.all(
+      orders.map(async (order) => {
+        const allowedActions = await engine.orders.getAllowedActions(order.id, 'chef_user');
+        return {
+          ...order,
+          customer: customers?.find((c) => c.id === order.customer_id) || null,
+          address: addresses?.find((a) => a.id === order.delivery_address_id) || null,
+          allowedActions,
+        };
+      })
+    );
 
-    return NextResponse.json({ orders: ordersWithDetails });
+    return successResponse({ orders: ordersWithDetails });
   } catch (error) {
     console.error('Error fetching orders:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }

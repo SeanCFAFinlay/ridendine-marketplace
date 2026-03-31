@@ -1,9 +1,17 @@
+// ==========================================
+// WEB CHECKOUT API
+// Powered by Central Engine
+// ==========================================
+
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import Stripe from 'stripe';
-import { createServerClient, getCartWithItems, createOrder, createOrderItems, clearCart, createDelivery, validatePromoCode } from '@ridendine/db';
-import { getCurrentCustomer, handleApiError } from '@/lib/auth-helpers';
-import { generateOrderNumber } from '@/lib/order-helpers';
+import { createAdminClient, getCartWithItems, clearCart } from '@ridendine/db';
+import {
+  getEngine,
+  getCustomerActorContext,
+  errorResponse,
+  successResponse,
+} from '@/lib/engine';
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -14,178 +22,190 @@ function getStripe() {
   });
 }
 
-// Platform fee constants
-const PLATFORM_FEE_PERCENT = 15;
-const SERVICE_FEE_PERCENT = 8;
-const HST_RATE = 13;
-const DELIVERY_FEE = 399; // $3.99 in cents
-
-export async function POST(request: Request): Promise<NextResponse> {
+export async function POST(request: Request): Promise<Response> {
   try {
+    const customerContext = await getCustomerActorContext();
+    if (!customerContext) {
+      return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    }
+
     const body = await request.json();
-    const { storefrontId, deliveryAddressId, tip = 0, promoCode } = body;
+    const { storefrontId, deliveryAddressId, tip = 0, promoCode, specialInstructions } = body;
 
     if (!storefrontId || !deliveryAddressId) {
-      return NextResponse.json(
-        { error: 'storefrontId and deliveryAddressId are required' },
-        { status: 400 }
-      );
+      return errorResponse('MISSING_FIELDS', 'storefrontId and deliveryAddressId are required');
     }
 
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
-    const customer = await getCurrentCustomer(supabase);
+    const adminClient = createAdminClient();
 
     // Get cart with items
-    const cart = await getCartWithItems(supabase, customer.id, storefrontId);
+    const cart = await getCartWithItems(adminClient as any, customerContext.customerId, storefrontId);
 
     if (!cart || !cart.cart_items || cart.cart_items.length === 0) {
-      return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+      return errorResponse('EMPTY_CART', 'Cart is empty');
     }
 
-    // Calculate subtotal
-    const subtotal = cart.cart_items.reduce(
-      (sum: number, item: any) => sum + item.unit_price * item.quantity,
-      0
-    );
-
-    // Apply promo code discount
-    let discount = 0;
+    // Validate promo code if provided
+    let promoDiscount = 0;
     let promoCodeId: string | null = null;
     if (promoCode) {
-      const validation = await validatePromoCode(supabase as any, promoCode, subtotal);
-      if (!validation.valid) {
-        return NextResponse.json({ error: validation.error }, { status: 400 });
+      const { data: promo } = await (adminClient as any)
+        .from('promo_codes')
+        .select('*')
+        .eq('code', promoCode.toUpperCase())
+        .eq('is_active', true)
+        .single();
+
+      if (promo) {
+        // Check validity
+        const now = new Date();
+        if (promo.valid_from && new Date(promo.valid_from) > now) {
+          return errorResponse('PROMO_NOT_ACTIVE', 'Promo code is not yet active');
+        }
+        if (promo.valid_until && new Date(promo.valid_until) < now) {
+          return errorResponse('PROMO_EXPIRED', 'Promo code has expired');
+        }
+        if (promo.max_uses && promo.times_used >= promo.max_uses) {
+          return errorResponse('PROMO_EXHAUSTED', 'Promo code has reached maximum uses');
+        }
+
+        promoCodeId = promo.id;
+        if (promo.discount_type === 'percentage') {
+          const subtotal = cart.cart_items.reduce(
+            (sum: number, item: { unit_price: number; quantity: number }) =>
+              sum + item.unit_price * item.quantity,
+            0
+          );
+          promoDiscount = Math.round(subtotal * (promo.discount_value / 100));
+        } else {
+          promoDiscount = promo.discount_value;
+        }
+      } else {
+        return errorResponse('INVALID_PROMO', 'Invalid or inactive promo code');
       }
-      discount = validation.discount ?? 0;
-      promoCodeId = validation.promoId ?? null;
     }
 
-    // Calculate fees
-    const deliveryFee = DELIVERY_FEE;
-    const serviceFee = Math.round(subtotal * (SERVICE_FEE_PERCENT / 100));
-    const taxableAmount = subtotal + serviceFee;
-    const tax = Math.round(taxableAmount * (HST_RATE / 100));
-    const tipAmount = tip;
-    const total = subtotal + deliveryFee + serviceFee + tax + tipAmount - discount;
+    // Transform cart items to engine input format
+    const items = cart.cart_items.map((item: {
+      menu_item_id: string;
+      quantity: number;
+      special_instructions?: string;
+      selected_options?: Array<{ optionId: string; valueId: string; priceAdjustment: number }>;
+    }) => ({
+      menuItemId: item.menu_item_id,
+      quantity: item.quantity,
+      specialInstructions: item.special_instructions,
+      modifiers: item.selected_options || [],
+    }));
 
-    // Get storefront for pickup address
-    const { data: storefront } = await supabase
+    const engine = getEngine();
+
+    // Create order via engine
+    const orderResult = await engine.orders.createOrder(
+      {
+        customerId: customerContext.customerId,
+        storefrontId,
+        deliveryAddressId,
+        items,
+        tip,
+        promoCode: promoCode || undefined,
+        specialInstructions,
+      },
+      customerContext.actor
+    );
+
+    if (!orderResult.success) {
+      return errorResponse(orderResult.error!.code, orderResult.error!.message);
+    }
+
+    const order = orderResult.data!;
+
+    // Create delivery record
+    const { data: storefront } = await adminClient
       .from('chef_storefronts')
-      .select('name, address')
+      .select(`
+        name,
+        kitchen:chef_kitchens (address, lat, lng)
+      `)
       .eq('id', storefrontId)
       .single();
 
-    // Get delivery address
-    const { data: deliveryAddress } = await supabase
+    const { data: deliveryAddress } = await adminClient
       .from('customer_addresses')
-      .select('street_address, city, state, postal_code')
+      .select('address_line1, address_line2, city, state, postal_code, lat, lng')
       .eq('id', deliveryAddressId)
       .single();
 
-    const orderNumber = generateOrderNumber();
-
-    // Create order with pending payment status
-    const order = await createOrder(supabase, {
-      order_number: orderNumber,
-      customer_id: customer.id,
-      storefront_id: storefrontId,
-      delivery_address_id: deliveryAddressId,
-      status: 'pending',
-      subtotal,
-      delivery_fee: deliveryFee,
-      service_fee: serviceFee,
-      tax,
-      tip: tipAmount,
-      total,
-      payment_status: 'processing',
-      payment_intent_id: null,
-      special_instructions: body.specialInstructions || null,
-      estimated_ready_at: null,
-      actual_ready_at: null,
-    });
-
-    // Create order items
-    const orderItems = cart.cart_items.map((item: any) => ({
-      order_id: order.id,
-      menu_item_id: item.menu_item_id,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-      special_instructions: item.special_instructions,
-      selected_options: item.selected_options || [],
-    }));
-    await createOrderItems(supabase, orderItems);
-
-    // Create delivery record
-    const pickupAddr = storefront?.address || 'Pickup address';
+    const kitchen = storefront?.kitchen as { address?: string; lat?: number; lng?: number } | null;
+    const pickupAddr = kitchen?.address || 'Pickup address';
     const dropoffAddr = deliveryAddress
-      ? `${deliveryAddress.street_address}, ${deliveryAddress.city}, ${deliveryAddress.state} ${deliveryAddress.postal_code}`
+      ? `${deliveryAddress.address_line1}${deliveryAddress.address_line2 ? ', ' + deliveryAddress.address_line2 : ''}, ${deliveryAddress.city}, ${deliveryAddress.state} ${deliveryAddress.postal_code}`
       : 'Delivery address';
 
-    await createDelivery(supabase, {
+    await adminClient.from('deliveries').insert({
       order_id: order.id,
       status: 'pending',
       driver_id: null,
       pickup_address: pickupAddr,
-      pickup_lat: null,
-      pickup_lng: null,
+      pickup_lat: kitchen?.lat || null,
+      pickup_lng: kitchen?.lng || null,
       dropoff_address: dropoffAddr,
-      dropoff_lat: null,
-      dropoff_lng: null,
+      dropoff_lat: deliveryAddress?.lat || null,
+      dropoff_lng: deliveryAddress?.lng || null,
       estimated_pickup_at: null,
       actual_pickup_at: null,
       estimated_dropoff_at: null,
       actual_dropoff_at: null,
-      distance_km: null,
-      delivery_fee: deliveryFee,
-      driver_payout: Math.round(deliveryFee * 0.8),
-      pickup_photo_url: null,
-      dropoff_photo_url: null,
-      customer_signature_url: null,
-      notes: null,
+      estimated_distance_km: null,
+      delivery_fee: order.delivery_fee,
+      driver_payout: Math.round(order.delivery_fee * 0.8 * 100) / 100,
     });
 
     // Create Stripe PaymentIntent
     const stripe = getStripe();
+    const totalCents = Math.round(order.total * 100);
+    const discountedTotal = Math.max(totalCents - promoDiscount, 0);
+
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: total,
+      amount: discountedTotal,
       currency: 'cad',
       automatic_payment_methods: { enabled: true },
       metadata: {
         order_id: order.id,
-        order_number: orderNumber,
-        customer_id: customer.id,
+        order_number: order.order_number,
+        customer_id: customerContext.customerId,
         storefront_id: storefrontId,
         ...(promoCodeId && { promo_code_id: promoCodeId }),
       },
     });
 
-    // Update order with payment intent ID
-    await supabase
-      .from('orders')
-      .update({ payment_intent_id: paymentIntent.id })
-      .eq('id', order.id);
+    // Authorize payment via engine
+    await engine.orders.authorizePayment(order.id, paymentIntent.id, customerContext.actor);
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        clientSecret: paymentIntent.client_secret,
-        orderId: order.id,
-        orderNumber,
-        total,
-        breakdown: {
-          subtotal,
-          deliveryFee,
-          serviceFee,
-          tax,
-          tip: tipAmount,
-          discount,
-        },
+    // Update promo code usage if applicable
+    if (promoCodeId) {
+      await (adminClient as any).rpc('increment_promo_usage', { promo_id: promoCodeId });
+    }
+
+    // Clear the cart
+    await clearCart(adminClient as any, customerContext.customerId);
+
+    return successResponse({
+      clientSecret: paymentIntent.client_secret,
+      orderId: order.id,
+      orderNumber: order.order_number,
+      total: discountedTotal / 100,
+      breakdown: {
+        subtotal: order.subtotal,
+        deliveryFee: order.delivery_fee,
+        serviceFee: order.service_fee,
+        tax: order.tax,
+        tip: order.tip,
+        discount: promoDiscount / 100,
       },
     });
   } catch (error) {
     console.error('Checkout error:', error);
-    const { error: message, status } = handleApiError(error);
-    return NextResponse.json({ error: message }, { status });
+    return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }

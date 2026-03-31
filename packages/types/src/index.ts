@@ -15,3 +15,7 @@ export * from './enums';
 
 // Re-export API types
 export * from './api';
+
+// Re-export engine types (central business engine)
+export * from './engine';
+export * from './engine/transitions';
