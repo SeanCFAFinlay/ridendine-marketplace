@@ -58,6 +58,18 @@ export async function GET() {
 }
 
 /**
+ * Generate a URL-friendly slug from a name
+ */
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/**
  * POST /api/storefront
  * Create a new storefront for the chef
  */
@@ -91,11 +103,64 @@ export async function POST(request: NextRequest) {
     const adminClient = createAdminClient();
     const engine = getEngine();
 
+    // Check if chef already has a kitchen, or create one
+    let kitchenId: string;
+    const { data: existingKitchen } = await adminClient
+      .from('chef_kitchens')
+      .select('id')
+      .eq('chef_id', chefContext.chefId)
+      .single();
+
+    if (existingKitchen) {
+      kitchenId = existingKitchen.id;
+    } else {
+      // Create a placeholder kitchen (chef will update address later)
+      const { data: newKitchen, error: kitchenError } = await adminClient
+        .from('chef_kitchens')
+        .insert({
+          chef_id: chefContext.chefId,
+          name: name.trim(),
+          street_address: 'To be updated',
+          city: 'To be updated',
+          state: 'BC',
+          postal_code: 'V0V 0V0',
+          is_verified: false,
+        })
+        .select()
+        .single();
+
+      if (kitchenError || !newKitchen) {
+        console.error('Error creating kitchen:', kitchenError);
+        return errorResponse('CREATE_ERROR', 'Failed to create kitchen');
+      }
+      kitchenId = newKitchen.id;
+    }
+
+    // Generate a unique slug
+    const baseSlug = generateSlug(name);
+    let slug = baseSlug;
+    let suffix = 1;
+
+    // Check for slug uniqueness
+    while (true) {
+      const { data: existingStorefront } = await adminClient
+        .from('chef_storefronts')
+        .select('id')
+        .eq('slug', slug)
+        .single();
+
+      if (!existingStorefront) break;
+      slug = `${baseSlug}-${suffix}`;
+      suffix++;
+    }
+
     // Create the storefront
     const { data: storefront, error } = await adminClient
       .from('chef_storefronts')
       .insert({
         chef_id: chefContext.chefId,
+        kitchen_id: kitchenId,
+        slug,
         name: name.trim(),
         description: description || null,
         cuisine_types: cuisine_types || [],
@@ -103,7 +168,6 @@ export async function POST(request: NextRequest) {
         estimated_prep_time_min: estimated_prep_time_min || 15,
         estimated_prep_time_max: estimated_prep_time_max || 45,
         is_active: false, // Start inactive until fully set up
-        accepting_orders: false,
       })
       .select()
       .single();
