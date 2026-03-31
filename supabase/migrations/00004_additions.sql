@@ -17,7 +17,7 @@ WHERE NOT EXISTS (SELECT 1 FROM platform_settings);
 -- Driver locations history table
 CREATE TABLE IF NOT EXISTS driver_locations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  driver_id UUID NOT NULL REFERENCES driver_profiles(id) ON DELETE CASCADE,
+  driver_id UUID NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
   lat DECIMAL(10, 8) NOT NULL,
   lng DECIMAL(11, 8) NOT NULL,
   recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -27,20 +27,9 @@ CREATE TABLE IF NOT EXISTS driver_locations (
 CREATE INDEX IF NOT EXISTS idx_driver_locations_driver_id ON driver_locations(driver_id);
 CREATE INDEX IF NOT EXISTS idx_driver_locations_recorded_at ON driver_locations(recorded_at);
 
--- Notifications table
-CREATE TABLE IF NOT EXISTS notifications (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  type TEXT NOT NULL,
-  title TEXT NOT NULL,
-  body TEXT NOT NULL,
-  data JSONB DEFAULT '{}',
-  read BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(user_id, read);
+-- Notifications table (already created in 00001 with is_read column)
+-- Skip recreation, just ensure indexes exist
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, is_read);
 
 -- Promo codes table
 CREATE TABLE IF NOT EXISTS promo_codes (
@@ -137,13 +126,13 @@ CREATE POLICY "Platform settings readable by authenticated" ON platform_settings
 CREATE POLICY "Drivers can insert own locations" ON driver_locations
   FOR INSERT TO authenticated
   WITH CHECK (driver_id IN (
-    SELECT id FROM driver_profiles WHERE user_id = auth.uid()
+    SELECT id FROM drivers WHERE user_id = auth.uid()
   ));
 
 CREATE POLICY "Ops can read all driver locations" ON driver_locations
   FOR SELECT TO authenticated USING (
     EXISTS (SELECT 1 FROM platform_users WHERE user_id = auth.uid() AND role = 'ops_admin')
-    OR driver_id IN (SELECT id FROM driver_profiles WHERE user_id = auth.uid())
+    OR driver_id IN (SELECT id FROM drivers WHERE user_id = auth.uid())
   );
 
 -- Notifications: users can read/update their own
