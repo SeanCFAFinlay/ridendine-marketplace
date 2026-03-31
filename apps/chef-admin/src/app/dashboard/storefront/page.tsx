@@ -1,16 +1,17 @@
 import { cookies } from 'next/headers';
 import { createServerClient, getStorefrontByChefId } from '@ridendine/db';
 import { StorefrontForm } from '@/components/storefront/storefront-form';
+import { StorefrontSetupForm } from '@/components/storefront/storefront-setup-form';
 
 export const dynamic = 'force-dynamic';
 
-async function getChefStorefront() {
+async function getChefData() {
   try {
     const cookieStore = await cookies();
     const supabase = createServerClient(cookieStore);
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    if (!user) return { isAuthenticated: false, hasChefProfile: false, storefront: null };
 
     const result: any = await supabase
       .from('chef_profiles')
@@ -18,27 +19,49 @@ async function getChefStorefront() {
       .eq('user_id', user.id)
       .single();
 
-    if (result.error || !result.data) return null;
+    if (result.error || !result.data) {
+      return { isAuthenticated: true, hasChefProfile: false, storefront: null };
+    }
 
-    return await getStorefrontByChefId(supabase as any, result.data.id);
+    const storefront = await getStorefrontByChefId(supabase as any, result.data.id);
+    return { isAuthenticated: true, hasChefProfile: true, storefront };
   } catch (error) {
-    console.error('Error getting chef storefront:', error);
-    return null;
+    console.error('Error getting chef data:', error);
+    return { isAuthenticated: false, hasChefProfile: false, storefront: null };
   }
 }
 
 export default async function StorefrontPage() {
   try {
-    const storefront = await getChefStorefront();
+    const { isAuthenticated, hasChefProfile, storefront } = await getChefData();
 
-    if (!storefront) {
+    // Not authenticated
+    if (!isAuthenticated) {
       return (
         <div className="flex h-96 items-center justify-center">
           <div className="text-center">
-            <p className="text-gray-500">No storefront found. Please complete your setup.</p>
+            <p className="text-gray-900 font-semibold">Please sign in</p>
+            <p className="mt-2 text-gray-500 text-sm">You need to be signed in to manage your storefront.</p>
           </div>
         </div>
       );
+    }
+
+    // Authenticated but no chef profile
+    if (!hasChefProfile) {
+      return (
+        <div className="flex h-96 items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-900 font-semibold">Chef profile not found</p>
+            <p className="mt-2 text-gray-500 text-sm">Please complete your chef registration first.</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Has chef profile but no storefront - show setup form
+    if (!storefront) {
+      return <StorefrontSetupForm />;
     }
 
     return (

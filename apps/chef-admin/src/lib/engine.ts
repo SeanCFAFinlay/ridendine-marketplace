@@ -24,6 +24,7 @@ export function getEngine(): CentralEngine {
 
 /**
  * Get actor context for current chef user
+ * Returns null if user is not authenticated or not a chef
  */
 export async function getChefActorContext(): Promise<{
   actor: ActorContext;
@@ -69,6 +70,51 @@ export async function getChefActorContext(): Promise<{
     },
     chefId: chefProfile.id,
     storefrontId: storefront.id,
+  };
+}
+
+/**
+ * Get basic chef context (allows chefs without storefront)
+ * Used for storefront creation and onboarding
+ */
+export async function getChefBasicContext(): Promise<{
+  userId: string;
+  chefId: string;
+  chefStatus: string;
+  storefrontId: string | null;
+} | null> {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return null;
+  }
+
+  // Get chef profile
+  const adminClient = createAdminClient();
+  const { data: chefProfile } = await adminClient
+    .from('chef_profiles')
+    .select('id, status')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!chefProfile) {
+    return null;
+  }
+
+  // Get storefront (optional)
+  const { data: storefront } = await adminClient
+    .from('chef_storefronts')
+    .select('id')
+    .eq('chef_id', chefProfile.id)
+    .single();
+
+  return {
+    userId: user.id,
+    chefId: chefProfile.id,
+    chefStatus: chefProfile.status,
+    storefrontId: storefront?.id || null,
   };
 }
 

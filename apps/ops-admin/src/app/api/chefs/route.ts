@@ -1,20 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
+import { getOpsActorContext, errorResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    // Debug: check if env vars are available
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('Missing Supabase env vars:', {
-        url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-        key: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      });
-      return NextResponse.json(
-        { error: 'Server configuration error - missing Supabase credentials' },
-        { status: 500 }
-      );
+    // Verify ops user is authenticated
+    const actor = await getOpsActorContext();
+    if (!actor) {
+      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
     }
 
     const supabase = createAdminClient();
@@ -49,6 +44,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    // Verify ops user is authenticated
+    const actor = await getOpsActorContext();
+    if (!actor) {
+      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
+    }
+
     const supabase = createAdminClient();
     const body = await request.json();
 

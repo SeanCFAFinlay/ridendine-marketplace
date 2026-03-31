@@ -8,6 +8,7 @@ import { createAdminClient } from '@ridendine/db';
 import {
   getEngine,
   getChefActorContext,
+  getChefBasicContext,
   errorResponse,
   successResponse,
 } from '@/lib/engine';
@@ -52,6 +53,82 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching storefront:', error);
+    return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
+  }
+}
+
+/**
+ * POST /api/storefront
+ * Create a new storefront for the chef
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const chefContext = await getChefBasicContext();
+    if (!chefContext) {
+      return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    }
+
+    // Check if chef already has a storefront
+    if (chefContext.storefrontId) {
+      return errorResponse('ALREADY_EXISTS', 'Storefront already exists', 400);
+    }
+
+    const body = await request.json();
+    const {
+      name,
+      description,
+      cuisine_types,
+      min_order_amount,
+      estimated_prep_time_min,
+      estimated_prep_time_max,
+    } = body;
+
+    // Validate required fields
+    if (!name || name.trim().length === 0) {
+      return errorResponse('VALIDATION_ERROR', 'Storefront name is required');
+    }
+
+    const adminClient = createAdminClient();
+    const engine = getEngine();
+
+    // Create the storefront
+    const { data: storefront, error } = await adminClient
+      .from('chef_storefronts')
+      .insert({
+        chef_id: chefContext.chefId,
+        name: name.trim(),
+        description: description || null,
+        cuisine_types: cuisine_types || [],
+        min_order_amount: min_order_amount || 0,
+        estimated_prep_time_min: estimated_prep_time_min || 15,
+        estimated_prep_time_max: estimated_prep_time_max || 45,
+        is_active: false, // Start inactive until fully set up
+        accepting_orders: false,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating storefront:', error);
+      return errorResponse('CREATE_ERROR', error.message);
+    }
+
+    // Log the creation via audit
+    await engine.audit.log({
+      action: 'create',
+      entityType: 'storefront',
+      entityId: storefront.id,
+      actor: {
+        userId: chefContext.userId,
+        role: 'chef_user',
+        entityId: chefContext.chefId,
+      },
+      afterState: storefront,
+    });
+
+    return successResponse({ storefront }, 201);
+  } catch (error) {
+    console.error('Error creating storefront:', error);
     return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }

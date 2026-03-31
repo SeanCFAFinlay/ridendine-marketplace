@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
+import { getOpsActorContext, errorResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
+    // Verify ops user is authenticated
+    const actor = await getOpsActorContext();
+    if (!actor) {
+      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
+    }
+
     const supabase = createAdminClient();
 
     const { searchParams } = new URL(request.url);
@@ -36,6 +43,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    // Verify ops user is authenticated
+    const actor = await getOpsActorContext();
+    if (!actor) {
+      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
+    }
+
     const supabase = createAdminClient();
     const body = await request.json();
 
