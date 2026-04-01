@@ -120,46 +120,8 @@ export async function POST(request: Request): Promise<Response> {
 
     const order = orderResult.data!;
 
-    // Create delivery record
-    const { data: storefront } = await adminClient
-      .from('chef_storefronts')
-      .select(`
-        name,
-        kitchen:chef_kitchens (address, lat, lng)
-      `)
-      .eq('id', storefrontId)
-      .single();
-
-    const { data: deliveryAddress } = await adminClient
-      .from('customer_addresses')
-      .select('address_line1, address_line2, city, state, postal_code, lat, lng')
-      .eq('id', deliveryAddressId)
-      .single();
-
-    const kitchen = storefront?.kitchen as { address?: string; lat?: number; lng?: number } | null;
-    const pickupAddr = kitchen?.address || 'Pickup address';
-    const dropoffAddr = deliveryAddress
-      ? `${deliveryAddress.address_line1}${deliveryAddress.address_line2 ? ', ' + deliveryAddress.address_line2 : ''}, ${deliveryAddress.city}, ${deliveryAddress.state} ${deliveryAddress.postal_code}`
-      : 'Delivery address';
-
-    await adminClient.from('deliveries').insert({
-      order_id: order.id,
-      status: 'pending',
-      driver_id: null,
-      pickup_address: pickupAddr,
-      pickup_lat: kitchen?.lat || null,
-      pickup_lng: kitchen?.lng || null,
-      dropoff_address: dropoffAddr,
-      dropoff_lat: deliveryAddress?.lat || null,
-      dropoff_lng: deliveryAddress?.lng || null,
-      estimated_pickup_at: null,
-      actual_pickup_at: null,
-      estimated_dropoff_at: null,
-      actual_dropoff_at: null,
-      estimated_distance_km: null,
-      delivery_fee: order.delivery_fee,
-      driver_payout: Math.round(order.delivery_fee * 0.8 * 100) / 100,
-    });
+    // NOTE: Delivery record is created by dispatch engine when chef marks order ready
+    // This ensures delivery is only created for orders that proceed past payment
 
     // Create Stripe PaymentIntent
     const stripe = getStripe();
