@@ -46,8 +46,8 @@ When auth bypass is enabled, you can access all routes without logging in.
 
 | Field | Value |
 |-------|-------|
-| Email | chef@ridendine.test |
-| Password | TestChef123! |
+| Email | sean@ridendine.ca |
+| Password | password123 |
 | Role | chef |
 
 **Features Available**:
@@ -70,9 +70,9 @@ When auth bypass is enabled, you can access all routes without logging in.
 
 | Field | Value |
 |-------|-------|
-| Email | ops@ridendine.test |
-| Password | TestOps123! |
-| Role | admin |
+| Email | ops@ridendine.ca |
+| Password | password123 |
+| Role | super_admin |
 
 **Features Available**:
 - Command center dashboard
@@ -117,7 +117,9 @@ When auth bypass is enabled, you can access all routes without logging in.
 
 ## Supabase Seeding
 
-These test accounts should be seeded into Supabase. Run the following SQL in your Supabase dashboard:
+The local seed file at [supabase/seeds/seed.sql](C:\Users\sean\RIDENDINEV1\supabase\seeds\seed.sql) is the source of truth for seeded credentials. If you need to reseed locally, run that seed through your Supabase local/dev environment.
+
+Additional test accounts can be seeded into Supabase with SQL like:
 
 ```sql
 -- Create test users in auth.users (handled by Supabase Auth)
@@ -145,8 +147,7 @@ VALUES (
   'approved'
 );
 
--- Admin/Ops (uses admin_users table if exists, or just user with admin role)
--- Admins are typically managed through Supabase dashboard or custom admin table
+-- Ops admin users must also exist in platform_users to access ops-admin pages
 
 -- Driver
 INSERT INTO public.driver_profiles (id, user_id, display_name, phone, status)

@@ -9,6 +9,9 @@
 
 INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
 VALUES
+  ('00000000-0000-0000-0000-000000000001', 'ops@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
+   '{"provider":"email","providers":["email"],"role":"super_admin"}',
+   '{"display_name":"RideNDine Ops","role":"super_admin"}', true, 'authenticated'),
   ('11111111-1111-1111-1111-111111111111', 'sean@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
    '{"provider":"email","providers":["email"],"role":"chef"}',
    '{"display_name":"Sean","role":"chef"}', false, 'authenticated'),
@@ -30,6 +33,22 @@ VALUES
   ('77777777-7777-7777-7777-777777777777', 'sarah.driver@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
    '{"provider":"email","providers":["email"],"role":"driver"}',
    '{"display_name":"Sarah Kim","role":"driver"}', false, 'authenticated')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- SECTION 1B: PLATFORM USERS
+-- ============================================================
+
+INSERT INTO platform_users (id, user_id, email, name, role, is_active, created_at, updated_at)
+VALUES
+  ('90000000-0000-0000-0000-000000000001',
+   '00000000-0000-0000-0000-000000000001',
+   'ops@ridendine.ca',
+   'RideNDine Ops',
+   'super_admin',
+   true,
+   NOW() - INTERVAL '120 days',
+   NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
