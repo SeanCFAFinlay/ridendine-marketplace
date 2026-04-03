@@ -3,14 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@ridendine/auth';
 import { Button, Input } from '@ridendine/ui';
 import { AuthLayout } from '../../../components/auth/auth-layout';
 import { PasswordStrength } from '../../../components/auth/password-strength';
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signUp, loading, error } = useAuth();
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -22,6 +20,8 @@ export default function SignupPage() {
   });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [validationError, setValidationError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -34,6 +34,7 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError('');
+    setError('');
 
     // Validation
     if (!agreedToTerms) {
@@ -51,15 +52,31 @@ export default function SignupPage() {
       return;
     }
 
-    const result = await signUp(formData.email, formData.password, {
-      first_name: formData.firstName,
-      last_name: formData.lastName,
-      phone: formData.phone,
-      role: 'chef',
-    });
+    setLoading(true);
 
-    if (result.success) {
-      router.push('/dashboard');
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Unable to create chef account');
+      }
+
+      if (result.data?.requiresEmailConfirmation) {
+        router.push('/auth/login?signup=success');
+        return;
+      }
+
+      router.push('/dashboard/storefront');
+    } catch (signupError) {
+      setError(signupError instanceof Error ? signupError.message : 'Unable to create chef account');
+    } finally {
+      setLoading(false);
     }
   };
 

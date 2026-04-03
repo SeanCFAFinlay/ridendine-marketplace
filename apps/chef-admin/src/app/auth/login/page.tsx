@@ -30,6 +30,12 @@ export default function LoginPage() {
       subtitle="Sign in to manage your storefront"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
+        {searchParams.get('signup') === 'success' && (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+            Chef account created. Sign in to continue your storefront setup.
+          </div>
+        )}
+
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             {error}
