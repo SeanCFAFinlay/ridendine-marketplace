@@ -1,130 +1,110 @@
-import { cookies } from 'next/headers';
 import { Card, Badge } from '@ridendine/ui';
-import { createServerClient } from '@ridendine/db';
+import {
+  createAdminClient,
+  getChefLiabilitySummaries,
+  getDriverLiabilitySummaries,
+  type LedgerEntrySummary,
+  type LiabilitySummary,
+  type PendingPayoutAdjustmentSummary,
+  type PendingRefundSummary,
+  getPendingPayoutAdjustmentSummaries,
+  getPendingRefundSummaries,
+  getRecentLedgerEntries,
+  type SupabaseClient,
+} from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { getEngine, getOpsActorContext, hasRequiredRole } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
-async function getFinanceData() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
+type FinanceDashboardData = {
+  summary: {
+    totalRevenue: number;
+    totalRefunds: number;
+    platformFees: number;
+    chefPayouts: number;
+    driverPayouts: number;
+    taxCollected: number;
+    orderCount: number;
+  };
+  pendingRefunds: PendingRefundSummary[];
+  pendingAdjustments: PendingPayoutAdjustmentSummary[];
+  recentLedger: LedgerEntrySummary[];
+  chefLiabilities: LiabilitySummary[];
+  driverLiabilities: LiabilitySummary[];
+};
 
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const twoWeeksAgo = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
-  const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+function formatCurrency(amount: number): string {
+  return `$${amount.toFixed(2)}`;
+}
 
-  try {
-    // Revenue queries
-    const [thisWeekResult, lastWeekResult, monthResult, allTimeResult] = await Promise.all([
-      supabase.from('orders').select('total').gte('created_at', weekAgo.toISOString()).eq('payment_status', 'completed'),
-      supabase.from('orders').select('total').gte('created_at', twoWeeksAgo.toISOString()).lt('created_at', weekAgo.toISOString()).eq('payment_status', 'completed'),
-      supabase.from('orders').select('total').gte('created_at', monthAgo.toISOString()).eq('payment_status', 'completed'),
-      supabase.from('orders').select('total').eq('payment_status', 'completed'),
-    ]);
-
-    const thisWeekRevenue = (thisWeekResult.data || []).reduce((sum: number, o: { total: number | null }) => sum + (o.total || 0), 0);
-    const lastWeekRevenue = (lastWeekResult.data || []).reduce((sum: number, o: { total: number | null }) => sum + (o.total || 0), 0);
-    const monthRevenue = (monthResult.data || []).reduce((sum: number, o: { total: number | null }) => sum + (o.total || 0), 0);
-    const totalGMV = (allTimeResult.data || []).reduce((sum: number, o: { total: number | null }) => sum + (o.total || 0), 0);
-
-    // Chef payout data
-    let chefPayouts: Array<{ id: string; name: string; pending: number; lastPayout?: string }> = [];
-    try {
-      const { data: chefs } = await supabase
-        .from('chef_storefronts')
-        .select('id, name, chef_profiles(id)')
-        .eq('is_active', true);
-
-      if (chefs) {
-        chefPayouts = await Promise.all(
-          chefs.slice(0, 10).map(async (chef: { id: string; name: string }) => {
-            const { data: orders } = await supabase
-              .from('orders')
-              .select('subtotal')
-              .eq('storefront_id', chef.id)
-              .eq('payment_status', 'completed');
-
-            const totalEarnings = (orders || []).reduce((sum: number, o: { subtotal: number }) => sum + (o.subtotal || 0), 0);
-            const platformFee = totalEarnings * 0.15;
-            const pending = totalEarnings - platformFee;
-
-            return {
-              id: chef.id,
-              name: chef.name,
-              pending: Math.round(pending),
-              lastPayout: undefined,
-            };
-          })
-        );
-      }
-    } catch (e) {
-      console.log('Could not fetch chef payouts');
-    }
-
-    // Driver earnings data
-    let driverPayouts: Array<{ id: string; name: string; pending: number; deliveries: number }> = [];
-    try {
-      const { data: drivers } = await supabase
-        .from('drivers')
-        .select('id, first_name, last_name')
-        .eq('status', 'approved');
-
-      if (drivers) {
-        driverPayouts = await Promise.all(
-          drivers.slice(0, 10).map(async (driver: { id: string; first_name: string; last_name: string }) => {
-            const { data: deliveries } = await supabase
-              .from('deliveries')
-              .select('driver_payout')
-              .eq('driver_id', driver.id)
-              .eq('status', 'delivered');
-
-            const totalEarnings = (deliveries || []).reduce((sum: number, d: { driver_payout: number }) => sum + (d.driver_payout || 0), 0);
-
-            return {
-              id: driver.id,
-              name: `${driver.first_name} ${driver.last_name}`,
-              pending: totalEarnings,
-              deliveries: deliveries?.length || 0,
-            };
-          })
-        );
-      }
-    } catch (e) {
-      console.log('Could not fetch driver payouts');
-    }
-
-    const weekOverWeekGrowth = lastWeekRevenue > 0
-      ? ((thisWeekRevenue - lastWeekRevenue) / lastWeekRevenue) * 100
-      : 0;
-
+async function getFinanceData(): Promise<FinanceDashboardData> {
+  const actor = await getOpsActorContext();
+  if (!actor || !hasRequiredRole(actor, ['ops_manager', 'finance_admin', 'super_admin'])) {
     return {
-      totalGMV,
-      thisWeekRevenue,
-      lastWeekRevenue,
-      monthRevenue,
-      platformCommission: totalGMV * 0.15,
-      weekOverWeekGrowth,
-      chefPayouts: chefPayouts.filter(c => c.pending > 0),
-      driverPayouts: driverPayouts.filter(d => d.pending > 0),
-    };
-  } catch (error) {
-    console.error('Finance data error:', error);
-    return {
-      totalGMV: 0,
-      thisWeekRevenue: 0,
-      lastWeekRevenue: 0,
-      monthRevenue: 0,
-      platformCommission: 0,
-      weekOverWeekGrowth: 0,
-      chefPayouts: [],
-      driverPayouts: [],
+      summary: {
+        totalRevenue: 0,
+        totalRefunds: 0,
+        platformFees: 0,
+        chefPayouts: 0,
+        driverPayouts: 0,
+        taxCollected: 0,
+        orderCount: 0,
+      },
+      pendingRefunds: [],
+      pendingAdjustments: [],
+      recentLedger: [],
+      chefLiabilities: [],
+      driverLiabilities: [],
     };
   }
+
+  const end = new Date();
+  const start = new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const adminClient = createAdminClient() as unknown as SupabaseClient;
+  const engine = getEngine();
+
+  const [summary, pendingRefunds, chefLiabilities, driverLiabilities, pendingAdjustments, recentLedger] =
+    await Promise.all([
+      engine.commerce.getFinancialSummary({
+        start: start.toISOString(),
+        end: end.toISOString(),
+      }),
+      getPendingRefundSummaries(adminClient, 25),
+      getChefLiabilitySummaries(adminClient, 10),
+      getDriverLiabilitySummaries(adminClient, 10),
+      getPendingPayoutAdjustmentSummaries(adminClient, 25),
+      getRecentLedgerEntries(adminClient, 25),
+    ]);
+
+  return {
+    summary,
+    pendingRefunds,
+    pendingAdjustments,
+    recentLedger,
+    chefLiabilities,
+    driverLiabilities,
+  };
 }
 
 export default async function FinancePage() {
+  const actor = await getOpsActorContext();
+
+  if (!actor || !hasRequiredRole(actor, ['ops_manager', 'finance_admin', 'super_admin'])) {
+    return (
+      <DashboardLayout>
+        <div className="mx-auto max-w-4xl">
+          <Card className="border-gray-800 bg-[#16213e] p-8">
+            <h1 className="text-2xl font-bold text-white">Finance Access Required</h1>
+            <p className="mt-2 text-gray-400">
+              Finance data is only available to ops managers, finance admins, and super admins.
+            </p>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   const data = await getFinanceData();
 
   return (
@@ -132,114 +112,148 @@ export default async function FinancePage() {
       <div className="mx-auto max-w-7xl space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Finance Dashboard</h1>
-          <p className="mt-1 text-gray-400">Revenue tracking and payout management</p>
+          <p className="mt-1 text-gray-400">
+            Real platform finance state from ledger, refund, payout-adjustment, chef, and driver records.
+          </p>
         </div>
 
-        {/* Revenue Summary */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <p className="text-sm text-gray-400">Total GMV</p>
+            <p className="text-sm text-gray-400">Captured Revenue</p>
             <p className="mt-2 text-3xl font-bold text-emerald-400">
-              ${Number(data.totalGMV).toFixed(2)}
+              {formatCurrency(data.summary.totalRevenue)}
             </p>
-            <p className="mt-1 text-sm text-gray-500">All-time gross merchandise value</p>
+            <p className="mt-1 text-sm text-gray-500">{data.summary.orderCount} captured orders in the last 30 days</p>
           </Card>
 
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <p className="text-sm text-gray-400">Platform Commission (15%)</p>
+            <p className="text-sm text-gray-400">Platform Fees</p>
             <p className="mt-2 text-3xl font-bold text-blue-400">
-              ${Number(data.platformCommission).toFixed(2)}
+              {formatCurrency(data.summary.platformFees)}
             </p>
-            <p className="mt-1 text-sm text-gray-500">All-time platform earnings</p>
+            <p className="mt-1 text-sm text-gray-500">Shared commerce ledger source of truth</p>
           </Card>
 
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <p className="text-sm text-gray-400">This Week Revenue</p>
+            <p className="text-sm text-gray-400">Chef Payables</p>
             <p className="mt-2 text-3xl font-bold text-purple-400">
-              ${Number(data.thisWeekRevenue).toFixed(2)}
+              {formatCurrency(data.summary.chefPayouts)}
             </p>
-            <p className={`mt-1 text-sm ${data.weekOverWeekGrowth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {data.weekOverWeekGrowth >= 0 ? '+' : ''}{data.weekOverWeekGrowth.toFixed(1)}% vs last week
-            </p>
+            <p className="mt-1 text-sm text-gray-500">Ledger entries owed to chefs</p>
           </Card>
 
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <p className="text-sm text-gray-400">Monthly Revenue</p>
+            <p className="text-sm text-gray-400">Driver Wages + Tips</p>
             <p className="mt-2 text-3xl font-bold text-orange-400">
-              ${Number(data.monthRevenue).toFixed(2)}
+              {formatCurrency(data.summary.driverPayouts)}
             </p>
-            <p className="mt-1 text-sm text-gray-500">Last 30 days</p>
+            <p className="mt-1 text-sm text-gray-500">Driver payables from deliveries and tips</p>
           </Card>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Chef Payout Queue */}
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white">Chef Payout Queue</h2>
-              <Badge className="bg-yellow-500/20 text-yellow-400">
-                {data.chefPayouts.length} pending
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">Chef Liability Snapshot</h2>
+              <Badge className="bg-purple-500/20 text-purple-300">
+                {data.chefLiabilities.length} chefs
               </Badge>
             </div>
-
-            {data.chefPayouts.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No pending chef payouts</p>
+            {data.chefLiabilities.length === 0 ? (
+              <p className="py-8 text-center text-gray-500">No chef payable ledger entries recorded yet.</p>
             ) : (
               <div className="space-y-3">
-                {data.chefPayouts.map((chef) => (
-                  <div
-                    key={chef.id}
-                    className="flex items-center justify-between rounded-lg bg-gray-800/50 p-4"
-                  >
+                {data.chefLiabilities.map((chef) => (
+                  <div key={chef.id} className="flex items-center justify-between rounded-lg bg-gray-800/50 p-4">
                     <div>
                       <p className="font-medium text-white">{chef.name}</p>
-                      {chef.lastPayout && (
-                        <p className="text-xs text-gray-500">Last payout: {chef.lastPayout}</p>
-                      )}
+                      <p className="text-xs text-gray-500">Chef payable ledger total</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg font-semibold text-emerald-400">
-                        ${Number(chef.pending).toFixed(2)}
-                      </span>
-                      <button className="rounded-lg bg-[#E85D26] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#d14d1a] transition-colors">
-                        Pay Now
-                      </button>
-                    </div>
+                    <span className="text-lg font-semibold text-emerald-400">
+                      {formatCurrency(chef.amount)}
+                    </span>
                   </div>
                 ))}
               </div>
             )}
           </Card>
 
-          {/* Driver Payout Queue */}
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white">Driver Payout Queue</h2>
-              <Badge className="bg-blue-500/20 text-blue-400">
-                {data.driverPayouts.length} pending
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">Driver Wage Snapshot</h2>
+              <Badge className="bg-blue-500/20 text-blue-300">
+                {data.driverLiabilities.length} drivers
               </Badge>
             </div>
-
-            {data.driverPayouts.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No pending driver payouts</p>
+            {data.driverLiabilities.length === 0 ? (
+              <p className="py-8 text-center text-gray-500">No driver payable ledger entries recorded yet.</p>
             ) : (
               <div className="space-y-3">
-                {data.driverPayouts.map((driver) => (
-                  <div
-                    key={driver.id}
-                    className="flex items-center justify-between rounded-lg bg-gray-800/50 p-4"
-                  >
+                {data.driverLiabilities.map((driver) => (
+                  <div key={driver.id} className="flex items-center justify-between rounded-lg bg-gray-800/50 p-4">
                     <div>
                       <p className="font-medium text-white">{driver.name}</p>
-                      <p className="text-xs text-gray-500">{driver.deliveries} deliveries</p>
+                      <p className="text-xs text-gray-500">Driver payable + tip ledger total</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg font-semibold text-emerald-400">
-                        ${Number(driver.pending).toFixed(2)}
+                    <span className="text-lg font-semibold text-emerald-400">
+                      {formatCurrency(driver.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">Pending Refund Review</h2>
+              <Badge className="bg-red-500/20 text-red-300">{data.pendingRefunds.length} open</Badge>
+            </div>
+            {data.pendingRefunds.length === 0 ? (
+              <p className="py-8 text-center text-gray-500">No refund cases awaiting ops review.</p>
+            ) : (
+              <div className="space-y-3">
+                {data.pendingRefunds.map((refund) => (
+                  <div key={refund.id} className="rounded-lg bg-gray-800/50 p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-medium text-white">Order {refund.order_number}</p>
+                        <p className="text-sm text-gray-400">{refund.customer_name}</p>
+                      </div>
+                      <span className="text-lg font-semibold text-red-300">
+                        {formatCurrency(refund.amount_cents / 100)}
                       </span>
-                      <button className="rounded-lg bg-[#E85D26] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#d14d1a] transition-colors">
-                        Pay Driver
-                      </button>
+                    </div>
+                    <p className="mt-2 text-sm text-gray-400">{refund.reason || 'No refund reason provided.'}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">Pending Payout Adjustments</h2>
+              <Badge className="bg-yellow-500/20 text-yellow-300">{data.pendingAdjustments.length} pending</Badge>
+            </div>
+            {data.pendingAdjustments.length === 0 ? (
+              <p className="py-8 text-center text-gray-500">No payout holds or clawbacks pending.</p>
+            ) : (
+              <div className="space-y-3">
+                {data.pendingAdjustments.map((adjustment) => (
+                  <div key={adjustment.id} className="rounded-lg bg-gray-800/50 p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-medium text-white">
+                          {adjustment.payee_type.toUpperCase()} {adjustment.adjustment_type.replace(/_/g, ' ')}
+                        </p>
+                        <p className="text-sm text-gray-400">Order {adjustment.order_number}</p>
+                      </div>
+                      <span className="text-lg font-semibold text-yellow-300">
+                        {formatCurrency(adjustment.amount_cents / 100)}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -248,57 +262,46 @@ export default async function FinancePage() {
           </Card>
         </div>
 
-        {/* Payout Run History */}
         <Card className="border-gray-800 bg-[#16213e] p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Payout Run History</h2>
-            <button className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors">
-              Run Weekly Payouts
-            </button>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-white">Recent Ledger Activity</h2>
+            <Badge className="bg-gray-700 text-gray-200">{data.recentLedger.length} entries</Badge>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="py-3 text-left text-sm font-medium text-gray-400">Date</th>
-                  <th className="py-3 text-left text-sm font-medium text-gray-400">Type</th>
-                  <th className="py-3 text-left text-sm font-medium text-gray-400">Recipients</th>
-                  <th className="py-3 text-left text-sm font-medium text-gray-400">Total Amount</th>
-                  <th className="py-3 text-left text-sm font-medium text-gray-400">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-gray-800">
-                  <td className="py-4 text-sm text-gray-300">Mar 21, 2026</td>
-                  <td className="py-4 text-sm text-gray-300">Weekly Chef Payout</td>
-                  <td className="py-4 text-sm text-gray-300">5 chefs</td>
-                  <td className="py-4 text-sm text-emerald-400 font-medium">$2,450.00</td>
-                  <td className="py-4">
-                    <Badge className="bg-green-500/20 text-green-400">Completed</Badge>
-                  </td>
-                </tr>
-                <tr className="border-b border-gray-800">
-                  <td className="py-4 text-sm text-gray-300">Mar 21, 2026</td>
-                  <td className="py-4 text-sm text-gray-300">Weekly Driver Payout</td>
-                  <td className="py-4 text-sm text-gray-300">2 drivers</td>
-                  <td className="py-4 text-sm text-emerald-400 font-medium">$340.00</td>
-                  <td className="py-4">
-                    <Badge className="bg-green-500/20 text-green-400">Completed</Badge>
-                  </td>
-                </tr>
-                <tr className="border-b border-gray-800">
-                  <td className="py-4 text-sm text-gray-300">Mar 14, 2026</td>
-                  <td className="py-4 text-sm text-gray-300">Weekly Chef Payout</td>
-                  <td className="py-4 text-sm text-gray-300">4 chefs</td>
-                  <td className="py-4 text-sm text-emerald-400 font-medium">$1,890.00</td>
-                  <td className="py-4">
-                    <Badge className="bg-green-500/20 text-green-400">Completed</Badge>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          {data.recentLedger.length === 0 ? (
+            <p className="py-8 text-center text-gray-500">No ledger entries recorded yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="py-3 text-left text-sm font-medium text-gray-400">Date</th>
+                    <th className="py-3 text-left text-sm font-medium text-gray-400">Type</th>
+                    <th className="py-3 text-left text-sm font-medium text-gray-400">Entity</th>
+                    <th className="py-3 text-left text-sm font-medium text-gray-400">Description</th>
+                    <th className="py-3 text-left text-sm font-medium text-gray-400">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.recentLedger.map((entry) => (
+                    <tr key={entry.id} className="border-b border-gray-800">
+                      <td className="py-4 text-sm text-gray-300">
+                        {new Date(entry.created_at).toLocaleString()}
+                      </td>
+                      <td className="py-4 text-sm text-gray-300">{entry.entry_type}</td>
+                      <td className="py-4 text-sm text-gray-300">
+                        {entry.entity_type ? `${entry.entity_type}:${entry.entity_id ?? 'n/a'}` : 'platform'}
+                      </td>
+                      <td className="py-4 text-sm text-gray-300">{entry.description || 'No description'}</td>
+                      <td className="py-4 text-sm font-medium text-emerald-400">
+                        {formatCurrency(entry.amount_cents / 100)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Card>
       </div>
     </DashboardLayout>

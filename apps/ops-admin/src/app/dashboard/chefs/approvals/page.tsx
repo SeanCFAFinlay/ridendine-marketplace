@@ -47,7 +47,7 @@ export default function ChefApprovalsPage() {
       await fetch(`/api/chefs/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'approved' }),
+        body: JSON.stringify({ action: 'approve' }),
       });
       fetchPendingChefs();
     } catch (error) {
@@ -60,7 +60,7 @@ export default function ChefApprovalsPage() {
       await fetch(`/api/chefs/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'rejected' }),
+        body: JSON.stringify({ action: 'reject' }),
       });
       fetchPendingChefs();
     } catch (error) {

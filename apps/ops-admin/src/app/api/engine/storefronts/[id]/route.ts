@@ -98,6 +98,30 @@ export async function PATCH(
   const engine = getEngine();
 
   switch (action) {
+    case 'publish': {
+      const result = await engine.platform.publishStorefront(
+        storefrontId,
+        actor,
+        actionParams.reason
+      );
+      if (!result.success) {
+        return errorResponse(result.error!.code, result.error!.message);
+      }
+      return successResponse(result.data);
+    }
+
+    case 'unpublish': {
+      const result = await engine.platform.unpublishStorefront(
+        storefrontId,
+        actor,
+        actionParams.reason
+      );
+      if (!result.success) {
+        return errorResponse(result.error!.code, result.error!.message);
+      }
+      return successResponse(result.data);
+    }
+
     case 'pause': {
       const result = await engine.kitchen.pauseStorefront(
         storefrontId,

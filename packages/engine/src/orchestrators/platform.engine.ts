@@ -1,10 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ActorContext, DomainEventType, OperationResult } from '@ridendine/types';
-import { DomainEventEmitter } from '../core/event-emitter';
-import { AuditLogger } from '../core/audit-logger';
-import { OrderOrchestrator } from './order.orchestrator';
-import { DispatchEngine } from './dispatch.engine';
-import { SupportExceptionEngine } from './support.engine';
+import type { DomainEventEmitter } from '../core/event-emitter';
+import type { AuditLogger } from '../core/audit-logger';
+import type { OrderOrchestrator } from './order.orchestrator';
+import type { DispatchEngine } from './dispatch.engine';
+import type { SupportExceptionEngine } from './support.engine';
+import {
+  getChefById,
+  getStorefrontByChefId,
+  getStorefrontById,
+  updateChefProfile,
+  updateStorefront,
+} from '@ridendine/db';
 
 interface PaymentFailureInput {
   orderId: string;
@@ -20,6 +27,8 @@ interface ExternalRefundInput {
   totalAmountCents: number;
   currency: string;
 }
+
+type ChefGovernanceStatus = 'approved' | 'rejected' | 'suspended';
 
 export class PlatformWorkflowEngine {
   constructor(
@@ -289,11 +298,263 @@ export class PlatformWorkflowEngine {
     return { success: true, data: updatedOrder };
   }
 
+  async updateChefGovernance(
+    chefId: string,
+    nextStatus: ChefGovernanceStatus,
+    actor: ActorContext,
+    reason?: string
+  ): Promise<OperationResult> {
+    const chef = await getChefById(this.client, chefId);
+    if (!chef) {
+      return {
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Chef profile not found' },
+      };
+    }
+
+    if (chef.status === nextStatus) {
+      return { success: true, data: chef };
+    }
+
+    const updatedChef = await updateChefProfile(this.client, chefId, { status: nextStatus });
+    const storefront = await getStorefrontByChefId(this.client, chefId);
+
+    if (storefront && nextStatus !== 'approved' && storefront.is_active) {
+      await updateStorefront(this.client, storefront.id, { is_active: false });
+      await this.recordStorefrontStateChange(
+        storefront.id,
+        'published',
+        nextStatus === 'suspended' ? 'suspended' : 'closed',
+        actor,
+        reason
+      );
+    }
+
+    await this.auditLogger.log({
+      action: this.mapChefStatusToAuditAction(nextStatus),
+      entityType: 'chef',
+      entityId: chefId,
+      actor,
+      beforeState: { status: chef.status },
+      afterState: { status: nextStatus },
+      reason,
+      metadata: storefront ? { storefrontId: storefront.id } : undefined,
+    });
+
+    if (chef.user_id) {
+      await this.insertNotification(chef.user_id, {
+        type: 'chef_governance',
+        title: this.getChefGovernanceTitle(nextStatus),
+        message: this.getChefGovernanceMessage(nextStatus, updatedChef.display_name, reason),
+        data: {
+          chef_id: chefId,
+          storefront_id: storefront?.id ?? null,
+          status: nextStatus,
+        },
+      });
+    }
+
+    await this.eventEmitter.flush();
+
+    return {
+      success: true,
+      data: {
+        chef: updatedChef,
+        storefront,
+      },
+    };
+  }
+
+  async publishStorefront(
+    storefrontId: string,
+    actor: ActorContext,
+    reason?: string
+  ): Promise<OperationResult> {
+    const storefront = await getStorefrontById(this.client, storefrontId);
+    if (!storefront) {
+      return {
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Storefront not found' },
+      };
+    }
+
+    const chef = await getChefById(this.client, storefront.chef_id);
+    if (!chef) {
+      return {
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Chef profile not found for storefront' },
+      };
+    }
+
+    if (chef.status !== 'approved') {
+      return {
+        success: false,
+        error: { code: 'CHEF_NOT_APPROVED', message: 'Only approved chefs can have published storefronts' },
+      };
+    }
+
+    if (storefront.is_active) {
+      return { success: true, data: storefront };
+    }
+
+    const updatedStorefront = await updateStorefront(this.client, storefrontId, { is_active: true });
+
+    await this.recordStorefrontStateChange(storefrontId, 'draft', 'published', actor, reason);
+
+    this.eventEmitter.emit(
+      'storefront.published' as DomainEventType,
+      'storefront',
+      storefrontId,
+      { chefId: storefront.chef_id, reason: reason ?? null },
+      actor
+    );
+
+    await this.auditLogger.log({
+      action: 'approval',
+      entityType: 'storefront',
+      entityId: storefrontId,
+      actor,
+      beforeState: { is_active: storefront.is_active },
+      afterState: { is_active: true },
+      reason,
+      metadata: { chefId: storefront.chef_id },
+    });
+
+    if (chef.user_id) {
+      await this.insertNotification(chef.user_id, {
+        type: 'storefront_published',
+        title: 'Storefront Published',
+        message: `${updatedStorefront.name} is now live on RideNDine.`,
+        data: { storefront_id: storefrontId, chef_id: storefront.chef_id },
+      });
+    }
+
+    await this.eventEmitter.flush();
+
+    return { success: true, data: updatedStorefront };
+  }
+
+  async unpublishStorefront(
+    storefrontId: string,
+    actor: ActorContext,
+    reason?: string
+  ): Promise<OperationResult> {
+    const storefront = await getStorefrontById(this.client, storefrontId);
+    if (!storefront) {
+      return {
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Storefront not found' },
+      };
+    }
+
+    if (!storefront.is_active) {
+      return { success: true, data: storefront };
+    }
+
+    const updatedStorefront = await updateStorefront(this.client, storefrontId, { is_active: false });
+
+    await this.recordStorefrontStateChange(storefrontId, 'published', 'closed', actor, reason);
+
+    await this.auditLogger.log({
+      action: 'status_change',
+      entityType: 'storefront',
+      entityId: storefrontId,
+      actor,
+      beforeState: { is_active: storefront.is_active },
+      afterState: { is_active: false },
+      reason,
+      metadata: { chefId: storefront.chef_id },
+    });
+
+    const chef = await getChefById(this.client, storefront.chef_id);
+    if (chef?.user_id) {
+      await this.insertNotification(chef.user_id, {
+        type: 'storefront_unpublished',
+        title: 'Storefront Visibility Updated',
+        message: reason
+          ? `${storefront.name} was removed from the marketplace: ${reason}`
+          : `${storefront.name} was removed from the marketplace by operations.`,
+        data: { storefront_id: storefrontId, chef_id: storefront.chef_id },
+      });
+    }
+
+    await this.eventEmitter.flush();
+
+    return { success: true, data: updatedStorefront };
+  }
+
   private getSystemActor(): ActorContext {
     return {
       userId: 'system',
       role: 'system',
     };
+  }
+
+  private async recordStorefrontStateChange(
+    storefrontId: string,
+    previousState: string,
+    nextState: string,
+    actor: ActorContext,
+    reason?: string
+  ): Promise<void> {
+    await this.client.from('storefront_state_changes').insert({
+      storefront_id: storefrontId,
+      previous_state: previousState,
+      new_state: nextState,
+      reason: reason ?? null,
+      changed_by: actor.userId,
+      changed_by_role: actor.role,
+    });
+  }
+
+  private async insertNotification(
+    userId: string,
+    payload: {
+      type: string;
+      title: string;
+      message: string;
+      data?: Record<string, unknown>;
+    }
+  ): Promise<void> {
+    await this.client.from('notifications').insert({
+      user_id: userId,
+      type: payload.type,
+      title: payload.title,
+      message: payload.message,
+      data: payload.data ?? {},
+    });
+  }
+
+  private mapChefStatusToAuditAction(nextStatus: ChefGovernanceStatus): 'approval' | 'rejection' | 'suspension' {
+    if (nextStatus === 'approved') return 'approval';
+    if (nextStatus === 'rejected') return 'rejection';
+    return 'suspension';
+  }
+
+  private getChefGovernanceTitle(nextStatus: ChefGovernanceStatus): string {
+    if (nextStatus === 'approved') return 'Chef Profile Approved';
+    if (nextStatus === 'rejected') return 'Chef Application Rejected';
+    return 'Chef Profile Suspended';
+  }
+
+  private getChefGovernanceMessage(
+    nextStatus: ChefGovernanceStatus,
+    displayName: string,
+    reason?: string
+  ): string {
+    if (nextStatus === 'approved') {
+      return `${displayName} can now operate on RideNDine. Storefront publication is still controlled by ops.`;
+    }
+
+    if (nextStatus === 'rejected') {
+      return reason
+        ? `${displayName}'s application was rejected: ${reason}`
+        : `${displayName}'s application was rejected by operations.`;
+    }
+
+    return reason
+      ? `${displayName}'s chef access was suspended: ${reason}`
+      : `${displayName}'s chef access was suspended by operations.`;
   }
 }
 

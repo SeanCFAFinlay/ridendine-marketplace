@@ -1,57 +1,18 @@
 import { Card, Badge } from '@ridendine/ui';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { createServerClient } from '@ridendine/db';
+import { createServerClient, getChefGovernanceDetail } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { notFound } from 'next/navigation';
+import { ChefGovernanceActions } from './chef-governance-actions';
+import { StorefrontGovernanceActions } from './storefront-governance-actions';
 
 export const dynamic = 'force-dynamic';
 
 async function getChefDetails(chefId: string) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
-
-  const { data: chef, error } = await supabase
-    .from('chef_profiles')
-    .select(`
-      *,
-      chef_storefronts (
-        id,
-        name,
-        slug,
-        is_active,
-        is_featured,
-        average_rating,
-        total_reviews,
-        cuisine_types
-      )
-    `)
-    .eq('id', chefId)
-    .single();
-
-  if (error || !chef) {
-    return null;
-  }
-
-  // Get order stats for this chef's storefronts
-  let orderCount = 0;
-  let totalRevenue = 0;
-  const storefronts = chef.chef_storefronts as Array<{ id: string }> | null;
-  if (storefronts && storefronts.length > 0) {
-    const storefrontIds = storefronts.map((s) => s.id);
-    const { data: orders } = await supabase
-      .from('orders')
-      .select('total')
-      .in('storefront_id', storefrontIds)
-      .eq('status', 'delivered');
-
-    if (orders) {
-      orderCount = orders.length;
-      totalRevenue = orders.reduce((sum: number, o: { total: number | null }) => sum + (o.total || 0), 0);
-    }
-  }
-
-  return { chef, orderCount, totalRevenue };
+  return getChefGovernanceDetail(supabase, chefId);
 }
 
 const statusColors: Record<string, string> = {
@@ -68,7 +29,7 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
     notFound();
   }
 
-  const { chef, orderCount, totalRevenue } = data;
+  const chef = data;
   const storefronts = chef.chef_storefronts as Array<{
     id: string;
     name: string;
@@ -108,8 +69,8 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
                 <p className="text-white">{chef.phone || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-400">Email</p>
-                <p className="text-white">{chef.email || 'N/A'}</p>
+                <p className="text-sm text-gray-400">Account Link</p>
+                <p className="text-white">{chef.user_id ? 'Linked user account' : 'No linked user account'}</p>
               </div>
               <div className="sm:col-span-2">
                 <p className="text-sm text-gray-400">Bio</p>
@@ -133,11 +94,11 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
             <h2 className="text-lg font-semibold text-white mb-4">Performance</h2>
             <div className="space-y-4">
               <div className="text-center p-4 bg-[#1a1a2e] rounded-lg">
-                <p className="text-2xl font-bold text-emerald-400">${totalRevenue.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-emerald-400">${chef.total_revenue.toFixed(2)}</p>
                 <p className="text-sm text-gray-400">Total Revenue</p>
               </div>
               <div className="text-center p-4 bg-[#1a1a2e] rounded-lg">
-                <p className="text-2xl font-bold text-blue-400">{orderCount}</p>
+                <p className="text-2xl font-bold text-blue-400">{chef.order_count}</p>
                 <p className="text-sm text-gray-400">Completed Orders</p>
               </div>
               <div className="text-center p-4 bg-[#1a1a2e] rounded-lg">
@@ -169,6 +130,10 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
                       <Badge className={storefront.is_active ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'}>
                         {storefront.is_active ? 'Active' : 'Inactive'}
                       </Badge>
+                      <StorefrontGovernanceActions
+                        storefrontId={storefront.id}
+                        isActive={storefront.is_active}
+                      />
                     </div>
                   </div>
                   <div className="mt-2 flex items-center gap-4 text-sm text-gray-400">
@@ -186,34 +151,10 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
         {/* Actions */}
         <Card className="border-gray-800 bg-[#16213e] p-6">
           <h2 className="text-lg font-semibold text-white mb-4">Actions</h2>
-          <div className="flex gap-3">
-            {chef.status === 'pending' && (
-              <>
-                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                  Approve Chef
-                </button>
-                <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                  Reject Application
-                </button>
-              </>
-            )}
-            {chef.status === 'approved' && (
-              <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
-                Suspend Chef
-              </button>
-            )}
-            {chef.status === 'suspended' && (
-              <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                Unsuspend Chef
-              </button>
-            )}
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              View Orders
-            </button>
-            <button className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-              Send Message
-            </button>
-          </div>
+          <p className="mb-4 text-sm text-gray-400">
+            Ops owns chef approval and storefront publication. Suspension removes storefront visibility until ops republishes it.
+          </p>
+          <ChefGovernanceActions chefId={chef.id} chefStatus={chef.status} />
         </Card>
       </div>
     </DashboardLayout>

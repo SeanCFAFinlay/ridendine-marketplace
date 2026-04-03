@@ -8,6 +8,7 @@ export interface StorefrontWithChef extends ChefStorefront {
     id: string;
     display_name: string;
     profile_image_url: string | null;
+    status: string;
   };
 }
 
@@ -24,13 +25,15 @@ export async function getActiveStorefronts(
     .from('chef_storefronts')
     .select(`
       *,
-      chef_profiles (
+      chef_profiles!inner (
         id,
         display_name,
-        profile_image_url
+        profile_image_url,
+        status
       )
     `)
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .eq('chef_profiles.status', 'approved');
 
   if (options.featured) {
     query = query.eq('is_featured', true);
@@ -65,14 +68,16 @@ export async function getStorefrontBySlug(
     .from('chef_storefronts')
     .select(`
       *,
-      chef_profiles (
+      chef_profiles!inner (
         id,
         display_name,
-        profile_image_url
+        profile_image_url,
+        status
       )
     `)
     .eq('slug', slug)
     .eq('is_active', true)
+    .eq('chef_profiles.status', 'approved')
     .single();
 
   if (error) {
@@ -158,13 +163,15 @@ export async function searchStorefronts(
     .from('chef_storefronts')
     .select(`
       *,
-      chef_profiles (
+      chef_profiles!inner (
         id,
         display_name,
-        profile_image_url
+        profile_image_url,
+        status
       )
     `)
     .eq('is_active', true)
+    .eq('chef_profiles.status', 'approved')
     .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
     .limit(limit);
 

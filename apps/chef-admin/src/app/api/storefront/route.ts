@@ -216,9 +216,15 @@ export async function PATCH(request: NextRequest) {
       min_order_amount,
       estimated_prep_time_min,
       estimated_prep_time_max,
-      is_active,
       accepting_orders,
     } = body;
+
+    if ('is_active' in body) {
+      return errorResponse(
+        'FORBIDDEN_FIELD',
+        'Storefront publication is governed by ops-admin. Chefs cannot change marketplace visibility.'
+      );
+    }
 
     const adminClient = createAdminClient() as unknown as SupabaseClient;
     const engine = getEngine();
@@ -231,7 +237,6 @@ export async function PATCH(request: NextRequest) {
     if (min_order_amount !== undefined) updates.min_order_amount = min_order_amount;
     if (estimated_prep_time_min !== undefined) updates.estimated_prep_time_min = estimated_prep_time_min;
     if (estimated_prep_time_max !== undefined) updates.estimated_prep_time_max = estimated_prep_time_max;
-    if (is_active !== undefined) updates.is_active = is_active;
     if (accepting_orders !== undefined) updates.accepting_orders = accepting_orders;
 
     if (Object.keys(updates).length === 0) {
