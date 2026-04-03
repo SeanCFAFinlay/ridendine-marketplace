@@ -102,7 +102,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
 
             {/* Actions */}
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Link href={`/orders/${order.id}`}>
+              <Link href={`/order-confirmation/${order.id}`}>
                 <Button>Track Order</Button>
               </Link>
               <Link href="/chefs">

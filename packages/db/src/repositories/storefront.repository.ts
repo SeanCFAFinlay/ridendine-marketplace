@@ -136,7 +136,7 @@ export async function createStorefront(
 export async function updateStorefront(
   client: SupabaseClient,
   id: string,
-  updates: Partial<ChefStorefront>
+  updates: Partial<ChefStorefront> & Record<string, unknown>
 ): Promise<ChefStorefront> {
   const { data, error } = await client
     .from('chef_storefronts')

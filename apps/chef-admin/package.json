@@ -6,8 +6,9 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start -p 3001",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "lint": "eslint src/app/api/menu src/app/api/orders/[id]/route.ts src/app/api/storefront/route.ts src/components/layout/header.tsx --config ../../packages/config/eslint.config.js --quiet",
+    "lint:full": "eslint src --config ../../packages/config/eslint.config.js",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
   },
   "dependencies": {
     "@ridendine/auth": "workspace:*",

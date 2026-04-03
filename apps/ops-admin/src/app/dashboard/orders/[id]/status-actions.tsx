@@ -3,71 +3,85 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@ridendine/ui';
-import {
-  ORDER_STATUS,
-  VALID_ORDER_TRANSITIONS,
-  ORDER_STATUS_LABELS,
-  type OrderStatusType,
-} from '@ridendine/engine';
 
 interface OrderStatusActionsProps {
   orderId: string;
   currentStatus: string;
+  allowedActions: string[];
 }
 
 export function OrderStatusActions({
   orderId,
   currentStatus,
+  allowedActions,
 }: OrderStatusActionsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const validTransitions =
-    VALID_ORDER_TRANSITIONS[currentStatus as OrderStatusType] || [];
+  const actionConfig: Record<string, { apiAction: string; label: string; success: string; className: string }> = {
+    accept_order: {
+      apiAction: 'accept',
+      label: 'Accept Order',
+      success: 'Order accepted',
+      className: 'bg-blue-600 hover:bg-blue-700',
+    },
+    reject_order: {
+      apiAction: 'reject',
+      label: 'Reject Order',
+      success: 'Order rejected',
+      className: 'bg-red-600 hover:bg-red-700',
+    },
+    start_preparing: {
+      apiAction: 'start_preparing',
+      label: 'Start Preparing',
+      success: 'Order moved to preparing',
+      className: 'bg-purple-600 hover:bg-purple-700',
+    },
+    mark_ready: {
+      apiAction: 'mark_ready',
+      label: 'Mark Ready',
+      success: 'Order marked ready',
+      className: 'bg-indigo-600 hover:bg-indigo-700',
+    },
+    complete_order: {
+      apiAction: 'complete',
+      label: 'Complete Order',
+      success: 'Order completed',
+      className: 'bg-green-600 hover:bg-green-700',
+    },
+  };
 
-  const handleStatusUpdate = async (newStatus: OrderStatusType) => {
+  const actionableItems = allowedActions
+    .map((action) => ({ action, config: actionConfig[action] }))
+    .filter((item): item is { action: string; config: { apiAction: string; label: string; success: string; className: string } } => Boolean(item.config));
+
+  const handleAction = async (action: string, successMessage: string) => {
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
-      const response = await fetch(`/api/orders/${orderId}`, {
+      const response = await fetch(`/api/engine/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ action }),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        setSuccess(`Order status updated to ${ORDER_STATUS_LABELS[newStatus]}`);
+        setSuccess(successMessage);
         router.refresh();
       } else {
-        setError(result.error || 'Failed to update status');
+        setError(result.error?.message || result.error || 'Failed to update order');
       }
-    } catch (err) {
-      setError('Failed to update order status');
+    } catch {
+      setError('Failed to update order');
     } finally {
       setLoading(false);
     }
-  };
-
-  const getStatusButtonStyle = (status: OrderStatusType): string => {
-    const styles: Record<string, string> = {
-      accepted: 'bg-blue-600 hover:bg-blue-700',
-      rejected: 'bg-red-600 hover:bg-red-700',
-      preparing: 'bg-purple-600 hover:bg-purple-700',
-      ready_for_pickup: 'bg-indigo-600 hover:bg-indigo-700',
-      picked_up: 'bg-cyan-600 hover:bg-cyan-700',
-      in_transit: 'bg-cyan-600 hover:bg-cyan-700',
-      delivered: 'bg-green-600 hover:bg-green-700',
-      completed: 'bg-green-600 hover:bg-green-700',
-      cancelled: 'bg-red-600 hover:bg-red-700',
-      refunded: 'bg-gray-600 hover:bg-gray-700',
-    };
-    return styles[status] || 'bg-gray-600 hover:bg-gray-700';
   };
 
   const isTerminal = ['completed', 'cancelled', 'rejected', 'refunded'].includes(
@@ -93,28 +107,24 @@ export function OrderStatusActions({
       {isTerminal ? (
         <p className="text-gray-400">
           This order is in a terminal state ({currentStatus}) and cannot be modified.
-        </p>
-      ) : validTransitions.length === 0 ? (
-        <p className="text-gray-400">No status transitions available.</p>
+        </p> 
+      ) : actionableItems.length === 0 ? (
+        <p className="text-gray-400">No engine-backed actions are currently available.</p>
       ) : (
         <>
           <p className="text-gray-400 mb-4">
             Current status:{' '}
-            <span className="text-white font-medium">
-              {ORDER_STATUS_LABELS[currentStatus as OrderStatusType] || currentStatus}
-            </span>
+            <span className="text-white font-medium">{currentStatus}</span>
           </p>
           <div className="flex flex-wrap gap-3">
-            {validTransitions.map((status) => (
+            {actionableItems.map(({ action, config }) => (
               <button
-                key={status}
-                onClick={() => handleStatusUpdate(status)}
+                key={action}
+                onClick={() => handleAction(config.apiAction, config.success)}
                 disabled={loading}
-                className={`px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getStatusButtonStyle(
-                  status
-                )}`}
+                className={`px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${config.className}`}
               >
-                {loading ? 'Updating...' : `Mark as ${ORDER_STATUS_LABELS[status]}`}
+                {loading ? 'Updating...' : config.label}
               </button>
             ))}
           </div>

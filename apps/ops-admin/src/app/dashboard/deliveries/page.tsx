@@ -104,10 +104,14 @@ export default function DeliveriesPage() {
 
     setAssigning(true);
     try {
-      const response = await fetch(`/api/deliveries/${selectedDelivery.id}`, {
-        method: 'PATCH',
+      const response = await fetch('/api/engine/dispatch', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ driverId: selectedDriverId }),
+        body: JSON.stringify({
+          action: 'manual_assign',
+          deliveryId: selectedDelivery.id,
+          driverId: selectedDriverId,
+        }),
       });
 
       if (response.ok) {

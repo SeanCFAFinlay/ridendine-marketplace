@@ -3,7 +3,7 @@
 // Powered by Central Engine
 // ==========================================
 
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 import {
   getEngine,
   getOpsActorContext,

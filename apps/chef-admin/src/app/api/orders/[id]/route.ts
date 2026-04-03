@@ -3,7 +3,7 @@
 // Powered by Central Engine
 // ==========================================
 
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import {
   getEngine,
@@ -18,7 +18,7 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const { id: orderId } = await params;
 
@@ -136,14 +136,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       }
 
       case 'mark_ready': {
-        const result = await engine.orders.markReady(orderId, actor);
+        const result = await engine.platform.markOrderReady(orderId, actor);
         if (!result.success) {
           return errorResponse(result.error!.code, result.error!.message);
         }
-
-        // After marking ready, request dispatch
-        await engine.dispatch.requestDispatch(orderId, { userId: 'system', role: 'system' });
-
         return successResponse(result.data);
       }
 

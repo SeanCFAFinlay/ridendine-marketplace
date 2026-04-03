@@ -6,7 +6,6 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
-import { createAdminClient } from '@ridendine/db';
 import { getEngine, getSystemActor } from '@/lib/engine';
 
 function getStripe() {
@@ -45,7 +44,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  const adminClient = createAdminClient();
   const engine = getEngine();
   const systemActor = getSystemActor();
 
@@ -63,16 +61,6 @@ export async function POST(request: Request): Promise<NextResponse> {
             console.error('Failed to submit order to kitchen:', submitResult.error);
             // Don't fail the webhook - the order is paid
           }
-
-          // Create ledger entry for payment capture
-          await (adminClient as any).from('ledger_entries').insert({
-            order_id: orderId,
-            entry_type: 'customer_charge_capture',
-            amount_cents: paymentIntent.amount,
-            currency: paymentIntent.currency.toUpperCase(),
-            description: `Payment confirmed for order ${paymentIntent.metadata.order_number}`,
-            stripe_id: paymentIntent.id,
-          });
 
           // Emit domain event
           engine.events.emit(
@@ -110,41 +98,19 @@ export async function POST(request: Request): Promise<NextResponse> {
         const orderId = paymentIntent.metadata.order_id;
 
         if (orderId) {
-          // Update order status to failed
-          await adminClient
-            .from('orders')
-            .update({
-              payment_status: 'failed',
-              engine_status: 'payment_failed',
-              status: 'cancelled',
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', orderId);
-
-          // Create exception for ops
-          await engine.support.createException(
+          const result = await engine.platform.handlePaymentFailure(
             {
-              type: 'payment_issue',
-              severity: 'high',
               orderId,
-              title: 'Payment Failed',
-              description: `Payment failed for order ${paymentIntent.metadata.order_number}: ${paymentIntent.last_payment_error?.message || 'Unknown error'}`,
-              recommendedActions: ['Contact customer', 'Offer retry'],
+              orderNumber: paymentIntent.metadata.order_number,
+              message: paymentIntent.last_payment_error?.message || 'Unknown error',
+              paymentIntentId: paymentIntent.id,
             },
             systemActor
           );
 
-          // Log audit
-          await engine.audit.log({
-            action: 'status_change',
-            entityType: 'order',
-            entityId: orderId,
-            actor: systemActor,
-            afterState: {
-              paymentStatus: 'failed',
-              error: paymentIntent.last_payment_error?.message,
-            },
-          });
+          if (!result.success) {
+            console.error('Failed to process payment failure webhook:', result.error);
+          }
         }
         break;
       }
@@ -154,94 +120,19 @@ export async function POST(request: Request): Promise<NextResponse> {
         const paymentIntentId = charge.payment_intent as string;
 
         if (paymentIntentId) {
-          // Find order by payment_intent_id
-          const { data: order } = await adminClient
-            .from('orders')
-            .select('id, order_number, customer_id, total')
-            .eq('payment_intent_id', paymentIntentId)
-            .single();
-
-          if (order) {
-            const refundedAmount = charge.amount_refunded;
-            const totalAmount = charge.amount;
-            const isFullRefund = refundedAmount >= totalAmount;
-
-            // Update order status via engine
-            if (isFullRefund) {
-              await adminClient
-                .from('orders')
-                .update({
-                  payment_status: 'refunded',
-                  engine_status: 'refunded',
-                  updated_at: new Date().toISOString(),
-                })
-                .eq('id', order.id);
-            } else {
-              await adminClient
-                .from('orders')
-                .update({
-                  payment_status: 'partial_refunded',
-                  engine_status: 'partially_refunded',
-                  updated_at: new Date().toISOString(),
-                })
-                .eq('id', order.id);
-            }
-
-            // Create ledger entry for refund
-            await (adminClient as any).from('ledger_entries').insert({
-              order_id: order.id,
-              entry_type: 'customer_refund',
-              amount_cents: -refundedAmount,
+          const result = await engine.platform.handleExternalRefund(
+            {
+              paymentIntentId,
+              stripeChargeId: charge.id,
+              refundedAmountCents: charge.amount_refunded,
+              totalAmountCents: charge.amount,
               currency: charge.currency.toUpperCase(),
-              description: `Refund processed for order ${order.order_number}`,
-              stripe_id: charge.id,
-            });
+            },
+            systemActor
+          );
 
-            // Emit domain event
-            engine.events.emit(
-              isFullRefund ? 'order.refunded' : 'order.partially_refunded',
-              'order',
-              order.id,
-              {
-                refundedAmount: refundedAmount / 100,
-                totalAmount: totalAmount / 100,
-                isFullRefund,
-              },
-              systemActor
-            );
-
-            // Log audit
-            await engine.audit.log({
-              action: 'status_change',
-              entityType: 'order',
-              entityId: order.id,
-              actor: systemActor,
-              afterState: {
-                paymentStatus: isFullRefund ? 'refunded' : 'partial_refunded',
-                refundedAmount,
-                totalAmount,
-              },
-            });
-
-            await engine.events.flush();
-
-            // Get customer user_id for notification
-            const { data: customer } = await adminClient
-              .from('customers')
-              .select('user_id')
-              .eq('id', order.customer_id)
-              .single();
-
-            if (customer) {
-              await (adminClient as any).from('notifications').insert({
-                user_id: customer.user_id,
-                type: 'refund',
-                title: isFullRefund ? 'Refund Processed' : 'Partial Refund Processed',
-                body: `A refund of $${(refundedAmount / 100).toFixed(2)} has been issued to your payment method.`,
-                data: { order_id: order.id, refund_amount: refundedAmount },
-                read: false,
-              });
-            }
+          if (!result.success) {
+            console.error('Failed to process refund webhook:', result.error);
           }
         }
         break;

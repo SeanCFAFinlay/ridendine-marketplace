@@ -11,6 +11,7 @@ export * from './orchestrators/kitchen.engine';
 export * from './orchestrators/dispatch.engine';
 export * from './orchestrators/commerce.engine';
 export * from './orchestrators/support.engine';
+export * from './orchestrators/platform.engine';
 
 // Legacy services (for backwards compatibility)
 export * from './services/orders.service';

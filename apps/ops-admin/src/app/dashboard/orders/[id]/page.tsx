@@ -1,7 +1,8 @@
 import { Card, Badge } from '@ridendine/ui';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { createServerClient } from '@ridendine/db';
+import { createAdminClient, createServerClient } from '@ridendine/db';
+import { createCentralEngine } from '@ridendine/engine';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { notFound } from 'next/navigation';
 import { OrderStatusActions } from './status-actions';
@@ -59,7 +60,10 @@ async function getOrderDetails(orderId: string) {
     // Delivery may not exist
   }
 
-  return { order, delivery };
+  const engine = createCentralEngine(createAdminClient() as any);
+  const allowedActions = await engine.orders.getAllowedActions(orderId, 'ops_agent');
+
+  return { order, delivery, allowedActions };
 }
 
 const statusColors: Record<string, string> = {
@@ -81,7 +85,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     notFound();
   }
 
-  const { order, delivery } = data;
+  const { order, delivery, allowedActions } = data;
   const storefront = order.chef_storefronts as { name: string; slug: string } | null;
   const customer = order.customers as { first_name: string; last_name: string; email: string; phone: string } | null;
   const items = order.order_items as Array<{ id: string; quantity: number; unit_price: number; total_price: number; menu_items: { name: string } | null }>;
@@ -252,6 +256,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <OrderStatusActions
           orderId={order.id}
           currentStatus={order.status}
+          allowedActions={allowedActions}
         />
       </div>
     </DashboardLayout>

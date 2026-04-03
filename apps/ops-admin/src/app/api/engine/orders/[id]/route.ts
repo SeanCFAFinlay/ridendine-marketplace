@@ -3,7 +3,7 @@
 // Powered by Central Engine
 // ==========================================
 
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import {
   getEngine,
@@ -144,7 +144,7 @@ export async function PATCH(
     }
 
     case 'mark_ready': {
-      const result = await engine.orders.markReady(orderId, actor);
+      const result = await engine.platform.markOrderReady(orderId, actor);
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
       }

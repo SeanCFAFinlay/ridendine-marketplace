@@ -3,7 +3,6 @@
 // Powered by Central Engine
 // ==========================================
 
-import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createAdminClient, getCartWithItems, clearCart } from '@ridendine/db';
 import {

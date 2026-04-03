@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, Button, Badge } from '@ridendine/ui';
+import { Card, Button } from '@ridendine/ui';
 import type { Delivery } from '@ridendine/db';
 import { useLocationTracker } from '@/hooks/use-location-tracker';
 

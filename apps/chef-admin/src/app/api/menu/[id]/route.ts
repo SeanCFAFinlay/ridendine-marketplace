@@ -3,8 +3,13 @@
 // Powered by Central Engine
 // ==========================================
 
-import { NextRequest } from 'next/server';
-import { createAdminClient } from '@ridendine/db';
+import type { NextRequest } from 'next/server';
+import {
+  createAdminClient,
+  getMenuCategoriesByStorefront,
+  getMenuItemById,
+  updateMenuItem,
+} from '@ridendine/db';
 import {
   getEngine,
   getChefActorContext,
@@ -26,11 +31,7 @@ async function verifyMenuItemOwnership(
   menuItemId: string
 ): Promise<{ menuItem: Record<string, unknown> | null; owns: boolean }> {
   const adminClient = createAdminClient();
-  const { data: menuItem } = await adminClient
-    .from('menu_items')
-    .select('*')
-    .eq('id', menuItemId)
-    .single();
+  const menuItem = await getMenuItemById(adminClient as any, menuItemId);
 
   if (!menuItem) {
     return { menuItem: null, owns: false };
@@ -46,7 +47,7 @@ async function verifyMenuItemOwnership(
  * GET /api/menu/[id]
  * Get a specific menu item
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const { id: menuItemId } = await params;
 
@@ -125,13 +126,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (price !== undefined) updates.price = price;
     if (category_id !== undefined) {
       // Verify new category belongs to this storefront
-      const { data: category } = await adminClient
-        .from('menu_categories')
-        .select('storefront_id')
-        .eq('id', category_id)
-        .single();
+      const categories = await getMenuCategoriesByStorefront(adminClient as any, chefContext.storefrontId);
+      const category = categories.find((entry) => entry.id === category_id);
 
-      if (!category || category.storefront_id !== chefContext.storefrontId) {
+      if (!category) {
         return errorResponse('INVALID_CATEGORY', 'Category not found or does not belong to your storefront');
       }
       updates.category_id = category_id;
@@ -149,16 +147,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     updates.updated_at = new Date().toISOString();
 
-    const { data: menuItem, error } = await adminClient
-      .from('menu_items')
-      .update(updates)
-      .eq('id', menuItemId)
-      .select()
-      .single();
-
-    if (error) {
-      return errorResponse('UPDATE_ERROR', error.message);
-    }
+    const menuItem = await updateMenuItem(adminClient as any, menuItemId, updates);
 
     // Log the update via audit
     await engine.audit.log({
@@ -180,7 +169,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  * DELETE /api/menu/[id]
  * Delete a menu item
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
     const { id: menuItemId } = await params;
 
@@ -205,18 +194,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const adminClient = createAdminClient();
     const engine = getEngine();
 
-    // Soft delete by marking as unavailable and adding deleted flag
-    const { error } = await adminClient
-      .from('menu_items')
-      .update({
-        is_available: false,
-        deleted_at: new Date().toISOString(),
-      })
-      .eq('id', menuItemId);
-
-    if (error) {
-      return errorResponse('DELETE_ERROR', error.message);
-    }
+    // Preserve historical order references by unpublishing the item instead of deleting the row.
+    await updateMenuItem(adminClient as any, menuItemId, {
+      is_available: false,
+      is_featured: false,
+    });
 
     // Log the deletion via audit
     await engine.audit.log({

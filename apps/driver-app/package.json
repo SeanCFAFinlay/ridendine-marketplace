@@ -6,8 +6,9 @@
     "dev": "next dev -p 3003",
     "build": "next build",
     "start": "next start -p 3003",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "lint": "eslint src/app/api/deliveries src/app/delivery --config ../../packages/config/eslint.config.js --quiet",
+    "lint:full": "eslint src --config ../../packages/config/eslint.config.js",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
   },
   "dependencies": {
     "@ridendine/auth": "workspace:*",

@@ -3,7 +3,7 @@
 // Powered by Central Engine
 // ==========================================
 
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import {
   getEngine,
@@ -161,35 +161,20 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         );
       }
 
-      const result = await engine.dispatch.updateDeliveryStatus(
-        deliveryId,
-        newStatus,
-        actor,
-        { proofUrl, notes }
-      );
+      const workflowResult = newStatus === 'delivered'
+        ? await engine.platform.completeDeliveredOrder(deliveryId, actor, { proofUrl, notes })
+        : await engine.dispatch.updateDeliveryStatus(
+            deliveryId,
+            newStatus,
+            actor,
+            { proofUrl, notes }
+          );
 
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
+      if (!workflowResult.success) {
+        return errorResponse(workflowResult.error!.code, workflowResult.error!.message);
       }
 
-      // If delivered, auto-complete the order
-      if (newStatus === 'delivered') {
-        const adminClient = createAdminClient();
-        const { data: delivery } = await adminClient
-          .from('deliveries')
-          .select('order_id')
-          .eq('id', deliveryId)
-          .single();
-
-        if (delivery?.order_id) {
-          await engine.orders.completeOrder(delivery.order_id, {
-            userId: 'system',
-            role: 'system',
-          });
-        }
-      }
-
-      return successResponse(result.data);
+      return successResponse(workflowResult.data);
     }
 
     return errorResponse('INVALID_ACTION', `Unknown action: ${action || 'none'}`);

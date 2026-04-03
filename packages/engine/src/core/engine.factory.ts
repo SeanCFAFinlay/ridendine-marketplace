@@ -12,6 +12,7 @@ import { KitchenEngine, createKitchenEngine } from '../orchestrators/kitchen.eng
 import { DispatchEngine, createDispatchEngine } from '../orchestrators/dispatch.engine';
 import { CommerceLedgerEngine, createCommerceLedgerEngine } from '../orchestrators/commerce.engine';
 import { SupportExceptionEngine, createSupportExceptionEngine } from '../orchestrators/support.engine';
+import { PlatformWorkflowEngine, createPlatformWorkflowEngine } from '../orchestrators/platform.engine';
 
 /**
  * Central Engine instance
@@ -29,6 +30,7 @@ export interface CentralEngine {
   dispatch: DispatchEngine;
   commerce: CommerceLedgerEngine;
   support: SupportExceptionEngine;
+  platform: PlatformWorkflowEngine;
 }
 
 /**
@@ -46,6 +48,7 @@ export function createCentralEngine(client: SupabaseClient): CentralEngine {
   const dispatch = createDispatchEngine(client, events, audit, sla);
   const commerce = createCommerceLedgerEngine(client, events, audit);
   const support = createSupportExceptionEngine(client, events, audit);
+  const platform = createPlatformWorkflowEngine(client, events, audit, orders, dispatch, support);
 
   return {
     events,
@@ -56,6 +59,7 @@ export function createCentralEngine(client: SupabaseClient): CentralEngine {
     dispatch,
     commerce,
     support,
+    platform,
   };
 }
 

@@ -1,5 +1,9 @@
 import { cookies } from 'next/headers';
-import { createServerClient, getStorefrontByChefId } from '@ridendine/db';
+import {
+  createServerClient,
+  getStorefrontByChefId,
+  getStorefrontMenu,
+} from '@ridendine/db';
 import { MenuList } from '@/components/menu/menu-list';
 
 export const dynamic = 'force-dynamic';
@@ -25,25 +29,7 @@ async function getChefStorefront() {
 async function getMenuData(storefrontId: string) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
-
-  const { data: menuItems }: any = await supabase
-    .from('menu_items')
-    .select('*')
-    .eq('storefront_id', storefrontId)
-    .order('sort_order', { ascending: true });
-
-  const { data: categories }: any = await supabase
-    .from('menu_categories')
-    .select('*')
-    .eq('storefront_id', storefrontId)
-    .order('sort_order', { ascending: true });
-
-  const grouped = categories?.map((category: any) => ({
-    ...category,
-    items: menuItems?.filter((item: any) => item.category_id === category.id) || [],
-  })) || [];
-
-  return grouped;
+  return getStorefrontMenu(supabase as any, storefrontId, { includeUnavailable: true });
 }
 
 export default async function MenuPage() {

@@ -3,8 +3,12 @@
 // Powered by Central Engine
 // ==========================================
 
-import { NextRequest } from 'next/server';
-import { createAdminClient } from '@ridendine/db';
+import type { NextRequest } from 'next/server';
+import {
+  createAdminClient,
+  createStorefront,
+  updateStorefront,
+} from '@ridendine/db';
 import {
   getEngine,
   getChefActorContext,
@@ -155,9 +159,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the storefront
-    const { data: storefront, error } = await adminClient
-      .from('chef_storefronts')
-      .insert({
+    const storefront = await createStorefront(adminClient as any, {
         chef_id: chefContext.chefId,
         kitchen_id: kitchenId,
         slug,
@@ -168,14 +170,10 @@ export async function POST(request: NextRequest) {
         estimated_prep_time_min: estimated_prep_time_min || 15,
         estimated_prep_time_max: estimated_prep_time_max || 45,
         is_active: false, // Start inactive until fully set up
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating storefront:', error);
-      return errorResponse('CREATE_ERROR', error.message);
-    }
+        is_featured: false,
+        cover_image_url: null,
+        logo_url: null,
+      });
 
     // Log the creation via audit
     await engine.audit.log({
@@ -240,16 +238,7 @@ export async function PATCH(request: NextRequest) {
 
     updates.updated_at = new Date().toISOString();
 
-    const { data: storefront, error } = await adminClient
-      .from('chef_storefronts')
-      .update(updates)
-      .eq('id', chefContext.storefrontId)
-      .select()
-      .single();
-
-    if (error) {
-      return errorResponse('UPDATE_ERROR', error.message);
-    }
+    const storefront = await updateStorefront(adminClient as any, chefContext.storefrontId, updates);
 
     // Log the update via audit
     await engine.audit.log({

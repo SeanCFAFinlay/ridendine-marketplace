@@ -6,8 +6,9 @@
     "dev": "next dev -p 3002",
     "build": "next build",
     "start": "next start -p 3002",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/app/api/engine src/app/api/orders/[id]/route.ts src/app/api/deliveries/[id]/route.ts src/app/dashboard/orders src/app/dashboard/deliveries --config ../../packages/config/eslint.config.js --quiet",
+    "lint:full": "eslint src --config ../../packages/config/eslint.config.js",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"

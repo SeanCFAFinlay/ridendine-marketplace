@@ -3,8 +3,13 @@
 // Powered by Central Engine
 // ==========================================
 
-import { NextRequest } from 'next/server';
-import { createAdminClient } from '@ridendine/db';
+import type { NextRequest } from 'next/server';
+import {
+  createAdminClient,
+  createMenuItem,
+  getMenuCategoriesByStorefront,
+  getMenuItemsByStorefront,
+} from '@ridendine/db';
 import {
   getEngine,
   getChefActorContext,
@@ -26,19 +31,9 @@ export async function GET() {
     }
 
     const adminClient = createAdminClient();
-
-    const { data: menuItems, error } = await adminClient
-      .from('menu_items')
-      .select(`
-        *,
-        category:menu_categories (id, name, sort_order)
-      `)
-      .eq('storefront_id', chefContext.storefrontId)
-      .order('sort_order', { ascending: true });
-
-    if (error) {
-      return errorResponse('FETCH_ERROR', error.message);
-    }
+    const menuItems = await getMenuItemsByStorefront(adminClient as any, chefContext.storefrontId, {
+      includeUnavailable: true,
+    });
 
     return successResponse({ menuItems: menuItems || [] });
   } catch (error) {
@@ -80,19 +75,14 @@ export async function POST(request: NextRequest) {
     const engine = getEngine();
 
     // Verify category belongs to this storefront
-    const { data: category } = await adminClient
-      .from('menu_categories')
-      .select('storefront_id')
-      .eq('id', category_id)
-      .single();
+    const categories = await getMenuCategoriesByStorefront(adminClient as any, chefContext.storefrontId);
+    const category = categories.find((entry) => entry.id === category_id);
 
-    if (!category || category.storefront_id !== chefContext.storefrontId) {
+    if (!category) {
       return errorResponse('INVALID_CATEGORY', 'Category not found or does not belong to your storefront');
     }
 
-    const { data: menuItem, error } = await adminClient
-      .from('menu_items')
-      .insert({
+    const menuItem = await createMenuItem(adminClient as any, {
         storefront_id: chefContext.storefrontId,
         name,
         description: description || null,
@@ -104,13 +94,7 @@ export async function POST(request: NextRequest) {
         sort_order: sort_order !== undefined ? sort_order : 0,
         dietary_tags: dietary_tags || [],
         prep_time_minutes: prep_time_minutes || null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      return errorResponse('CREATE_ERROR', error.message);
-    }
+      });
 
     // Log the creation via audit
     await engine.audit.log({

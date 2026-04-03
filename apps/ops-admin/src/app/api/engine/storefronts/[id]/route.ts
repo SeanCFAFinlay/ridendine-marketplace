@@ -3,8 +3,8 @@
 // Powered by Central Engine
 // ==========================================
 
-import { NextRequest } from 'next/server';
-import { createAdminClient } from '@ridendine/db';
+import type { NextRequest } from 'next/server';
+import { createAdminClient, updateStorefront } from '@ridendine/db';
 import {
   getEngine,
   getOpsActorContext,
@@ -120,19 +120,9 @@ export async function PATCH(
 
     case 'update_max_queue': {
       const adminClient = createAdminClient();
-      const { data, error } = await adminClient
-        .from('chef_storefronts')
-        .update({
-          max_queue_size: actionParams.maxQueueSize,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', storefrontId)
-        .select()
-        .single();
-
-      if (error) {
-        return errorResponse('UPDATE_FAILED', error.message);
-      }
+      const data = await updateStorefront(adminClient as any, storefrontId, {
+        max_queue_size: actionParams.maxQueueSize,
+      });
       return successResponse(data);
     }
 

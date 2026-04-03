@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuthContext } from '@ridendine/auth';
 import { Avatar, Badge, cn } from '@ridendine/ui';
 
@@ -18,9 +18,15 @@ const navItems = [
 ];
 
 export function Header() {
-  const { user } = useAuthContext();
+  const { user, signOut } = useAuthContext();
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/auth/login');
+  };
 
   return (
     <>
@@ -139,15 +145,16 @@ export function Header() {
 
             {/* Footer */}
             <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 p-4">
-              <Link
-                href="/auth/logout"
+              <button
+                type="button"
+                onClick={handleSignOut}
                 className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-red-400 hover:bg-white/5"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
                 Sign Out
-              </Link>
+              </button>
             </div>
           </div>
         </div>

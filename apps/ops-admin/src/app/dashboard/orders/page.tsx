@@ -51,17 +51,6 @@ function formatStatus(status: string): string {
     .join(' ');
 }
 
-const ORDER_STATUSES = [
-  'pending',
-  'accepted',
-  'preparing',
-  'ready',
-  'picked_up',
-  'delivered',
-  'completed',
-  'cancelled',
-];
-
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,11 +73,27 @@ export default function OrdersPage() {
   }
 
   async function handleStatusChange(orderId: string, newStatus: string) {
+    const statusToAction: Record<string, string> = {
+      accepted: 'accept',
+      preparing: 'start_preparing',
+      ready: 'mark_ready',
+      cancelled: 'cancel',
+    };
+
+    const action = statusToAction[newStatus];
+    if (!action) {
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/orders/${orderId}`, {
+      const response = await fetch(`/api/engine/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify(
+          action === 'cancel'
+            ? { action, reason: 'ops_override', notes: 'Cancelled from order management list' }
+            : { action }
+        ),
       });
 
       if (response.ok) {

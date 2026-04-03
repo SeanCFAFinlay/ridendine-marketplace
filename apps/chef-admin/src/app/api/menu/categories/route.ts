@@ -1,8 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createServerClient, getStorefrontByChefId } from '@ridendine/db';
+import {
+  createMenuCategory,
+  createServerClient,
+  getMenuCategoriesByStorefront,
+  getStorefrontByChefId,
+} from '@ridendine/db';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const cookieStore = await cookies();
     const supabase = createServerClient(cookieStore);
@@ -27,11 +33,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Storefront not found' }, { status: 404 });
     }
 
-    const { data: categories }: any = await supabase
-      .from('menu_categories')
-      .select('*')
-      .eq('storefront_id', storefront.id)
-      .order('sort_order', { ascending: true });
+    const categories = await getMenuCategoriesByStorefront(supabase as any, storefront.id);
 
     return NextResponse.json({ categories });
   } catch (error) {
@@ -72,18 +74,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Category name is required' }, { status: 400 });
     }
 
-    const { data: category, error }: any = await supabase
-      .from('menu_categories')
-      .insert({
+    const category = await createMenuCategory(supabase as any, {
         storefront_id: storefront.id,
         name,
         description: description || null,
         sort_order: sort_order !== undefined ? sort_order : 0,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
+        is_active: true,
+      });
 
     return NextResponse.json({ category }, { status: 201 });
   } catch (error) {
