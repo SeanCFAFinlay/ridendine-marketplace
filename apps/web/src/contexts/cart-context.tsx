@@ -21,6 +21,18 @@ interface Cart {
   subtotal: number;
 }
 
+interface CartApiItem {
+  id: string;
+  menu_item_id: string;
+  unit_price: number;
+  quantity: number;
+  special_instructions?: string;
+  menu_items?: {
+    name?: string | null;
+    image_url?: string | null;
+  } | null;
+}
+
 interface CartContextType {
   cart: Cart | null;
   loading: boolean;
@@ -51,7 +63,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       if (result.success && result.data) {
         const cartData = result.data;
-        const items: CartItem[] = (cartData.cart_items || []).map((item: any) => ({
+        const items: CartItem[] = (cartData.cart_items || []).map((item: CartApiItem) => ({
           id: item.id,
           menu_item_id: item.menu_item_id,
           name: item.menu_items?.name || 'Unknown Item',
@@ -112,6 +124,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchCart]);
 
+  const removeItem = useCallback(async (itemId: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/cart?itemId=${itemId}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+
+      if (result.success && storefrontId) {
+        await fetchCart(storefrontId);
+      }
+    } catch (error) {
+      console.error('Error removing item:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [storefrontId, fetchCart]);
+
   const updateQuantity = useCallback(async (itemId: string, quantity: number) => {
     if (quantity <= 0) {
       return removeItem(itemId);
@@ -135,26 +166,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [storefrontId, fetchCart]);
-
-  const removeItem = useCallback(async (itemId: string) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/cart?itemId=${itemId}`, {
-        method: 'DELETE',
-      });
-
-      const result = await response.json();
-
-      if (result.success && storefrontId) {
-        await fetchCart(storefrontId);
-      }
-    } catch (error) {
-      console.error('Error removing item:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [storefrontId, fetchCart]);
+  }, [storefrontId, fetchCart, removeItem]);
 
   const clearCart = useCallback(() => {
     setCart(null);

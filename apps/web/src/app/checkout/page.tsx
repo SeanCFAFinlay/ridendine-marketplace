@@ -25,6 +25,17 @@ interface Cart {
   items: CartItem[];
 }
 
+interface CartApiItem {
+  id: string;
+  menu_item_id: string;
+  quantity: number;
+  unit_price: number;
+  menu_items?: {
+    name?: string | null;
+    image_url?: string | null;
+  } | null;
+}
+
 interface Address {
   id: string;
   label: string;
@@ -82,7 +93,7 @@ function CheckoutContent() {
         const cartData = await cartRes.json();
 
         if (cartData.success && cartData.data) {
-          const items = (cartData.data.cart_items || []).map((item: any) => ({
+          const items = (cartData.data.cart_items || []).map((item: CartApiItem) => ({
             id: item.id,
             name: item.menu_items?.name || 'Unknown Item',
             price: item.unit_price,

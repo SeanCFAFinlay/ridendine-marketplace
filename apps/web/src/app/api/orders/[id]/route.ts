@@ -4,7 +4,7 @@
 // ==========================================
 
 import type { NextRequest } from 'next/server';
-import { createAdminClient } from '@ridendine/db';
+import { createAdminClient, type SupabaseClient } from '@ridendine/db';
 import {
   getEngine,
   getCustomerActorContext,
@@ -16,6 +16,11 @@ export const dynamic = 'force-dynamic';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
+}
+
+interface OrderDeliverySummary {
+  driver_id: string | null;
+  status: string;
 }
 
 /**
@@ -31,7 +36,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
     }
 
-    const adminClient = createAdminClient();
+    const adminClient = createAdminClient() as unknown as SupabaseClient;
 
     // Get order with related data - verify customer owns it
     const { data: order, error } = await adminClient
@@ -111,7 +116,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Get live driver location if delivery is in progress
     let driverLocation = null;
-    const delivery = (order as any).delivery as { driver_id: string; status: string } | null;
+    const delivery = order.delivery as OrderDeliverySummary | null;
     if (delivery?.driver_id) {
       const activeStatuses = [
         'assigned',
@@ -123,7 +128,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       ];
 
       if (activeStatuses.includes(delivery.status)) {
-        const { data: presence } = await (adminClient as any)
+        const { data: presence } = await adminClient
           .from('driver_presence')
           .select('current_lat, current_lng, last_location_at')
           .eq('driver_id', delivery.driver_id)

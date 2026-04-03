@@ -4,7 +4,7 @@
 // ==========================================
 
 import type { NextRequest } from 'next/server';
-import { createAdminClient } from '@ridendine/db';
+import { createAdminClient, type SupabaseClient } from '@ridendine/db';
 import {
   getEngine,
   getOpsActorContext,
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
   const endDate = searchParams.get('endDate') || today;
 
   const engine = getEngine();
-  const adminClient = createAdminClient();
+  const adminClient = createAdminClient() as unknown as SupabaseClient;
 
   // Get financial summary
   const summary = await engine.commerce.getFinancialSummary({ start: startDate, end: endDate });
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
   const pendingRefunds = await engine.commerce.getPendingRefunds();
 
   // Get recent ledger entries (cast to any for new table)
-  const { data: recentLedger } = await (adminClient as any)
+  const { data: recentLedger } = await adminClient
     .from('ledger_entries')
     .select(`
       *,
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     .limit(100);
 
   // Get payout adjustments pending (cast to any for new table)
-  const { data: pendingAdjustments } = await (adminClient as any)
+  const { data: pendingAdjustments } = await adminClient
     .from('payout_adjustments')
     .select(`
       *,
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false });
 
   // Get daily totals for chart (cast to any for RPC)
-  const { data: dailyTotals } = await (adminClient as any).rpc('get_financial_summary', {
+  const { data: dailyTotals } = await adminClient.rpc('get_financial_summary', {
     start_date: startDate,
     end_date: endDate,
   });

@@ -8,6 +8,7 @@ import {
   createAdminClient,
   createStorefront,
   updateStorefront,
+  type SupabaseClient,
 } from '@ridendine/db';
 import {
   getEngine,
@@ -105,6 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     const adminClient = createAdminClient();
+    const repositoryClient = adminClient as unknown as SupabaseClient;
     const engine = getEngine();
 
     // Check if chef already has a kitchen, or create one
@@ -159,7 +161,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the storefront
-    const storefront = await createStorefront(adminClient as any, {
+    const storefront = await createStorefront(repositoryClient, {
         chef_id: chefContext.chefId,
         kitchen_id: kitchenId,
         slug,
@@ -218,7 +220,7 @@ export async function PATCH(request: NextRequest) {
       accepting_orders,
     } = body;
 
-    const adminClient = createAdminClient();
+    const adminClient = createAdminClient() as unknown as SupabaseClient;
     const engine = getEngine();
 
     // Build updates object
@@ -238,7 +240,7 @@ export async function PATCH(request: NextRequest) {
 
     updates.updated_at = new Date().toISOString();
 
-    const storefront = await updateStorefront(adminClient as any, chefContext.storefrontId, updates);
+    const storefront = await updateStorefront(adminClient, chefContext.storefrontId, updates);
 
     // Log the update via audit
     await engine.audit.log({

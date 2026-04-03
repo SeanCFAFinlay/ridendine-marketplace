@@ -9,6 +9,7 @@ import {
   createMenuItem,
   getMenuCategoriesByStorefront,
   getMenuItemsByStorefront,
+  type SupabaseClient,
 } from '@ridendine/db';
 import {
   getEngine,
@@ -30,8 +31,8 @@ export async function GET() {
       return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
     }
 
-    const adminClient = createAdminClient();
-    const menuItems = await getMenuItemsByStorefront(adminClient as any, chefContext.storefrontId, {
+    const adminClient = createAdminClient() as unknown as SupabaseClient;
+    const menuItems = await getMenuItemsByStorefront(adminClient, chefContext.storefrontId, {
       includeUnavailable: true,
     });
 
@@ -71,18 +72,18 @@ export async function POST(request: NextRequest) {
       return errorResponse('MISSING_FIELDS', 'Required fields: name, price, category_id');
     }
 
-    const adminClient = createAdminClient();
+    const adminClient = createAdminClient() as unknown as SupabaseClient;
     const engine = getEngine();
 
     // Verify category belongs to this storefront
-    const categories = await getMenuCategoriesByStorefront(adminClient as any, chefContext.storefrontId);
+    const categories = await getMenuCategoriesByStorefront(adminClient, chefContext.storefrontId);
     const category = categories.find((entry) => entry.id === category_id);
 
     if (!category) {
       return errorResponse('INVALID_CATEGORY', 'Category not found or does not belong to your storefront');
     }
 
-    const menuItem = await createMenuItem(adminClient as any, {
+    const menuItem = await createMenuItem(adminClient, {
         storefront_id: chefContext.storefrontId,
         name,
         description: description || null,

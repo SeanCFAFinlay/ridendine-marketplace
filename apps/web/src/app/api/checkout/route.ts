@@ -4,7 +4,7 @@
 // ==========================================
 
 import Stripe from 'stripe';
-import { createAdminClient, getCartWithItems, clearCart } from '@ridendine/db';
+import { createAdminClient, getCartWithItems, clearCart, type SupabaseClient } from '@ridendine/db';
 import {
   getEngine,
   getCustomerActorContext,
@@ -21,6 +21,18 @@ function getStripe() {
   });
 }
 
+interface PromoCodeRow {
+  id: string;
+  code: string;
+  is_active: boolean;
+  valid_from: string | null;
+  valid_until: string | null;
+  max_uses: number | null;
+  times_used: number;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+}
+
 export async function POST(request: Request): Promise<Response> {
   try {
     const customerContext = await getCustomerActorContext();
@@ -35,10 +47,10 @@ export async function POST(request: Request): Promise<Response> {
       return errorResponse('MISSING_FIELDS', 'storefrontId and deliveryAddressId are required');
     }
 
-    const adminClient = createAdminClient();
+    const adminClient = createAdminClient() as unknown as SupabaseClient;
 
     // Get cart with items
-    const cart = await getCartWithItems(adminClient as any, customerContext.customerId, storefrontId);
+    const cart = await getCartWithItems(adminClient, customerContext.customerId, storefrontId);
 
     if (!cart || !cart.cart_items || cart.cart_items.length === 0) {
       return errorResponse('EMPTY_CART', 'Cart is empty');
@@ -48,36 +60,38 @@ export async function POST(request: Request): Promise<Response> {
     let promoDiscount = 0;
     let promoCodeId: string | null = null;
     if (promoCode) {
-      const { data: promo } = await (adminClient as any)
+      const { data: promo } = await adminClient
         .from('promo_codes')
         .select('*')
         .eq('code', promoCode.toUpperCase())
         .eq('is_active', true)
         .single();
 
-      if (promo) {
+      const typedPromo = promo as PromoCodeRow | null;
+
+      if (typedPromo) {
         // Check validity
         const now = new Date();
-        if (promo.valid_from && new Date(promo.valid_from) > now) {
+        if (typedPromo.valid_from && new Date(typedPromo.valid_from) > now) {
           return errorResponse('PROMO_NOT_ACTIVE', 'Promo code is not yet active');
         }
-        if (promo.valid_until && new Date(promo.valid_until) < now) {
+        if (typedPromo.valid_until && new Date(typedPromo.valid_until) < now) {
           return errorResponse('PROMO_EXPIRED', 'Promo code has expired');
         }
-        if (promo.max_uses && promo.times_used >= promo.max_uses) {
+        if (typedPromo.max_uses && typedPromo.times_used >= typedPromo.max_uses) {
           return errorResponse('PROMO_EXHAUSTED', 'Promo code has reached maximum uses');
         }
 
-        promoCodeId = promo.id;
-        if (promo.discount_type === 'percentage') {
+        promoCodeId = typedPromo.id;
+        if (typedPromo.discount_type === 'percentage') {
           const subtotal = cart.cart_items.reduce(
             (sum: number, item: { unit_price: number; quantity: number }) =>
               sum + item.unit_price * item.quantity,
             0
           );
-          promoDiscount = Math.round(subtotal * (promo.discount_value / 100));
+          promoDiscount = Math.round(subtotal * (typedPromo.discount_value / 100));
         } else {
-          promoDiscount = promo.discount_value;
+          promoDiscount = typedPromo.discount_value;
         }
       } else {
         return errorResponse('INVALID_PROMO', 'Invalid or inactive promo code');
@@ -145,11 +159,11 @@ export async function POST(request: Request): Promise<Response> {
 
     // Update promo code usage if applicable
     if (promoCodeId) {
-      await (adminClient as any).rpc('increment_promo_usage', { promo_id: promoCodeId });
+      await adminClient.rpc('increment_promo_usage', { promo_id: promoCodeId });
     }
 
     // Clear the cart
-    await clearCart(adminClient as any, customerContext.customerId);
+    await clearCart(adminClient, cart.id);
 
     return successResponse({
       clientSecret: paymentIntent.client_secret,

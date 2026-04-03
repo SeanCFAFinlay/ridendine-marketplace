@@ -10,10 +10,22 @@ type DeliveryStatus = 'accepted' | 'en_route_to_pickup' | 'arrived_at_pickup' | 
 
 interface DeliveryDetailProps {
   delivery: Delivery;
-  order: any;
+  order: DeliveryOrder | null;
 }
 
+interface DeliveryOrder {
+  order_number: string;
+  special_instructions?: string | null;
+  customer_phone?: string | null;
+}
+
+type DeliveryWithContact = Delivery & {
+  pickup_phone?: string | null;
+  driver_tip?: number | null;
+};
+
 export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps) {
+  const deliveryWithContact = delivery as DeliveryWithContact;
   const router = useRouter();
   const [status, setStatus] = useState<DeliveryStatus>(delivery.status as DeliveryStatus);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
@@ -326,7 +338,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
                 variant="outline"
                 size="sm"
                 className="mt-4 rounded-lg"
-                onClick={() => window.open(`tel:${(delivery as any).pickup_phone || ''}`, '_self')}
+                onClick={() => window.open(`tel:${deliveryWithContact.pickup_phone || ''}`, '_self')}
               >
                 Call Restaurant
               </Button>
@@ -381,7 +393,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
             <div className="flex justify-between text-[14px]">
               <span className="text-[#6b7280]">Tip</span>
               <span className="font-medium text-[#1a1a1a]">
-                ${((delivery as any).driver_tip || 0).toFixed(2)}
+                ${(deliveryWithContact.driver_tip || 0).toFixed(2)}
               </span>
             </div>
             <div className="border-t pt-2 flex justify-between text-[14px]">

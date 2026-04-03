@@ -4,7 +4,7 @@
 // ==========================================
 
 import type { NextRequest } from 'next/server';
-import { createAdminClient } from '@ridendine/db';
+import { createAdminClient, type SupabaseClient } from '@ridendine/db';
 import {
   getEngine,
   getOpsActorContext,
@@ -31,7 +31,7 @@ export async function GET(
   }
 
   const engine = getEngine();
-  const adminClient = createAdminClient();
+  const adminClient = createAdminClient() as unknown as SupabaseClient;
 
   // Get order
   const { data: order, error } = await adminClient
@@ -68,7 +68,7 @@ export async function GET(
   const timeline = await engine.audit.getAuditTrail('order', orderId);
 
   // Get any linked exceptions (cast to any for new table)
-  const { data: exceptions } = await (adminClient as any)
+  const { data: exceptions } = await adminClient
     .from('order_exceptions')
     .select('*')
     .eq('order_id', orderId)

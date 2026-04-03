@@ -6,34 +6,41 @@ import {
   createServerClient,
   getMenuCategoriesByStorefront,
   getStorefrontByChefId,
+  type SupabaseClient,
 } from '@ridendine/db';
+
+interface ChefProfileRow {
+  id: string;
+}
 
 export async function GET() {
   try {
     const cookieStore = await cookies();
     const supabase = createServerClient(cookieStore);
+    const repositoryClient = supabase as unknown as SupabaseClient;
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: chefProfile }: any = await supabase
+    const { data: chefProfile } = await supabase
       .from('chef_profiles')
       .select('id')
       .eq('user_id', user.id)
       .single();
 
-    if (!chefProfile) {
+    const typedChefProfile = chefProfile as ChefProfileRow | null;
+    if (!typedChefProfile) {
       return NextResponse.json({ error: 'Chef profile not found' }, { status: 404 });
     }
 
-    const storefront = await getStorefrontByChefId(supabase as any, chefProfile.id);
+    const storefront = await getStorefrontByChefId(repositoryClient, typedChefProfile.id);
     if (!storefront) {
       return NextResponse.json({ error: 'Storefront not found' }, { status: 404 });
     }
 
-    const categories = await getMenuCategoriesByStorefront(supabase as any, storefront.id);
+    const categories = await getMenuCategoriesByStorefront(repositoryClient, storefront.id);
 
     return NextResponse.json({ categories });
   } catch (error) {
@@ -46,23 +53,26 @@ export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
     const supabase = createServerClient(cookieStore);
+    const repositoryClient = supabase as unknown as SupabaseClient;
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: chefProfile }: any = await supabase
+    const { data: chefProfile } = await supabase
       .from('chef_profiles')
       .select('id')
       .eq('user_id', user.id)
       .single();
 
-    if (!chefProfile) {
+    const typedChefProfile = chefProfile as ChefProfileRow | null;
+
+    if (!typedChefProfile) {
       return NextResponse.json({ error: 'Chef profile not found' }, { status: 404 });
     }
 
-    const storefront = await getStorefrontByChefId(supabase as any, chefProfile.id);
+    const storefront = await getStorefrontByChefId(repositoryClient, typedChefProfile.id);
     if (!storefront) {
       return NextResponse.json({ error: 'Storefront not found' }, { status: 404 });
     }
@@ -74,7 +84,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Category name is required' }, { status: 400 });
     }
 
-    const category = await createMenuCategory(supabase as any, {
+    const category = await createMenuCategory(repositoryClient, {
         storefront_id: storefront.id,
         name,
         description: description || null,

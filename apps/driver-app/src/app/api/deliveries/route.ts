@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createServerClient, getDriverByUserId, getActiveDeliveriesForDriver } from '@ridendine/db';
+import { createServerClient, getDriverByUserId, getActiveDeliveriesForDriver, type SupabaseClient } from '@ridendine/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
+    const supabase = createServerClient(cookieStore) as unknown as SupabaseClient;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -18,7 +18,7 @@ export async function GET() {
       );
     }
 
-    const driver = await getDriverByUserId(supabase as any, user.id);
+    const driver = await getDriverByUserId(supabase, user.id);
 
     if (!driver) {
       return NextResponse.json(
@@ -27,7 +27,7 @@ export async function GET() {
       );
     }
 
-    const deliveries = await getActiveDeliveriesForDriver(supabase as any, driver.id);
+    const deliveries = await getActiveDeliveriesForDriver(supabase, driver.id);
 
     return NextResponse.json({ deliveries });
   } catch (error) {

@@ -20,6 +20,10 @@ interface Order {
   };
 }
 
+interface CustomerProfileRow {
+  id: string;
+}
+
 export default function OrdersPage() {
   const { user, loading: authLoading } = useAuthContext();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -37,13 +41,15 @@ export default function OrdersPage() {
 
       try {
         // Get customer profile
-        const { data: customer }: any = await supabase
+        const { data: customer } = await supabase
           .from('customers')
           .select('id')
           .eq('user_id', user.id)
           .single();
 
-        if (!customer) {
+        const typedCustomer = customer as CustomerProfileRow | null;
+
+        if (!typedCustomer) {
           setLoading(false);
           return;
         }
@@ -63,7 +69,7 @@ export default function OrdersPage() {
               slug
             )
           `)
-          .eq('customer_id', customer.id as string)
+          .eq('customer_id', typedCustomer.id)
           .order('created_at', { ascending: false })
           .limit(20);
 

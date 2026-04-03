@@ -4,7 +4,7 @@
 // ==========================================
 
 import type { NextRequest } from 'next/server';
-import { createAdminClient, updateStorefront } from '@ridendine/db';
+import { createAdminClient, updateStorefront, type SupabaseClient } from '@ridendine/db';
 import {
   getEngine,
   getOpsActorContext,
@@ -29,7 +29,7 @@ export async function GET(
     return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
   }
 
-  const adminClient = createAdminClient();
+  const adminClient = createAdminClient() as unknown as SupabaseClient;
   const engine = getEngine();
 
   // Get storefront with related data
@@ -61,7 +61,7 @@ export async function GET(
   const overloadStatus = await engine.kitchen.checkOverloadStatus(storefrontId);
 
   // Get state change history (cast to any for new table)
-  const { data: stateChanges } = await (adminClient as any)
+  const { data: stateChanges } = await adminClient
     .from('storefront_state_changes')
     .select('*')
     .eq('storefront_id', storefrontId)
@@ -119,8 +119,8 @@ export async function PATCH(
     }
 
     case 'update_max_queue': {
-      const adminClient = createAdminClient();
-      const data = await updateStorefront(adminClient as any, storefrontId, {
+      const adminClient = createAdminClient() as unknown as SupabaseClient;
+      const data = await updateStorefront(adminClient, storefrontId, {
         max_queue_size: actionParams.maxQueueSize,
       });
       return successResponse(data);

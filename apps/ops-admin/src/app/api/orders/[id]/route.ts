@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, getOrderById, type SupabaseClient } from '@ridendine/db';
 import { getEngine, getOpsActorContext, errorResponse } from '@/lib/engine';
+import type { OrderCancelReason, OrderRejectReason } from '@ridendine/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,7 +77,7 @@ export async function PATCH(
         case 'reject': {
           const result = await engine.orders.rejectOrder(
             id,
-            (mapped.extra?.reason as any) || 'other',
+            (mapped.extra?.reason as OrderRejectReason | undefined) || 'other',
             mapped.extra?.notes as string | undefined,
             actor
           );
@@ -102,7 +103,7 @@ export async function PATCH(
         case 'cancel': {
           const result = await engine.orders.cancelOrder(
             id,
-            (mapped.extra?.reason as any) || 'ops_override',
+            (mapped.extra?.reason as OrderCancelReason | undefined) || 'ops_override',
             mapped.extra?.notes as string | undefined,
             actor
           );

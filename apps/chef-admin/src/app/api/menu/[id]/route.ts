@@ -8,7 +8,9 @@ import {
   createAdminClient,
   getMenuCategoriesByStorefront,
   getMenuItemById,
+  type MenuItem,
   updateMenuItem,
+  type SupabaseClient,
 } from '@ridendine/db';
 import {
   getEngine,
@@ -29,9 +31,9 @@ interface RouteParams {
 async function verifyMenuItemOwnership(
   storefrontId: string,
   menuItemId: string
-): Promise<{ menuItem: Record<string, unknown> | null; owns: boolean }> {
-  const adminClient = createAdminClient();
-  const menuItem = await getMenuItemById(adminClient as any, menuItemId);
+): Promise<{ menuItem: MenuItem | null; owns: boolean }> {
+  const adminClient = createAdminClient() as unknown as SupabaseClient;
+  const menuItem = await getMenuItemById(adminClient, menuItemId);
 
   if (!menuItem) {
     return { menuItem: null, owns: false };
@@ -116,7 +118,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       prep_time_minutes,
     } = body;
 
-    const adminClient = createAdminClient();
+    const adminClient = createAdminClient() as unknown as SupabaseClient;
     const engine = getEngine();
 
     // Build updates
@@ -126,7 +128,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (price !== undefined) updates.price = price;
     if (category_id !== undefined) {
       // Verify new category belongs to this storefront
-      const categories = await getMenuCategoriesByStorefront(adminClient as any, chefContext.storefrontId);
+      const categories = await getMenuCategoriesByStorefront(adminClient, chefContext.storefrontId);
       const category = categories.find((entry) => entry.id === category_id);
 
       if (!category) {
@@ -147,7 +149,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     updates.updated_at = new Date().toISOString();
 
-    const menuItem = await updateMenuItem(adminClient as any, menuItemId, updates);
+    const menuItem = await updateMenuItem(adminClient, menuItemId, updates);
 
     // Log the update via audit
     await engine.audit.log({
@@ -191,11 +193,11 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
       return errorResponse('FORBIDDEN', 'This menu item does not belong to your storefront', 403);
     }
 
-    const adminClient = createAdminClient();
+    const adminClient = createAdminClient() as unknown as SupabaseClient;
     const engine = getEngine();
 
     // Preserve historical order references by unpublishing the item instead of deleting the row.
-    await updateMenuItem(adminClient as any, menuItemId, {
+    await updateMenuItem(adminClient, menuItemId, {
       is_available: false,
       is_featured: false,
     });

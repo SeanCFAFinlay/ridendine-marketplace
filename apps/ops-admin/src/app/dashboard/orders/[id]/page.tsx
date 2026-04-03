@@ -60,7 +60,7 @@ async function getOrderDetails(orderId: string) {
     // Delivery may not exist
   }
 
-  const engine = createCentralEngine(createAdminClient() as any);
+  const engine = createCentralEngine(createAdminClient());
   const allowedActions = await engine.orders.getAllowedActions(orderId, 'ops_agent');
 
   return { order, delivery, allowedActions };

@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { createServerClient, getDeliveryById } from '@ridendine/db';
+import { createServerClient, getDeliveryById, type SupabaseClient } from '@ridendine/db';
 import DeliveryDetail from './components/DeliveryDetail';
 
 export const dynamic = 'force-dynamic';
@@ -8,12 +8,19 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+interface DeliveryOrderRow {
+  order_number: string;
+  customer_phone?: string | null;
+  special_instructions?: string | null;
+  [key: string]: unknown;
+}
+
 export default async function ActiveDeliveryPage({ params }: PageProps) {
   const { id } = await params;
   const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
+  const supabase = createServerClient(cookieStore) as unknown as SupabaseClient;
 
-  const delivery = await getDeliveryById(supabase as any, id);
+  const delivery = await getDeliveryById(supabase, id);
 
   if (!delivery) {
     return (
@@ -26,11 +33,11 @@ export default async function ActiveDeliveryPage({ params }: PageProps) {
     );
   }
 
-  const { data: order } = await (supabase as any)
+  const { data: order } = await supabase
     .from('orders')
     .select('*, customer_addresses(*)')
     .eq('id', delivery.order_id)
     .single();
 
-  return <DeliveryDetail delivery={delivery} order={order} />;
+  return <DeliveryDetail delivery={delivery} order={(order as DeliveryOrderRow | null) ?? null} />;
 }

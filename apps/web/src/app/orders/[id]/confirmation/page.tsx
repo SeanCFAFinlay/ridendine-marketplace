@@ -8,6 +8,18 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+interface OrderWithStorefront {
+  id: string;
+  order_number: string;
+  status: string;
+  total: number;
+  estimated_ready_at: string | null;
+  chef_storefronts?: {
+    name: string;
+    logo_url?: string | null;
+  } | null;
+}
+
 export default async function OrderConfirmationPage({ params }: Props) {
   const { id } = await params;
   const cookieStore = await cookies();
@@ -25,7 +37,9 @@ export default async function OrderConfirmationPage({ params }: Props) {
     .eq('id', id)
     .single();
 
-  if (error || !order) {
+  const typedOrder = order as OrderWithStorefront | null;
+
+  if (error || !typedOrder) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -65,12 +79,12 @@ export default async function OrderConfirmationPage({ params }: Props) {
               <div className="flex items-center justify-between border-b border-gray-200 pb-4">
                 <div>
                   <p className="text-sm text-gray-500">Order Number</p>
-                  <p className="font-semibold text-gray-900">{order.order_number}</p>
+                  <p className="font-semibold text-gray-900">{typedOrder.order_number}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-gray-500">Status</p>
                   <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                    {order.status.replace(/_/g, ' ')}
+                    {typedOrder.status.replace(/_/g, ' ')}
                   </span>
                 </div>
               </div>
@@ -78,19 +92,19 @@ export default async function OrderConfirmationPage({ params }: Props) {
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Restaurant</span>
-                  <span className="font-medium">{(order as any).chef_storefronts?.name || 'Unknown'}</span>
+                  <span className="font-medium">{typedOrder.chef_storefronts?.name || 'Unknown'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total</span>
                   <span className="font-semibold text-[#E85D26]">
-                    ${(order.total / 100).toFixed(2)}
+                    ${(typedOrder.total / 100).toFixed(2)}
                   </span>
                 </div>
-                {order.estimated_ready_at && (
+                {typedOrder.estimated_ready_at && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Estimated Ready</span>
                     <span className="font-medium">
-                      {new Date(order.estimated_ready_at).toLocaleTimeString([], {
+                      {new Date(typedOrder.estimated_ready_at).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
@@ -102,7 +116,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
 
             {/* Actions */}
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Link href={`/order-confirmation/${order.id}`}>
+              <Link href={`/order-confirmation/${typedOrder.id}`}>
                 <Button>Track Order</Button>
               </Link>
               <Link href="/chefs">

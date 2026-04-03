@@ -54,6 +54,15 @@ interface DriverLocation {
   lng: number;
 }
 
+interface DriverPresenceRow {
+  current_lat: number | null;
+  current_lng: number | null;
+}
+
+interface RealtimeOrderPayload {
+  new: Partial<Order>;
+}
+
 const ORDER_STATUSES = [
   { key: 'pending', label: 'Order Placed', icon: '📋' },
   { key: 'payment_confirmed', label: 'Payment Confirmed', icon: '💳' },
@@ -117,7 +126,7 @@ export default function OrderConfirmationPage() {
       setOrder(orderData);
 
       // Fetch delivery info
-      const { data: deliveryData } = await (db as any)
+      const { data: deliveryData } = await db
         .from('deliveries')
         .select(`
           *,
@@ -127,20 +136,23 @@ export default function OrderConfirmationPage() {
         .single();
 
       if (deliveryData) {
-        setDelivery(deliveryData as Delivery);
+        const typedDelivery = deliveryData as Delivery;
+        setDelivery(typedDelivery);
 
         // If driver assigned, fetch their location
-        if ((deliveryData as Delivery).driver_id) {
-          const { data: presenceData } = await (db as any)
+        if (typedDelivery.driver_id) {
+          const { data: presenceData } = await db
             .from('driver_presence')
             .select('current_lat, current_lng')
-            .eq('driver_id', (deliveryData as Delivery).driver_id)
+            .eq('driver_id', typedDelivery.driver_id)
             .single();
 
-          if (presenceData?.current_lat && presenceData?.current_lng) {
+          const typedPresence = presenceData as DriverPresenceRow | null;
+
+          if (typedPresence?.current_lat && typedPresence?.current_lng) {
             setDriverLocation({
-              lat: presenceData.current_lat,
-              lng: presenceData.current_lng,
+              lat: typedPresence.current_lat,
+              lng: typedPresence.current_lng,
             });
           }
         }
@@ -170,7 +182,7 @@ export default function OrderConfirmationPage() {
           table: 'orders',
           filter: `id=eq.${orderId}`,
         },
-        (payload) => {
+        (payload: RealtimeOrderPayload) => {
           setOrder((prev) => (prev ? { ...prev, ...payload.new } : null));
         }
       )
@@ -179,7 +191,7 @@ export default function OrderConfirmationPage() {
     // Poll for driver location every 15 seconds
     const locationInterval = setInterval(() => {
       if (delivery?.driver_id) {
-        (db as any)
+        db
           .from('driver_presence')
           .select('current_lat, current_lng')
           .eq('driver_id', delivery.driver_id)

@@ -4,7 +4,7 @@
 // ==========================================
 
 import type { NextRequest } from 'next/server';
-import { createAdminClient } from '@ridendine/db';
+import { createAdminClient, type SupabaseClient } from '@ridendine/db';
 import {
   getEngine,
   getDriverActorContext,
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return errorResponse('FORBIDDEN', 'This delivery is not assigned to you', 403);
     }
 
-    const adminClient = createAdminClient();
+    const adminClient = createAdminClient() as unknown as SupabaseClient;
 
     // Get delivery with related data
     const { data: delivery, error } = await adminClient
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get any active assignment attempt
-    const { data: activeAttempt } = await (adminClient as any)
+    const { data: activeAttempt } = await adminClient
       .from('assignment_attempts')
       .select('*')
       .eq('delivery_id', deliveryId)

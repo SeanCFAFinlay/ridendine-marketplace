@@ -4,7 +4,7 @@
 // ==========================================
 
 import type { NextRequest } from 'next/server';
-import { createAdminClient } from '@ridendine/db';
+import { createAdminClient, type SupabaseClient } from '@ridendine/db';
 import {
   getEngine,
   getOpsActorContext,
@@ -30,10 +30,11 @@ export async function GET(request: NextRequest) {
   const endDate = searchParams.get('endDate') || today;
 
   const engine = getEngine();
-  const adminClient = createAdminClient();
+  const adminDb = createAdminClient();
+  const repositoryClient = adminDb as unknown as SupabaseClient;
 
   // Get dashboard stats via RPC (cast to any for new tables)
-  const { data: stats } = await (adminClient as any).rpc('get_ops_dashboard_stats');
+  const { data: stats } = await repositoryClient.rpc('get_ops_dashboard_stats');
 
   // Convert to object
   const statsObj: Record<string, number> = {};
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
   const dispatchBoard = await engine.dispatch.getDispatchBoard();
 
   // Get recent orders needing attention
-  const { data: urgentOrders } = await adminClient
+  const { data: urgentOrders } = await adminDb
     .from('orders')
     .select(`
       id, order_number, total, engine_status, created_at,
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
     .limit(10);
 
   // Get active alerts (cast to any for new table)
-  const { data: alerts } = await (adminClient as any)
+  const { data: alerts } = await repositoryClient
     .from('system_alerts')
     .select('*')
     .eq('acknowledged', false)
@@ -120,12 +121,12 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { action, ...actionParams } = body;
 
-  const adminClient = createAdminClient();
+  const adminClient = createAdminClient() as unknown as SupabaseClient;
   const engine = getEngine();
 
   switch (action) {
     case 'acknowledge_alert': {
-      const { error } = await (adminClient as any)
+      const { error } = await adminClient
         .from('system_alerts')
         .update({
           acknowledged: true,
