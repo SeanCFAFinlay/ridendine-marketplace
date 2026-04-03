@@ -4,12 +4,15 @@ import { createServerClient } from '@supabase/ssr';
 
 const PROTECTED_ROUTES = ['/account'];
 const AUTH_ROUTES = ['/auth/login', '/auth/signup'];
+type CookieOptions = Record<string, unknown>;
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // DEVELOPMENT BYPASS: Allow access without auth when BYPASS_AUTH is set
-  const bypassAuth = process.env.BYPASS_AUTH === 'true' || process.env.NODE_ENV === 'development';
+  // Only allow auth bypass outside production deployments.
+  const bypassAuth =
+    process.env.NODE_ENV === 'development' ||
+    (process.env.VERCEL_ENV !== 'production' && process.env.BYPASS_AUTH === 'true');
   if (bypassAuth) {
     return NextResponse.next();
   }
@@ -30,7 +33,7 @@ export async function middleware(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value;
         },
-        set(name: string, value: string, options: any) {
+        set(name: string, value: string, options: CookieOptions) {
           request.cookies.set({
             name,
             value,
@@ -47,7 +50,7 @@ export async function middleware(request: NextRequest) {
             ...options,
           });
         },
-        remove(name: string, options: any) {
+        remove(name: string, options: CookieOptions) {
           request.cookies.set({
             name,
             value: '',
