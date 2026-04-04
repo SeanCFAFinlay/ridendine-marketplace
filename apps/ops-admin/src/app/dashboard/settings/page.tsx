@@ -1,137 +1,84 @@
-'use client';
-
-import { Card } from '@ridendine/ui';
+import Link from 'next/link';
+import { Card, Badge } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { useState } from 'react';
+
+const controlSurfaces = [
+  {
+    title: 'Chef Governance',
+    description: 'Approve, reject, suspend, and restore chef accounts from the chef governance surfaces.',
+    href: '/dashboard/chefs/approvals',
+    cta: 'Open chef approvals',
+  },
+  {
+    title: 'Storefront Governance',
+    description: 'Publish, unpublish, pause, and adjust queue controls from chef detail pages.',
+    href: '/dashboard/chefs',
+    cta: 'Open chef oversight',
+  },
+  {
+    title: 'Order And Delivery Intervention',
+    description: 'Use order and delivery operations pages for platform intervention and dispatch oversight.',
+    href: '/dashboard/orders',
+    cta: 'Open operations queue',
+  },
+  {
+    title: 'Support And Finance Review',
+    description: 'Resolve support tickets, review refunds, and monitor liabilities from the dedicated oversight pages.',
+    href: '/dashboard/finance',
+    cta: 'Open finance oversight',
+  },
+];
 
 export default function SettingsPage() {
-  const [platformFee, setPlatformFee] = useState('15');
-  const [deliveryFee, setDeliveryFee] = useState('5.99');
-  const [minOrderAmount, setMinOrderAmount] = useState('15.00');
-  const [maxDeliveryRadius, setMaxDeliveryRadius] = useState('10');
-
-  const handleSave = () => {
-    // In production, this would call an API to save settings
-    alert('Settings saved successfully!');
-  };
-
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-4xl space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Platform Settings</h1>
-          <p className="mt-1 text-gray-400">Configure platform-wide settings and policies</p>
+      <div className="mx-auto max-w-6xl space-y-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Platform Controls</h1>
+            <p className="mt-1 text-gray-400">
+              Ops-admin is the control center for governance and intervention. Persisted platform rule configuration is not implemented as a standalone settings model yet.
+            </p>
+          </div>
+          <Badge className="bg-yellow-500/20 text-yellow-300">Configuration model pending</Badge>
         </div>
 
-        {/* Fee Settings */}
         <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Fee Configuration</h2>
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Platform Fee (%)
-              </label>
-              <input
-                type="number"
-                value={platformFee}
-                onChange={(e) => setPlatformFee(e.target.value)}
-                className="w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-4 py-2 text-white focus:border-[#E85D26] focus:outline-none"
-                min="0"
-                max="100"
-              />
-              <p className="mt-1 text-xs text-gray-500">Percentage taken from each order</p>
+          <h2 className="text-lg font-semibold text-white">Current Control Model</h2>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-lg bg-gray-800/50 p-4">
+              <p className="text-sm font-medium text-white">What is real today</p>
+              <ul className="mt-3 space-y-2 text-sm text-gray-400">
+                <li>Chef governance is engine-backed.</li>
+                <li>Storefront publication and pause controls are engine-backed.</li>
+                <li>Order and dispatch oversight actions are engine-backed.</li>
+                <li>Finance visibility comes from ledger, refund, and payout-adjustment data.</li>
+              </ul>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Base Delivery Fee ($)
-              </label>
-              <input
-                type="number"
-                value={deliveryFee}
-                onChange={(e) => setDeliveryFee(e.target.value)}
-                className="w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-4 py-2 text-white focus:border-[#E85D26] focus:outline-none"
-                min="0"
-                step="0.01"
-              />
-              <p className="mt-1 text-xs text-gray-500">Default delivery fee charged to customers</p>
+            <div className="rounded-lg bg-gray-800/50 p-4">
+              <p className="text-sm font-medium text-white">What is not implemented yet</p>
+              <ul className="mt-3 space-y-2 text-sm text-gray-400">
+                <li>No persisted global settings table is wired into ops-admin.</li>
+                <li>No standalone payout execution control panel exists yet.</li>
+                <li>Platform rules still live in existing domain workflows rather than a centralized settings model.</li>
+              </ul>
             </div>
           </div>
         </Card>
 
-        {/* Order Settings */}
-        <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Order Settings</h2>
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Minimum Order Amount ($)
-              </label>
-              <input
-                type="number"
-                value={minOrderAmount}
-                onChange={(e) => setMinOrderAmount(e.target.value)}
-                className="w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-4 py-2 text-white focus:border-[#E85D26] focus:outline-none"
-                min="0"
-                step="0.01"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Max Delivery Radius (miles)
-              </label>
-              <input
-                type="number"
-                value={maxDeliveryRadius}
-                onChange={(e) => setMaxDeliveryRadius(e.target.value)}
-                className="w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-4 py-2 text-white focus:border-[#E85D26] focus:outline-none"
-                min="1"
-              />
-            </div>
-          </div>
-        </Card>
-
-        {/* Platform Status */}
-        <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Platform Status</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-[#1a1a2e] rounded-lg">
-              <div>
-                <p className="font-medium text-white">Accept New Orders</p>
-                <p className="text-sm text-gray-400">Allow customers to place new orders</p>
-              </div>
-              <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-green-500">
-                <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-6" />
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-[#1a1a2e] rounded-lg">
-              <div>
-                <p className="font-medium text-white">Accept New Chef Applications</p>
-                <p className="text-sm text-gray-400">Allow new chefs to register</p>
-              </div>
-              <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-green-500">
-                <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-6" />
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-[#1a1a2e] rounded-lg">
-              <div>
-                <p className="font-medium text-white">Accept New Driver Applications</p>
-                <p className="text-sm text-gray-400">Allow new drivers to register</p>
-              </div>
-              <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-green-500">
-                <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-6" />
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Save Button */}
-        <div className="flex justify-end">
-          <button
-            onClick={handleSave}
-            className="rounded-lg bg-[#E85D26] px-6 py-3 font-medium text-white hover:bg-[#d54d1a] transition-colors"
-          >
-            Save Settings
-          </button>
+        <div className="grid gap-4 lg:grid-cols-2">
+          {controlSurfaces.map((surface) => (
+            <Card key={surface.title} className="border-gray-800 bg-[#16213e] p-6">
+              <h2 className="text-lg font-semibold text-white">{surface.title}</h2>
+              <p className="mt-2 text-sm text-gray-400">{surface.description}</p>
+              <Link
+                href={surface.href}
+                className="mt-4 inline-flex rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#d54d1a]"
+              >
+                {surface.cta}
+              </Link>
+            </Card>
+          ))}
         </div>
       </div>
     </DashboardLayout>
