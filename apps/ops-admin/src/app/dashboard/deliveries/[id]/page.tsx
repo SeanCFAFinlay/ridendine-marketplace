@@ -1,50 +1,16 @@
 import { Card, Badge } from '@ridendine/ui';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@ridendine/db';
+import {
+  createAdminClient,
+  getOpsDeliveryDetail,
+  listOpsDrivers,
+  type SupabaseClient,
+} from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { notFound } from 'next/navigation';
+import { DeliveryActions } from './delivery-actions';
 
 export const dynamic = 'force-dynamic';
-
-async function getDeliveryDetails(deliveryId: string) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
-
-  const { data: delivery, error } = await supabase
-    .from('deliveries')
-    .select(`
-      *,
-      orders (
-        id,
-        order_number,
-        status,
-        total,
-        customers (
-          first_name,
-          last_name,
-          phone
-        ),
-        chef_storefronts (
-          name
-        )
-      ),
-      drivers (
-        id,
-        first_name,
-        last_name,
-        phone
-      )
-    `)
-    .eq('id', deliveryId)
-    .single();
-
-  if (error || !delivery) {
-    return null;
-  }
-
-  return delivery;
-}
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-500',
@@ -60,30 +26,51 @@ const statusColors: Record<string, string> = {
   failed: 'bg-red-700',
 };
 
-export default async function DeliveryDetailPage({ params }: { params: { id: string } }) {
-  const delivery = await getDeliveryDetails(params.id);
+function formatMoney(value: number | null | undefined) {
+  return `$${(value ?? 0).toFixed(2)}`;
+}
+
+function formatTimestamp(value: string | null | undefined) {
+  return value ? new Date(value).toLocaleString() : 'Not recorded';
+}
+
+async function getDeliveryDetailPageData(deliveryId: string) {
+  const adminClient = createAdminClient() as unknown as SupabaseClient;
+  const [delivery, drivers] = await Promise.all([
+    getOpsDeliveryDetail(adminClient, deliveryId),
+    listOpsDrivers(adminClient, { status: 'approved' }),
+  ]);
 
   if (!delivery) {
+    return null;
+  }
+
+  return { delivery, drivers };
+}
+
+export default async function DeliveryDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const data = await getDeliveryDetailPageData(id);
+
+  if (!data) {
     notFound();
   }
 
-  const order = delivery.orders as {
-    id: string;
-    order_number: string;
-    status: string;
-    total: number;
-    customers: { first_name: string; last_name: string; phone: string } | null;
-    chef_storefronts: { name: string } | null;
-  } | null;
-
-  const driver = delivery.drivers as { id: string; first_name: string; last_name: string; phone: string } | null;
+  const { delivery, drivers } = data;
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Link href="/dashboard/deliveries" className="text-sm text-gray-400 hover:text-white mb-2 inline-block">
+            <Link
+              href="/dashboard/deliveries"
+              className="mb-2 inline-block text-sm text-gray-400 hover:text-white"
+            >
               &larr; Back to Deliveries
             </Link>
             <h1 className="text-3xl font-bold text-white">
@@ -93,192 +80,259 @@ export default async function DeliveryDetailPage({ params }: { params: { id: str
               Created {new Date(delivery.created_at).toLocaleString()}
             </p>
           </div>
-          <Badge className={`${statusColors[delivery.status] || 'bg-gray-500'} text-white px-4 py-2`}>
+          <Badge
+            className={`${
+              statusColors[delivery.status] || 'bg-gray-500'
+            } px-4 py-2 text-white`}
+          >
             {delivery.status?.replace(/_/g, ' ').toUpperCase()}
           </Badge>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Order Info */}
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Order Information</h2>
-            {order ? (
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Order Number</span>
-                  <span className="text-white">#{order.order_number}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Order Total</span>
-                  <span className="text-emerald-400 font-bold">${order.total?.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Restaurant</span>
-                  <span className="text-white">{order.chef_storefronts?.name || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Customer</span>
-                  <span className="text-white">
-                    {order.customers
-                      ? `${order.customers.first_name} ${order.customers.last_name}`
-                      : 'N/A'}
-                  </span>
-                </div>
-                <Link
-                  href={`/dashboard/orders/${order.id}`}
-                  className="text-[#E85D26] hover:underline inline-block mt-2"
-                >
-                  View Order Details &rarr;
-                </Link>
+            <h2 className="mb-4 text-lg font-semibold text-white">
+              Delivery Oversight
+            </h2>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-400">Linked Order</span>
+                <span className="text-white">
+                  {delivery.order?.order_number
+                    ? `#${delivery.order.order_number}`
+                    : 'Not linked'}
+                </span>
               </div>
-            ) : (
-              <p className="text-gray-400">Order information not available</p>
-            )}
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-400">Order Status</span>
+                <span className="text-white">
+                  {delivery.order?.status?.replace(/_/g, ' ') || 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-400">Payment Status</span>
+                <span className="text-white">
+                  {delivery.order?.payment_status || 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-400">Storefront</span>
+                <span className="text-white">
+                  {delivery.order?.storefront?.name || 'N/A'}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-4 text-sm">
+              {delivery.order?.id && (
+                <Link
+                  href={`/dashboard/orders/${delivery.order.id}`}
+                  className="text-[#E85D26] hover:underline"
+                >
+                  View Order Detail &rarr;
+                </Link>
+              )}
+              {delivery.driver?.id && (
+                <Link
+                  href={`/dashboard/drivers/${delivery.driver.id}`}
+                  className="text-[#E85D26] hover:underline"
+                >
+                  View Driver Detail &rarr;
+                </Link>
+              )}
+            </div>
           </Card>
 
-          {/* Driver Info */}
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Driver</h2>
-            {driver ? (
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Name</span>
-                  <span className="text-white">{driver.first_name} {driver.last_name}</span>
+            <h2 className="mb-4 text-lg font-semibold text-white">
+              Driver & Customer Context
+            </h2>
+            <div className="space-y-4 text-sm">
+              <div>
+                <p className="text-gray-400">Assigned Driver</p>
+                <p className="mt-1 text-white">
+                  {delivery.driver
+                    ? `${delivery.driver.first_name} ${delivery.driver.last_name}`
+                    : 'Not assigned'}
+                </p>
+                {delivery.driver?.phone && (
+                  <p className="text-xs text-gray-400">{delivery.driver.phone}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-gray-400">Customer</p>
+                <p className="mt-1 text-white">
+                  {delivery.order?.customer
+                    ? `${delivery.order.customer.first_name} ${delivery.order.customer.last_name}`
+                    : 'Not available'}
+                </p>
+                {delivery.order?.customer?.phone && (
+                  <p className="text-xs text-gray-400">
+                    {delivery.order.customer.phone}
+                  </p>
+                )}
+              </div>
+              <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Dispatch Status
+                </p>
+                <p className="mt-2 text-sm text-gray-200">
+                  {delivery.driver
+                    ? 'A driver is assigned. Reassignment is available if intervention is required.'
+                    : 'No driver is assigned yet. Ops can run auto-assign or make a manual assignment from this page.'}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <Card className="border-gray-800 bg-[#16213e] p-6">
+          <h2 className="mb-4 text-lg font-semibold text-white">
+            Route & Payout Context
+          </h2>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="rounded-lg bg-[#1a1a2e] p-4">
+              <p className="text-sm font-medium text-white">Pickup</p>
+              <p className="mt-2 text-sm text-gray-300">
+                {delivery.pickup_address || 'Address not set'}
+              </p>
+            </div>
+            <div className="rounded-lg bg-[#1a1a2e] p-4">
+              <p className="text-sm font-medium text-white">Dropoff</p>
+              <p className="mt-2 text-sm text-gray-300">
+                {delivery.dropoff_address || 'Address not set'}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <div>
+              <p className="text-sm text-gray-400">Distance</p>
+              <p className="text-white">
+                {delivery.distance_km ? `${delivery.distance_km} km` : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-400">Delivery Fee</p>
+              <p className="text-white">{formatMoney(delivery.delivery_fee)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-400">Driver Payout</p>
+              <p className="text-emerald-400">
+                {formatMoney(delivery.driver_payout)}
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/dashboard/map"
+            className="mt-4 inline-block text-[#E85D26] hover:underline"
+          >
+            View on Live Map &rarr;
+          </Link>
+        </Card>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <h2 className="mb-4 text-lg font-semibold text-white">
+              Workflow Timeline
+            </h2>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="h-3 w-3 rounded-full bg-green-500" />
+                <div>
+                  <p className="text-white">Delivery Record Created</p>
+                  <p className="text-sm text-gray-400">
+                    {formatTimestamp(delivery.created_at)}
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Phone</span>
-                  <span className="text-white">{driver.phone || 'N/A'}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="h-3 w-3 rounded-full bg-blue-500" />
+                <div>
+                  <p className="text-white">Estimated Pickup</p>
+                  <p className="text-sm text-gray-400">
+                    {formatTimestamp(delivery.estimated_pickup_at)}
+                  </p>
                 </div>
-                <Link
-                  href={`/dashboard/drivers/${driver.id}`}
-                  className="text-[#E85D26] hover:underline inline-block mt-2"
-                >
-                  View Driver Profile &rarr;
-                </Link>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="h-3 w-3 rounded-full bg-purple-500" />
+                <div>
+                  <p className="text-white">Actual Pickup</p>
+                  <p className="text-sm text-gray-400">
+                    {formatTimestamp(delivery.actual_pickup_at)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="h-3 w-3 rounded-full bg-amber-500" />
+                <div>
+                  <p className="text-white">Estimated Dropoff</p>
+                  <p className="text-sm text-gray-400">
+                    {formatTimestamp(delivery.estimated_dropoff_at)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="h-3 w-3 rounded-full bg-emerald-500" />
+                <div>
+                  <p className="text-white">Actual Dropoff</p>
+                  <p className="text-sm text-gray-400">
+                    {formatTimestamp(delivery.actual_dropoff_at)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <h2 className="mb-4 text-lg font-semibold text-white">
+              Tracking Visibility
+            </h2>
+            {delivery.tracking_events.length > 0 ? (
+              <div className="space-y-3">
+                {delivery.tracking_events
+                  .slice(-5)
+                  .reverse()
+                  .map((event) => (
+                    <div
+                      key={event.id}
+                      className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4"
+                    >
+                      <p className="text-sm text-white">
+                        {event.lat.toFixed(5)}, {event.lng.toFixed(5)}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-400">
+                        Recorded {formatTimestamp(event.recorded_at)}
+                      </p>
+                    </div>
+                  ))}
               </div>
             ) : (
-              <div className="text-center py-4">
-                <p className="text-gray-400 mb-3">No driver assigned</p>
-                <button className="px-4 py-2 bg-[#E85D26] text-white rounded-lg hover:bg-[#d54d1a] transition-colors">
-                  Assign Driver
-                </button>
+              <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+                <p className="text-sm text-gray-300">
+                  No tracking pings are recorded for this delivery yet.
+                </p>
+                <p className="mt-2 text-xs text-gray-500">
+                  Live workflow events still come from the assigned driver flow. Ops
+                  can use dispatch controls here without fabricating status changes.
+                </p>
               </div>
             )}
           </Card>
         </div>
 
-        {/* Route Info */}
         <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Route Information</h2>
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="p-4 bg-[#1a1a2e] rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-orange-400 text-lg">📍</span>
-                <span className="font-medium text-white">Pickup</span>
-              </div>
-              <p className="text-gray-300">{delivery.pickup_address || 'Address not set'}</p>
-              {delivery.pickup_lat && delivery.pickup_lng && (
-                <p className="text-sm text-gray-500 mt-1">
-                  {delivery.pickup_lat}, {delivery.pickup_lng}
-                </p>
-              )}
-            </div>
-            <div className="p-4 bg-[#1a1a2e] rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-blue-400 text-lg">🏠</span>
-                <span className="font-medium text-white">Dropoff</span>
-              </div>
-              <p className="text-gray-300">{delivery.dropoff_address || 'Address not set'}</p>
-              {delivery.dropoff_lat && delivery.dropoff_lng && (
-                <p className="text-sm text-gray-500 mt-1">
-                  {delivery.dropoff_lat}, {delivery.dropoff_lng}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <div>
-              <p className="text-sm text-gray-400">Distance</p>
-              <p className="text-white">{delivery.distance_km ? `${delivery.distance_km} km` : 'N/A'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Delivery Fee</p>
-              <p className="text-white">${delivery.delivery_fee?.toFixed(2) || '0.00'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Driver Payout</p>
-              <p className="text-emerald-400">${delivery.driver_payout?.toFixed(2) || '0.00'}</p>
-            </div>
-          </div>
-          <Link href="/dashboard/map" className="text-[#E85D26] hover:underline inline-block mt-4">
-            View on Live Map &rarr;
-          </Link>
-        </Card>
-
-        {/* Timeline */}
-        <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Delivery Timeline</h2>
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <div>
-                <p className="text-white">Order Created</p>
-                <p className="text-sm text-gray-400">{new Date(delivery.created_at).toLocaleString()}</p>
-              </div>
-            </div>
-            {delivery.assigned_at && (
-              <div className="flex items-center gap-4">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <div>
-                  <p className="text-white">Driver Assigned</p>
-                  <p className="text-sm text-gray-400">{new Date(delivery.assigned_at).toLocaleString()}</p>
-                </div>
-              </div>
-            )}
-            {delivery.picked_up_at && (
-              <div className="flex items-center gap-4">
-                <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                <div>
-                  <p className="text-white">Order Picked Up</p>
-                  <p className="text-sm text-gray-400">{new Date(delivery.picked_up_at).toLocaleString()}</p>
-                </div>
-              </div>
-            )}
-            {delivery.delivered_at && (
-              <div className="flex items-center gap-4">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <div>
-                  <p className="text-white">Delivered</p>
-                  <p className="text-sm text-gray-400">{new Date(delivery.delivered_at).toLocaleString()}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        {/* Actions */}
-        <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Actions</h2>
-          <div className="flex gap-3">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              Update Status
-            </button>
-            {!driver && (
-              <button className="px-4 py-2 bg-[#E85D26] text-white rounded-lg hover:bg-[#d54d1a] transition-colors">
-                Assign Driver
-              </button>
-            )}
-            {driver && delivery.status !== 'delivered' && delivery.status !== 'cancelled' && (
-              <button className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
-                Reassign Driver
-              </button>
-            )}
-            {delivery.status !== 'cancelled' && delivery.status !== 'delivered' && (
-              <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                Cancel Delivery
-              </button>
-            )}
-          </div>
+          <h2 className="mb-4 text-lg font-semibold text-white">
+            Delivery Controls
+          </h2>
+          <DeliveryActions
+            deliveryId={delivery.id}
+            currentStatus={delivery.status}
+            assignedDriverId={delivery.driver_id}
+            drivers={drivers}
+          />
         </Card>
       </div>
     </DashboardLayout>

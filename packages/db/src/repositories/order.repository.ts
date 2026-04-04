@@ -14,6 +14,53 @@ export interface OpsOrderListItem extends Order {
   } | null;
 }
 
+export interface OpsOrderDetail extends Order {
+  customer: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string | null;
+  } | null;
+  storefront: {
+    id: string;
+    name: string;
+    slug: string;
+    chef: {
+      id: string;
+      display_name: string | null;
+      phone: string | null;
+    } | null;
+  } | null;
+  delivery_address: {
+    address_line1: string;
+    address_line2: string | null;
+    city: string;
+    state: string;
+    postal_code: string;
+  } | null;
+  items: Array<{
+    id: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+    menu_item: {
+      name: string;
+      description: string | null;
+    } | null;
+  }>;
+  delivery: {
+    id: string;
+    status: string;
+    driver_id: string | null;
+    driver: {
+      first_name: string;
+      last_name: string;
+      phone: string | null;
+    } | null;
+  } | null;
+}
+
 export async function getOrderById(
   client: SupabaseClient,
   id: string
@@ -125,6 +172,44 @@ export async function listOpsOrders(
 
   if (error) throw error;
   return (data ?? []) as unknown as OpsOrderListItem[];
+}
+
+export async function getOpsOrderDetail(
+  client: SupabaseClient,
+  orderId: string
+): Promise<OpsOrderDetail | null> {
+  const { data, error } = await client
+    .from('orders')
+    .select(`
+      *,
+      customer:customers (
+        id, first_name, last_name, email, phone
+      ),
+      storefront:chef_storefronts (
+        id, name, slug,
+        chef:chef_profiles (id, display_name, phone)
+      ),
+      delivery_address:customer_addresses (
+        address_line1, address_line2, city, state, postal_code
+      ),
+      items:order_items (
+        id, quantity, unit_price, total_price,
+        menu_item:menu_items (name, description)
+      ),
+      delivery:deliveries (
+        id, status, driver_id,
+        driver:drivers (first_name, last_name, phone)
+      )
+    `)
+    .eq('id', orderId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+
+  return data as unknown as OpsOrderDetail;
 }
 
 export async function createOrder(

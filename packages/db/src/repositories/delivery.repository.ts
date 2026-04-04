@@ -13,6 +13,37 @@ export interface OpsDeliveryListItem extends Delivery {
   } | null;
 }
 
+export interface OpsDeliveryDetail extends Delivery {
+  order: {
+    id: string;
+    order_number: string;
+    status: string;
+    payment_status: string | null;
+    total: number;
+    created_at: string;
+    customer: {
+      id: string;
+      first_name: string;
+      last_name: string;
+      phone: string | null;
+      email: string;
+    } | null;
+    storefront: {
+      id: string;
+      name: string;
+      slug: string;
+    } | null;
+  } | null;
+  driver: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    phone: string | null;
+    status: string;
+  } | null;
+  tracking_events: DeliveryTrackingEvent[];
+}
+
 export async function getDeliveryById(
   client: SupabaseClient,
   id: string
@@ -158,6 +189,58 @@ export async function listOpsDeliveries(
 
   if (error) throw error;
   return (data ?? []) as unknown as OpsDeliveryListItem[];
+}
+
+export async function getOpsDeliveryDetail(
+  client: SupabaseClient,
+  deliveryId: string
+): Promise<OpsDeliveryDetail | null> {
+  const { data, error } = await client
+    .from('deliveries')
+    .select(`
+      *,
+      order:orders (
+        id,
+        order_number,
+        status,
+        payment_status,
+        total,
+        created_at,
+        customer:customers (
+          id,
+          first_name,
+          last_name,
+          phone,
+          email
+        ),
+        storefront:chef_storefronts (
+          id,
+          name,
+          slug
+        )
+      ),
+      driver:drivers (
+        id,
+        first_name,
+        last_name,
+        phone,
+        status
+      )
+    `)
+    .eq('id', deliveryId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+
+  const trackingEvents = await getDeliveryTrackingEvents(client, deliveryId);
+
+  return {
+    ...(data as unknown as Omit<OpsDeliveryDetail, 'tracking_events'>),
+    tracking_events: trackingEvents,
+  };
 }
 
 export async function getDeliveryHistory(
