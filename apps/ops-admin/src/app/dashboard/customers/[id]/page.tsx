@@ -1,65 +1,45 @@
 import { Card, Badge } from '@ridendine/ui';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@ridendine/db';
+import {
+  createAdminClient,
+  getOpsCustomerDetail,
+  type SupabaseClient,
+} from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-async function getCustomerDetails(customerId: string) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
-
-  const { data: customer, error } = await supabase
-    .from('customers')
-    .select('*')
-    .eq('id', customerId)
-    .single();
-
-  if (error || !customer) {
-    return null;
-  }
-
-  // Get order stats
-  const { data: orders } = await supabase
-    .from('orders')
-    .select('id, order_number, status, total, created_at')
-    .eq('customer_id', customerId)
-    .order('created_at', { ascending: false })
-    .limit(10);
-
-  // Get addresses
-  const { data: addresses } = await supabase
-    .from('customer_addresses')
-    .select('*')
-    .eq('customer_id', customerId);
-
-  // Calculate stats
-  const orderStats = {
-    totalOrders: orders?.length || 0,
-    totalSpent: orders?.reduce((sum: number, o: { total: number | null }) => sum + (o.total || 0), 0) || 0,
-    completedOrders: orders?.filter((o: { status: string }) => o.status === 'delivered').length || 0,
-  };
-
-  return { customer, orders: orders || [], addresses: addresses || [], orderStats };
+function formatMoney(value: number | null | undefined) {
+  return `$${(value ?? 0).toFixed(2)}`;
 }
 
-export default async function CustomerDetailPage({ params }: { params: { id: string } }) {
-  const data = await getCustomerDetails(params.id);
+async function getCustomerPageData(customerId: string) {
+  const adminClient = createAdminClient() as unknown as SupabaseClient;
+  return getOpsCustomerDetail(adminClient, customerId);
+}
 
-  if (!data) {
+export default async function CustomerDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const customer = await getCustomerPageData(id);
+
+  if (!customer) {
     notFound();
   }
 
-  const { customer, orders, addresses, orderStats } = data;
-
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Link href="/dashboard/customers" className="text-sm text-gray-400 hover:text-white mb-2 inline-block">
+            <Link
+              href="/dashboard/customers"
+              className="mb-2 inline-block text-sm text-gray-400 hover:text-white"
+            >
               &larr; Back to Customers
             </Link>
             <h1 className="text-3xl font-bold text-white">
@@ -69,13 +49,14 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
               Customer since {new Date(customer.created_at).toLocaleDateString()}
             </p>
           </div>
-          <Badge className="bg-green-500 text-white px-4 py-2">Active</Badge>
+          <Badge className="bg-green-500 px-4 py-2 text-white">Active</Badge>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Profile Info */}
           <Card className="border-gray-800 bg-[#16213e] p-6 lg:col-span-2">
-            <h2 className="text-lg font-semibold text-white mb-4">Profile Information</h2>
+            <h2 className="mb-4 text-lg font-semibold text-white">
+              Customer Account Context
+            </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-sm text-gray-400">Email</p>
@@ -87,91 +68,156 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
               </div>
               <div>
                 <p className="text-sm text-gray-400">User ID</p>
-                <p className="text-white font-mono text-sm">{customer.user_id}</p>
+                <p className="font-mono text-sm text-white">{customer.user_id}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">Customer ID</p>
-                <p className="text-white font-mono text-sm">{customer.id}</p>
+                <p className="font-mono text-sm text-white">{customer.id}</p>
               </div>
+            </div>
+
+            <div className="mt-6 rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                Operational Notes
+              </p>
+              <p className="mt-2 text-sm text-gray-200">
+                This page is for account and order oversight. Direct customer
+                credits or messaging tools are not implemented here yet, so the
+                page links operators into the real order and support surfaces
+                instead of presenting fake controls.
+              </p>
             </div>
           </Card>
 
-          {/* Stats */}
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Order Statistics</h2>
+            <h2 className="mb-4 text-lg font-semibold text-white">
+              Order Snapshot
+            </h2>
             <div className="space-y-4">
-              <div className="text-center p-4 bg-[#1a1a2e] rounded-lg">
-                <p className="text-2xl font-bold text-emerald-400">${orderStats.totalSpent.toFixed(2)}</p>
-                <p className="text-sm text-gray-400">Total Spent</p>
+              <div className="rounded-lg bg-[#1a1a2e] p-4 text-center">
+                <p className="text-2xl font-bold text-emerald-400">
+                  {formatMoney(customer.stats.totalSpent)}
+                </p>
+                <p className="text-sm text-gray-400">Total Spend</p>
               </div>
-              <div className="text-center p-4 bg-[#1a1a2e] rounded-lg">
-                <p className="text-2xl font-bold text-blue-400">{orderStats.totalOrders}</p>
+              <div className="rounded-lg bg-[#1a1a2e] p-4 text-center">
+                <p className="text-2xl font-bold text-blue-400">
+                  {customer.stats.totalOrders}
+                </p>
                 <p className="text-sm text-gray-400">Total Orders</p>
               </div>
-              <div className="text-center p-4 bg-[#1a1a2e] rounded-lg">
-                <p className="text-2xl font-bold text-purple-400">{orderStats.completedOrders}</p>
-                <p className="text-sm text-gray-400">Completed</p>
+              <div className="rounded-lg bg-[#1a1a2e] p-4 text-center">
+                <p className="text-2xl font-bold text-purple-400">
+                  {customer.stats.completedOrders}
+                </p>
+                <p className="text-sm text-gray-400">Completed Orders</p>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Saved Addresses */}
-        <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Saved Addresses</h2>
-          {addresses.length > 0 ? (
-            <div className="space-y-3">
-              {addresses.map((address: any) => (
-                <div key={address.id} className="p-4 bg-[#1a1a2e] rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-white">{address.label || 'Address'}</p>
-                      <p className="text-sm text-gray-400">{address.street_address}</p>
-                      <p className="text-sm text-gray-400">
-                        {address.city}, {address.state} {address.zip_code}
-                      </p>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <h2 className="mb-4 text-lg font-semibold text-white">
+              Saved Addresses
+            </h2>
+            {customer.addresses.length > 0 ? (
+              <div className="space-y-3">
+                {customer.addresses.map((address) => (
+                  <div
+                    key={address.id}
+                    className="rounded-lg bg-[#1a1a2e] p-4"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-medium text-white">
+                          {address.label || 'Address'}
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          {address.address_line1}
+                          {address.address_line2 ? `, ${address.address_line2}` : ''}
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          {address.city}, {address.state} {address.postal_code}
+                        </p>
+                      </div>
+                      {address.is_default && (
+                        <Badge className="bg-blue-500 text-white">Default</Badge>
+                      )}
                     </div>
-                    {address.is_default && (
-                      <Badge className="bg-blue-500 text-white">Default</Badge>
-                    )}
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-400">No saved addresses</p>
-          )}
-        </Card>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">
+                No saved addresses are recorded for this customer.
+              </p>
+            )}
+          </Card>
 
-        {/* Recent Orders */}
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <h2 className="mb-4 text-lg font-semibold text-white">
+              Customer Oversight Context
+            </h2>
+            <div className="space-y-4 text-sm">
+              <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+                <p className="text-gray-400">Last Order</p>
+                <p className="mt-1 text-white">
+                  {customer.stats.lastOrderAt
+                    ? new Date(customer.stats.lastOrderAt).toLocaleString()
+                    : 'No orders yet'}
+                </p>
+              </div>
+              <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+                <p className="text-gray-400">Cancelled Orders</p>
+                <p className="mt-1 text-white">
+                  {customer.stats.cancelledOrders}
+                </p>
+              </div>
+              <Link
+                href="/dashboard/support"
+                className="inline-block text-[#E85D26] hover:underline"
+              >
+                Review support queue for customer issues &rarr;
+              </Link>
+            </div>
+          </Card>
+        </div>
+
         <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Recent Orders</h2>
-          {orders.length > 0 ? (
+          <h2 className="mb-4 text-lg font-semibold text-white">
+            Recent Orders
+          </h2>
+          {customer.recent_orders.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-sm text-gray-400 border-b border-gray-700">
+                  <tr className="border-b border-gray-700 text-left text-sm text-gray-400">
                     <th className="pb-3">Order #</th>
                     <th className="pb-3">Status</th>
                     <th className="pb-3">Total</th>
                     <th className="pb-3">Date</th>
-                    <th className="pb-3"></th>
+                    <th className="pb-3" />
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((order: any) => (
+                  {customer.recent_orders.map((order) => (
                     <tr key={order.id} className="border-b border-gray-800">
                       <td className="py-3 text-white">#{order.order_number}</td>
                       <td className="py-3">
-                        <Badge className={`${
-                          order.status === 'delivered' ? 'bg-green-500' :
-                          order.status === 'cancelled' ? 'bg-red-500' :
-                          'bg-blue-500'
-                        } text-white`}>
-                          {order.status}
+                        <Badge
+                          className={`${
+                            order.status === 'delivered'
+                              ? 'bg-green-500'
+                              : order.status === 'cancelled'
+                                ? 'bg-red-500'
+                                : 'bg-blue-500'
+                          } text-white`}
+                        >
+                          {order.status.replace(/_/g, ' ')}
                         </Badge>
                       </td>
-                      <td className="py-3 text-white">${order.total?.toFixed(2)}</td>
+                      <td className="py-3 text-white">{formatMoney(order.total)}</td>
                       <td className="py-3 text-gray-400">
                         {new Date(order.created_at).toLocaleDateString()}
                       </td>
@@ -180,7 +226,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
                           href={`/dashboard/orders/${order.id}`}
                           className="text-[#E85D26] hover:underline"
                         >
-                          View
+                          View order &rarr;
                         </Link>
                       </td>
                     </tr>
@@ -189,24 +235,10 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
               </table>
             </div>
           ) : (
-            <p className="text-gray-400">No orders yet</p>
+            <p className="text-sm text-gray-400">
+              No orders are recorded for this customer yet.
+            </p>
           )}
-        </Card>
-
-        {/* Actions */}
-        <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Actions</h2>
-          <div className="flex gap-3">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              View All Orders
-            </button>
-            <button className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-              Send Message
-            </button>
-            <button className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
-              Issue Credit
-            </button>
-          </div>
         </Card>
       </div>
     </DashboardLayout>

@@ -1,59 +1,15 @@
 import { Card, Badge } from '@ridendine/ui';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@ridendine/db';
+import {
+  createAdminClient,
+  getOpsDriverDetail,
+  type SupabaseClient,
+} from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { notFound } from 'next/navigation';
+import { DriverGovernanceActions } from './driver-governance-actions';
 
 export const dynamic = 'force-dynamic';
-
-async function getDriverDetails(driverId: string) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
-
-  const { data: driver, error } = await supabase
-    .from('drivers')
-    .select('*')
-    .eq('id', driverId)
-    .single();
-
-  if (error || !driver) {
-    return null;
-  }
-
-  // Get driver presence
-  let presence = null;
-  try {
-    const { data } = await supabase
-      .from('driver_presence')
-      .select('*')
-      .eq('driver_id', driverId)
-      .single();
-    presence = data;
-  } catch {
-    // Presence may not exist
-  }
-
-  // Get delivery stats
-  let deliveryCount = 0;
-  let totalEarnings = 0;
-  try {
-    const { data: deliveries } = await supabase
-      .from('deliveries')
-      .select('driver_payout')
-      .eq('driver_id', driverId)
-      .eq('status', 'delivered');
-
-    if (deliveries) {
-      deliveryCount = deliveries.length;
-      totalEarnings = deliveries.reduce((sum: number, d: { driver_payout: number | null }) => sum + (d.driver_payout || 0), 0);
-    }
-  } catch {
-    // Deliveries may not exist
-  }
-
-  return { driver, presence, deliveryCount, totalEarnings };
-}
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-500',
@@ -68,21 +24,40 @@ const presenceColors: Record<string, string> = {
   busy: 'bg-orange-500',
 };
 
-export default async function DriverDetailPage({ params }: { params: { id: string } }) {
-  const data = await getDriverDetails(params.id);
+function formatMoney(value: number | null | undefined) {
+  return `$${(value ?? 0).toFixed(2)}`;
+}
 
-  if (!data) {
+function formatTimestamp(value: string | null | undefined) {
+  return value ? new Date(value).toLocaleString() : 'Not recorded';
+}
+
+async function getDriverPageData(driverId: string) {
+  const adminClient = createAdminClient() as unknown as SupabaseClient;
+  return getOpsDriverDetail(adminClient, driverId);
+}
+
+export default async function DriverDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const driver = await getDriverPageData(id);
+
+  if (!driver) {
     notFound();
   }
 
-  const { driver, presence, deliveryCount, totalEarnings } = data;
-
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Link href="/dashboard/drivers" className="text-sm text-gray-400 hover:text-white mb-2 inline-block">
+            <Link
+              href="/dashboard/drivers"
+              className="mb-2 inline-block text-sm text-gray-400 hover:text-white"
+            >
               &larr; Back to Drivers
             </Link>
             <h1 className="text-3xl font-bold text-white">
@@ -93,21 +68,30 @@ export default async function DriverDetailPage({ params }: { params: { id: strin
             </p>
           </div>
           <div className="flex gap-2">
-            {presence && (
-              <Badge className={`${presenceColors[presence.status] || 'bg-gray-500'} text-white px-3 py-1`}>
-                {presence.status?.toUpperCase()}
+            {driver.driver_presence && (
+              <Badge
+                className={`${
+                  presenceColors[driver.driver_presence.status] || 'bg-gray-500'
+                } px-3 py-1 text-white`}
+              >
+                {driver.driver_presence.status.toUpperCase()}
               </Badge>
             )}
-            <Badge className={`${statusColors[driver.status] || 'bg-gray-500'} text-white px-3 py-1`}>
+            <Badge
+              className={`${
+                statusColors[driver.status] || 'bg-gray-500'
+              } px-3 py-1 text-white`}
+            >
               {driver.status?.toUpperCase()}
             </Badge>
           </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Profile Info */}
           <Card className="border-gray-800 bg-[#16213e] p-6 lg:col-span-2">
-            <h2 className="text-lg font-semibold text-white mb-4">Profile Information</h2>
+            <h2 className="mb-4 text-lg font-semibold text-white">
+              Driver Profile & Operations Context
+            </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-sm text-gray-400">Email</p>
@@ -118,99 +102,173 @@ export default async function DriverDetailPage({ params }: { params: { id: strin
                 <p className="text-white">{driver.phone || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-400">Account Status</p>
-                <p className="text-white capitalize">{driver.status}</p>
+                <p className="text-sm text-gray-400">Presence</p>
+                <p className="text-white capitalize">
+                  {driver.driver_presence?.status || 'Unknown'}
+                </p>
               </div>
               <div>
-                <p className="text-sm text-gray-400">Online Status</p>
-                <p className="text-white capitalize">{presence?.status || 'Unknown'}</p>
+                <p className="text-sm text-gray-400">Profile Image</p>
+                <p className="text-white">
+                  {driver.profile_image_url ? 'Uploaded' : 'Not recorded'}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-400">User ID</p>
+                <p className="font-mono text-sm text-white">{driver.user_id}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-400">Driver ID</p>
+                <p className="font-mono text-sm text-white">{driver.id}</p>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                Active Operations
+              </p>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-sm text-gray-400">Active Deliveries</p>
+                  <p className="text-xl font-semibold text-white">
+                    {driver.stats.activeDeliveries}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Completed Deliveries</p>
+                  <p className="text-xl font-semibold text-white">
+                    {driver.stats.completedDeliveries}
+                  </p>
+                </div>
               </div>
             </div>
           </Card>
 
-          {/* Stats */}
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Performance</h2>
+            <h2 className="mb-4 text-lg font-semibold text-white">
+              Earnings Snapshot
+            </h2>
             <div className="space-y-4">
-              <div className="text-center p-4 bg-[#1a1a2e] rounded-lg">
-                <p className="text-2xl font-bold text-emerald-400">${totalEarnings.toFixed(2)}</p>
-                <p className="text-sm text-gray-400">Total Earnings</p>
+              <div className="rounded-lg bg-[#1a1a2e] p-4 text-center">
+                <p className="text-2xl font-bold text-emerald-400">
+                  {formatMoney(driver.stats.totalEarnings)}
+                </p>
+                <p className="text-sm text-gray-400">Delivered Payouts</p>
               </div>
-              <div className="text-center p-4 bg-[#1a1a2e] rounded-lg">
-                <p className="text-2xl font-bold text-blue-400">{deliveryCount}</p>
-                <p className="text-sm text-gray-400">Completed Deliveries</p>
+              <div className="rounded-lg bg-[#1a1a2e] p-4 text-center">
+                <p className="text-2xl font-bold text-blue-400">
+                  {driver.recent_deliveries.length}
+                </p>
+                <p className="text-sm text-gray-400">Recent Jobs Visible</p>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Location */}
-        {presence && presence.last_location_lat && presence.last_location_lng && (
+        <div className="grid gap-6 lg:grid-cols-2">
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Last Known Location</h2>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <p className="text-sm text-gray-400">Latitude</p>
-                <p className="text-white font-mono">{presence.last_location_lat}</p>
+            <h2 className="mb-4 text-lg font-semibold text-white">
+              Last Known Location
+            </h2>
+            {driver.driver_presence ? (
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <p className="text-sm text-gray-400">Latitude</p>
+                  <p className="font-mono text-white">
+                    {driver.driver_presence.last_location_lat ?? 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Longitude</p>
+                  <p className="font-mono text-white">
+                    {driver.driver_presence.last_location_lng ?? 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Last Updated</p>
+                  <p className="text-white">
+                    {formatTimestamp(driver.driver_presence.last_updated_at)}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-gray-400">Longitude</p>
-                <p className="text-white font-mono">{presence.last_location_lng}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400">Last Updated</p>
-                <p className="text-white">
-                  {presence.last_updated_at
-                    ? new Date(presence.last_updated_at).toLocaleString()
-                    : 'N/A'}
-                </p>
-              </div>
-            </div>
-            <Link href="/dashboard/map" className="text-[#E85D26] hover:underline inline-block mt-4">
+            ) : (
+              <p className="text-sm text-gray-400">
+                No presence record is available for this driver yet.
+              </p>
+            )}
+
+            <Link
+              href="/dashboard/map"
+              className="mt-4 inline-block text-[#E85D26] hover:underline"
+            >
               View on Live Map &rarr;
             </Link>
           </Card>
-        )}
 
-        {/* Recent Deliveries Placeholder */}
-        <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Recent Deliveries</h2>
-          <div className="h-32 flex items-center justify-center border border-dashed border-gray-700 rounded-lg">
-            <p className="text-gray-500">Delivery history coming soon</p>
-          </div>
-        </Card>
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <h2 className="mb-4 text-lg font-semibold text-white">
+              Recent Delivery Context
+            </h2>
+            {driver.recent_deliveries.length > 0 ? (
+              <div className="space-y-3">
+                {driver.recent_deliveries.map((delivery) => (
+                  <div
+                    key={delivery.id}
+                    className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          {delivery.order?.order_number
+                            ? `Order #${delivery.order.order_number}`
+                            : `Delivery ${delivery.id.slice(0, 8)}`}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {formatTimestamp(
+                            delivery.actual_dropoff_at ?? delivery.created_at
+                          )}
+                        </p>
+                      </div>
+                      <Badge
+                        className={`${
+                          delivery.status === 'delivered'
+                            ? 'bg-green-500'
+                            : 'bg-blue-500'
+                        } text-white`}
+                      >
+                        {delivery.status.replace(/_/g, ' ')}
+                      </Badge>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between text-sm">
+                      <span className="text-gray-400">
+                        Payout {formatMoney(delivery.driver_payout)}
+                      </span>
+                      <Link
+                        href={`/dashboard/deliveries/${delivery.id}`}
+                        className="text-[#E85D26] hover:underline"
+                      >
+                        View delivery &rarr;
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">
+                No deliveries are recorded for this driver yet.
+              </p>
+            )}
+          </Card>
+        </div>
 
-        {/* Actions */}
         <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Actions</h2>
-          <div className="flex gap-3">
-            {driver.status === 'pending' && (
-              <>
-                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                  Approve Driver
-                </button>
-                <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                  Reject Application
-                </button>
-              </>
-            )}
-            {driver.status === 'approved' && (
-              <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
-                Suspend Driver
-              </button>
-            )}
-            {driver.status === 'suspended' && (
-              <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                Unsuspend Driver
-              </button>
-            )}
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              View Deliveries
-            </button>
-            <button className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-              Send Message
-            </button>
-          </div>
+          <h2 className="mb-4 text-lg font-semibold text-white">
+            Driver Governance
+          </h2>
+          <DriverGovernanceActions
+            driverId={driver.id}
+            currentStatus={driver.status}
+          />
         </Card>
       </div>
     </DashboardLayout>

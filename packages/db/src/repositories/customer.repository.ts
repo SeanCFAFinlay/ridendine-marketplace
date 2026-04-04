@@ -6,6 +6,39 @@ export interface OpsCustomerListItem extends Customer {
   orders: { count: number }[] | null;
 }
 
+export interface OpsCustomerDetail extends Customer {
+  addresses: Array<{
+    id: string;
+    label: string;
+    address_line1: string;
+    address_line2: string | null;
+    city: string;
+    state: string;
+    postal_code: string;
+    is_default: boolean;
+  }>;
+  recent_orders: Array<{
+    id: string;
+    order_number: string;
+    status: string;
+    total: number;
+    created_at: string;
+  }>;
+  stats: {
+    totalOrders: number;
+    completedOrders: number;
+    cancelledOrders: number;
+    totalSpent: number;
+    lastOrderAt: string | null;
+  };
+}
+
+type CustomerStatsRow = {
+  status: string;
+  total: number | null;
+  created_at: string;
+};
+
 export async function getCustomerByUserId(
   client: SupabaseClient,
   userId: string
@@ -82,6 +115,66 @@ export async function listOpsCustomers(
 
   if (error) throw error;
   return (data ?? []) as unknown as OpsCustomerListItem[];
+}
+
+export async function getOpsCustomerDetail(
+  client: SupabaseClient,
+  customerId: string
+): Promise<OpsCustomerDetail | null> {
+  const { data: customer, error } = await client
+    .from('customers')
+    .select('*')
+    .eq('id', customerId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+
+  const [addressesResult, recentOrdersResult, allOrdersResult] = await Promise.all([
+    client
+      .from('customer_addresses')
+      .select('id, label, address_line1, address_line2, city, state, postal_code, is_default')
+      .eq('customer_id', customerId)
+      .order('created_at', { ascending: false }),
+    client
+      .from('orders')
+      .select('id, order_number, status, total, created_at')
+      .eq('customer_id', customerId)
+      .order('created_at', { ascending: false })
+      .limit(10),
+    client
+      .from('orders')
+      .select('status, total, created_at')
+      .eq('customer_id', customerId),
+  ]);
+
+  if (addressesResult.error) throw addressesResult.error;
+  if (recentOrdersResult.error) throw recentOrdersResult.error;
+  if (allOrdersResult.error) throw allOrdersResult.error;
+
+  const allOrders = (allOrdersResult.data ?? []) as CustomerStatsRow[];
+
+  return {
+    ...(customer as Customer),
+    addresses: (addressesResult.data ?? []) as OpsCustomerDetail['addresses'],
+    recent_orders: (recentOrdersResult.data ?? []) as OpsCustomerDetail['recent_orders'],
+    stats: {
+      totalOrders: allOrders.length,
+      completedOrders: allOrders.filter(
+        (order: CustomerStatsRow) => order.status === 'delivered'
+      ).length,
+      cancelledOrders: allOrders.filter(
+        (order: CustomerStatsRow) => order.status === 'cancelled'
+      ).length,
+      totalSpent: allOrders.reduce(
+        (sum: number, order: CustomerStatsRow) => sum + (order.total ?? 0),
+        0
+      ),
+      lastOrderAt: allOrders[0]?.created_at ?? null,
+    },
+  };
 }
 
 export async function getOrCreateCustomer(
