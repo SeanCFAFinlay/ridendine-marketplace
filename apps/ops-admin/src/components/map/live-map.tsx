@@ -1,111 +1,93 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { createBrowserClient } from '@ridendine/db';
 
-interface Driver {
+type DriverMapRow = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  driver_presence:
+    | {
+        status: string;
+        last_location_lat: number | null;
+        last_location_lng: number | null;
+      }
+    | {
+        status: string;
+        last_location_lat: number | null;
+        last_location_lng: number | null;
+      }[]
+    | null;
+};
+
+type DeliveryMapRow = {
+  id: string;
+  pickup_lat: number | null;
+  pickup_lng: number | null;
+  dropoff_lat: number | null;
+  dropoff_lng: number | null;
+  status: string;
+  driver_id: string | null;
+  orders:
+    | {
+        order_number: string;
+      }
+    | {
+        order_number: string;
+      }[]
+    | null;
+};
+
+type DriverMarkerData = {
   id: string;
   first_name: string;
   last_name: string;
   status: string;
   current_lat: number | null;
   current_lng: number | null;
-  active_delivery_id: string | null;
-}
+};
 
-interface Delivery {
+type DeliveryMarkerData = {
   id: string;
   order_number: string;
-  pickup_lat: number;
-  pickup_lng: number;
-  dropoff_lat: number;
-  dropoff_lng: number;
+  pickup_lat: number | null;
+  pickup_lng: number | null;
+  dropoff_lat: number | null;
+  dropoff_lng: number | null;
   status: string;
   driver_id: string | null;
+};
+
+type BrowserSupabaseClient = NonNullable<ReturnType<typeof createBrowserClient>>;
+
+function normalizePresence(row: DriverMapRow['driver_presence']) {
+  if (!row) return null;
+  return Array.isArray(row) ? row[0] ?? null : row;
+}
+
+function normalizeOrder(row: DeliveryMapRow['orders']) {
+  if (!row) return null;
+  return Array.isArray(row) ? row[0] ?? null : row;
 }
 
 export default function LiveMap() {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const supabaseRef = useRef<BrowserSupabaseClient | null>(createBrowserClient());
 
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
-  const [filter, setFilter] = useState<'all' | 'online' | 'busy' | 'offline'>('all');
+  const [drivers, setDrivers] = useState<DriverMarkerData[]>([]);
+  const [deliveries, setDeliveries] = useState<DeliveryMarkerData[]>([]);
+  const [filter, setFilter] = useState<'all' | 'online' | 'busy' | 'offline'>(
+    'all'
+  );
 
-  const supabase = useMemo(() => createBrowserClient(), []);
-
-  const fetchData = useCallback(async () => {
-    if (!supabase) return;
-
-    const db = supabase;
-
-    // Fetch drivers with presence data
-    const { data: driverData } = await db
-      .from('driver_profiles')
-      .select(`
-        id,
-        first_name,
-        last_name,
-        status,
-        driver_presence (
-          status,
-          current_lat,
-          current_lng
-        )
-      `)
-      .eq('status', 'approved');
-
-    if (driverData) {
-      const mappedDrivers = driverData.map((d: any) => ({
-        id: d.id,
-        first_name: d.first_name,
-        last_name: d.last_name,
-        status: d.driver_presence?.[0]?.status || 'offline',
-        current_lat: d.driver_presence?.[0]?.current_lat,
-        current_lng: d.driver_presence?.[0]?.current_lng,
-        active_delivery_id: null,
-      }));
-      setDrivers(mappedDrivers);
-    }
-
-    // Fetch active deliveries
-    const { data: deliveryData } = await db
-      .from('deliveries')
-      .select(`
-        id,
-        pickup_lat,
-        pickup_lng,
-        dropoff_lat,
-        dropoff_lng,
-        status,
-        driver_id,
-        orders (order_number)
-      `)
-      .in('status', ['assigned', 'accepted', 'en_route_to_pickup', 'picked_up', 'en_route_to_dropoff']);
-
-    if (deliveryData) {
-      const mappedDeliveries = deliveryData.map((d: any) => ({
-        id: d.id,
-        order_number: d.orders?.order_number || 'Unknown',
-        pickup_lat: d.pickup_lat,
-        pickup_lng: d.pickup_lng,
-        dropoff_lat: d.dropoff_lat,
-        dropoff_lng: d.dropoff_lng,
-        status: d.status,
-        driver_id: d.driver_id,
-      }));
-      setDeliveries(mappedDeliveries);
-    }
-  }, [supabase]);
-
-  // Initialize map
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    // Hamilton, ON center
     mapRef.current = L.map(containerRef.current).setView([43.2557, -79.8711], 12);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -120,57 +102,131 @@ export default function LiveMap() {
     };
   }, []);
 
-  // Subscribe to real-time updates
   useEffect(() => {
-    if (!supabase) return;
+    const db = supabaseRef.current;
+    if (!db) return;
+    const client = db;
 
-    const db = supabase;
-    fetchData();
+    async function fetchData() {
+      const { data: driverData } = await client
+        .from('drivers')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          driver_presence (
+            status,
+            last_location_lat,
+            last_location_lng
+          )
+        `)
+        .eq('status', 'approved');
 
-    const channel = db
+      if (driverData) {
+        const mappedDrivers = (driverData as unknown as DriverMapRow[]).map(
+          (driver) => {
+            const presence = normalizePresence(driver.driver_presence);
+            return {
+              id: driver.id,
+              first_name: driver.first_name,
+              last_name: driver.last_name,
+              status: presence?.status || 'offline',
+              current_lat: presence?.last_location_lat ?? null,
+              current_lng: presence?.last_location_lng ?? null,
+            };
+          }
+        );
+        setDrivers(mappedDrivers);
+      }
+
+      const { data: deliveryData } = await client
+        .from('deliveries')
+        .select(`
+          id,
+          pickup_lat,
+          pickup_lng,
+          dropoff_lat,
+          dropoff_lng,
+          status,
+          driver_id,
+          orders (order_number)
+        `)
+        .in('status', [
+          'assigned',
+          'accepted',
+          'en_route_to_pickup',
+          'picked_up',
+          'en_route_to_dropoff',
+        ]);
+
+      if (deliveryData) {
+        const mappedDeliveries = (deliveryData as unknown as DeliveryMapRow[]).map(
+          (delivery) => ({
+            id: delivery.id,
+            order_number: normalizeOrder(delivery.orders)?.order_number || 'Unknown',
+            pickup_lat: delivery.pickup_lat,
+            pickup_lng: delivery.pickup_lng,
+            dropoff_lat: delivery.dropoff_lat,
+            dropoff_lng: delivery.dropoff_lng,
+            status: delivery.status,
+            driver_id: delivery.driver_id,
+          })
+        );
+        setDeliveries(mappedDeliveries);
+      }
+    }
+
+    void fetchData();
+
+    const channel = client
       .channel('live-map')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'driver_presence' },
-        () => fetchData()
+        () => {
+          void fetchData();
+        }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'deliveries' },
-        () => fetchData()
+        () => {
+          void fetchData();
+        }
       )
       .subscribe();
 
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(() => {
+      void fetchData();
+    }, 30000);
 
     return () => {
-      db.removeChannel(channel);
+      client.removeChannel(channel);
       clearInterval(interval);
     };
-  }, [fetchData, supabase]);
+  }, []);
 
-  // Update markers
   useEffect(() => {
-    if (!mapRef.current) return;
+    const map = mapRef.current;
+    if (!map) return;
 
-    // Clear existing markers
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current.clear();
 
-    // Filter drivers
-    const filteredDrivers = drivers.filter((d) => {
+    const filteredDrivers = drivers.filter((driver) => {
       if (filter === 'all') return true;
-      if (filter === 'online') return d.status === 'online';
-      if (filter === 'busy') return d.status === 'busy';
-      if (filter === 'offline') return d.status === 'offline';
-      return true;
+      return driver.status === filter;
     });
 
-    // Add driver markers
     filteredDrivers.forEach((driver) => {
       if (!driver.current_lat || !driver.current_lng) return;
 
-      const color = driver.status === 'online' ? '#22c55e' : driver.status === 'busy' ? '#f97316' : '#64748b';
+      const color =
+        driver.status === 'online'
+          ? '#22c55e'
+          : driver.status === 'busy'
+            ? '#f97316'
+            : '#64748b';
 
       const icon = L.divIcon({
         className: 'driver-marker',
@@ -195,7 +251,7 @@ export default function LiveMap() {
       });
 
       const marker = L.marker([driver.current_lat, driver.current_lng], { icon })
-        .addTo(mapRef.current!)
+        .addTo(map)
         .bindPopup(`
           <div style="min-width: 150px;">
             <strong>${driver.first_name} ${driver.last_name}</strong>
@@ -207,7 +263,6 @@ export default function LiveMap() {
       markersRef.current.set(`driver-${driver.id}`, marker);
     });
 
-    // Add delivery markers (restaurants and drop-offs)
     deliveries.forEach((delivery) => {
       if (delivery.pickup_lat && delivery.pickup_lng) {
         const pickupIcon = L.divIcon({
@@ -232,11 +287,13 @@ export default function LiveMap() {
           iconAnchor: [15, 15],
         });
 
-        const marker = L.marker([delivery.pickup_lat, delivery.pickup_lng], { icon: pickupIcon })
-          .addTo(mapRef.current!)
+        const pickupMarker = L.marker([delivery.pickup_lat, delivery.pickup_lng], {
+          icon: pickupIcon,
+        })
+          .addTo(map)
           .bindPopup(`Pickup: ${delivery.order_number}`);
 
-        markersRef.current.set(`pickup-${delivery.id}`, marker);
+        markersRef.current.set(`pickup-${delivery.id}`, pickupMarker);
       }
 
       if (delivery.dropoff_lat && delivery.dropoff_lng) {
@@ -262,76 +319,86 @@ export default function LiveMap() {
           iconAnchor: [15, 15],
         });
 
-        const marker = L.marker([delivery.dropoff_lat, delivery.dropoff_lng], { icon: dropoffIcon })
-          .addTo(mapRef.current!)
+        const dropoffMarker = L.marker(
+          [delivery.dropoff_lat, delivery.dropoff_lng],
+          { icon: dropoffIcon }
+        )
+          .addTo(map)
           .bindPopup(`Dropoff: ${delivery.order_number}`);
 
-        markersRef.current.set(`dropoff-${delivery.id}`, marker);
+        markersRef.current.set(`dropoff-${delivery.id}`, dropoffMarker);
       }
     });
-  }, [drivers, deliveries, filter]);
+  }, [deliveries, drivers, filter]);
 
   const counts = {
-    online: drivers.filter((d) => d.status === 'online').length,
-    busy: drivers.filter((d) => d.status === 'busy').length,
-    offline: drivers.filter((d) => d.status === 'offline').length,
+    online: drivers.filter((driver) => driver.status === 'online').length,
+    busy: drivers.filter((driver) => driver.status === 'busy').length,
+    offline: drivers.filter((driver) => driver.status === 'offline').length,
   };
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Filter buttons */}
-      <div className="flex gap-2 p-4 bg-[#1a1a2e]">
+    <div className="flex h-full flex-col">
+      <div className="flex gap-2 bg-[#1a1a2e] p-4">
         <button
           onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            filter === 'all' ? 'bg-[#E85D26] text-white' : 'bg-[#16213e] text-gray-300 hover:bg-[#1a1a2e]'
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            filter === 'all'
+              ? 'bg-[#E85D26] text-white'
+              : 'bg-[#16213e] text-gray-300 hover:bg-[#1a1a2e]'
           }`}
         >
           All ({drivers.length})
         </button>
         <button
           onClick={() => setFilter('online')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            filter === 'online' ? 'bg-green-600 text-white' : 'bg-[#16213e] text-gray-300 hover:bg-[#1a1a2e]'
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            filter === 'online'
+              ? 'bg-green-600 text-white'
+              : 'bg-[#16213e] text-gray-300 hover:bg-[#1a1a2e]'
           }`}
         >
           Online ({counts.online})
         </button>
         <button
           onClick={() => setFilter('busy')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            filter === 'busy' ? 'bg-orange-600 text-white' : 'bg-[#16213e] text-gray-300 hover:bg-[#1a1a2e]'
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            filter === 'busy'
+              ? 'bg-orange-600 text-white'
+              : 'bg-[#16213e] text-gray-300 hover:bg-[#1a1a2e]'
           }`}
         >
           Busy ({counts.busy})
         </button>
         <button
           onClick={() => setFilter('offline')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            filter === 'offline' ? 'bg-gray-600 text-white' : 'bg-[#16213e] text-gray-300 hover:bg-[#1a1a2e]'
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            filter === 'offline'
+              ? 'bg-gray-600 text-white'
+              : 'bg-[#16213e] text-gray-300 hover:bg-[#1a1a2e]'
           }`}
         >
           Offline ({counts.offline})
         </button>
       </div>
 
-      {/* Map container */}
       <div ref={containerRef} className="flex-1" style={{ minHeight: '400px' }} />
 
-      {/* Stats sidebar */}
-      <div className="p-4 bg-[#16213e] border-t border-gray-800">
+      <div className="border-t border-gray-800 bg-[#16213e] p-4">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-2xl font-bold text-green-400">{counts.online}</p>
             <p className="text-xs text-gray-400">Drivers Online</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-orange-400">{deliveries.length}</p>
+            <p className="text-2xl font-bold text-orange-400">
+              {deliveries.length}
+            </p>
             <p className="text-xs text-gray-400">Active Deliveries</p>
           </div>
           <div>
             <p className="text-2xl font-bold text-blue-400">
-              {deliveries.filter((d) => !d.driver_id).length}
+              {deliveries.filter((delivery) => !delivery.driver_id).length}
             </p>
             <p className="text-xs text-gray-400">Unassigned</p>
           </div>

@@ -1,13 +1,11 @@
 import { Card } from '@ridendine/ui';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@ridendine/db';
+import { createAdminClient, type SupabaseClient } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
 export const dynamic = 'force-dynamic';
 
 async function getAnalyticsData() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
+  const supabase = createAdminClient() as unknown as SupabaseClient;
 
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -19,22 +17,60 @@ async function getAnalyticsData() {
       completedOrdersResult,
       revenueResult,
       weeklyOrdersResult,
-      chefsResult,
-      driversResult,
-      customersResult,
+      approvedChefsResult,
+      liveStorefrontsResult,
+      approvedDriversResult,
+      onlineDriversResult,
+      totalCustomersResult,
     ] = await Promise.all([
-      supabase.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString()),
-      supabase.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString()).eq('status', 'delivered'),
-      supabase.from('orders').select('total, service_fee').gte('created_at', thirtyDaysAgo.toISOString()).eq('payment_status', 'completed'),
-      supabase.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo.toISOString()),
-      supabase.from('chef_storefronts').select('*', { count: 'exact', head: true }).eq('is_active', true),
-      supabase.from('drivers').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+      supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', thirtyDaysAgo.toISOString()),
+      supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', thirtyDaysAgo.toISOString())
+        .eq('status', 'delivered'),
+      supabase
+        .from('orders')
+        .select('total, service_fee')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+        .eq('payment_status', 'completed'),
+      supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', sevenDaysAgo.toISOString()),
+      supabase
+        .from('chef_profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'approved'),
+      supabase
+        .from('chef_storefronts')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true),
+      supabase
+        .from('drivers')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'approved'),
+      supabase
+        .from('driver_presence')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'online'),
       supabase.from('customers').select('*', { count: 'exact', head: true }),
     ]);
 
-    const revenueData = revenueResult.data as Array<{ total: number; service_fee: number }> || [];
-    const totalRevenue = revenueData.reduce((sum, o) => sum + (o.total || 0), 0);
-    const platformRevenue = revenueData.reduce((sum, o) => sum + (o.service_fee || 0), 0);
+    const revenueData =
+      (revenueResult.data as Array<{ total: number | null; service_fee: number | null }>) ??
+      [];
+    const totalRevenue = revenueData.reduce(
+      (sum, order) => sum + (order.total ?? 0),
+      0
+    );
+    const platformRevenue = revenueData.reduce(
+      (sum, order) => sum + (order.service_fee ?? 0),
+      0
+    );
 
     return {
       totalOrders: totalOrdersResult.count ?? 0,
@@ -42,11 +78,19 @@ async function getAnalyticsData() {
       weeklyOrders: weeklyOrdersResult.count ?? 0,
       totalRevenue,
       platformRevenue,
-      avgOrderValue: totalOrdersResult.count ? totalRevenue / totalOrdersResult.count : 0,
-      completionRate: totalOrdersResult.count ? ((completedOrdersResult.count ?? 0) / totalOrdersResult.count) * 100 : 0,
-      activeChefs: chefsResult.count ?? 0,
-      activeDrivers: driversResult.count ?? 0,
-      totalCustomers: customersResult.count ?? 0,
+      avgOrderValue:
+        totalOrdersResult.count && totalOrdersResult.count > 0
+          ? totalRevenue / totalOrdersResult.count
+          : 0,
+      completionRate:
+        totalOrdersResult.count && totalOrdersResult.count > 0
+          ? ((completedOrdersResult.count ?? 0) / totalOrdersResult.count) * 100
+          : 0,
+      approvedChefs: approvedChefsResult.count ?? 0,
+      liveStorefronts: liveStorefrontsResult.count ?? 0,
+      approvedDrivers: approvedDriversResult.count ?? 0,
+      onlineDrivers: onlineDriversResult.count ?? 0,
+      totalCustomers: totalCustomersResult.count ?? 0,
     };
   } catch (error) {
     console.error('Analytics error:', error);
@@ -58,8 +102,10 @@ async function getAnalyticsData() {
       platformRevenue: 0,
       avgOrderValue: 0,
       completionRate: 0,
-      activeChefs: 0,
-      activeDrivers: 0,
+      approvedChefs: 0,
+      liveStorefronts: 0,
+      approvedDrivers: 0,
+      onlineDrivers: 0,
       totalCustomers: 0,
     };
   }
@@ -69,21 +115,48 @@ export default async function AnalyticsPage() {
   const data = await getAnalyticsData();
 
   const metrics = [
-    { label: 'Total Orders (30d)', value: data.totalOrders.toLocaleString(), color: 'text-blue-400' },
-    { label: 'Completed Orders', value: data.completedOrders.toLocaleString(), color: 'text-green-400' },
-    { label: 'Weekly Orders', value: data.weeklyOrders.toLocaleString(), color: 'text-purple-400' },
-    { label: 'Completion Rate', value: `${data.completionRate.toFixed(1)}%`, color: 'text-emerald-400' },
+    {
+      label: 'Total Orders (30d)',
+      value: data.totalOrders.toLocaleString(),
+      color: 'text-blue-400',
+    },
+    {
+      label: 'Completed Orders',
+      value: data.completedOrders.toLocaleString(),
+      color: 'text-green-400',
+    },
+    {
+      label: 'Weekly Orders',
+      value: data.weeklyOrders.toLocaleString(),
+      color: 'text-purple-400',
+    },
+    {
+      label: 'Completion Rate',
+      value: `${data.completionRate.toFixed(1)}%`,
+      color: 'text-emerald-400',
+    },
   ];
 
   const financials = [
-    { label: 'Total Revenue (30d)', value: `$${data.totalRevenue.toFixed(2)}` },
-    { label: 'Platform Revenue', value: `$${data.platformRevenue.toFixed(2)}` },
-    { label: 'Avg Order Value', value: `$${data.avgOrderValue.toFixed(2)}` },
+    {
+      label: 'Captured Revenue (30d)',
+      value: `$${data.totalRevenue.toFixed(2)}`,
+    },
+    {
+      label: 'Service Fee Revenue',
+      value: `$${data.platformRevenue.toFixed(2)}`,
+    },
+    {
+      label: 'Avg Order Value',
+      value: `$${data.avgOrderValue.toFixed(2)}`,
+    },
   ];
 
   const platformStats = [
-    { label: 'Active Chefs', value: data.activeChefs },
-    { label: 'Active Drivers', value: data.activeDrivers },
+    { label: 'Approved Chefs', value: data.approvedChefs },
+    { label: 'Live Storefronts', value: data.liveStorefronts },
+    { label: 'Approved Drivers', value: data.approvedDrivers },
+    { label: 'Drivers Online', value: data.onlineDrivers },
     { label: 'Total Customers', value: data.totalCustomers },
   ];
 
@@ -92,53 +165,70 @@ export default async function AnalyticsPage() {
       <div className="mx-auto max-w-7xl space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Analytics & Reports</h1>
-          <p className="mt-1 text-gray-400">Platform performance metrics and insights</p>
+          <p className="mt-1 text-gray-400">
+            Real current-state operational reporting from orders, governance, and
+            presence data. Advanced BI and trend exploration are not implemented
+            yet.
+          </p>
         </div>
 
-        {/* Order Metrics */}
         <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Order Metrics</h2>
+          <h2 className="mb-4 text-lg font-semibold text-white">Order Metrics</h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {metrics.map((metric) => (
               <div key={metric.label} className="text-center">
                 <p className={`text-3xl font-bold ${metric.color}`}>{metric.value}</p>
-                <p className="text-sm text-gray-400 mt-1">{metric.label}</p>
+                <p className="mt-1 text-sm text-gray-400">{metric.label}</p>
               </div>
             ))}
           </div>
         </Card>
 
-        {/* Financial Overview */}
         <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Financial Overview</h2>
+          <h2 className="mb-4 text-lg font-semibold text-white">
+            Financial Overview
+          </h2>
           <div className="grid gap-6 sm:grid-cols-3">
             {financials.map((item) => (
-              <div key={item.label} className="text-center p-4 bg-[#1a1a2e] rounded-lg">
+              <div
+                key={item.label}
+                className="rounded-lg bg-[#1a1a2e] p-4 text-center"
+              >
                 <p className="text-2xl font-bold text-emerald-400">{item.value}</p>
-                <p className="text-sm text-gray-400 mt-1">{item.label}</p>
+                <p className="mt-1 text-sm text-gray-400">{item.label}</p>
               </div>
             ))}
           </div>
         </Card>
 
-        {/* Platform Statistics */}
         <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Platform Statistics</h2>
-          <div className="grid gap-6 sm:grid-cols-3">
+          <h2 className="mb-4 text-lg font-semibold text-white">
+            Platform Statistics
+          </h2>
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-5">
             {platformStats.map((stat) => (
-              <div key={stat.label} className="text-center p-4 bg-[#1a1a2e] rounded-lg">
-                <p className="text-2xl font-bold text-white">{stat.value.toLocaleString()}</p>
-                <p className="text-sm text-gray-400 mt-1">{stat.label}</p>
+              <div
+                key={stat.label}
+                className="rounded-lg bg-[#1a1a2e] p-4 text-center"
+              >
+                <p className="text-2xl font-bold text-white">
+                  {stat.value.toLocaleString()}
+                </p>
+                <p className="mt-1 text-sm text-gray-400">{stat.label}</p>
               </div>
             ))}
           </div>
         </Card>
 
-        {/* Placeholder for Charts */}
         <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Trends & Insights</h2>
-          <div className="h-64 flex items-center justify-center border border-dashed border-gray-700 rounded-lg">
-            <p className="text-gray-500">Advanced charts and trend analysis coming soon</p>
+          <h2 className="mb-4 text-lg font-semibold text-white">
+            Reporting Scope
+          </h2>
+          <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4 text-sm text-gray-300">
+            This analytics surface currently reports live operational counts and
+            recent financial totals. Historical trend visualizations, cohort
+            analysis, and deep forecasting are still not implemented in the
+            current platform model.
           </div>
         </Card>
       </div>
