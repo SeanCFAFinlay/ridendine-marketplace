@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, listOpsCustomers, type SupabaseClient } from '@ridendine/db';
-import { getOpsActorContext, errorResponse } from '@/lib/engine';
+import { getOpsActorContext, errorResponse, hasRequiredRole } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,47 +31,17 @@ export async function POST(request: Request) {
     if (!actor) {
       return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
     }
-
-    const supabase = createAdminClient();
-    const body = await request.json();
-
-    const { first_name, last_name, email, phone } = body;
-
-    if (!first_name || !last_name || !email) {
-      return NextResponse.json(
-        { error: 'First name, last name, and email are required' },
-        { status: 400 }
-      );
+    if (!hasRequiredRole(actor, ['ops_manager', 'super_admin'])) {
+      return errorResponse('FORBIDDEN', 'Customer records must be created through the customer ordering flow.', 403);
     }
 
-    // Create customer (user_id is null for admin-created customers)
-    const { data: customer, error: customerError } = await supabase
-      .from('customers')
-      .insert({
-        user_id: null,
-        first_name,
-        last_name,
-        email,
-        phone: phone || null,
-        profile_image_url: null,
-      })
-      .select()
-      .single();
-
-    if (customerError) {
-      console.error('Failed to create customer:', customerError);
-      return NextResponse.json(
-        { error: customerError.message },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ data: customer }, { status: 201 });
-  } catch (error) {
-    console.error('Failed to create customer:', error);
-    return NextResponse.json(
-      { error: 'Failed to create customer' },
-      { status: 500 }
+    void request;
+    return errorResponse(
+      'NOT_SUPPORTED',
+      'Customers must originate from the customer app. Ops-admin can oversee and support real customer records only.',
+      400
     );
+  } catch {
+    return NextResponse.json({ error: 'Failed to create customer' }, { status: 500 });
   }
 }

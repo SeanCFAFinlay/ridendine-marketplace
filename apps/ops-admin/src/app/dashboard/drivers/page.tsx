@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, Badge, Modal } from '@ridendine/ui';
+import { Card, Badge } from '@ridendine/ui';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -35,14 +35,6 @@ function getStatusVariant(
 export default function DriversPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-  });
 
   useEffect(() => {
     fetchDrivers();
@@ -62,41 +54,19 @@ export default function DriversPage() {
 
   async function handleStatusChange(id: string, status: string) {
     try {
-      await fetch(`/api/drivers/${id}`, {
+      const response = await fetch(`/api/drivers/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
+      if (!response.ok) {
+        const result = await response.json();
+        alert(result.error?.message || result.error || 'Failed to update driver');
+        return;
+      }
       fetchDrivers();
     } catch (error) {
       console.error('Failed to update driver:', error);
-    }
-  }
-
-  async function handleAddDriver(e: React.FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
-
-    try {
-      const response = await fetch('/api/drivers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        setShowAddModal(false);
-        setFormData({ first_name: '', last_name: '', email: '', phone: '' });
-        fetchDrivers();
-      } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to add driver');
-      }
-    } catch (error) {
-      console.error('Failed to add driver:', error);
-      alert('Failed to add driver');
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -116,17 +86,9 @@ export default function DriversPage() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Drivers</h1>
-            <p className="mt-2 text-gray-400">Manage all drivers</p>
+            <p className="mt-2 text-gray-400">Oversee real driver records, approval state, and availability.</p>
           </div>
-          <div className="flex items-center gap-4">
-            <Badge className="bg-[#E85D26] text-white">{drivers.length} Drivers</Badge>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#d54d1a]"
-            >
-              + Add Driver
-            </button>
-          </div>
+          <Badge className="bg-[#E85D26] text-white">{drivers.length} Drivers</Badge>
         </div>
 
         <Card className="border-gray-800 bg-[#16213e]">
@@ -203,90 +165,13 @@ export default function DriversPage() {
               </tbody>
             </table>
             {drivers.length === 0 && (
-              <div className="py-12 text-center text-gray-400">No drivers found</div>
+              <div className="py-12 text-center text-gray-400">
+                No real driver records are available yet. Drivers appear here after they onboard through the driver app flow.
+              </div>
             )}
           </div>
         </Card>
       </div>
-
-      <Modal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        title="Add New Driver"
-      >
-        <form onSubmit={handleAddDriver} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-300">
-                First Name *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.first_name}
-                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                className="w-full rounded-lg border border-gray-600 bg-[#0d1528] px-3 py-2 text-white placeholder-gray-500 focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
-                placeholder="John"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-300">
-                Last Name *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.last_name}
-                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                className="w-full rounded-lg border border-gray-600 bg-[#0d1528] px-3 py-2 text-white placeholder-gray-500 focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
-                placeholder="Doe"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">
-              Email *
-            </label>
-            <input
-              type="email"
-              required
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full rounded-lg border border-gray-600 bg-[#0d1528] px-3 py-2 text-white placeholder-gray-500 focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
-              placeholder="driver@example.com"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">
-              Phone *
-            </label>
-            <input
-              type="tel"
-              required
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full rounded-lg border border-gray-600 bg-[#0d1528] px-3 py-2 text-white placeholder-gray-500 focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
-              placeholder="+1 (555) 000-0000"
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowAddModal(false)}
-              className="rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-300 transition-colors hover:bg-gray-700"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#d54d1a] disabled:opacity-50"
-            >
-              {submitting ? 'Adding...' : 'Add Driver'}
-            </button>
-          </div>
-        </form>
-      </Modal>
     </DashboardLayout>
   );
 }
