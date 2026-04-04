@@ -106,6 +106,14 @@ export default async function FinancePage() {
   }
 
   const data = await getFinanceData();
+  const pendingRefundAmount = data.pendingRefunds.reduce(
+    (sum, refund) => sum + refund.amount_cents / 100,
+    0
+  );
+  const pendingAdjustmentAmount = data.pendingAdjustments.reduce(
+    (sum, adjustment) => sum + adjustment.amount_cents / 100,
+    0
+  );
 
   return (
     <DashboardLayout>
@@ -135,6 +143,22 @@ export default async function FinancePage() {
           </Card>
 
           <Card className="border-gray-800 bg-[#16213e] p-6">
+            <p className="text-sm text-gray-400">Refunded Amount</p>
+            <p className="mt-2 text-3xl font-bold text-red-300">
+              {formatCurrency(data.summary.totalRefunds)}
+            </p>
+            <p className="mt-1 text-sm text-gray-500">Resolved through the refund engine and ledger</p>
+          </Card>
+
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <p className="text-sm text-gray-400">Tax Collected</p>
+            <p className="mt-2 text-3xl font-bold text-cyan-300">
+              {formatCurrency(data.summary.taxCollected)}
+            </p>
+            <p className="mt-1 text-sm text-gray-500">Current tax visibility from captured orders</p>
+          </Card>
+
+          <Card className="border-gray-800 bg-[#16213e] p-6">
             <p className="text-sm text-gray-400">Chef Payables</p>
             <p className="mt-2 text-3xl font-bold text-purple-400">
               {formatCurrency(data.summary.chefPayouts)}
@@ -150,6 +174,29 @@ export default async function FinancePage() {
             <p className="mt-1 text-sm text-gray-500">Driver payables from deliveries and tips</p>
           </Card>
         </div>
+
+        <Card className="border-gray-800 bg-[#16213e] p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Finance Operating Status</h2>
+              <p className="mt-1 text-sm text-gray-400">
+                Ops-admin is the visibility and review hub for liabilities, refunds, and payout exceptions. Automated payout execution is not implemented in the current codebase.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg bg-gray-800/50 p-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Pending Refund Review</p>
+                <p className="mt-2 text-xl font-semibold text-red-300">{formatCurrency(pendingRefundAmount)}</p>
+                <p className="text-xs text-gray-500">{data.pendingRefunds.length} open cases</p>
+              </div>
+              <div className="rounded-lg bg-gray-800/50 p-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Pending Payout Adjustments</p>
+                <p className="mt-2 text-xl font-semibold text-yellow-300">{formatCurrency(pendingAdjustmentAmount)}</p>
+                <p className="text-xs text-gray-500">{data.pendingAdjustments.length} pending reviews</p>
+              </div>
+            </div>
+          </div>
+        </Card>
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Card className="border-gray-800 bg-[#16213e] p-6">
