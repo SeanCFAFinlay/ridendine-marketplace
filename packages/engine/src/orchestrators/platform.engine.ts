@@ -7,8 +7,10 @@ import type { DispatchEngine } from './dispatch.engine';
 import type { SupportExceptionEngine } from './support.engine';
 import {
   getChefById,
+  getDriverById,
   getStorefrontByChefId,
   getStorefrontById,
+  updateDriver,
   updateChefProfile,
   updateStorefront,
 } from '@ridendine/db';
@@ -29,6 +31,7 @@ interface ExternalRefundInput {
 }
 
 type ChefGovernanceStatus = 'approved' | 'rejected' | 'suspended';
+type DriverGovernanceStatus = 'approved' | 'rejected' | 'suspended';
 
 export class PlatformWorkflowEngine {
   constructor(
@@ -365,6 +368,67 @@ export class PlatformWorkflowEngine {
     };
   }
 
+  async updateDriverGovernance(
+    driverId: string,
+    nextStatus: DriverGovernanceStatus,
+    actor: ActorContext,
+    reason?: string
+  ): Promise<OperationResult> {
+    const driver = await getDriverById(this.client, driverId);
+    if (!driver) {
+      return {
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Driver profile not found' },
+      };
+    }
+
+    if (driver.status === nextStatus) {
+      return { success: true, data: driver };
+    }
+
+    const updatedDriver = await updateDriver(this.client, driverId, {
+      status: nextStatus,
+    });
+
+    await this.auditLogger.log({
+      action: this.mapDriverStatusToAuditAction(nextStatus),
+      entityType: 'driver',
+      entityId: driverId,
+      actor,
+      beforeState: { status: driver.status },
+      afterState: { status: nextStatus },
+      reason,
+    });
+
+    this.eventEmitter.emit(
+      'driver.status_changed' as DomainEventType,
+      'driver',
+      driverId,
+      { previousStatus: driver.status, nextStatus, reason: reason ?? null },
+      actor
+    );
+
+    if (driver.user_id) {
+      await this.insertNotification(driver.user_id, {
+        type: 'driver_governance',
+        title: this.getDriverGovernanceTitle(nextStatus),
+        message: this.getDriverGovernanceMessage(
+          nextStatus,
+          `${updatedDriver.first_name} ${updatedDriver.last_name}`,
+          reason
+        ),
+        data: {
+          driver_id: driverId,
+          status: nextStatus,
+        },
+      });
+    }
+
+    await this.eventEmitter.flush();
+
+    return { success: true, data: updatedDriver };
+  }
+
   async publishStorefront(
     storefrontId: string,
     actor: ActorContext,
@@ -555,6 +619,40 @@ export class PlatformWorkflowEngine {
     return reason
       ? `${displayName}'s chef access was suspended: ${reason}`
       : `${displayName}'s chef access was suspended by operations.`;
+  }
+
+  private mapDriverStatusToAuditAction(
+    nextStatus: DriverGovernanceStatus
+  ): 'approval' | 'rejection' | 'suspension' {
+    if (nextStatus === 'approved') return 'approval';
+    if (nextStatus === 'rejected') return 'rejection';
+    return 'suspension';
+  }
+
+  private getDriverGovernanceTitle(nextStatus: DriverGovernanceStatus): string {
+    if (nextStatus === 'approved') return 'Driver Approved';
+    if (nextStatus === 'rejected') return 'Driver Application Rejected';
+    return 'Driver Access Suspended';
+  }
+
+  private getDriverGovernanceMessage(
+    nextStatus: DriverGovernanceStatus,
+    displayName: string,
+    reason?: string
+  ): string {
+    if (nextStatus === 'approved') {
+      return `${displayName} is approved for dispatch assignments.`;
+    }
+
+    if (nextStatus === 'rejected') {
+      return reason
+        ? `${displayName}'s application was rejected: ${reason}`
+        : `${displayName}'s application was rejected by operations.`;
+    }
+
+    return reason
+      ? `${displayName}'s driver access was suspended: ${reason}`
+      : `${displayName}'s driver access was suspended by operations.`;
   }
 }
 

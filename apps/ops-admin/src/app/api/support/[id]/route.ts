@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient, updateSupportTicket, type SupabaseClient } from '@ridendine/db';
+import {
+  createAdminClient,
+  getSupportTicketById,
+  updateSupportTicket,
+  type SupabaseClient,
+} from '@ridendine/db';
 import { getOpsActorContext, errorResponse, hasRequiredRole } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +26,27 @@ export async function PATCH(
     const body = await request.json();
     const supabase = createAdminClient() as unknown as SupabaseClient;
 
-    const ticket = await updateSupportTicket(supabase, id, body);
+    let updates = body;
+
+    if (body.action === 'start_review') {
+      updates = {
+        status: 'in_progress',
+        assigned_to: actor.entityId || actor.userId,
+      };
+    } else if (body.action === 'resolve') {
+      const existing = await getSupportTicketById(supabase, id);
+      if (!existing) {
+        return errorResponse('NOT_FOUND', 'Support ticket not found', 404);
+      }
+
+      updates = {
+        status: 'resolved',
+        resolved_at: new Date().toISOString(),
+        assigned_to: existing.assigned_to || actor.entityId || actor.userId,
+      };
+    }
+
+    const ticket = await updateSupportTicket(supabase, id, updates);
     return NextResponse.json({ data: ticket });
   } catch {
     return NextResponse.json(

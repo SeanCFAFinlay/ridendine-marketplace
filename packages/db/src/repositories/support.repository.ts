@@ -3,6 +3,13 @@ import type { Tables } from '../generated/database.types';
 
 export type SupportTicket = Tables<'support_tickets'>;
 export type OpsSupportTicketListItem = SupportTicket;
+export interface OpsSupportQueueSummary {
+  openCount: number;
+  inProgressCount: number;
+  urgentCount: number;
+  unassignedCount: number;
+  resolvedTodayCount: number;
+}
 
 export async function getAllSupportTickets(
   client: SupabaseClient
@@ -26,6 +33,29 @@ export async function listOpsSupportTickets(
 
   if (error) throw error;
   return (data ?? []) as OpsSupportTicketListItem[];
+}
+
+export async function getOpsSupportQueue(
+  client: SupabaseClient
+): Promise<{
+  tickets: OpsSupportTicketListItem[];
+  summary: OpsSupportQueueSummary;
+}> {
+  const tickets = await listOpsSupportTickets(client);
+  const today = new Date().toISOString().slice(0, 10);
+
+  return {
+    tickets,
+    summary: {
+      openCount: tickets.filter((ticket) => ticket.status === 'open').length,
+      inProgressCount: tickets.filter((ticket) => ticket.status === 'in_progress').length,
+      urgentCount: tickets.filter((ticket) => ticket.priority === 'urgent').length,
+      unassignedCount: tickets.filter((ticket) => !ticket.assigned_to).length,
+      resolvedTodayCount: tickets.filter(
+        (ticket) => ticket.resolved_at?.slice(0, 10) === today
+      ).length,
+    },
+  };
 }
 
 export async function getSupportTicketById(

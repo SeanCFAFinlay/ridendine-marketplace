@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient, listOpsSupportTickets, createSupportTicket, type SupabaseClient } from '@ridendine/db';
+import { createAdminClient, getOpsSupportQueue, createSupportTicket, type SupabaseClient } from '@ridendine/db';
 import { getOpsActorContext, errorResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
@@ -12,8 +12,8 @@ export async function GET() {
     }
 
     const supabase = createAdminClient() as unknown as SupabaseClient;
-    const tickets = await listOpsSupportTickets(supabase);
-    return NextResponse.json({ data: tickets });
+    const queue = await getOpsSupportQueue(supabase);
+    return NextResponse.json({ data: queue });
   } catch {
     return NextResponse.json(
       { error: 'Internal server error' },

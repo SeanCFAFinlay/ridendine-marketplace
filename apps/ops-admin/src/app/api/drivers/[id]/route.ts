@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient, updateDriver, type SupabaseClient } from '@ridendine/db';
-import { getOpsActorContext, errorResponse, hasRequiredRole } from '@/lib/engine';
+import { getEngine, getOpsActorContext, errorResponse, hasRequiredRole } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,11 +18,25 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const supabase = createAdminClient() as unknown as SupabaseClient;
 
     if (body.status) {
-      const driver = await updateDriver(supabase, id, { status: body.status });
-      return NextResponse.json({ data: driver });
+      const engine = getEngine();
+      const result = await engine.platform.updateDriverGovernance(
+        id,
+        body.status,
+        actor,
+        body.reason
+      );
+
+      if (!result.success) {
+        return errorResponse(
+          result.error?.code || 'UPDATE_FAILED',
+          result.error?.message || 'Failed to update driver',
+          400
+        );
+      }
+
+      return NextResponse.json({ data: result.data });
     }
 
     return NextResponse.json(
