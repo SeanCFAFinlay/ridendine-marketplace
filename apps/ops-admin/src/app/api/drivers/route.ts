@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient } from '@ridendine/db';
+import { createAdminClient, listOpsDrivers, type SupabaseClient } from '@ridendine/db';
 import { getOpsActorContext, errorResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
@@ -12,28 +12,13 @@ export async function GET(request: Request) {
       return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
     }
 
-    const supabase = createAdminClient();
-
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
-
-    let query = supabase
-      .from('drivers')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (status) {
-      query = query.eq('status', status);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    const supabase = createAdminClient() as unknown as SupabaseClient;
+    const data = await listOpsDrivers(supabase, { status: status || undefined });
 
     return NextResponse.json({ data });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

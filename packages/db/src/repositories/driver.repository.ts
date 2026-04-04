@@ -2,6 +2,12 @@ import type { SupabaseClient } from '../client/types';
 import type { Tables } from '../generated/database.types';
 
 export type Driver = Tables<'drivers'>;
+export interface OpsDriverListItem extends Driver {
+  driver_presence: {
+    status: 'offline' | 'online' | 'busy';
+    updated_at: string;
+  } | null;
+}
 
 export async function getDriverByUserId(
   client: SupabaseClient,
@@ -79,6 +85,31 @@ export async function getApprovedDrivers(
 
   if (error) throw error;
   return data;
+}
+
+export async function listOpsDrivers(
+  client: SupabaseClient,
+  options: { status?: string } = {}
+): Promise<OpsDriverListItem[]> {
+  let query = client
+    .from('drivers')
+    .select(`
+      *,
+      driver_presence (
+        status,
+        updated_at
+      )
+    `)
+    .order('created_at', { ascending: false });
+
+  if (options.status) {
+    query = query.eq('status', options.status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return (data ?? []) as unknown as OpsDriverListItem[];
 }
 
 export async function getPendingDriverApprovals(

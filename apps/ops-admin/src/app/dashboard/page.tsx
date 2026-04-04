@@ -1,7 +1,16 @@
 import { Card, Badge } from '@ridendine/ui';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { createServerClient, getPendingChefApprovals } from '@ridendine/db';
+import {
+  createServerClient,
+  createAdminClient,
+  getPendingChefApprovals,
+  listOpsDeliveries,
+  listOpsDrivers,
+  listOpsOrders,
+  listOpsSupportTickets,
+  type SupabaseClient,
+} from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { RealTimeStats } from '@/components/dashboard/real-time-stats';
 import { RevenueChart } from '@/components/dashboard/revenue-chart';
@@ -13,6 +22,7 @@ export const dynamic = 'force-dynamic';
 async function getDashboardStats() {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
+  const adminClient = createAdminClient() as unknown as SupabaseClient;
 
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -30,6 +40,12 @@ async function getDashboardStats() {
       monthRevenueResult,
       chefsResult,
       customersResult,
+      activeStorefrontsResult,
+      orders,
+      deliveries,
+      drivers,
+      supportTickets,
+      approvals,
     ] = await Promise.all([
       supabase.from('orders').select('*', { count: 'exact', head: true }),
       supabase.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
@@ -42,49 +58,25 @@ async function getDashboardStats() {
         .lt('created_at', today.toISOString())
         .eq('payment_status', 'completed'),
       supabase.from('orders').select('total').gte('created_at', monthAgo.toISOString()).eq('payment_status', 'completed'),
-      supabase.from('chef_storefronts').select('*', { count: 'exact', head: true }).eq('is_active', true),
+      supabase.from('chef_profiles').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
       supabase.from('customers').select('*', { count: 'exact', head: true }),
+      supabase.from('chef_storefronts').select('*', { count: 'exact', head: true }).eq('is_active', true),
+      listOpsOrders(adminClient),
+      listOpsDeliveries(adminClient),
+      listOpsDrivers(adminClient),
+      listOpsSupportTickets(adminClient),
+      getPendingChefApprovals(adminClient),
     ]);
-
-    // Queries that might fail if tables don't exist yet
-    let activeDeliveries = 0;
-    let pendingApprovals = 0;
-    let totalDrivers = 0;
-    let onlineDrivers = 0;
-
-    try {
-      const deliveriesResult = await (supabase as any).from('deliveries').select('*', { count: 'exact', head: true }).in('status', [
-        'assigned', 'accepted', 'en_route_to_pickup', 'picked_up', 'en_route_to_dropoff',
-      ]);
-      activeDeliveries = deliveriesResult.count ?? 0;
-    } catch (e) {
-      console.log('Deliveries table not available');
-    }
-
-    try {
-      const approvals = await getPendingChefApprovals(supabase as any);
-      pendingApprovals = approvals?.length ?? 0;
-    } catch (e) {
-      console.log('Could not fetch pending approvals');
-    }
-
-    try {
-      const driversResult = await supabase.from('drivers').select('*', { count: 'exact', head: true }).eq('status', 'approved');
-      totalDrivers = driversResult.count ?? 0;
-    } catch (e) {
-      console.log('Driver profiles not available');
-    }
-
-    try {
-      const onlineResult = await (supabase as any).from('driver_presence').select('*', { count: 'exact', head: true }).eq('status', 'online');
-      onlineDrivers = onlineResult.count ?? 0;
-    } catch (e) {
-      console.log('Driver presence not available');
-    }
 
     const todayRevenue = (todayRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
     const yesterdayRevenue = (yesterdayRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
     const monthRevenue = (monthRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
+    const activeDeliveries = deliveries.filter((delivery) =>
+      ['assigned', 'accepted', 'en_route_to_pickup', 'picked_up', 'en_route_to_dropoff'].includes(delivery.status)
+    ).length;
+    const totalDrivers = drivers.filter((driver) => driver.status === 'approved').length;
+    const onlineDrivers = drivers.filter((driver) => driver.driver_presence?.status === 'online').length;
+    const openSupport = supportTickets.filter((ticket) => !['resolved', 'closed'].includes(ticket.status)).length;
 
     const revenueGrowth = yesterdayRevenue > 0
       ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
@@ -98,7 +90,7 @@ async function getDashboardStats() {
       totalOrders: ordersResult.count ?? 0,
       todayOrders: todayOrdersResult.count ?? 0,
       activeDeliveries,
-      pendingApprovals,
+      pendingApprovals: approvals.length,
       todayRevenue,
       monthRevenue,
       revenueGrowth,
@@ -107,8 +99,9 @@ async function getDashboardStats() {
       onlineDrivers,
       activeChefs: chefsResult.count ?? 0,
       totalCustomers: customersResult.count ?? 0,
-      avgDeliveryTime: 25,
-      platformFee: monthRevenue * 0.15,
+      activeStorefronts: activeStorefrontsResult.count ?? 0,
+      ordersNeedingAction: orders.filter((order) => ['pending', 'accepted', 'preparing'].includes(order.status)).length,
+      supportOpen: openSupport,
     };
   } catch (error) {
     console.error('Dashboard stats error:', error);
@@ -126,8 +119,9 @@ async function getDashboardStats() {
       onlineDrivers: 0,
       activeChefs: 0,
       totalCustomers: 0,
-      avgDeliveryTime: 0,
-      platformFee: 0,
+      activeStorefronts: 0,
+      ordersNeedingAction: 0,
+      supportOpen: 0,
     };
   }
 }
@@ -168,11 +162,11 @@ export default async function DashboardPage() {
 
   const secondaryStats = [
     { label: 'Monthly Revenue', value: `$${stats.monthRevenue.toFixed(2)}` },
-    { label: 'Platform Earnings (15%)', value: `$${stats.platformFee.toFixed(2)}` },
+    { label: 'Orders Needing Action', value: stats.ordersNeedingAction.toString() },
     { label: 'Active Chefs', value: stats.activeChefs.toString() },
+    { label: 'Live Storefronts', value: stats.activeStorefronts.toString() },
     { label: 'Total Customers', value: stats.totalCustomers.toLocaleString() },
-    { label: 'Avg Delivery Time', value: `${stats.avgDeliveryTime} min` },
-    { label: 'Pending Approvals', value: stats.pendingApprovals.toString() },
+    { label: 'Open Support', value: stats.supportOpen.toString() },
   ];
 
   const quickActions = [

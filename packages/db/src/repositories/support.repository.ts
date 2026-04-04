@@ -2,6 +2,7 @@ import type { SupabaseClient } from '../client/types';
 import type { Tables } from '../generated/database.types';
 
 export type SupportTicket = Tables<'support_tickets'>;
+export type OpsSupportTicketListItem = SupportTicket;
 
 export async function getAllSupportTickets(
   client: SupabaseClient
@@ -13,6 +14,18 @@ export async function getAllSupportTickets(
 
   if (error) throw error;
   return data;
+}
+
+export async function listOpsSupportTickets(
+  client: SupabaseClient
+): Promise<OpsSupportTicketListItem[]> {
+  const { data, error } = await client
+    .from('support_tickets')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as OpsSupportTicketListItem[];
 }
 
 export async function getSupportTicketById(

@@ -2,6 +2,16 @@ import type { SupabaseClient } from '../client/types';
 import type { Tables } from '../generated/database.types';
 
 export type Delivery = Tables<'deliveries'>;
+export interface OpsDeliveryListItem extends Delivery {
+  orders: {
+    order_number: string;
+    total: number;
+  } | null;
+  drivers: {
+    first_name: string;
+    last_name: string;
+  } | null;
+}
 
 export async function getDeliveryById(
   client: SupabaseClient,
@@ -129,6 +139,25 @@ export async function getPendingDeliveries(
 
   if (error) throw error;
   return data;
+}
+
+export async function listOpsDeliveries(
+  client: SupabaseClient,
+  options: { status?: string } = {}
+): Promise<OpsDeliveryListItem[]> {
+  let query = client
+    .from('deliveries')
+    .select('*, orders(order_number, total), drivers(first_name, last_name)')
+    .order('created_at', { ascending: false });
+
+  if (options.status) {
+    query = query.eq('status', options.status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return (data ?? []) as unknown as OpsDeliveryListItem[];
 }
 
 export async function getDeliveryHistory(

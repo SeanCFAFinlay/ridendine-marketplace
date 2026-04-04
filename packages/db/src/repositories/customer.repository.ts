@@ -2,6 +2,9 @@ import type { SupabaseClient } from '../client/types';
 import type { Tables } from '../generated/database.types';
 
 export type Customer = Tables<'customers'>;
+export interface OpsCustomerListItem extends Customer {
+  orders: { count: number }[] | null;
+}
 
 export async function getCustomerByUserId(
   client: SupabaseClient,
@@ -67,6 +70,18 @@ export async function updateCustomer(
 
   if (error) throw error;
   return data;
+}
+
+export async function listOpsCustomers(
+  client: SupabaseClient
+): Promise<OpsCustomerListItem[]> {
+  const { data, error } = await client
+    .from('customers')
+    .select('*, orders(count)')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as unknown as OpsCustomerListItem[];
 }
 
 export async function getOrCreateCustomer(

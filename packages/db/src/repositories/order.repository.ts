@@ -3,6 +3,16 @@ import type { Tables } from '../generated/database.types';
 
 export type Order = Tables<'orders'>;
 export type OrderItem = Tables<'order_items'>;
+export interface OpsOrderListItem extends Order {
+  customers: {
+    first_name: string;
+    last_name: string;
+    email: string;
+  } | null;
+  chef_storefronts: {
+    name: string;
+  } | null;
+}
 
 export async function getOrderById(
   client: SupabaseClient,
@@ -88,6 +98,33 @@ export async function getOrdersByStorefront(
 
   if (error) throw error;
   return data;
+}
+
+export async function listOpsOrders(
+  client: SupabaseClient,
+  options: { status?: string; startDate?: string; endDate?: string } = {}
+): Promise<OpsOrderListItem[]> {
+  let query = client
+    .from('orders')
+    .select('*, customers(first_name, last_name, email), chef_storefronts(name)')
+    .order('created_at', { ascending: false });
+
+  if (options.status) {
+    query = query.eq('status', options.status);
+  }
+
+  if (options.startDate) {
+    query = query.gte('created_at', options.startDate);
+  }
+
+  if (options.endDate) {
+    query = query.lte('created_at', options.endDate);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return (data ?? []) as unknown as OpsOrderListItem[];
 }
 
 export async function createOrder(
