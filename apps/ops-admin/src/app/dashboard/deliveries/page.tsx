@@ -14,10 +14,6 @@ function getQueueName(input: string | undefined): QueueName {
   return 'pending';
 }
 
-function formatDate(value: string | null | undefined): string {
-  return value ? new Date(value).toLocaleString() : 'Not set';
-}
-
 function getSearchParam(
   value: string | string[] | undefined,
   fallback = ''
@@ -38,7 +34,30 @@ export default async function DeliveriesPage({
   const search = getSearchParam(params.search).trim().toLowerCase();
   const page = Number(getSearchParam(params.page, '1'));
 
-  const commandCenter = await getEngine().ops.getDispatchCommandCenter();
+  let commandCenter;
+  try {
+    commandCenter = await getEngine().ops.getDispatchCommandCenter();
+  } catch (error) {
+    console.error('[ridendine][ops-admin][deliveries-page-load-failed]', error);
+    commandCenter = {
+      summary: {
+        pendingDispatch: 0,
+        activeDeliveries: 0,
+        escalatedDeliveries: 0,
+        staleAssignments: 0,
+        driversOnline: 0,
+        driversBusy: 0,
+        driversUnavailable: 0,
+        expiredOffers: 0,
+      },
+      pendingQueue: [],
+      activeQueue: [],
+      escalatedQueue: [],
+      staleAssignments: [],
+      driverSupply: [],
+      coverageGaps: [],
+    };
+  }
   const sourceQueue =
     queue === 'active'
       ? commandCenter.activeQueue
