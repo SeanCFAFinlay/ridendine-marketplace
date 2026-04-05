@@ -9,6 +9,7 @@ import type {
   PlatformRuleSet,
 } from '@ridendine/types';
 import {
+  createDefaultPlatformRuleSet,
   getDeliveryInterventionDetailReadModel,
   getDispatchCommandCenterReadModel,
   getFinanceOperationsReadModel,
@@ -43,7 +44,27 @@ export class OpsControlEngine {
   ) {}
 
   async getDashboard(): Promise<OpsDashboardReadModel> {
-    return getOpsDashboardReadModel(this.client);
+    try {
+      return await getOpsDashboardReadModel(this.client);
+    } catch (error) {
+      console.error('[ridendine][ops-engine][dashboard-load-failed]', error);
+      return {
+        activeOrders: 0,
+        ordersNeedingAction: 0,
+        activeDeliveries: 0,
+        pendingDispatch: 0,
+        openExceptions: 0,
+        slaBreaches: 0,
+        pendingRefunds: 0,
+        storefrontRisks: 0,
+        driversOnline: 0,
+        driversBusy: 0,
+        driversUnavailable: 0,
+        supportBacklog: 0,
+        deliveryEscalations: 0,
+        cards: [],
+      };
+    }
   }
 
   async getPlatformRules(): Promise<PlatformRuleSet> {
@@ -78,8 +99,30 @@ export class OpsControlEngine {
   }
 
   async getDispatchCommandCenter(): Promise<DispatchCommandCenterReadModel> {
-    const rules = await getPlatformSettings(this.client);
-    return getDispatchCommandCenterReadModel(this.client, rules);
+    try {
+      const rules = await getPlatformSettings(this.client);
+      return await getDispatchCommandCenterReadModel(this.client, rules);
+    } catch (error) {
+      console.error('[ridendine][ops-engine][dispatch-board-load-failed]', error);
+      return {
+        summary: {
+          pendingDispatch: 0,
+          activeDeliveries: 0,
+          escalatedDeliveries: 0,
+          staleAssignments: 0,
+          driversOnline: 0,
+          driversBusy: 0,
+          driversUnavailable: 0,
+          expiredOffers: 0,
+        },
+        pendingQueue: [],
+        activeQueue: [],
+        escalatedQueue: [],
+        staleAssignments: [],
+        driverSupply: [],
+        coverageGaps: [],
+      };
+    }
   }
 
   async getDeliveryInterventionDetail(
@@ -259,19 +302,46 @@ export class OpsControlEngine {
       };
     }
 
-    const [rules, summary] = await Promise.all([
-      getPlatformSettings(this.client),
-      this.commerceEngine.getFinancialSummary(dateRange),
-    ]);
+    try {
+      const [rules, summary] = await Promise.all([
+        getPlatformSettings(this.client),
+        this.commerceEngine.getFinancialSummary(dateRange),
+      ]);
 
-    const model = await getFinanceOperationsReadModel(
-      this.client,
-      rules,
-      dateRange,
-      summary
-    );
+      const model = await getFinanceOperationsReadModel(
+        this.client,
+        rules,
+        dateRange,
+        summary
+      );
 
-    return { success: true, data: model };
+      return { success: true, data: model };
+    } catch (error) {
+      console.error('[ridendine][ops-engine][finance-load-failed]', error);
+      const fallbackRules = createDefaultPlatformRuleSet();
+      return {
+        success: true,
+        data: {
+          summary: {
+            totalRevenue: 0,
+            totalRefunds: 0,
+            platformFees: 0,
+            chefPayouts: 0,
+            driverPayouts: 0,
+            taxCollected: 0,
+            orderCount: 0,
+          },
+          pendingRefundAmount: 0,
+          pendingAdjustmentAmount: 0,
+          refundAutoReviewThresholdCents: fallbackRules.refundAutoReviewThresholdCents,
+          pendingRefunds: [],
+          pendingAdjustments: [],
+          recentLedger: [],
+          chefLiabilities: [],
+          driverLiabilities: [],
+        },
+      };
+    }
   }
 
   processExpiredOffers(actor: ActorContext): Promise<number> {

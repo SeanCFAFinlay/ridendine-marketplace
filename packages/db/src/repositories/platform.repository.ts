@@ -25,6 +25,71 @@ type PlatformSettingsRow = {
   updated_by?: string | null;
 };
 
+type PlatformSettingsErrorLike = {
+  code?: string;
+  message?: string;
+  details?: string;
+  status?: number;
+};
+
+export function createDefaultPlatformRuleSet(
+  overrides: Partial<PlatformRuleSet> = {}
+): PlatformRuleSet {
+  return {
+    id: 'platform-settings-default',
+    platformFeePercent: 15,
+    serviceFeePercent: 8,
+    hstRate: 13,
+    minOrderAmount: 10,
+    dispatchRadiusKm: 10,
+    maxDeliveryDistanceKm: 15,
+    defaultPrepTimeMinutes: 20,
+    offerTimeoutSeconds: 60,
+    maxAssignmentAttempts: 5,
+    autoAssignEnabled: true,
+    refundAutoReviewThresholdCents: 2500,
+    supportSlaWarningMinutes: 15,
+    supportSlaBreachMinutes: 60,
+    storefrontThrottleOrderLimit: 0,
+    storefrontThrottleWindowMinutes: 30,
+    storefrontAutoPauseEnabled: false,
+    storefrontPauseOnSlaBreach: true,
+    updatedAt: new Date(0).toISOString(),
+    ...overrides,
+  };
+}
+
+export function shouldFallbackToDefaultPlatformSettings(
+  error: PlatformSettingsErrorLike | null | undefined
+): boolean {
+  if (!error) return false;
+  const haystack = `${error.code ?? ''} ${error.message ?? ''} ${error.details ?? ''}`.toLowerCase();
+  return (
+    error.code === 'PGRST116' ||
+    error.code === 'PGRST205' ||
+    error.code === '42P01' ||
+    error.status === 404 ||
+    haystack.includes('platform_settings') &&
+      (haystack.includes('not found') ||
+        haystack.includes('could not find') ||
+        haystack.includes('does not exist') ||
+        haystack.includes('relation'))
+  );
+}
+
+function logPlatformSettingsFallback(
+  source: string,
+  error: PlatformSettingsErrorLike
+): void {
+  console.error('[ridendine][platform-settings][fallback]', {
+    source,
+    code: error.code ?? null,
+    status: error.status ?? null,
+    message: error.message ?? null,
+    details: error.details ?? null,
+  });
+}
+
 function mapPlatformSettings(row: PlatformSettingsRow): PlatformRuleSet {
   return {
     id: row.id,
@@ -72,7 +137,22 @@ export async function getPlatformSettings(
     .limit(1)
     .single() as any);
 
-  if (error) throw error;
+  if (error) {
+    if (shouldFallbackToDefaultPlatformSettings(error)) {
+      logPlatformSettingsFallback('getPlatformSettings', error);
+      return createDefaultPlatformRuleSet();
+    }
+    throw error;
+  }
+
+  if (!data) {
+    console.error('[ridendine][platform-settings][fallback]', {
+      source: 'getPlatformSettings',
+      reason: 'empty-data',
+    });
+    return createDefaultPlatformRuleSet();
+  }
+
   return mapPlatformSettings(data as PlatformSettingsRow);
 }
 
@@ -82,6 +162,11 @@ export async function updatePlatformSettings(
   actorUserId: string
 ): Promise<PlatformRuleSet> {
   const current = await getPlatformSettings(client);
+  if (current.id === 'platform-settings-default') {
+    throw new Error(
+      'Platform settings table is missing. Apply migrations before editing settings.'
+    );
+  }
   const targetId = input.id ?? current.id;
 
   const payload = {
@@ -112,6 +197,14 @@ export async function updatePlatformSettings(
     .select('*')
     .single());
 
-  if (error) throw error;
+  if (error) {
+    if (shouldFallbackToDefaultPlatformSettings(error)) {
+      logPlatformSettingsFallback('updatePlatformSettings', error);
+      throw new Error(
+        'Platform settings table is missing. Apply migrations before editing settings.'
+      );
+    }
+    throw error;
+  }
   return mapPlatformSettings(data as PlatformSettingsRow);
 }
