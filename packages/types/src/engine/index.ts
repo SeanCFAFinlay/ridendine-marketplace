@@ -493,3 +493,226 @@ export interface OpsOverrideLog {
   approvedBy?: string;
   createdAt: string;
 }
+
+export interface PlatformRuleSet {
+  id: string;
+  platformFeePercent: number;
+  serviceFeePercent: number;
+  hstRate: number;
+  minOrderAmount: number;
+  dispatchRadiusKm: number;
+  maxDeliveryDistanceKm: number;
+  defaultPrepTimeMinutes: number;
+  offerTimeoutSeconds: number;
+  maxAssignmentAttempts: number;
+  autoAssignEnabled: boolean;
+  refundAutoReviewThresholdCents: number;
+  supportSlaWarningMinutes: number;
+  supportSlaBreachMinutes: number;
+  storefrontThrottleOrderLimit: number;
+  storefrontThrottleWindowMinutes: number;
+  storefrontAutoPauseEnabled: boolean;
+  storefrontPauseOnSlaBreach: boolean;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+export interface DriverSupplySnapshot {
+  driverId: string;
+  name: string;
+  status: 'online' | 'busy' | 'offline' | 'unavailable';
+  approvalState: string;
+  activeDeliveries: number;
+  distanceKm: number | null;
+  lastAssignmentAt?: string | null;
+  recentDeclines: number;
+  recentExpiries: number;
+  fairnessScore: number;
+}
+
+export interface DispatchQueueItem {
+  deliveryId: string;
+  orderId: string;
+  orderNumber: string;
+  status: string;
+  pickupAddress: string;
+  dropoffAddress: string;
+  pickupArea: string;
+  customerName: string;
+  storefrontName: string;
+  createdAt: string;
+  estimatedPickupAt?: string | null;
+  estimatedDropoffAt?: string | null;
+  assignmentAttemptsCount: number;
+  activeAttemptCount: number;
+  lastAssignmentAt?: string | null;
+  escalatedToOps: boolean;
+  escalationReason?: string | null;
+  assignedDriver?: {
+    id: string;
+    name: string;
+    phone?: string | null;
+  } | null;
+  topCandidates: DriverSupplySnapshot[];
+  timelineSummary: string[];
+  queueReason: 'pending_dispatch' | 'active_delivery' | 'stale_assignment' | 'escalated';
+}
+
+export interface DeliveryInterventionDetail {
+  deliveryId: string;
+  status: string;
+  escalationState: 'none' | 'open' | 'acknowledged' | 'escalated' | 'resolved';
+  escalationReason?: string | null;
+  order: {
+    id: string;
+    orderNumber: string;
+    status: string;
+    paymentStatus?: string | null;
+    total: number;
+    createdAt: string;
+  };
+  customer: {
+    id: string;
+    name: string;
+    phone?: string | null;
+    email?: string | null;
+  } | null;
+  storefront: {
+    id: string;
+    name: string;
+    slug?: string | null;
+  } | null;
+  driver: {
+    id: string;
+    name: string;
+    phone?: string | null;
+    status?: string | null;
+    presenceStatus?: string | null;
+  } | null;
+  pickup: {
+    address: string;
+    lat?: number | null;
+    lng?: number | null;
+  };
+  dropoff: {
+    address: string;
+    lat?: number | null;
+    lng?: number | null;
+  };
+  payout: {
+    deliveryFee: number;
+    driverPayout: number;
+    refundExposureCents: number;
+    payoutHoldCount: number;
+  };
+  assignmentAttempts: AssignmentAttempt[];
+  eventTimeline: Array<{
+    id: string;
+    type: string;
+    timestamp: string;
+    note?: string | null;
+  }>;
+  opsNotes: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    createdBy: string;
+  }>;
+  trackingBreadcrumbs: Array<{
+    id: string;
+    lat: number;
+    lng: number;
+    recordedAt: string;
+  }>;
+}
+
+export interface OpsDashboardReadModel {
+  activeOrders: number;
+  ordersNeedingAction: number;
+  activeDeliveries: number;
+  pendingDispatch: number;
+  openExceptions: number;
+  slaBreaches: number;
+  pendingRefunds: number;
+  storefrontRisks: number;
+  driversOnline: number;
+  driversBusy: number;
+  driversUnavailable: number;
+  supportBacklog: number;
+  deliveryEscalations: number;
+  cards: Array<{
+    label: string;
+    value: number;
+    tone: 'default' | 'warning' | 'critical' | 'success';
+  }>;
+}
+
+export interface DispatchCommandCenterReadModel {
+  summary: {
+    pendingDispatch: number;
+    activeDeliveries: number;
+    escalatedDeliveries: number;
+    staleAssignments: number;
+    driversOnline: number;
+    driversBusy: number;
+    driversUnavailable: number;
+    expiredOffers: number;
+  };
+  pendingQueue: DispatchQueueItem[];
+  activeQueue: DispatchQueueItem[];
+  escalatedQueue: DispatchQueueItem[];
+  staleAssignments: DispatchQueueItem[];
+  driverSupply: DriverSupplySnapshot[];
+  coverageGaps: Array<{
+    area: string;
+    openDeliveries: number;
+    availableDrivers: number;
+    riskLevel: 'low' | 'medium' | 'high';
+  }>;
+}
+
+export interface FinanceOperationsReadModel {
+  summary: {
+    totalRevenue: number;
+    totalRefunds: number;
+    platformFees: number;
+    chefPayouts: number;
+    driverPayouts: number;
+    taxCollected: number;
+    orderCount: number;
+  };
+  pendingRefundAmount: number;
+  pendingAdjustmentAmount: number;
+  refundAutoReviewThresholdCents: number;
+  pendingRefunds: Array<{
+    id: string;
+    orderNumber: string;
+    customerName: string;
+    amountCents: number;
+    reason?: string | null;
+    createdAt: string;
+    status: string;
+  }>;
+  pendingAdjustments: Array<{
+    id: string;
+    payeeType: string;
+    payeeId: string;
+    amountCents: number;
+    adjustmentType: string;
+    status: string;
+    orderNumber: string;
+    createdAt: string;
+  }>;
+  recentLedger: Array<{
+    id: string;
+    entryType: string;
+    amountCents: number;
+    currency: string;
+    description?: string | null;
+    createdAt: string;
+    entityType?: string | null;
+    entityId?: string | null;
+  }>;
+  chefLiabilities: Array<{ id: string; name: string; amount: number }>;
+  driverLiabilities: Array<{ id: string; name: string; amount: number }>;
+}

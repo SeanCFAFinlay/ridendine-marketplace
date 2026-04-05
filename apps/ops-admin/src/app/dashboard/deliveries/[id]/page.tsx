@@ -1,51 +1,19 @@
-import { Card, Badge } from '@ridendine/ui';
 import Link from 'next/link';
-import {
-  createAdminClient,
-  getOpsDeliveryDetail,
-  listOpsDrivers,
-  type SupabaseClient,
-} from '@ridendine/db';
+import { Badge, Card } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { getEngine } from '@/lib/engine';
+import { createAdminClient, listOpsDrivers, type SupabaseClient } from '@ridendine/db';
 import { notFound } from 'next/navigation';
 import { DeliveryActions } from './delivery-actions';
 
 export const dynamic = 'force-dynamic';
 
-const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-500',
-  assigned: 'bg-blue-500',
-  accepted: 'bg-indigo-500',
-  en_route_to_pickup: 'bg-purple-500',
-  arrived_at_pickup: 'bg-cyan-500',
-  picked_up: 'bg-teal-500',
-  en_route_to_dropoff: 'bg-orange-500',
-  arrived_at_dropoff: 'bg-amber-500',
-  delivered: 'bg-green-500',
-  cancelled: 'bg-red-500',
-  failed: 'bg-red-700',
-};
-
-function formatMoney(value: number | null | undefined) {
-  return `$${(value ?? 0).toFixed(2)}`;
+function formatMoney(value: number): string {
+  return `$${value.toFixed(2)}`;
 }
 
-function formatTimestamp(value: string | null | undefined) {
+function formatDate(value: string | null | undefined): string {
   return value ? new Date(value).toLocaleString() : 'Not recorded';
-}
-
-async function getDeliveryDetailPageData(deliveryId: string) {
-  const adminClient = createAdminClient() as unknown as SupabaseClient;
-  const [delivery, drivers] = await Promise.all([
-    getOpsDeliveryDetail(adminClient, deliveryId),
-    listOpsDrivers(adminClient, { status: 'approved' }),
-  ]);
-
-  if (!delivery) {
-    return null;
-  }
-
-  return { delivery, drivers };
 }
 
 export default async function DeliveryDetailPage({
@@ -54,283 +22,245 @@ export default async function DeliveryDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const data = await getDeliveryDetailPageData(id);
+  const [detail, drivers] = await Promise.all([
+    getEngine().ops.getDeliveryInterventionDetail(id),
+    listOpsDrivers(createAdminClient() as unknown as SupabaseClient, { status: 'approved' }),
+  ]);
 
-  if (!data) {
+  if (!detail) {
     notFound();
   }
 
-  const { delivery, drivers } = data;
+  const openException = detail.eventTimeline.find((event) => event.type.startsWith('exception.'));
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <Link
               href="/dashboard/deliveries"
               className="mb-2 inline-block text-sm text-gray-400 hover:text-white"
             >
-              &larr; Back to Deliveries
+              &larr; Back to dispatch board
             </Link>
             <h1 className="text-3xl font-bold text-white">
-              Delivery #{delivery.id.slice(0, 8)}
+              Delivery Intervention Console
             </h1>
             <p className="mt-1 text-gray-400">
-              Created {new Date(delivery.created_at).toLocaleString()}
+              Order {detail.order.orderNumber} · Created {formatDate(detail.order.createdAt)}
             </p>
           </div>
-          <Badge
-            className={`${
-              statusColors[delivery.status] || 'bg-gray-500'
-            } px-4 py-2 text-white`}
-          >
-            {delivery.status?.replace(/_/g, ' ').toUpperCase()}
-          </Badge>
+          <div className="flex flex-wrap gap-2">
+            <Badge className="bg-blue-500/20 text-blue-200">{detail.status}</Badge>
+            <Badge
+              className={
+                detail.escalationState === 'escalated'
+                  ? 'bg-red-500/20 text-red-200'
+                  : detail.escalationState === 'acknowledged'
+                    ? 'bg-yellow-500/20 text-yellow-200'
+                    : detail.escalationState === 'open'
+                      ? 'bg-orange-500/20 text-orange-200'
+                      : 'bg-gray-700 text-gray-200'
+              }
+            >
+              escalation {detail.escalationState}
+            </Badge>
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <h2 className="mb-4 text-lg font-semibold text-white">
-              Delivery Oversight
-            </h2>
-            <div className="space-y-3 text-sm">
+            <h2 className="text-lg font-semibold text-white">Linked Order Context</h2>
+            <div className="mt-4 space-y-3 text-sm">
               <div className="flex justify-between gap-4">
-                <span className="text-gray-400">Linked Order</span>
-                <span className="text-white">
-                  {delivery.order?.order_number
-                    ? `#${delivery.order.order_number}`
-                    : 'Not linked'}
-                </span>
+                <span className="text-gray-400">Order status</span>
+                <span className="text-white">{detail.order.status}</span>
               </div>
               <div className="flex justify-between gap-4">
-                <span className="text-gray-400">Order Status</span>
-                <span className="text-white">
-                  {delivery.order?.status?.replace(/_/g, ' ') || 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between gap-4">
-                <span className="text-gray-400">Payment Status</span>
-                <span className="text-white">
-                  {delivery.order?.payment_status || 'N/A'}
-                </span>
+                <span className="text-gray-400">Payment status</span>
+                <span className="text-white">{detail.order.paymentStatus ?? 'N/A'}</span>
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-gray-400">Storefront</span>
-                <span className="text-white">
-                  {delivery.order?.storefront?.name || 'N/A'}
-                </span>
+                <span className="text-white">{detail.storefront?.name ?? 'Unknown'}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-400">Customer</span>
+                <span className="text-white">{detail.customer?.name ?? 'Unknown'}</span>
               </div>
             </div>
-
             <div className="mt-4 flex flex-wrap gap-4 text-sm">
-              {delivery.order?.id && (
-                <Link
-                  href={`/dashboard/orders/${delivery.order.id}`}
-                  className="text-[#E85D26] hover:underline"
-                >
-                  View Order Detail &rarr;
-                </Link>
-              )}
-              {delivery.driver?.id && (
-                <Link
-                  href={`/dashboard/drivers/${delivery.driver.id}`}
-                  className="text-[#E85D26] hover:underline"
-                >
-                  View Driver Detail &rarr;
+              <Link href={`/dashboard/orders/${detail.order.id}`} className="text-[#E85D26] hover:underline">
+                View order detail &rarr;
+              </Link>
+              {detail.driver && (
+                <Link href={`/dashboard/drivers/${detail.driver.id}`} className="text-[#E85D26] hover:underline">
+                  View driver detail &rarr;
                 </Link>
               )}
             </div>
           </Card>
 
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <h2 className="mb-4 text-lg font-semibold text-white">
-              Driver & Customer Context
-            </h2>
-            <div className="space-y-4 text-sm">
-              <div>
-                <p className="text-gray-400">Assigned Driver</p>
-                <p className="mt-1 text-white">
-                  {delivery.driver
-                    ? `${delivery.driver.first_name} ${delivery.driver.last_name}`
-                    : 'Not assigned'}
-                </p>
-                {delivery.driver?.phone && (
-                  <p className="text-xs text-gray-400">{delivery.driver.phone}</p>
-                )}
+            <h2 className="text-lg font-semibold text-white">Pickup, Dropoff, and Payout</h2>
+            <div className="mt-4 grid gap-4">
+              <div className="rounded-lg bg-[#1a1a2e] p-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Pickup</p>
+                <p className="mt-2 text-sm text-white">{detail.pickup.address}</p>
               </div>
-              <div>
-                <p className="text-gray-400">Customer</p>
-                <p className="mt-1 text-white">
-                  {delivery.order?.customer
-                    ? `${delivery.order.customer.first_name} ${delivery.order.customer.last_name}`
-                    : 'Not available'}
-                </p>
-                {delivery.order?.customer?.phone && (
-                  <p className="text-xs text-gray-400">
-                    {delivery.order.customer.phone}
+              <div className="rounded-lg bg-[#1a1a2e] p-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Dropoff</p>
+                <p className="mt-2 text-sm text-white">{detail.dropoff.address}</p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-lg bg-[#1a1a2e] p-4">
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Delivery fee</p>
+                  <p className="mt-2 text-lg font-semibold text-white">
+                    {formatMoney(detail.payout.deliveryFee)}
                   </p>
-                )}
-              </div>
-              <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  Dispatch Status
-                </p>
-                <p className="mt-2 text-sm text-gray-200">
-                  {delivery.driver
-                    ? 'A driver is assigned. Reassignment is available if intervention is required.'
-                    : 'No driver is assigned yet. Ops can run auto-assign or make a manual assignment from this page.'}
-                </p>
+                </div>
+                <div className="rounded-lg bg-[#1a1a2e] p-4">
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Driver payout</p>
+                  <p className="mt-2 text-lg font-semibold text-emerald-300">
+                    {formatMoney(detail.payout.driverPayout)}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-[#1a1a2e] p-4">
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Refund exposure</p>
+                  <p className="mt-2 text-lg font-semibold text-yellow-200">
+                    {formatMoney(detail.payout.refundExposureCents / 100)}
+                  </p>
+                </div>
               </div>
             </div>
           </Card>
         </div>
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="mb-4 text-lg font-semibold text-white">
-            Route & Payout Context
-          </h2>
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="rounded-lg bg-[#1a1a2e] p-4">
-              <p className="text-sm font-medium text-white">Pickup</p>
-              <p className="mt-2 text-sm text-gray-300">
-                {delivery.pickup_address || 'Address not set'}
-              </p>
-            </div>
-            <div className="rounded-lg bg-[#1a1a2e] p-4">
-              <p className="text-sm font-medium text-white">Dropoff</p>
-              <p className="mt-2 text-sm text-gray-300">
-                {delivery.dropoff_address || 'Address not set'}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-3">
-            <div>
-              <p className="text-sm text-gray-400">Distance</p>
-              <p className="text-white">
-                {delivery.distance_km ? `${delivery.distance_km} km` : 'N/A'}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Delivery Fee</p>
-              <p className="text-white">{formatMoney(delivery.delivery_fee)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Driver Payout</p>
-              <p className="text-emerald-400">
-                {formatMoney(delivery.driver_payout)}
-              </p>
-            </div>
-          </div>
-
-          <Link
-            href="/dashboard/map"
-            className="mt-4 inline-block text-[#E85D26] hover:underline"
-          >
-            View on Live Map &rarr;
-          </Link>
-        </Card>
-
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 xl:grid-cols-[2fr,1fr]">
           <Card className="border-gray-800 bg-[#16213e] p-6">
-            <h2 className="mb-4 text-lg font-semibold text-white">
-              Workflow Timeline
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="h-3 w-3 rounded-full bg-green-500" />
-                <div>
-                  <p className="text-white">Delivery Record Created</p>
-                  <p className="text-sm text-gray-400">
-                    {formatTimestamp(delivery.created_at)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="h-3 w-3 rounded-full bg-blue-500" />
-                <div>
-                  <p className="text-white">Estimated Pickup</p>
-                  <p className="text-sm text-gray-400">
-                    {formatTimestamp(delivery.estimated_pickup_at)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="h-3 w-3 rounded-full bg-purple-500" />
-                <div>
-                  <p className="text-white">Actual Pickup</p>
-                  <p className="text-sm text-gray-400">
-                    {formatTimestamp(delivery.actual_pickup_at)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="h-3 w-3 rounded-full bg-amber-500" />
-                <div>
-                  <p className="text-white">Estimated Dropoff</p>
-                  <p className="text-sm text-gray-400">
-                    {formatTimestamp(delivery.estimated_dropoff_at)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="h-3 w-3 rounded-full bg-emerald-500" />
-                <div>
-                  <p className="text-white">Actual Dropoff</p>
-                  <p className="text-sm text-gray-400">
-                    {formatTimestamp(delivery.actual_dropoff_at)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="border-gray-800 bg-[#16213e] p-6">
-            <h2 className="mb-4 text-lg font-semibold text-white">
-              Tracking Visibility
-            </h2>
-            {delivery.tracking_events.length > 0 ? (
-              <div className="space-y-3">
-                {delivery.tracking_events
-                  .slice(-5)
-                  .reverse()
-                  .map((event) => (
-                    <div
-                      key={event.id}
-                      className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4"
-                    >
-                      <p className="text-sm text-white">
-                        {event.lat.toFixed(5)}, {event.lng.toFixed(5)}
-                      </p>
-                      <p className="mt-1 text-xs text-gray-400">
-                        Recorded {formatTimestamp(event.recorded_at)}
-                      </p>
+            <h2 className="text-lg font-semibold text-white">Assignment Attempts</h2>
+            <div className="mt-4 space-y-3">
+              {detail.assignmentAttempts.length === 0 ? (
+                <p className="text-sm text-gray-500">No assignment attempts recorded yet.</p>
+              ) : (
+                detail.assignmentAttempts.map((attempt) => (
+                  <div key={attempt.id} className="rounded-lg bg-[#1a1a2e] p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-white">Attempt {attempt.attemptNumber}</p>
+                        <p className="text-xs text-gray-500">
+                          Offered {formatDate(attempt.offeredAt)} · expires {formatDate(attempt.expiresAt)}
+                        </p>
+                      </div>
+                      <Badge className="bg-gray-700 text-gray-200">{attempt.response}</Badge>
                     </div>
-                  ))}
+                    {attempt.declineReason && (
+                      <p className="mt-2 text-sm text-gray-400">{attempt.declineReason}</p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <h2 className="text-lg font-semibold text-white">Driver Context</h2>
+            <div className="mt-4 space-y-3 text-sm">
+              <div className="rounded-lg bg-[#1a1a2e] p-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Assigned driver</p>
+                <p className="mt-2 text-white">{detail.driver?.name ?? 'No driver assigned'}</p>
+                {detail.driver?.phone && (
+                  <p className="mt-1 text-gray-400">{detail.driver.phone}</p>
+                )}
+                {detail.driver?.presenceStatus && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    presence {detail.driver.presenceStatus}
+                  </p>
+                )}
               </div>
-            ) : (
-              <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
-                <p className="text-sm text-gray-300">
-                  No tracking pings are recorded for this delivery yet.
+              <div className="rounded-lg bg-[#1a1a2e] p-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Escalation</p>
+                <p className="mt-2 text-white">
+                  {detail.escalationReason ?? 'No active escalation reason'}
                 </p>
-                <p className="mt-2 text-xs text-gray-500">
-                  Live workflow events still come from the assigned driver flow. Ops
-                  can use dispatch controls here without fabricating status changes.
-                </p>
+                {openException && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Last exception event {formatDate(openException.timestamp)}
+                  </p>
+                )}
               </div>
-            )}
+            </div>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[2fr,1fr]">
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <h2 className="text-lg font-semibold text-white">Event Timeline</h2>
+            <div className="mt-4 space-y-3">
+              {detail.eventTimeline.length === 0 ? (
+                <p className="text-sm text-gray-500">No delivery events recorded yet.</p>
+              ) : (
+                detail.eventTimeline.map((event) => (
+                  <div key={event.id} className="rounded-lg bg-[#1a1a2e] p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-white">{event.type}</p>
+                      <span className="text-xs text-gray-500">{formatDate(event.timestamp)}</span>
+                    </div>
+                    {event.note && <p className="mt-2 text-sm text-gray-400">{event.note}</p>}
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <h2 className="text-lg font-semibold text-white">Ops Notes & Tracking</h2>
+            <div className="mt-4 space-y-4">
+              <div className="rounded-lg bg-[#1a1a2e] p-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Ops notes</p>
+                <div className="mt-3 space-y-3">
+                  {detail.opsNotes.length === 0 ? (
+                    <p className="text-sm text-gray-500">No ops notes recorded.</p>
+                  ) : (
+                    detail.opsNotes.map((note) => (
+                      <div key={note.id}>
+                        <p className="text-sm text-white">{note.content}</p>
+                        <p className="text-xs text-gray-500">{formatDate(note.createdAt)}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-lg bg-[#1a1a2e] p-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Tracking breadcrumbs</p>
+                <div className="mt-3 space-y-2">
+                  {detail.trackingBreadcrumbs.length === 0 ? (
+                    <p className="text-sm text-gray-500">No tracking breadcrumbs recorded.</p>
+                  ) : (
+                    detail.trackingBreadcrumbs.slice(0, 5).map((point) => (
+                      <div key={point.id} className="text-sm text-gray-300">
+                        {point.lat.toFixed(5)}, {point.lng.toFixed(5)}
+                        <span className="ml-2 text-xs text-gray-500">
+                          {formatDate(point.recordedAt)}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           </Card>
         </div>
 
         <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h2 className="mb-4 text-lg font-semibold text-white">
-            Delivery Controls
-          </h2>
+          <h2 className="mb-4 text-lg font-semibold text-white">Interventions</h2>
           <DeliveryActions
-            deliveryId={delivery.id}
-            currentStatus={delivery.status}
-            assignedDriverId={delivery.driver_id}
+            deliveryId={detail.deliveryId}
+            currentStatus={detail.status}
+            assignedDriverId={detail.driver?.id ?? null}
+            openExceptionId={openException?.type.startsWith('exception.') ? openException.id : null}
             drivers={drivers}
           />
         </Card>

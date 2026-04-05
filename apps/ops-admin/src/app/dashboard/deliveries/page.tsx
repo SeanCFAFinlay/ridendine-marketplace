@@ -1,336 +1,290 @@
-'use client';
-
-import { Card, Badge, Modal } from '@ridendine/ui';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Badge, Card } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { getEngine } from '@/lib/engine';
 
-type Delivery = {
-  id: string;
-  order_id: string;
-  driver_id: string | null;
-  status: string;
-  pickup_address: string;
-  dropoff_address: string;
-  created_at: string;
-  orders?: {
-    order_number: string;
-    total: number;
-  };
-  drivers?: {
-    first_name: string;
-    last_name: string;
-  } | null;
-};
+export const dynamic = 'force-dynamic';
 
-type Driver = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  status: string;
-};
+type QueueName = 'pending' | 'active' | 'escalated' | 'stale';
 
-function getDeliveryStatusVariant(
-  status: string
-): 'success' | 'warning' | 'error' | 'info' | 'default' {
-  switch (status) {
-    case 'delivered':
-    case 'completed':
-      return 'success';
-    case 'picked_up':
-    case 'en_route_to_dropoff':
-      return 'info';
-    case 'assigned':
-    case 'accepted':
-    case 'en_route_to_pickup':
-      return 'warning';
-    case 'pending':
-      return 'default';
-    default:
-      return 'default';
+function getQueueName(input: string | undefined): QueueName {
+  if (input === 'active' || input === 'escalated' || input === 'stale') {
+    return input;
   }
+  return 'pending';
 }
 
-function formatDeliveryStatus(status: string): string {
-  return status
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+function formatDate(value: string | null | undefined): string {
+  return value ? new Date(value).toLocaleString() : 'Not set';
 }
 
-export default function DeliveriesPage() {
-  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
-  const [pendingDeliveries, setPendingDeliveries] = useState<Delivery[]>([]);
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(null);
-  const [selectedDriverId, setSelectedDriverId] = useState('');
-  const [assigning, setAssigning] = useState(false);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  async function fetchData() {
-    try {
-      const [deliveriesRes, driversRes] = await Promise.all([
-        fetch('/api/deliveries'),
-        fetch('/api/drivers?status=approved'),
-      ]);
-
-      const deliveriesData = await deliveriesRes.json();
-      const driversData = await driversRes.json();
-
-      const allDeliveries = deliveriesData.data || [];
-      setDeliveries(allDeliveries.filter((d: Delivery) => d.driver_id !== null));
-      setPendingDeliveries(allDeliveries.filter((d: Delivery) => d.driver_id === null && d.status === 'pending'));
-      setDrivers(driversData.data || []);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
-    } finally {
-      setLoading(false);
-    }
+function getSearchParam(
+  value: string | string[] | undefined,
+  fallback = ''
+): string {
+  if (Array.isArray(value)) {
+    return value[0] ?? fallback;
   }
+  return value ?? fallback;
+}
 
-  function openAssignModal(delivery: Delivery) {
-    setSelectedDelivery(delivery);
-    setSelectedDriverId('');
-    setShowAssignModal(true);
-  }
+export default async function DeliveriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const queue = getQueueName(getSearchParam(params.queue, 'pending'));
+  const search = getSearchParam(params.search).trim().toLowerCase();
+  const page = Number(getSearchParam(params.page, '1'));
 
-  async function handleAssignDriver() {
-    if (!selectedDelivery || !selectedDriverId) return;
+  const commandCenter = await getEngine().ops.getDispatchCommandCenter();
+  const sourceQueue =
+    queue === 'active'
+      ? commandCenter.activeQueue
+      : queue === 'escalated'
+        ? commandCenter.escalatedQueue
+        : queue === 'stale'
+          ? commandCenter.staleAssignments
+          : commandCenter.pendingQueue;
 
-    setAssigning(true);
-    try {
-      const response = await fetch('/api/engine/dispatch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'manual_assign',
-          deliveryId: selectedDelivery.id,
-          driverId: selectedDriverId,
-        }),
-      });
+  const filtered = sourceQueue.filter((item) => {
+    if (!search) return true;
+    const haystack = [
+      item.orderNumber,
+      item.storefrontName,
+      item.customerName,
+      item.pickupAddress,
+      item.dropoffAddress,
+      item.assignedDriver?.name ?? '',
+    ]
+      .join(' ')
+      .toLowerCase();
+    return haystack.includes(search);
+  });
 
-      if (response.ok) {
-        setShowAssignModal(false);
-        setSelectedDelivery(null);
-        setSelectedDriverId('');
-        fetchData();
-      } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to assign driver');
-      }
-    } catch (error) {
-      console.error('Failed to assign driver:', error);
-      alert('Failed to assign driver');
-    } finally {
-      setAssigning(false);
-    }
-  }
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="mx-auto max-w-7xl">
-          <div className="text-center text-gray-400">Loading...</div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const pageSize = 10;
+  const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const pageItems = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Delivery Management</h1>
-          <p className="mt-2 text-gray-400">Assign drivers and monitor active deliveries</p>
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Dispatch Command Center</h1>
+            <p className="mt-1 text-gray-400">
+              Deterministic dispatch queues, driver supply visibility, and intervention controls.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-4">
+            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Pending</p>
+              <p className="mt-1 text-xl font-semibold text-white">{commandCenter.summary.pendingDispatch}</p>
+            </div>
+            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Active</p>
+              <p className="mt-1 text-xl font-semibold text-white">{commandCenter.summary.activeDeliveries}</p>
+            </div>
+            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Escalated</p>
+              <p className="mt-1 text-xl font-semibold text-white">{commandCenter.summary.escalatedDeliveries}</p>
+            </div>
+            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Expired Offers</p>
+              <p className="mt-1 text-xl font-semibold text-white">{commandCenter.summary.expiredOffers}</p>
+            </div>
+          </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Pending Deliveries - Need Driver Assignment */}
-          <Card className="border-gray-800 bg-[#16213e] p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Pending Assignment</h2>
-              <Badge variant="warning">{pendingDeliveries.length} Pending</Badge>
-            </div>
-            <div className="space-y-3 max-h-[500px] overflow-y-auto">
-              {pendingDeliveries.map((delivery) => (
-                <div
-                  key={delivery.id}
-                  className="rounded-lg border border-yellow-500/30 bg-[#1a1a2e] p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono font-medium text-white">
-                      {delivery.orders?.order_number || 'N/A'}
-                    </span>
-                    <Badge variant="warning">Needs Driver</Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-400">
-                    <span className="text-gray-500">From:</span> {delivery.pickup_address || 'N/A'}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    <span className="text-gray-500">To:</span> {delivery.dropoff_address || 'N/A'}
-                  </p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="font-medium text-white">
-                      ${((delivery.orders?.total ?? 0) / 100).toFixed(2)}
-                    </span>
-                    <button
-                      onClick={() => openAssignModal(delivery)}
-                      className="rounded bg-[#E85D26] px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-[#d54d1a]"
-                    >
-                      Assign Driver
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {pendingDeliveries.length === 0 && (
-                <div className="py-8 text-center text-gray-400">
-                  No deliveries pending assignment
-                </div>
-              )}
-            </div>
-          </Card>
-
-          {/* Active Deliveries */}
-          <Card className="border-gray-800 bg-[#16213e] p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Active Deliveries</h2>
-              <Badge className="bg-[#E85D26] text-white">{deliveries.length} Active</Badge>
-            </div>
-            <div className="space-y-3 max-h-[500px] overflow-y-auto">
-              {deliveries.map((delivery) => (
+        <Card className="border-gray-800 bg-[#16213e] p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {(['pending', 'active', 'escalated', 'stale'] as QueueName[]).map((entry) => (
                 <Link
-                  key={delivery.id}
-                  href={`/dashboard/deliveries/${delivery.id}`}
+                  key={entry}
+                  href={`/dashboard/deliveries?queue=${entry}`}
+                  className={`rounded-full px-4 py-2 text-sm ${
+                    queue === entry
+                      ? 'bg-[#E85D26] text-white'
+                      : 'bg-[#1a1a2e] text-gray-300 hover:bg-[#222745]'
+                  }`}
+                >
+                  {entry}
+                </Link>
+              ))}
+            </div>
+            <form className="flex gap-2" action="/dashboard/deliveries">
+              <input type="hidden" name="queue" value={queue} />
+              <input
+                type="search"
+                name="search"
+                defaultValue={search}
+                placeholder="Search order, customer, storefront, driver"
+                className="w-full min-w-[280px] rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-sm text-white focus:border-[#E85D26] focus:outline-none"
+              />
+              <button className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-medium text-white">
+                Search
+              </button>
+            </form>
+          </div>
+        </Card>
+
+        <div className="grid gap-6 xl:grid-cols-[2fr,1fr]">
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  {queue.charAt(0).toUpperCase() + queue.slice(1)} Queue
+                </h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Page {safePage} of {totalPages}. {filtered.length} deliveries match the current filter.
+                </p>
+              </div>
+              <Badge className="bg-gray-700 text-gray-200">{filtered.length}</Badge>
+            </div>
+
+            <div className="space-y-4">
+              {pageItems.map((item) => (
+                <Link
+                  key={item.deliveryId}
+                  href={`/dashboard/deliveries/${item.deliveryId}`}
                   className="block rounded-lg border border-gray-800 bg-[#1a1a2e] p-4 transition-colors hover:border-[#E85D26]"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono font-medium text-white">
-                      {delivery.orders?.order_number || 'N/A'}
-                    </span>
-                    <Badge variant={getDeliveryStatusVariant(delivery.status)}>
-                      {formatDeliveryStatus(delivery.status)}
-                    </Badge>
-                  </div>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {delivery.pickup_address} → {delivery.dropoff_address}
-                  </p>
-                  <div className="mt-2 flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-400">Driver: </span>
-                      <span className="text-sm font-medium text-white">
-                        {delivery.drivers
-                          ? `${delivery.drivers.first_name} ${delivery.drivers.last_name}`
-                          : 'Unassigned'}
-                      </span>
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-white">Order {item.orderNumber}</span>
+                        <Badge className="bg-blue-500/20 text-blue-200">{item.status}</Badge>
+                        {item.escalatedToOps && (
+                          <Badge className="bg-red-500/20 text-red-200">Escalated</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-300">{item.storefrontName}</p>
+                      <p className="text-sm text-gray-400">
+                        {item.pickupAddress} to {item.dropoffAddress}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Customer: {item.customerName} · Attempts: {item.assignmentAttemptsCount}
+                      </p>
+                      {item.assignedDriver && (
+                        <p className="text-sm text-gray-500">
+                          Driver: {item.assignedDriver.name}
+                        </p>
+                      )}
                     </div>
-                    <span className="text-sm text-[#E85D26]">View →</span>
+
+                    <div className="min-w-[220px] rounded-lg bg-[#121928] p-3 text-sm">
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Top candidates</p>
+                      <div className="mt-2 space-y-2">
+                        {item.topCandidates.length === 0 ? (
+                          <p className="text-gray-500">No eligible supply in range.</p>
+                        ) : (
+                          item.topCandidates.map((candidate) => (
+                            <div key={candidate.driverId} className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-white">{candidate.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  {candidate.distanceKm == null
+                                    ? 'No live location'
+                                    : `${candidate.distanceKm.toFixed(1)} km`} · {candidate.status}
+                                </p>
+                              </div>
+                              <span className="text-xs text-gray-400">
+                                load {candidate.activeDeliveries}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </Link>
               ))}
-              {deliveries.length === 0 && (
-                <div className="py-8 text-center text-gray-400">No active deliveries</div>
+
+              {pageItems.length === 0 && (
+                <div className="rounded-lg border border-dashed border-gray-700 p-10 text-center text-gray-500">
+                  No deliveries match this queue view.
+                </div>
               )}
             </div>
-          </Card>
-        </div>
 
-        {/* Available Drivers Quick View */}
-        <Card className="mt-6 border-gray-800 bg-[#16213e] p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Available Drivers</h2>
-            <Badge variant="success">{drivers.length} Online</Badge>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {drivers.slice(0, 8).map((driver) => (
-              <div
-                key={driver.id}
-                className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4"
+            <div className="mt-6 flex items-center justify-between">
+              <Link
+                href={`/dashboard/deliveries?queue=${queue}&search=${encodeURIComponent(search)}&page=${Math.max(1, safePage - 1)}`}
+                className={`rounded-lg px-4 py-2 text-sm ${
+                  safePage <= 1 ? 'pointer-events-none bg-gray-800 text-gray-600' : 'bg-[#1a1a2e] text-white'
+                }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E85D26] text-white font-medium">
-                    {driver.first_name[0]}{driver.last_name[0]}
-                  </div>
-                  <div>
-                    <p className="font-medium text-white">
-                      {driver.first_name} {driver.last_name}
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                      <span className="text-xs text-green-400">Available</span>
+                Previous
+              </Link>
+              <Link
+                href={`/dashboard/deliveries?queue=${queue}&search=${encodeURIComponent(search)}&page=${Math.min(totalPages, safePage + 1)}`}
+                className={`rounded-lg px-4 py-2 text-sm ${
+                  safePage >= totalPages ? 'pointer-events-none bg-gray-800 text-gray-600' : 'bg-[#1a1a2e] text-white'
+                }`}
+              >
+                Next
+              </Link>
+            </div>
+          </Card>
+
+          <div className="space-y-6">
+            <Card className="border-gray-800 bg-[#16213e] p-6">
+              <h2 className="text-lg font-semibold text-white">Driver Supply</h2>
+              <div className="mt-4 space-y-3">
+                {commandCenter.driverSupply.slice(0, 8).map((driver) => (
+                  <div key={driver.driverId} className="rounded-lg bg-[#1a1a2e] p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-white">{driver.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {driver.status} · declines {driver.recentDeclines} · expiries {driver.recentExpiries}
+                        </p>
+                      </div>
+                      <span className="text-xs text-gray-400">load {driver.activeDeliveries}</span>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-            {drivers.length === 0 && (
-              <div className="col-span-full py-8 text-center text-gray-400">
-                No approved drivers available
+            </Card>
+
+            <Card className="border-gray-800 bg-[#16213e] p-6">
+              <h2 className="text-lg font-semibold text-white">Coverage Gaps</h2>
+              <div className="mt-4 space-y-3">
+                {commandCenter.coverageGaps.length === 0 ? (
+                  <p className="text-sm text-gray-500">No open coverage gaps identified.</p>
+                ) : (
+                  commandCenter.coverageGaps.map((gap) => (
+                    <div key={gap.area} className="rounded-lg bg-[#1a1a2e] p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-white">{gap.area}</p>
+                          <p className="text-xs text-gray-500">
+                            {gap.openDeliveries} open deliveries · {gap.availableDrivers} available drivers
+                          </p>
+                        </div>
+                        <Badge
+                          className={
+                            gap.riskLevel === 'high'
+                              ? 'bg-red-500/20 text-red-200'
+                              : gap.riskLevel === 'medium'
+                                ? 'bg-yellow-500/20 text-yellow-200'
+                                : 'bg-emerald-500/20 text-emerald-200'
+                          }
+                        >
+                          {gap.riskLevel}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
-            )}
-          </div>
-        </Card>
-      </div>
-
-      {/* Driver Assignment Modal */}
-      <Modal
-        isOpen={showAssignModal}
-        onClose={() => setShowAssignModal(false)}
-        title="Assign Driver"
-      >
-        <div className="space-y-4">
-          {selectedDelivery && (
-            <div className="rounded-lg border border-gray-700 bg-[#0d1528] p-4">
-              <p className="text-sm text-gray-400">Order</p>
-              <p className="font-mono font-medium text-white">
-                {selectedDelivery.orders?.order_number}
-              </p>
-              <p className="mt-2 text-sm text-gray-400">
-                {selectedDelivery.pickup_address} → {selectedDelivery.dropoff_address}
-              </p>
-            </div>
-          )}
-
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">
-              Select Driver
-            </label>
-            <select
-              value={selectedDriverId}
-              onChange={(e) => setSelectedDriverId(e.target.value)}
-              className="w-full rounded-lg border border-gray-600 bg-[#0d1528] px-3 py-2 text-white focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
-            >
-              <option value="">Choose a driver...</option>
-              {drivers.map((driver) => (
-                <option key={driver.id} value={driver.id}>
-                  {driver.first_name} {driver.last_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowAssignModal(false)}
-              className="rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-300 transition-colors hover:bg-gray-700"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleAssignDriver}
-              disabled={!selectedDriverId || assigning}
-              className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#d54d1a] disabled:opacity-50"
-            >
-              {assigning ? 'Assigning...' : 'Assign Driver'}
-            </button>
+            </Card>
           </div>
         </div>
-      </Modal>
+      </div>
     </DashboardLayout>
   );
 }

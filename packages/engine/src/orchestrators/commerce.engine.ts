@@ -65,6 +65,39 @@ interface OrderFinancials {
   ledgerEntries: LedgerEntry[];
 }
 
+export function summarizeLedgerEntriesForDashboard(
+  entries: Array<{ entry_type: string; amount_cents: number }>
+): {
+  totalRevenue: number;
+  totalRefunds: number;
+  platformFees: number;
+  chefPayouts: number;
+  driverPayouts: number;
+  taxCollected: number;
+  orderCount: number;
+} {
+  const sumByType = (type: string) =>
+    entries
+      .filter((entry) => entry.entry_type === type)
+      .reduce((sum, entry) => sum + entry.amount_cents, 0) / 100;
+
+  const captures = entries.filter(
+    (entry) => entry.entry_type === 'customer_charge_capture'
+  );
+
+  return {
+    totalRevenue: sumByType('customer_charge_capture'),
+    totalRefunds: Math.abs(
+      sumByType('customer_refund') + sumByType('customer_partial_refund')
+    ),
+    platformFees: sumByType('platform_fee'),
+    chefPayouts: sumByType('chef_payable'),
+    driverPayouts: sumByType('driver_payable') + sumByType('tip_payable'),
+    taxCollected: sumByType('tax_collected'),
+    orderCount: captures.length,
+  };
+}
+
 export class CommerceLedgerEngine {
   private client: SupabaseClient;
   private eventEmitter: DomainEventEmitter;
@@ -823,22 +856,7 @@ export class CommerceLedgerEngine {
       };
     }
 
-    const sumByType = (type: string) =>
-      entries
-        .filter((e) => e.entry_type === type)
-        .reduce((sum, e) => sum + e.amount_cents, 0) / 100;
-
-    const captures = entries.filter((e) => e.entry_type === 'customer_charge_capture');
-
-    return {
-      totalRevenue: sumByType('customer_charge_capture'),
-      totalRefunds: Math.abs(sumByType('customer_refund') + sumByType('customer_partial_refund')),
-      platformFees: sumByType('platform_fee'),
-      chefPayouts: sumByType('chef_payable'),
-      driverPayouts: sumByType('driver_payable') + sumByType('tip_payable'),
-      taxCollected: sumByType('tax_collected'),
-      orderCount: captures.length,
-    };
+    return summarizeLedgerEntriesForDashboard(entries);
   }
 
   /**

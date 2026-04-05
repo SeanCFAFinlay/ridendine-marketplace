@@ -4,7 +4,7 @@
 // ==========================================
 
 import type { NextRequest } from 'next/server';
-import { createAdminClient, type SupabaseClient } from '@ridendine/db';
+import { financeActionSchema } from '@ridendine/validation';
 import {
   getEngine,
   getOpsActorContext,
@@ -37,49 +37,16 @@ export async function GET(request: NextRequest) {
   const endDate = searchParams.get('endDate') || today;
 
   const engine = getEngine();
-  const adminClient = createAdminClient() as unknown as SupabaseClient;
-
-  // Get financial summary
-  const summary = await engine.commerce.getFinancialSummary({ start: startDate, end: endDate });
-
-  // Get pending refunds
-  const pendingRefunds = await engine.commerce.getPendingRefunds();
-
-  // Get recent ledger entries (cast to any for new table)
-  const { data: recentLedger } = await adminClient
-    .from('ledger_entries')
-    .select(`
-      *,
-      orders (order_number)
-    `)
-    .gte('created_at', startDate)
-    .lte('created_at', endDate + 'T23:59:59')
-    .order('created_at', { ascending: false })
-    .limit(100);
-
-  // Get payout adjustments pending (cast to any for new table)
-  const { data: pendingAdjustments } = await adminClient
-    .from('payout_adjustments')
-    .select(`
-      *,
-      orders (order_number)
-    `)
-    .eq('status', 'pending')
-    .order('created_at', { ascending: false });
-
-  // Get daily totals for chart (cast to any for RPC)
-  const { data: dailyTotals } = await adminClient.rpc('get_financial_summary', {
-    start_date: startDate,
-    end_date: endDate,
+  const result = await engine.ops.getFinanceOperations(actor, {
+    start: `${startDate}T00:00:00`,
+    end: `${endDate}T23:59:59`,
   });
 
-  return successResponse({
-    summary,
-    pendingRefunds,
-    recentLedger: recentLedger || [],
-    pendingAdjustments: pendingAdjustments || [],
-    dailyTotals: dailyTotals || [],
-  });
+  if (!result.success) {
+    return errorResponse(result.error!.code, result.error!.message, 400);
+  }
+
+  return successResponse(result.data);
 }
 
 /**
@@ -97,18 +64,59 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { action, ...actionParams } = body;
+  const parsed = financeActionSchema.safeParse(body);
+  if (!parsed.success) {
+    return errorResponse('INVALID_INPUT', parsed.error.issues[0]?.message || 'Invalid finance action');
+  }
+
+  const actionInput = parsed.data;
 
   const engine = getEngine();
 
-  switch (action) {
+  switch (actionInput.action) {
+    case 'approve_refund': {
+      const result = await engine.commerce.approveRefund(
+        actionInput.refundCaseId,
+        actionInput.approvedAmountCents,
+        actor
+      );
+      if (!result.success) {
+        return errorResponse(result.error!.code, result.error!.message);
+      }
+      return successResponse(result.data);
+    }
+
+    case 'deny_refund': {
+      const result = await engine.commerce.denyRefund(
+        actionInput.refundCaseId,
+        actionInput.reason,
+        actor
+      );
+      if (!result.success) {
+        return errorResponse(result.error!.code, result.error!.message);
+      }
+      return successResponse(result.data);
+    }
+
+    case 'process_refund': {
+      const result = await engine.commerce.processRefund(
+        actionInput.refundCaseId,
+        actionInput.stripeRefundId,
+        actor
+      );
+      if (!result.success) {
+        return errorResponse(result.error!.code, result.error!.message);
+      }
+      return successResponse(result.data);
+    }
+
     case 'create_payout_hold': {
       const result = await engine.commerce.createPayoutHold(
-        actionParams.payeeType,
-        actionParams.payeeId,
-        actionParams.orderId,
-        actionParams.amountCents,
-        actionParams.reason,
+        actionInput.payeeType,
+        actionInput.payeeId,
+        actionInput.orderId,
+        actionInput.amountCents,
+        actionInput.reason,
         actor
       );
       if (!result.success) {
@@ -119,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     case 'release_payout_hold': {
       const result = await engine.commerce.releasePayoutHold(
-        actionParams.adjustmentId,
+        actionInput.adjustmentId,
         actor
       );
       if (!result.success) {
@@ -128,15 +136,7 @@ export async function POST(request: NextRequest) {
       return successResponse(result.data);
     }
 
-    case 'get_order_financials': {
-      const result = await engine.commerce.getOrderFinancials(actionParams.orderId);
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
     default:
-      return errorResponse('INVALID_ACTION', `Unknown action: ${action}`);
+      return errorResponse('INVALID_ACTION', 'Unknown action');
   }
 }

@@ -47,6 +47,9 @@ export class AuditLogger {
       old_data: entry.beforeState,
       new_data: entry.afterState,
       user_id: entry.actor.userId,
+      actor_role: entry.actor.role,
+      reason: entry.reason,
+      metadata: entry.metadata,
       created_at: entry.timestamp,
     });
 
@@ -152,10 +155,12 @@ export class AuditLogger {
       entityId: row.entity_id,
       actor: {
         userId: row.user_id,
-        role: 'system' as const, // Default to system role
+        role: (row.actor_role ?? 'system') as ActorContext['role'],
       } satisfies ActorContext,
       beforeState: row.old_data,
       afterState: row.new_data,
+      reason: row.reason ?? undefined,
+      metadata: row.metadata ?? undefined,
       timestamp: row.created_at,
     }));
   }

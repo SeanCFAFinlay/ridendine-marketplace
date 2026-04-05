@@ -1,256 +1,188 @@
-'use client';
-
-import { Card, Badge } from '@ridendine/ui';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Badge, Card } from '@ridendine/ui';
+import { createAdminClient, getOpsSupportQueue, type SupabaseClient } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { getEngine } from '@/lib/engine';
 
-type SupportTicket = {
-  id: string;
-  subject: string;
-  description: string;
-  status: string;
-  priority: string;
-  category: string | null;
-  order_id: string | null;
-  assigned_to: string | null;
-  created_at: string;
-  resolved_at: string | null;
-};
+export const dynamic = 'force-dynamic';
 
-type SupportSummary = {
-  openCount: number;
-  inProgressCount: number;
-  urgentCount: number;
-  unassignedCount: number;
-  resolvedTodayCount: number;
-};
-
-function getStatusVariant(
-  status: string
-): 'success' | 'warning' | 'error' | 'info' | 'default' {
-  switch (status) {
-    case 'resolved':
-    case 'closed':
-      return 'success';
-    case 'in_progress':
-      return 'info';
-    case 'open':
-      return 'warning';
-    default:
-      return 'default';
+function getSearchParam(
+  value: string | string[] | undefined,
+  fallback = ''
+): string {
+  if (Array.isArray(value)) {
+    return value[0] ?? fallback;
   }
+  return value ?? fallback;
 }
 
-function getPriorityVariant(
-  priority: string
-): 'success' | 'warning' | 'error' | 'info' | 'default' {
-  switch (priority) {
-    case 'urgent':
-      return 'error';
-    case 'high':
-      return 'warning';
-    case 'medium':
-      return 'info';
-    case 'low':
-      return 'default';
-    default:
-      return 'default';
-  }
-}
+export default async function SupportPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const search = getSearchParam(params.search).toLowerCase();
+  const statusFilter = getSearchParam(params.status, 'all');
+  const page = Number(getSearchParam(params.page, '1'));
 
-const emptySummary: SupportSummary = {
-  openCount: 0,
-  inProgressCount: 0,
-  urgentCount: 0,
-  unassignedCount: 0,
-  resolvedTodayCount: 0,
-};
+  const adminClient = createAdminClient() as unknown as SupabaseClient;
+  const [queue, exceptionQueue, sla] = await Promise.all([
+    getOpsSupportQueue(adminClient),
+    getEngine().support.getExceptionQueue(),
+    getEngine().support.getSLAStatus(),
+  ]);
 
-export default function SupportPage() {
-  const [tickets, setTickets] = useState<SupportTicket[]>([]);
-  const [summary, setSummary] = useState<SupportSummary>(emptySummary);
-  const [loading, setLoading] = useState(true);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    void fetchTickets();
-  }, []);
-
-  async function fetchTickets() {
-    try {
-      const response = await fetch('/api/support');
-      const result = await response.json();
-      const queue = result.data ?? { tickets: [], summary: emptySummary };
-      setTickets(queue.tickets ?? []);
-      setSummary(queue.summary ?? emptySummary);
-    } catch (error) {
-      console.error('Failed to fetch tickets:', error);
-    } finally {
-      setLoading(false);
+  const filteredTickets = queue.tickets.filter((ticket) => {
+    if (statusFilter !== 'all' && ticket.status !== statusFilter) {
+      return false;
     }
-  }
+    if (!search) return true;
+    return [ticket.subject, ticket.description, ticket.category ?? '', ticket.priority]
+      .join(' ')
+      .toLowerCase()
+      .includes(search);
+  });
 
-  async function handleAction(id: string, action: 'start_review' | 'resolve') {
-    setUpdatingId(id);
-    try {
-      await fetch(`/api/support/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
-      });
-      await fetchTickets();
-    } catch (error) {
-      console.error('Failed to update support ticket:', error);
-    } finally {
-      setUpdatingId(null);
-    }
-  }
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="mx-auto max-w-7xl">
-          <div className="text-center text-gray-400">Loading...</div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const pageSize = 10;
+  const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+  const totalPages = Math.max(1, Math.ceil(filteredTickets.length / pageSize));
+  const pageItems = filteredTickets.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="mb-2">
-          <h1 className="text-3xl font-bold text-white">Support Queue</h1>
-          <p className="mt-2 text-gray-400">
-            Ops-managed support workflow using the current support ticket model.
-            Richer exception escalation rules still live separately under the
-            engine’s order exception workflows.
+        <div>
+          <h1 className="text-3xl font-bold text-white">Support Operations</h1>
+          <p className="mt-1 text-gray-400">
+            Queue-first support triage with linked exception visibility and SLA tracking.
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-4">
           <Card className="border-gray-800 bg-[#16213e] p-4">
-            <p className="text-sm text-gray-400">Open</p>
-            <p className="mt-2 text-2xl font-bold text-white">{summary.openCount}</p>
-          </Card>
-          <Card className="border-gray-800 bg-[#16213e] p-4">
-            <p className="text-sm text-gray-400">In Progress</p>
-            <p className="mt-2 text-2xl font-bold text-white">
-              {summary.inProgressCount}
-            </p>
+            <p className="text-sm text-gray-400">Backlog</p>
+            <p className="mt-2 text-2xl font-bold text-white">{queue.summary.openCount}</p>
           </Card>
           <Card className="border-gray-800 bg-[#16213e] p-4">
             <p className="text-sm text-gray-400">Urgent</p>
-            <p className="mt-2 text-2xl font-bold text-red-300">
-              {summary.urgentCount}
-            </p>
+            <p className="mt-2 text-2xl font-bold text-red-200">{queue.summary.urgentCount}</p>
           </Card>
           <Card className="border-gray-800 bg-[#16213e] p-4">
-            <p className="text-sm text-gray-400">Unassigned</p>
-            <p className="mt-2 text-2xl font-bold text-amber-300">
-              {summary.unassignedCount}
-            </p>
+            <p className="text-sm text-gray-400">At Risk SLA</p>
+            <p className="mt-2 text-2xl font-bold text-yellow-200">{sla.atRisk}</p>
           </Card>
           <Card className="border-gray-800 bg-[#16213e] p-4">
-            <p className="text-sm text-gray-400">Resolved Today</p>
-            <p className="mt-2 text-2xl font-bold text-emerald-300">
-              {summary.resolvedTodayCount}
-            </p>
+            <p className="text-sm text-gray-400">Breached SLA</p>
+            <p className="mt-2 text-2xl font-bold text-red-200">{sla.breached}</p>
           </Card>
         </div>
 
-        <Card className="border-gray-800 bg-[#16213e]">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-800 text-left text-sm text-gray-400">
-                  <th className="pb-4 pl-6 font-medium">Ticket</th>
-                  <th className="pb-4 font-medium">Status</th>
-                  <th className="pb-4 font-medium">Priority</th>
-                  <th className="pb-4 font-medium">Ownership</th>
-                  <th className="pb-4 font-medium">Context</th>
-                  <th className="pb-4 pr-6 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm">
-                {tickets.map((ticket) => (
-                  <tr key={ticket.id} className="border-b border-gray-800/50 align-top">
-                    <td className="py-4 pl-6">
-                      <div className="font-medium text-white">{ticket.subject}</div>
-                      <div className="mt-1 line-clamp-2 text-xs text-gray-400">
-                        {ticket.description}
-                      </div>
-                      <div className="mt-2 text-xs text-gray-500">
-                        Created {new Date(ticket.created_at).toLocaleString()}
-                      </div>
-                    </td>
-                    <td className="py-4">
-                      <Badge variant={getStatusVariant(ticket.status)}>
-                        {ticket.status.replace('_', ' ')}
-                      </Badge>
-                    </td>
-                    <td className="py-4">
-                      <Badge variant={getPriorityVariant(ticket.priority)}>
-                        {ticket.priority}
-                      </Badge>
-                    </td>
-                    <td className="py-4 text-gray-300">
-                      <div>{ticket.assigned_to ? 'Assigned' : 'Unassigned'}</div>
-                      {ticket.assigned_to && (
-                        <div className="mt-1 font-mono text-xs text-gray-500">
-                          {ticket.assigned_to}
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-4 text-gray-300">
-                      <div>{ticket.category || 'General support'}</div>
-                      {ticket.order_id ? (
-                        <Link
-                          href={`/dashboard/orders/${ticket.order_id}`}
-                          className="mt-1 inline-block text-[#E85D26] hover:underline"
-                        >
-                          Linked order &rarr;
-                        </Link>
-                      ) : (
-                        <div className="mt-1 text-xs text-gray-500">
-                          No linked order
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-4 pr-6">
-                      <div className="flex flex-wrap gap-2">
-                        {ticket.status === 'open' && (
-                          <button
-                            onClick={() => void handleAction(ticket.id, 'start_review')}
-                            disabled={updatingId === ticket.id}
-                            className="rounded bg-blue-600 px-3 py-1 text-xs text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
-                          >
-                            {updatingId === ticket.id ? 'Saving…' : 'Start Review'}
-                          </button>
-                        )}
-                        {ticket.status !== 'resolved' && ticket.status !== 'closed' && (
-                          <button
-                            onClick={() => void handleAction(ticket.id, 'resolve')}
-                            disabled={updatingId === ticket.id}
-                            className="rounded bg-green-600 px-3 py-1 text-xs text-white transition-colors hover:bg-green-500 disabled:opacity-50"
-                          >
-                            {updatingId === ticket.id ? 'Saving…' : 'Resolve'}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {tickets.length === 0 && (
-              <div className="py-12 text-center text-gray-400">
-                No support tickets are currently queued.
+        <div className="grid gap-6 xl:grid-cols-[2fr,1fr]">
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Support Queue</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  {filteredTickets.length} tickets match the current filter.
+                </p>
               </div>
-            )}
-          </div>
-        </Card>
+              <form action="/dashboard/support" className="flex gap-2">
+                <select
+                  name="status"
+                  defaultValue={statusFilter}
+                  className="rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-sm text-white"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="open">Open</option>
+                  <option value="in_progress">In progress</option>
+                  <option value="resolved">Resolved</option>
+                </select>
+                <input
+                  type="search"
+                  name="search"
+                  defaultValue={search}
+                  placeholder="Search tickets"
+                  className="rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-sm text-white"
+                />
+                <button className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-medium text-white">
+                  Apply
+                </button>
+              </form>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {pageItems.map((ticket) => (
+                <div key={ticket.id} className="rounded-lg bg-[#1a1a2e] p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <p className="font-medium text-white">{ticket.subject}</p>
+                      <p className="mt-1 text-sm text-gray-400">{ticket.description}</p>
+                      <p className="mt-2 text-xs text-gray-500">
+                        {new Date(ticket.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge className="bg-blue-500/20 text-blue-200">{ticket.status}</Badge>
+                      <Badge className="bg-gray-700 text-gray-200">{ticket.priority}</Badge>
+                    </div>
+                  </div>
+                  {ticket.order_id && (
+                    <Link
+                      href={`/dashboard/orders/${ticket.order_id}`}
+                      className="mt-3 inline-block text-sm text-[#E85D26] hover:underline"
+                    >
+                      View linked order &rarr;
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 flex items-center justify-between">
+              <Link
+                href={`/dashboard/support?status=${statusFilter}&search=${encodeURIComponent(search)}&page=${Math.max(1, safePage - 1)}`}
+                className={`rounded-lg px-4 py-2 text-sm ${
+                  safePage <= 1 ? 'pointer-events-none bg-gray-800 text-gray-600' : 'bg-[#1a1a2e] text-white'
+                }`}
+              >
+                Previous
+              </Link>
+              <Link
+                href={`/dashboard/support?status=${statusFilter}&search=${encodeURIComponent(search)}&page=${Math.min(totalPages, safePage + 1)}`}
+                className={`rounded-lg px-4 py-2 text-sm ${
+                  safePage >= totalPages ? 'pointer-events-none bg-gray-800 text-gray-600' : 'bg-[#1a1a2e] text-white'
+                }`}
+              >
+                Next
+              </Link>
+            </div>
+          </Card>
+
+          <Card className="border-gray-800 bg-[#16213e] p-6">
+            <h2 className="text-lg font-semibold text-white">Open Exceptions</h2>
+            <div className="mt-4 space-y-3">
+              {exceptionQueue.slice(0, 8).map((exception) => (
+                <div key={exception.id} className="rounded-lg bg-[#1a1a2e] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-white">{exception.title}</p>
+                    <Badge
+                      className={
+                        exception.severity === 'critical'
+                          ? 'bg-red-500/20 text-red-200'
+                          : exception.severity === 'high'
+                            ? 'bg-yellow-500/20 text-yellow-200'
+                            : 'bg-gray-700 text-gray-200'
+                      }
+                    >
+                      {exception.severity}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500">{exception.status}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
       </div>
     </DashboardLayout>
   );

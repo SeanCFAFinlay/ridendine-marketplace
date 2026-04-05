@@ -4,6 +4,7 @@
 // ==========================================
 
 import type { NextRequest } from 'next/server';
+import { deliveryInterventionActionSchema } from '@ridendine/validation';
 import {
   getEngine,
   getOpsActorContext,
@@ -22,7 +23,7 @@ export async function GET() {
   }
 
   const engine = getEngine();
-  const board = await engine.dispatch.getDispatchBoard();
+  const board = await engine.ops.getDispatchCommandCenter();
 
   return successResponse(board);
 }
@@ -38,26 +39,20 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { action, ...actionParams } = body;
+  const parsed = deliveryInterventionActionSchema.safeParse(body);
+  if (!parsed.success) {
+    return errorResponse('INVALID_INPUT', parsed.error.issues[0]?.message || 'Invalid dispatch action');
+  }
+
+  const actionInput = parsed.data;
 
   const engine = getEngine();
 
-  switch (action) {
-    case 'request_dispatch': {
-      const result = await engine.dispatch.requestDispatch(
-        actionParams.orderId,
-        actor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
+  switch (actionInput.action) {
     case 'manual_assign': {
       const result = await engine.dispatch.manualAssign(
-        actionParams.deliveryId,
-        actionParams.driverId,
+        actionInput.deliveryId,
+        actionInput.driverId,
         actor
       );
       if (!result.success) {
@@ -68,8 +63,8 @@ export async function POST(request: NextRequest) {
 
     case 'reassign': {
       const result = await engine.dispatch.reassignDelivery(
-        actionParams.deliveryId,
-        actionParams.reason,
+        actionInput.deliveryId,
+        actionInput.reason,
         actor
       );
       if (!result.success) {
@@ -80,7 +75,54 @@ export async function POST(request: NextRequest) {
 
     case 'retry_assignment': {
       const result = await engine.dispatch.findAndAssignDriver(
-        actionParams.deliveryId,
+        actionInput.deliveryId,
+        actor
+      );
+      if (!result.success) {
+        return errorResponse(result.error!.code, result.error!.message);
+      }
+      return successResponse(result.data);
+    }
+
+    case 'escalate_exception': {
+      const result = await engine.ops.escalateDeliveryException(
+        actionInput.deliveryId,
+        actionInput.reason,
+        actor
+      );
+      if (!result.success) {
+        return errorResponse(result.error!.code, result.error!.message);
+      }
+      return successResponse(result.data);
+    }
+
+    case 'cancel_delivery': {
+      const result = await engine.ops.cancelDelivery(
+        actionInput.deliveryId,
+        actionInput.reason,
+        actor
+      );
+      if (!result.success) {
+        return errorResponse(result.error!.code, result.error!.message);
+      }
+      return successResponse(result.data);
+    }
+
+    case 'acknowledge_issue': {
+      const result = await engine.ops.acknowledgeException(
+        actionInput.exceptionId,
+        actor
+      );
+      if (!result.success) {
+        return errorResponse(result.error!.code, result.error!.message);
+      }
+      return successResponse(result.data);
+    }
+
+    case 'add_ops_note': {
+      const result = await engine.ops.addDeliveryOpsNote(
+        actionInput.deliveryId,
+        actionInput.note,
         actor
       );
       if (!result.success) {
@@ -90,6 +132,6 @@ export async function POST(request: NextRequest) {
     }
 
     default:
-      return errorResponse('INVALID_ACTION', `Unknown action: ${action}`);
+      return errorResponse('INVALID_ACTION', 'Unknown action');
   }
 }

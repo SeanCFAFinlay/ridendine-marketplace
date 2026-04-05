@@ -1,254 +1,143 @@
-import { Card, Badge } from '@ridendine/ui';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
-import {
-  createServerClient,
-  createAdminClient,
-  getPendingChefApprovals,
-  listOpsDeliveries,
-  listOpsDrivers,
-  listOpsOrders,
-  listOpsSupportTickets,
-  type SupabaseClient,
-} from '@ridendine/db';
+import { Badge, Card } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { RealTimeStats } from '@/components/dashboard/real-time-stats';
-import { RevenueChart } from '@/components/dashboard/revenue-chart';
-import { OrdersHeatmap } from '@/components/dashboard/orders-heatmap';
-import { AlertsPanel } from '@/components/dashboard/alerts-panel';
+import { getEngine } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
-async function getDashboardStats() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
-  const adminClient = createAdminClient() as unknown as SupabaseClient;
-
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-  const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-  try {
-    // Core queries that should always work
-    const [
-      ordersResult,
-      todayOrdersResult,
-      yesterdayOrdersResult,
-      todayRevenueResult,
-      yesterdayRevenueResult,
-      monthRevenueResult,
-      chefsResult,
-      customersResult,
-      activeStorefrontsResult,
-      orders,
-      deliveries,
-      drivers,
-      supportTickets,
-      approvals,
-    ] = await Promise.all([
-      supabase.from('orders').select('*', { count: 'exact', head: true }),
-      supabase.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
-      supabase.from('orders').select('*', { count: 'exact', head: true })
-        .gte('created_at', yesterday.toISOString())
-        .lt('created_at', today.toISOString()),
-      supabase.from('orders').select('total').gte('created_at', today.toISOString()).eq('payment_status', 'completed'),
-      supabase.from('orders').select('total')
-        .gte('created_at', yesterday.toISOString())
-        .lt('created_at', today.toISOString())
-        .eq('payment_status', 'completed'),
-      supabase.from('orders').select('total').gte('created_at', monthAgo.toISOString()).eq('payment_status', 'completed'),
-      supabase.from('chef_profiles').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
-      supabase.from('customers').select('*', { count: 'exact', head: true }),
-      supabase.from('chef_storefronts').select('*', { count: 'exact', head: true }).eq('is_active', true),
-      listOpsOrders(adminClient),
-      listOpsDeliveries(adminClient),
-      listOpsDrivers(adminClient),
-      listOpsSupportTickets(adminClient),
-      getPendingChefApprovals(adminClient),
-    ]);
-
-    const todayRevenue = (todayRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
-    const yesterdayRevenue = (yesterdayRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
-    const monthRevenue = (monthRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
-    const activeDeliveries = deliveries.filter((delivery) =>
-      ['assigned', 'accepted', 'en_route_to_pickup', 'picked_up', 'en_route_to_dropoff'].includes(delivery.status)
-    ).length;
-    const totalDrivers = drivers.filter((driver) => driver.status === 'approved').length;
-    const onlineDrivers = drivers.filter((driver) => driver.driver_presence?.status === 'online').length;
-    const openSupport = supportTickets.filter((ticket) => !['resolved', 'closed'].includes(ticket.status)).length;
-
-    const revenueGrowth = yesterdayRevenue > 0
-      ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
-      : 0;
-
-    const orderGrowth = (yesterdayOrdersResult.count || 0) > 0
-      ? (((todayOrdersResult.count || 0) - (yesterdayOrdersResult.count || 0)) / (yesterdayOrdersResult.count || 1)) * 100
-      : 0;
-
-    return {
-      totalOrders: ordersResult.count ?? 0,
-      todayOrders: todayOrdersResult.count ?? 0,
-      activeDeliveries,
-      pendingApprovals: approvals.length,
-      todayRevenue,
-      monthRevenue,
-      revenueGrowth,
-      orderGrowth,
-      totalDrivers,
-      onlineDrivers,
-      activeChefs: chefsResult.count ?? 0,
-      totalCustomers: customersResult.count ?? 0,
-      activeStorefronts: activeStorefrontsResult.count ?? 0,
-      ordersNeedingAction: orders.filter((order) => ['pending', 'accepted', 'preparing'].includes(order.status)).length,
-      supportOpen: openSupport,
-    };
-  } catch (error) {
-    console.error('Dashboard stats error:', error);
-    // Return default values if everything fails
-    return {
-      totalOrders: 0,
-      todayOrders: 0,
-      activeDeliveries: 0,
-      pendingApprovals: 0,
-      todayRevenue: 0,
-      monthRevenue: 0,
-      revenueGrowth: 0,
-      orderGrowth: 0,
-      totalDrivers: 0,
-      onlineDrivers: 0,
-      activeChefs: 0,
-      totalCustomers: 0,
-      activeStorefronts: 0,
-      ordersNeedingAction: 0,
-      supportOpen: 0,
-    };
-  }
-}
+const queueLinks = [
+  {
+    href: '/dashboard/deliveries?queue=pending',
+    label: 'Pending dispatch',
+    field: 'pendingDispatch' as const,
+    description: 'Orders waiting for driver assignment or auto-assign retry.',
+  },
+  {
+    href: '/dashboard/deliveries?queue=escalated',
+    label: 'Delivery escalations',
+    field: 'deliveryEscalations' as const,
+    description: 'Deliveries that require manual intervention or escalation handling.',
+  },
+  {
+    href: '/dashboard/orders',
+    label: 'Orders needing action',
+    field: 'ordersNeedingAction' as const,
+    description: 'Kitchen and order workflow states that need ops attention.',
+  },
+  {
+    href: '/dashboard/support',
+    label: 'Support backlog',
+    field: 'supportBacklog' as const,
+    description: 'Customer support work still waiting for review or resolution.',
+  },
+  {
+    href: '/dashboard/finance',
+    label: 'Pending refunds',
+    field: 'pendingRefunds' as const,
+    description: 'Refund cases waiting for finance review or execution.',
+  },
+  {
+    href: '/dashboard/chefs',
+    label: 'Storefront risks',
+    field: 'storefrontRisks' as const,
+    description: 'Paused or risky storefronts that threaten service quality.',
+  },
+];
 
 export default async function DashboardPage() {
-  const stats = await getDashboardStats();
-
-  const primaryStats = [
-    {
-      label: "Today's Revenue",
-      value: `$${stats.todayRevenue.toFixed(2)}`,
-      change: `${stats.revenueGrowth >= 0 ? '+' : ''}${stats.revenueGrowth.toFixed(1)}%`,
-      changeType: stats.revenueGrowth >= 0 ? 'positive' : 'negative',
-      color: 'text-emerald-400',
-    },
-    {
-      label: "Today's Orders",
-      value: stats.todayOrders.toString(),
-      change: `${stats.orderGrowth >= 0 ? '+' : ''}${stats.orderGrowth.toFixed(1)}%`,
-      changeType: stats.orderGrowth >= 0 ? 'positive' : 'negative',
-      color: 'text-blue-400',
-    },
-    {
-      label: 'Active Deliveries',
-      value: stats.activeDeliveries.toString(),
-      change: 'In progress now',
-      changeType: 'neutral',
-      color: 'text-purple-400',
-    },
-    {
-      label: 'Drivers Online',
-      value: `${stats.onlineDrivers}/${stats.totalDrivers}`,
-      change: `${Math.round((stats.onlineDrivers / Math.max(stats.totalDrivers, 1)) * 100)}% available`,
-      changeType: 'neutral',
-      color: 'text-green-400',
-    },
-  ];
-
-  const secondaryStats = [
-    { label: 'Monthly Revenue', value: `$${stats.monthRevenue.toFixed(2)}` },
-    { label: 'Orders Needing Action', value: stats.ordersNeedingAction.toString() },
-    { label: 'Active Chefs', value: stats.activeChefs.toString() },
-    { label: 'Live Storefronts', value: stats.activeStorefronts.toString() },
-    { label: 'Total Customers', value: stats.totalCustomers.toLocaleString() },
-    { label: 'Open Support', value: stats.supportOpen.toString() },
-  ];
-
-  const quickActions = [
-    { href: '/dashboard/chefs/approvals', label: 'Chef Approvals', count: stats.pendingApprovals, urgent: stats.pendingApprovals > 0 },
-    { href: '/dashboard/map', label: 'Live Map', count: stats.activeDeliveries },
-    { href: '/dashboard/orders', label: 'All Orders', count: stats.totalOrders },
-    { href: '/dashboard/drivers', label: 'Manage Drivers', count: stats.totalDrivers },
-  ];
+  const dashboard = await getEngine().ops.getDashboard();
 
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Operations Command Center</h1>
-            <p className="mt-1 text-gray-400">Real-time platform monitoring</p>
+            <h1 className="text-3xl font-bold text-white">Marketplace Control Center</h1>
+            <p className="mt-1 text-gray-400">
+              Engine-backed operational state for dispatch, exceptions, support, finance, and governance.
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="flex h-3 w-3 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-            </span>
-            <span className="text-sm text-green-400">Live</span>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Drivers</p>
+              <p className="mt-1 text-lg font-semibold text-white">
+                {dashboard.driversOnline} online / {dashboard.driversBusy} busy
+              </p>
+            </div>
+            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Exceptions</p>
+              <p className="mt-1 text-lg font-semibold text-white">
+                {dashboard.openExceptions} open
+              </p>
+            </div>
+            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-gray-500">SLA Breaches</p>
+              <p className="mt-1 text-lg font-semibold text-white">
+                {dashboard.slaBreaches} today
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Primary Stats */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {primaryStats.map((stat) => (
-            <Card key={stat.label} className="border-gray-800 bg-[#16213e] p-6">
-              <p className="text-sm text-gray-400">{stat.label}</p>
-              <p className={`mt-2 text-3xl font-bold ${stat.color}`}>{stat.value}</p>
-              <p className={`mt-1 text-sm ${
-                stat.changeType === 'positive' ? 'text-green-400' :
-                stat.changeType === 'negative' ? 'text-red-400' : 'text-gray-500'
-              }`}>
-                {stat.change}
-              </p>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {dashboard.cards.map((card) => (
+            <Card key={card.label} className="border-gray-800 bg-[#16213e] p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm text-gray-400">{card.label}</p>
+                  <p className="mt-2 text-3xl font-bold text-white">{card.value}</p>
+                </div>
+                <Badge
+                  className={
+                    card.tone === 'critical'
+                      ? 'bg-red-500/20 text-red-200'
+                      : card.tone === 'warning'
+                        ? 'bg-yellow-500/20 text-yellow-200'
+                        : card.tone === 'success'
+                          ? 'bg-emerald-500/20 text-emerald-200'
+                          : 'bg-gray-700 text-gray-200'
+                  }
+                >
+                  {card.tone}
+                </Badge>
+              </div>
             </Card>
           ))}
         </div>
 
-        {/* Real-time updates and alerts */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <RealTimeStats />
-          </div>
-          <div>
-            <AlertsPanel pendingApprovals={stats.pendingApprovals} />
-          </div>
-        </div>
-
-        {/* Charts */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <RevenueChart />
-          <OrdersHeatmap />
-        </div>
-
-        {/* Secondary Stats */}
         <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Platform Overview</h3>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-            {secondaryStats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-2xl font-bold text-white">{stat.value}</p>
-                <p className="text-xs text-gray-400 mt-1">{stat.label}</p>
-              </div>
-            ))}
+          <h2 className="text-lg font-semibold text-white">Operational Load</h2>
+          <div className="mt-4 grid gap-4 lg:grid-cols-4">
+            <div className="rounded-lg bg-[#1a1a2e] p-4">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Active orders</p>
+              <p className="mt-2 text-2xl font-semibold text-white">{dashboard.activeOrders}</p>
+            </div>
+            <div className="rounded-lg bg-[#1a1a2e] p-4">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Active deliveries</p>
+              <p className="mt-2 text-2xl font-semibold text-white">{dashboard.activeDeliveries}</p>
+            </div>
+            <div className="rounded-lg bg-[#1a1a2e] p-4">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Pending dispatch</p>
+              <p className="mt-2 text-2xl font-semibold text-white">{dashboard.pendingDispatch}</p>
+            </div>
+            <div className="rounded-lg bg-[#1a1a2e] p-4">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Driver unavailable</p>
+              <p className="mt-2 text-2xl font-semibold text-white">{dashboard.driversUnavailable}</p>
+            </div>
           </div>
         </Card>
 
-        {/* Quick Actions */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {quickActions.map((action) => (
-            <Link key={action.href} href={action.href}>
-              <Card className={`cursor-pointer border-gray-800 bg-[#16213e] p-6 transition-all hover:border-[#E85D26] hover:shadow-lg ${
-                action.urgent ? 'border-orange-500 animate-pulse' : ''
-              }`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-white">{action.label}</span>
-                  <Badge className={action.urgent ? 'bg-orange-500 text-white' : 'bg-gray-700 text-gray-300'}>
-                    {action.count}
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          {queueLinks.map((queue) => (
+            <Link key={queue.href} href={queue.href}>
+              <Card className="h-full border-gray-800 bg-[#16213e] p-6 transition-colors hover:border-[#E85D26]">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-white">{queue.label}</h2>
+                    <p className="mt-2 text-sm text-gray-400">{queue.description}</p>
+                  </div>
+                  <Badge className="bg-[#E85D26]/20 text-[#F7B49A]">
+                    {dashboard[queue.field]}
                   </Badge>
                 </div>
               </Card>

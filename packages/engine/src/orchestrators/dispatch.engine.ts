@@ -4,6 +4,7 @@
 // ==========================================
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { getPlatformSettings } from '@ridendine/db';
 import type {
   ActorContext,
   OperationResult,
@@ -42,14 +43,36 @@ interface EligibleDriver {
   user_id: string;
   first_name: string;
   last_name: string;
+  approval_state: string;
+  presence_status: string;
   distance_km: number;
   estimated_minutes: number;
   rating?: number;
   total_deliveries: number;
+  active_workload: number;
+  recent_declines: number;
+  recent_expiries: number;
+  fairness_score: number;
 }
 
-const OFFER_TIMEOUT_SECONDS = 60;
-const MAX_ASSIGNMENT_ATTEMPTS = 5;
+export function calculateDriverAssignmentScore(driver: EligibleDriver): number {
+  const distanceScore = Math.max(0, (12 - driver.distance_km) * 10);
+  const ratingScore = (driver.rating || 4) * 5;
+  const experienceScore = Math.min(driver.total_deliveries, 500) / 25;
+  const workloadPenalty = driver.active_workload * 25;
+  const declinePenalty = driver.recent_declines * 8;
+  const expiryPenalty = driver.recent_expiries * 10;
+  const fairnessBonus = driver.fairness_score * 12;
+  return Math.round(
+    distanceScore +
+      ratingScore +
+      experienceScore +
+      fairnessBonus -
+      workloadPenalty -
+      declinePenalty -
+      expiryPenalty
+  );
+}
 
 export class DispatchEngine {
   private client: SupabaseClient;
@@ -242,7 +265,8 @@ export class DispatchEngine {
     }
 
     // Check if max attempts reached
-    if (delivery.assignment_attempts_count >= MAX_ASSIGNMENT_ATTEMPTS) {
+    const settings = await this.getDispatchSettings();
+    if (delivery.assignment_attempts_count >= settings.maxAssignmentAttempts) {
       // Escalate to ops
       await this.escalateToOps(deliveryId, 'max_attempts_reached', actor);
       return {
@@ -254,7 +278,8 @@ export class DispatchEngine {
     // Find eligible drivers
     const eligibleDrivers = await this.findEligibleDrivers(
       delivery.pickup_lat,
-      delivery.pickup_lng
+      delivery.pickup_lng,
+      settings.dispatchRadiusKm
     );
 
     if (eligibleDrivers.length === 0) {
@@ -302,7 +327,7 @@ export class DispatchEngine {
 
     // Create assignment attempt
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + OFFER_TIMEOUT_SECONDS * 1000);
+    const expiresAt = new Date(now.getTime() + settings.offerTimeoutSeconds * 1000);
 
     const { data: attempt, error: attemptError } = await this.client
       .from('assignment_attempts')
@@ -956,7 +981,8 @@ export class DispatchEngine {
       .order('created_at', { ascending: true });
 
     // Available drivers
-    const availableDrivers = await this.findEligibleDrivers(0, 0, false);
+    const settings = await this.getDispatchSettings();
+    const availableDrivers = await this.findEligibleDrivers(0, 0, settings.dispatchRadiusKm, false);
 
     // Escalated
     const { data: escalated } = await this.client
@@ -1023,6 +1049,7 @@ export class DispatchEngine {
   private async findEligibleDrivers(
     pickupLat: number,
     pickupLng: number,
+    maxRadiusKm = 10,
     filterByLocation = true
   ): Promise<EligibleDriver[]> {
     // Get online, approved drivers
@@ -1031,6 +1058,7 @@ export class DispatchEngine {
       .select(`
         id,
         user_id,
+        status,
         first_name,
         last_name,
         rating,
@@ -1050,6 +1078,50 @@ export class DispatchEngine {
 
     // Calculate distances and filter
     const eligible: EligibleDriver[] = [];
+    const driverIds = (drivers ?? []).map((driver) => driver.id);
+    const [activeDeliveriesResult, attemptsResult] = await Promise.all([
+      driverIds.length
+        ? ((this.client
+            .from('deliveries')
+            .select('driver_id')
+            .in('driver_id', driverIds)
+            .in('status', ['assigned', 'accepted', 'en_route_to_pickup', 'arrived_at_pickup', 'picked_up', 'en_route_to_dropoff', 'arrived_at_dropoff']) as any) as Promise<any>)
+        : Promise.resolve({ data: [], error: null }),
+      driverIds.length
+        ? ((this.client
+            .from('assignment_attempts')
+            .select('driver_id, response')
+            .in('driver_id', driverIds)
+            .gte('offered_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) as any) as Promise<any>)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+
+    const activeWorkload = new Map<string, number>();
+    for (const active of activeDeliveriesResult.data ?? []) {
+      if (!active.driver_id) continue;
+      activeWorkload.set(
+        active.driver_id,
+        (activeWorkload.get(active.driver_id) ?? 0) + 1
+      );
+    }
+
+    const recentDeclines = new Map<string, number>();
+    const recentExpiries = new Map<string, number>();
+    for (const attempt of attemptsResult.data ?? []) {
+      if (!attempt.driver_id) continue;
+      if (attempt.response === 'declined') {
+        recentDeclines.set(
+          attempt.driver_id,
+          (recentDeclines.get(attempt.driver_id) ?? 0) + 1
+        );
+      }
+      if (attempt.response === 'expired') {
+        recentExpiries.set(
+          attempt.driver_id,
+          (recentExpiries.get(attempt.driver_id) ?? 0) + 1
+        );
+      }
+    }
 
     for (const driver of drivers) {
       // driver_presence is returned as single object with !inner join
@@ -1069,19 +1141,26 @@ export class DispatchEngine {
           pickupLng
         );
 
-        // Filter drivers within 10km
-        if (distance > 10) continue;
+        if (distance > maxRadiusKm) continue;
       }
+
+      const workload = activeWorkload.get(driver.id) ?? 0;
 
       eligible.push({
         id: driver.id,
         user_id: driver.user_id,
         first_name: driver.first_name,
         last_name: driver.last_name,
+        approval_state: driver.status,
+        presence_status: presence.status,
         distance_km: distance,
         estimated_minutes: Math.round((distance / 30) * 60) + 5,
         rating: driver.rating,
         total_deliveries: driver.total_deliveries,
+        active_workload: workload,
+        recent_declines: recentDeclines.get(driver.id) ?? 0,
+        recent_expiries: recentExpiries.get(driver.id) ?? 0,
+        fairness_score: 1 / (workload + 1),
       });
     }
 
@@ -1097,10 +1176,9 @@ export class DispatchEngine {
       return null;
     }
 
-    // Score drivers: closer is better, higher rating is better
-    const scored = drivers.map((d) => ({
-      ...d,
-      score: (1 / (d.distance_km + 1)) * 10 + (d.rating || 4) + (d.total_deliveries / 100),
+    const scored = drivers.map((driver) => ({
+      ...driver,
+      score: calculateDriverAssignmentScore(driver),
     }));
 
     // Return highest scored
@@ -1202,6 +1280,19 @@ export class DispatchEngine {
 
   private toRad(deg: number): number {
     return deg * (Math.PI / 180);
+  }
+
+  private async getDispatchSettings(): Promise<{
+    dispatchRadiusKm: number;
+    offerTimeoutSeconds: number;
+    maxAssignmentAttempts: number;
+  }> {
+    const settings = await getPlatformSettings(this.client as unknown as any);
+    return {
+      dispatchRadiusKm: settings.dispatchRadiusKm,
+      offerTimeoutSeconds: settings.offerTimeoutSeconds,
+      maxAssignmentAttempts: settings.maxAssignmentAttempts,
+    };
   }
 }
 

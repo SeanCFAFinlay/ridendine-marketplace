@@ -13,6 +13,7 @@ import { DispatchEngine, createDispatchEngine } from '../orchestrators/dispatch.
 import { CommerceLedgerEngine, createCommerceLedgerEngine } from '../orchestrators/commerce.engine';
 import { SupportExceptionEngine, createSupportExceptionEngine } from '../orchestrators/support.engine';
 import { PlatformWorkflowEngine, createPlatformWorkflowEngine } from '../orchestrators/platform.engine';
+import { OpsControlEngine, createOpsControlEngine } from '../orchestrators/ops.engine';
 
 /**
  * Central Engine instance
@@ -31,6 +32,7 @@ export interface CentralEngine {
   commerce: CommerceLedgerEngine;
   support: SupportExceptionEngine;
   platform: PlatformWorkflowEngine;
+  ops: OpsControlEngine;
 }
 
 /**
@@ -49,6 +51,7 @@ export function createCentralEngine(client: SupabaseClient): CentralEngine {
   const commerce = createCommerceLedgerEngine(client, events, audit);
   const support = createSupportExceptionEngine(client, events, audit);
   const platform = createPlatformWorkflowEngine(client, events, audit, orders, dispatch, support);
+  const ops = createOpsControlEngine(client, events, audit, dispatch, support, commerce);
 
   return {
     events,
@@ -60,6 +63,7 @@ export function createCentralEngine(client: SupabaseClient): CentralEngine {
     commerce,
     support,
     platform,
+    ops,
   };
 }
 
