@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@ridendine/auth';
 import { Button, Input } from '@ridendine/ui';
 
 export default function DriverLoginPage() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const { signIn, loading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,7 +16,8 @@ export default function DriverLoginPage() {
     e.preventDefault();
     const result = await signIn(email, password);
     if (result.success) {
-      router.push('/');
+      const redirect = searchParams.get('redirect');
+      window.location.assign(redirect || '/');
     }
   };
 

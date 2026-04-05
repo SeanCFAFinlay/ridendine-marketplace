@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@ridendine/auth';
 import { Button, Input } from '@ridendine/ui';
 import { AuthLayout } from '../../../components/auth/auth-layout';
 
 export default function LoginPage() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const { signIn, loading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,7 +18,8 @@ export default function LoginPage() {
     e.preventDefault();
     const result = await signIn(email, password);
     if (result.success) {
-      router.push('/chefs');
+      const redirect = searchParams.get('redirect');
+      window.location.assign(redirect || '/chefs');
     }
   };
 
