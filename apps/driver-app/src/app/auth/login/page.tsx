@@ -3,21 +3,43 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
-import { useAuth } from '@ridendine/auth';
 import { Button, Input } from '@ridendine/ui';
 
 export default function DriverLoginPage() {
   const searchParams = useSearchParams();
-  const { signIn, loading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await signIn(email, password);
-    if (result.success) {
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Sign in failed');
+        return;
+      }
+
       const redirect = searchParams.get('redirect');
       window.location.assign(redirect || '/');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign in failed');
+    } finally {
+      setLoading(false);
     }
   };
 

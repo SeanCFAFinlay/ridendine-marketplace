@@ -3,23 +3,45 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useAuth } from '@ridendine/auth';
 import { Button, Input } from '@ridendine/ui';
 import { AuthLayout } from '../../../components/auth/auth-layout';
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
-  const { signIn, loading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await signIn(email, password);
-    if (result.success) {
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Sign in failed');
+        return;
+      }
+
       const redirect = searchParams.get('redirect');
       window.location.assign(redirect || '/chefs');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign in failed');
+    } finally {
+      setLoading(false);
     }
   };
 
