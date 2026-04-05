@@ -20,7 +20,8 @@ interface Order {
   };
   address?: {
     id: string;
-    street_address: string;
+    address_line1: string;
+    address_line2?: string | null;
     city: string;
     state?: string;
     postal_code?: string;
@@ -255,7 +256,7 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
                   )}
                   {order.address && (
                     <p className="text-sm text-gray-500">
-                      {order.address.street_address}, {order.address.city}
+                      {order.address.address_line1}, {order.address.city}
                     </p>
                   )}
                   {order.special_instructions && (

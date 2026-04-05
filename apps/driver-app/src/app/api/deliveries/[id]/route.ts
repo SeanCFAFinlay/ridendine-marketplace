@@ -37,6 +37,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const adminClient = createAdminClient() as unknown as SupabaseClient;
 
     // Get delivery with related data
+    // FIXED: chef_kitchens uses address_line1/lat/lng, not address/lat/lng
     const { data: delivery, error } = await adminClient
       .from('deliveries')
       .select(`
@@ -57,8 +58,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             phone,
             kitchen:chef_kitchens (
               address,
+              address_line1,
+              address_line2,
+              city,
+              state,
+              postal_code,
               lat,
-              lng
+              lng,
+              phone
             )
           ),
           items:order_items (
@@ -72,6 +79,22 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (error || !delivery) {
       return errorResponse('NOT_FOUND', 'Delivery not found', 404);
+    }
+
+    // Normalize kitchen address for driver display
+    // Prefer the denormalized 'address' field; fall back to composing from parts
+    const rawOrder = delivery.orders as any;
+    if (rawOrder?.storefront?.kitchen) {
+      const k = rawOrder.storefront.kitchen;
+      if (!k.address && k.address_line1) {
+        k.address = [
+          k.address_line1,
+          k.address_line2,
+          k.city,
+          k.state,
+          k.postal_code,
+        ].filter(Boolean).join(', ');
+      }
     }
 
     // Get any active assignment attempt

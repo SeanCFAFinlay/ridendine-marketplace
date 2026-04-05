@@ -366,6 +366,7 @@ export class DispatchEngine {
       user_id: selectedDriver.user_id,
       type: 'delivery_offer',
       title: 'New Delivery Request',
+      body: `New delivery available: ${delivery.pickup_address} to ${delivery.dropoff_address}`,
       message: `New delivery available: ${delivery.pickup_address} to ${delivery.dropoff_address}`,
       data: {
         deliveryId,

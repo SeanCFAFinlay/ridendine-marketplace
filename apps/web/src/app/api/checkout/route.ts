@@ -25,6 +25,12 @@ interface PromoCodeRow {
   id: string;
   code: string;
   is_active: boolean;
+  // Schema columns (canonical)
+  starts_at: string | null;
+  expires_at: string | null;
+  usage_limit: number | null;
+  usage_count: number;
+  // Alias columns added by migration 00010 (kept for backwards compat)
   valid_from: string | null;
   valid_until: string | null;
   max_uses: number | null;
@@ -70,15 +76,19 @@ export async function POST(request: Request): Promise<Response> {
       const typedPromo = promo as PromoCodeRow | null;
 
       if (typedPromo) {
-        // Check validity
+        // Check validity — use canonical schema columns with alias fallback
         const now = new Date();
-        if (typedPromo.valid_from && new Date(typedPromo.valid_from) > now) {
+        const activeFrom = typedPromo.starts_at ?? typedPromo.valid_from;
+        const activeUntil = typedPromo.expires_at ?? typedPromo.valid_until;
+        const maxUses = typedPromo.usage_limit ?? typedPromo.max_uses;
+        const usedCount = typedPromo.usage_count ?? typedPromo.times_used;
+        if (activeFrom && new Date(activeFrom) > now) {
           return errorResponse('PROMO_NOT_ACTIVE', 'Promo code is not yet active');
         }
-        if (typedPromo.valid_until && new Date(typedPromo.valid_until) < now) {
+        if (activeUntil && new Date(activeUntil) < now) {
           return errorResponse('PROMO_EXPIRED', 'Promo code has expired');
         }
-        if (typedPromo.max_uses && typedPromo.times_used >= typedPromo.max_uses) {
+        if (maxUses && usedCount >= maxUses) {
           return errorResponse('PROMO_EXHAUSTED', 'Promo code has reached maximum uses');
         }
 

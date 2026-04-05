@@ -386,11 +386,30 @@ export class OrderOrchestrator {
       metadata: { storefrontId: order.storefront_id },
     });
 
-    // Create notification for chef
+    // Create notification for chef — look up chef's user_id via storefront → chef_profile
+    let chefUserId: string | null = null;
+    try {
+      const { data: storefront } = await this.client
+        .from('chef_storefronts')
+        .select('chef_id')
+        .eq('id', order.storefront_id)
+        .single();
+      if (storefront?.chef_id) {
+        const { data: chefProfile } = await this.client
+          .from('chef_profiles')
+          .select('user_id')
+          .eq('id', storefront.chef_id)
+          .single();
+        chefUserId = chefProfile?.user_id ?? null;
+      }
+    } catch {
+      // Non-fatal: notification is best-effort
+    }
     await this.client.from('notifications').insert({
-      user_id: null, // Would need to get chef user ID
+      user_id: chefUserId,
       type: 'order_placed',
       title: 'New Order Received',
+      body: `Order ${order.order_number} has been placed`,
       message: `Order ${order.order_number} has been placed`,
       data: { orderId, orderNumber: order.order_number },
     });

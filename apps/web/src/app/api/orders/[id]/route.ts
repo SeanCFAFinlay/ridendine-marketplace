@@ -85,10 +85,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             first_name,
             last_name,
             phone,
-            vehicle_make,
-            vehicle_model,
-            vehicle_color,
-            license_plate
+            driver_vehicles (
+              make,
+              model,
+              color,
+              license_plate,
+              is_active
+            )
           )
         )
       `)

@@ -126,10 +126,11 @@ export async function POST(request: NextRequest) {
         .insert({
           chef_id: chefContext.chefId,
           name: name.trim(),
-          street_address: 'To be updated',
+          address_line1: 'To be updated',
           city: 'To be updated',
           state: 'BC',
           postal_code: 'V0V 0V0',
+          country: 'CA',
           is_verified: false,
         })
         .select()

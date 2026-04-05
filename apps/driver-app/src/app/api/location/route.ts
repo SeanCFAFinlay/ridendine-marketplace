@@ -60,13 +60,20 @@ export async function POST(request: NextRequest) {
     const engine = getEngine();
 
     // Update driver's current location in driver_presence
+    // Write both field names so they stay in sync (migration 00010 also syncs via trigger)
+    const locationTimestamp = new Date().toISOString();
     await adminClient
       .from('driver_presence')
       .upsert({
         driver_id: driverId,
         current_lat: lat,
         current_lng: lng,
-        last_location_at: new Date().toISOString(),
+        last_location_lat: lat,
+        last_location_lng: lng,
+        last_location_update: locationTimestamp,
+        last_location_at: locationTimestamp,
+        last_updated_at: locationTimestamp,
+        updated_at: locationTimestamp,
       }, {
         onConflict: 'driver_id',
       });

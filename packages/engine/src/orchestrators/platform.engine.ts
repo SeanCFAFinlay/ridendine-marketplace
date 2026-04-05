@@ -291,6 +291,7 @@ export class PlatformWorkflowEngine {
         user_id: customer.user_id,
         type: 'refund',
         title: isFullRefund ? 'Refund Processed' : 'Partial Refund Processed',
+        body: `A refund of $${(input.refundedAmountCents / 100).toFixed(2)} has been issued to your payment method.`,
         message: `A refund of $${(input.refundedAmountCents / 100).toFixed(2)} has been issued to your payment method.`,
         data: { order_id: order.id, refund_amount: input.refundedAmountCents },
       });
@@ -584,6 +585,7 @@ export class PlatformWorkflowEngine {
       user_id: userId,
       type: payload.type,
       title: payload.title,
+      body: payload.message,
       message: payload.message,
       data: payload.data ?? {},
     });

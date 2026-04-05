@@ -86,7 +86,7 @@ export async function PATCH(request: NextRequest) {
         {
           driver_id: driverContext.driverId,
           status,
-          last_status_change_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         },
         {
           onConflict: 'driver_id',
@@ -124,7 +124,7 @@ export async function PATCH(request: NextRequest) {
         .from('deliveries')
         .select('id, status')
         .eq('driver_id', driverContext.driverId)
-        .not('status', 'in', '("delivered","cancelled","failed")')
+        .in('status', ['assigned', 'en_route_to_pickup', 'arrived_at_pickup', 'picked_up', 'en_route_to_dropoff', 'arrived_at_dropoff'])
         .maybeSingle();
 
       if (activeDelivery) {
