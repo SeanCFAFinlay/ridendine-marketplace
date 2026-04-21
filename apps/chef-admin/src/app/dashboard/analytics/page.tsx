@@ -82,7 +82,7 @@ export default function AnalyticsPage() {
         .from('order_items')
         .select(`
           quantity,
-          price,
+          unit_price,
           menu_items (name)
         `)
         .in('order_id', orders.map(o => o.id));
@@ -103,7 +103,7 @@ export default function AnalyticsPage() {
           itemCounts[name] = { count: 0, revenue: 0 };
         }
         itemCounts[name].count += item.quantity;
-        itemCounts[name].revenue += item.price * item.quantity;
+        itemCounts[name].revenue += item.unit_price * item.quantity;
       });
 
       const topItems = Object.entries(itemCounts)

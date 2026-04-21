@@ -738,6 +738,198 @@ export type Database = {
         }
         Relationships: []
       }
+      carts: {
+        Row: {
+          id: string
+          customer_id: string
+          storefront_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id: string
+          storefront_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string
+          storefront_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cart_items: {
+        Row: {
+          id: string
+          cart_id: string
+          menu_item_id: string
+          quantity: number
+          unit_price: number
+          special_instructions: string | null
+          selected_options: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          cart_id: string
+          menu_item_id: string
+          quantity?: number
+          unit_price: number
+          special_instructions?: string | null
+          selected_options?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          cart_id?: string
+          menu_item_id?: string
+          quantity?: number
+          unit_price?: number
+          special_instructions?: string | null
+          selected_options?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      menu_categories: {
+        Row: {
+          id: string
+          storefront_id: string
+          name: string
+          description: string | null
+          sort_order: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          storefront_id: string
+          name: string
+          description?: string | null
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          storefront_id?: string
+          name?: string
+          description?: string | null
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          id: string
+          order_id: string
+          menu_item_id: string
+          menu_item_name: string | null
+          quantity: number
+          unit_price: number
+          total_price: number
+          special_instructions: string | null
+          selected_options: Json | null
+          subtotal: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          menu_item_id: string
+          menu_item_name?: string | null
+          quantity: number
+          unit_price: number
+          total_price?: number
+          special_instructions?: string | null
+          selected_options?: Json | null
+          subtotal?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          menu_item_id?: string
+          menu_item_name?: string | null
+          quantity?: number
+          unit_price?: number
+          total_price?: number
+          special_instructions?: string | null
+          selected_options?: Json | null
+          subtotal?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          id: string
+          order_id: string | null
+          customer_id: string | null
+          chef_id: string | null
+          driver_id: string | null
+          user_id: string | null
+          subject: string
+          description: string
+          status: string
+          priority: string
+          category: string | null
+          assigned_to: string | null
+          resolved_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id?: string | null
+          customer_id?: string | null
+          chef_id?: string | null
+          driver_id?: string | null
+          user_id?: string | null
+          subject: string
+          description: string
+          status?: string
+          priority?: string
+          category?: string | null
+          assigned_to?: string | null
+          resolved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string | null
+          customer_id?: string | null
+          chef_id?: string | null
+          driver_id?: string | null
+          user_id?: string | null
+          subject?: string
+          description?: string
+          status?: string
+          priority?: string
+          category?: string | null
+          assigned_to?: string | null
+          resolved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customer_addresses: {
         Row: {
           id: string
@@ -840,3 +1032,4 @@ export type Database = {
 export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
 export type InsertTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']
 export type UpdateTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update']
+export type Enums = Database['public']['Enums']

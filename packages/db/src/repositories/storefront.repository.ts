@@ -126,7 +126,7 @@ export async function getStorefrontByChefId(
 
 export async function createStorefront(
   client: SupabaseClient,
-  storefront: Omit<ChefStorefront, 'id' | 'created_at' | 'updated_at' | 'average_rating' | 'total_reviews'>
+  storefront: Partial<ChefStorefront> & Pick<ChefStorefront, 'chef_id' | 'kitchen_id' | 'slug' | 'name'>
 ): Promise<ChefStorefront> {
   const { data, error } = await client
     .from('chef_storefronts')

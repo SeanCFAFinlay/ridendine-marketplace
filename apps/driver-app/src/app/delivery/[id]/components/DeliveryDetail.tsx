@@ -235,10 +235,10 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'update_status',
           status: 'delivered',
-          proof_photo: photo,
-          signature: signature,
-          completed_at: new Date().toISOString(),
+          proofUrl: photo,
+          notes: signature ? 'Signature captured' : undefined,
         }),
       });
 

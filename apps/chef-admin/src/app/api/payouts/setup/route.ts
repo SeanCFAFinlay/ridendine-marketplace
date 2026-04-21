@@ -25,7 +25,7 @@ export async function POST() {
     // Get chef profile
     const { data: chefProfile } = await supabase
       .from('chef_profiles')
-      .select('id, first_name, last_name')
+      .select('id, display_name')
       .eq('user_id', user.id)
       .single();
 
@@ -58,13 +58,13 @@ export async function POST() {
         },
         business_type: 'individual',
         individual: {
-          first_name: chefProfile.first_name,
-          last_name: chefProfile.last_name,
+          first_name: chefProfile.display_name?.split(' ')[0] || 'Chef',
+          last_name: chefProfile.display_name?.split(' ').slice(1).join(' ') || '',
           email: user.email,
         },
         business_profile: {
           mcc: '5812', // Restaurants
-          name: `${chefProfile.first_name} ${chefProfile.last_name} - Chef`,
+          name: `${chefProfile.display_name || 'Chef'} - RideNDine`,
         },
       });
 

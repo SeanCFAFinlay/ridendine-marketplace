@@ -40,6 +40,9 @@ export async function POST(request: NextRequest) {
       priority: 'medium',
       category: validated.category ?? 'general',
       order_id: null,
+      customer_id: null,
+      chef_id: null,
+      driver_id: null,
       assigned_to: null,
       resolved_at: null,
     });

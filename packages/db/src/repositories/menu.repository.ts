@@ -62,7 +62,7 @@ export async function getMenuItemById(
 
 export async function createMenuItem(
   client: SupabaseClient,
-  item: Omit<MenuItem, 'id' | 'created_at' | 'updated_at'>
+  item: Partial<MenuItem> & Pick<MenuItem, 'category_id' | 'storefront_id' | 'name' | 'price'>
 ): Promise<MenuItem> {
   const { data, error } = await client
     .from('menu_items')
