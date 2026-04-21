@@ -35,7 +35,17 @@ function ChefsLoadingSkeleton() {
   );
 }
 
-export default function ChefsPage() {
+export default async function ChefsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string; cuisine?: string | string[]; rating?: string }>;
+}) {
+  const params = await searchParams;
+  const cuisines = params.cuisine
+    ? Array.isArray(params.cuisine) ? params.cuisine : [params.cuisine]
+    : [];
+  const minRating = params.rating ? parseFloat(params.rating) : undefined;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -54,13 +64,15 @@ export default function ChefsPage() {
         <div className="flex flex-col gap-8 lg:flex-row">
           {/* Filters Sidebar */}
           <aside className="w-full lg:w-64 flex-shrink-0">
-            <ChefsFilters />
+            <Suspense fallback={<div />}>
+              <ChefsFilters />
+            </Suspense>
           </aside>
 
           {/* Chefs Grid */}
           <div className="flex-1 min-w-0">
             <Suspense fallback={<ChefsLoadingSkeleton />}>
-              <ChefsList />
+              <ChefsList search={params.search} cuisines={cuisines} minRating={minRating} />
             </Suspense>
           </div>
         </div>

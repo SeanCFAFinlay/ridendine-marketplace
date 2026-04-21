@@ -4,22 +4,32 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button, Input } from '@ridendine/ui';
 import { AuthLayout } from '@/components/auth/auth-layout';
+import { useAuth } from '@ridendine/auth';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const { resetPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      setIsSubmitted(true);
+    try {
+      const result = await resetPassword(email);
+      if (result.success) {
+        setIsSubmitted(true);
+      } else {
+        setError(result.error || 'Failed to send reset email. Please try again.');
+      }
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   if (isSubmitted) {

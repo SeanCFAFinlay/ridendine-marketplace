@@ -34,11 +34,29 @@ export default function SettingsPage() {
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    setTimeout(() => {
-      setSuccessMessage('Profile updated successfully');
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: profileData.firstName,
+          lastName: profileData.lastName,
+          phone: profileData.phone,
+        }),
+      });
+      if (response.ok) {
+        setSuccessMessage('Profile updated successfully');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        const data = await response.json();
+        setSuccessMessage('');
+        alert(data.error || 'Failed to update profile');
+      }
+    } catch {
+      alert('Failed to update profile. Please try again.');
+    } finally {
       setIsSaving(false);
-      setTimeout(() => setSuccessMessage(''), 3000);
-    }, 1000);
+    }
   };
 
   const handleNotificationToggle = (key: keyof typeof notificationSettings) => {

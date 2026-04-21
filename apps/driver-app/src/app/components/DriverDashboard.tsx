@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Driver, Delivery } from '@ridendine/db';
@@ -58,7 +58,26 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
     }
   };
 
-  const todayStats = { deliveries: 0, earnings: 0, hours: 0 };
+  const [todayStats, setTodayStats] = useState({ deliveries: 0, earnings: 0, hours: 0 });
+
+  useEffect(() => {
+    async function fetchTodayStats() {
+      try {
+        const response = await fetch('/api/earnings');
+        if (response.ok) {
+          const data = await response.json();
+          setTodayStats({
+            deliveries: data.today?.count ?? 0,
+            earnings: data.today?.earnings ?? 0,
+            hours: 0,
+          });
+        }
+      } catch {
+        // Keep defaults on error
+      }
+    }
+    fetchTodayStats();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] pb-24">

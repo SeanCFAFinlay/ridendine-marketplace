@@ -1,15 +1,32 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { createServerClient, getActiveStorefronts } from '@ridendine/db';
+import { createServerClient, getActiveStorefronts, searchStorefronts } from '@ridendine/db';
 
-export async function ChefsList() {
+interface ChefsListProps {
+  search?: string;
+  cuisines?: string[];
+  minRating?: number;
+}
+
+export async function ChefsList({ search, cuisines, minRating }: ChefsListProps = {}) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
   let chefs: Awaited<ReturnType<typeof getActiveStorefronts>> = [];
 
   try {
-    chefs = await getActiveStorefronts(supabase as any, { limit: 20 });
+    if (search) {
+      chefs = await searchStorefronts(supabase as any, search, 20);
+    } else {
+      chefs = await getActiveStorefronts(supabase as any, {
+        limit: 20,
+        cuisineTypes: cuisines && cuisines.length > 0 ? cuisines : undefined,
+      });
+    }
+
+    if (minRating) {
+      chefs = chefs.filter((c) => (c.average_rating ?? 0) >= minRating);
+    }
   } catch (error) {
     console.error('Failed to fetch chefs:', error);
   }

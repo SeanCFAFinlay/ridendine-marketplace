@@ -8,7 +8,7 @@ export const SERVICE_FEE_PERCENT = 8;
 export const HST_RATE = 13;
 
 // Delivery Configuration (in cents)
-export const BASE_DELIVERY_FEE = 399; // $3.99
+export const BASE_DELIVERY_FEE = 500; // $5.00
 export const DRIVER_PAYOUT_PERCENT = 80; // Driver gets 80% of delivery fee
 
 // Order Status Flow
