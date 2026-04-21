@@ -1,0 +1,52 @@
+%% Ride N Dine — Future Planning Dependency Map
+graph TD
+    subgraph "Phase A: Low Risk, Independent"
+        PW_RESET["Password Reset\nFlow"]
+        SETTINGS_FIX["Customer Settings\nSave Fix"]
+        ADMIN_NOTES_UI["Admin Notes\nUI"]
+        CHEF_HOURS["Chef Availability\nHours Editor"]
+    end
+
+    subgraph "Phase B: Medium Risk, Isolated"
+        IMG_UPLOAD["Image Upload\nPipeline"]
+        CHEF_DOCS_UI["Chef Document\nVerification"]
+        DRV_DOCS_UI["Driver Document\nVerification"]
+        FAVORITES_SYS["Favorites\nSystem"]
+        SEARCH_FILTER["Chef Search\n& Filters"]
+        DRV_SIGNUP["Driver Signup\nFlow"]
+    end
+
+    subgraph "Phase C: Medium Risk, Cross-cutting"
+        FEE_FIX["Fee Constant\nResolution"]
+        MENU_OPTIONS["Menu Item\nOptions/Modifiers"]
+        NOTIF_DISPATCH["Notification\nDispatch System"]
+    end
+
+    subgraph "Phase D: High Risk, Dependent"
+        DYN_FEES["Dynamic Delivery\nFees/Zones"]
+        BATCH_PAYOUT["Batch Payout\nSystem"]
+        PUSH_NOTIF["Real-time Push\nNotifications"]
+    end
+
+    subgraph "Prerequisites"
+        STORAGE["Supabase Storage\nBucket Setup"]
+        EMAIL_SVC["Email Service\n(Resend/SendGrid)"]
+        VAPID["VAPID Keys +\nService Worker"]
+    end
+
+    IMG_UPLOAD --> STORAGE
+    CHEF_DOCS_UI --> STORAGE
+    DRV_DOCS_UI --> STORAGE
+
+    NOTIF_DISPATCH --> EMAIL_SVC
+    PUSH_NOTIF --> VAPID
+    PUSH_NOTIF --> NOTIF_DISPATCH
+
+    FEE_FIX --> DYN_FEES
+    FEE_FIX --> MENU_OPTIONS
+
+    DYN_FEES --> CHEF_HOURS
+
+    MENU_OPTIONS -.->|"affects checkout\ncalculation"| FEE_FIX
+
+    BATCH_PAYOUT -.->|"needs finance\ninfrastructure"| FEE_FIX

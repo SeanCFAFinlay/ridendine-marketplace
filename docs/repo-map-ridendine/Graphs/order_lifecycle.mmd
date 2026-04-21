@@ -1,0 +1,32 @@
+%% Ride N Dine — Order Lifecycle State Machine
+stateDiagram-v2
+    [*] --> pending: Customer checkout\n(web /api/checkout)
+
+    pending --> accepted: Stripe webhook\n(submitToKitchen)
+    pending --> cancelled: Customer/Ops\ncancelOrder()
+
+    accepted --> preparing: Chef clicks\nStart Preparing
+    accepted --> rejected: Chef rejects\n(with reason)
+    accepted --> cancelled: Customer/Ops\ncancelOrder()
+
+    preparing --> ready_for_pickup: Chef clicks\nMark Ready
+    preparing --> cancelled: Ops cancel\n(override)
+
+    ready_for_pickup --> picked_up: Driver status\nupdate
+    ready_for_pickup --> cancelled: Ops cancel\n(override)
+
+    picked_up --> in_transit: Driver status\nupdate
+
+    in_transit --> delivered: Driver completes\n(photo+signature)
+
+    delivered --> completed: Platform engine\nauto-complete
+
+    completed --> refunded: Ops processes\nStripe refund
+
+    rejected --> [*]
+    cancelled --> [*]
+    refunded --> [*]
+
+    note right of pending: Payment processing\nvia Stripe
+    note right of ready_for_pickup: Auto-triggers\nDispatch Engine
+    note right of delivered: Creates ledger\nentries automatically

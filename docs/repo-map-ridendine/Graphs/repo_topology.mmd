@@ -1,0 +1,68 @@
+%% Ride N Dine — System Topology
+graph TB
+    subgraph "Client Layer (4 Next.js Apps)"
+        WEB["apps/web\nCustomer Marketplace\n:3000"]
+        CHEF["apps/chef-admin\nChef Dashboard\n:3001"]
+        OPS["apps/ops-admin\nOps Control Plane\n:3002"]
+        DRV["apps/driver-app\nDriver PWA\n:3003"]
+    end
+
+    subgraph "Shared Packages"
+        AUTH["@ridendine/auth"]
+        UI["@ridendine/ui"]
+        TYPES["@ridendine/types"]
+        VAL["@ridendine/validation"]
+        UTILS["@ridendine/utils"]
+        NOTIF["@ridendine/notifications"]
+        CONFIG["@ridendine/config"]
+    end
+
+    subgraph "Engine Layer"
+        ENGINE["@ridendine/engine"]
+        subgraph "Orchestrators"
+            ORD["OrderOrchestrator"]
+            DISP["DispatchEngine"]
+            KITCH["KitchenEngine"]
+            COMM["CommerceLedgerEngine"]
+            SUPP["SupportExceptionEngine"]
+            PLAT["PlatformWorkflowEngine"]
+            OPSENG["OpsControlEngine"]
+        end
+        subgraph "Core"
+            EVT["DomainEventEmitter"]
+            AUD["AuditLogger"]
+            SLA["SLAManager"]
+        end
+    end
+
+    subgraph "Data Layer"
+        DB["@ridendine/db"]
+        subgraph "Clients"
+            SRV["Server Client (RLS)"]
+            BRW["Browser Client (RLS)"]
+            ADM["Admin Client (no RLS)"]
+        end
+        REPO["14 Repositories"]
+    end
+
+    subgraph "External"
+        SUPA["Supabase\nPostgreSQL + Auth + Realtime"]
+        STRIPE["Stripe\nPayments + Connect"]
+        LEAF["Leaflet/OSM\nMaps"]
+    end
+
+    WEB --> AUTH & UI & ENGINE & DB
+    CHEF --> AUTH & UI & ENGINE & DB
+    OPS --> AUTH & UI & ENGINE & DB
+    DRV --> AUTH & UI & ENGINE & DB
+
+    ENGINE --> ORD & DISP & KITCH & COMM & SUPP & PLAT & OPSENG
+    ENGINE --> EVT & AUD & SLA
+    ORD & DISP & KITCH & COMM & SUPP & PLAT & OPSENG --> DB
+
+    DB --> REPO --> SRV & BRW & ADM --> SUPA
+
+    WEB --> STRIPE
+    CHEF --> STRIPE
+    WEB --> LEAF
+    DRV --> LEAF

@@ -1,0 +1,39 @@
+%% Ride N Dine — Menu Lifecycle
+graph TB
+    subgraph "Chef Creates"
+        CREATE_CAT["Create Category\nPOST /api/menu/categories"]
+        CREATE_ITEM["Create Menu Item\nPOST /api/menu"]
+    end
+
+    subgraph "Chef Manages"
+        EDIT["Edit Item\nPATCH /api/menu/[id]"]
+        TOGGLE["Toggle Availability\nPATCH /api/menu/[id]\nis_available: true/false"]
+        FEATURE["Toggle Featured\nPATCH /api/menu/[id]\nis_featured: true/false"]
+        DELETE["Delete Item\nDELETE /api/menu/[id]\n(soft: is_available=false)"]
+    end
+
+    subgraph "Visibility Gate"
+        GATE{"is_available = true\nAND\nstorefront is_active = true\nAND\nchef status = approved"}
+    end
+
+    subgraph "Customer Sees"
+        DISPLAY["Menu displayed on\n/chefs/[slug]"]
+        ADD["Add to Cart\nvia StorefrontMenu"]
+        ORDER["Included in Order\nvia checkout"]
+    end
+
+    subgraph "Not Yet Built"
+        OPTIONS["Item Options\n(size, toppings)\nSchema exists"]
+        AVAIL["Time-based Availability\n(breakfast/lunch/dinner)\nSchema exists"]
+        SOLD["Sold Out Tracking\n(daily_limit, daily_sold)\nFields exist"]
+    end
+
+    CREATE_CAT --> CREATE_ITEM
+    CREATE_ITEM --> EDIT & TOGGLE & FEATURE & DELETE
+    TOGGLE --> GATE
+    GATE -->|"All true"| DISPLAY
+    DISPLAY --> ADD --> ORDER
+
+    OPTIONS -.->|"future"| CREATE_ITEM
+    AVAIL -.->|"future"| GATE
+    SOLD -.->|"future"| TOGGLE

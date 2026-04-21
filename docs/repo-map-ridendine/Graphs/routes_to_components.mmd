@@ -1,0 +1,82 @@
+%% Ride N Dine — Routes → Components Map
+graph LR
+    subgraph "Web Routes"
+        W_HOME["/"]
+        W_CHEFS["/chefs"]
+        W_SLUG["/chefs/slug"]
+        W_CART["/cart"]
+        W_CHECK["/checkout"]
+        W_CONFIRM["/order-confirmation/id"]
+        W_ACCOUNT["/account"]
+        W_ORDERS["/account/orders"]
+        W_ADDR["/account/addresses"]
+    end
+
+    subgraph "Web Components"
+        HEADER["Header"]
+        CHEFS_LIST["ChefsList"]
+        CHEFS_FILTER["ChefsFilters"]
+        SF_HEADER["StorefrontHeader"]
+        SF_MENU["StorefrontMenu"]
+        FEATURED["FeaturedChefs"]
+        NOTIF_BELL["NotificationBell"]
+        TRACK_MAP["OrderTrackingMap"]
+        PW_STR["PasswordStrength"]
+        AUTH_LAY["AuthLayout"]
+    end
+
+    subgraph "Chef Routes"
+        C_DASH["/dashboard"]
+        C_MENU["/dashboard/menu"]
+        C_ORD["/dashboard/orders"]
+        C_STORE["/dashboard/storefront"]
+        C_PAY["/dashboard/payouts"]
+    end
+
+    subgraph "Chef Components"
+        SIDEBAR["Sidebar"]
+        C_HEADER["Header"]
+        MENU_LIST["MenuList"]
+        ORD_LIST["OrdersList"]
+        SF_FORM["StorefrontForm"]
+        SF_SETUP["StorefrontSetupForm"]
+        PROF_FORM["ProfileForm"]
+    end
+
+    subgraph "Driver Routes"
+        D_HOME["/"]
+        D_DEL["/delivery/id"]
+        D_EARN["/earnings"]
+        D_HIST["/history"]
+        D_PROF["/profile"]
+    end
+
+    subgraph "Driver Components"
+        DRV_DASH["DriverDashboard"]
+        DEL_DET["DeliveryDetail"]
+        EARN_VIEW["EarningsView"]
+        HIST_VIEW["HistoryView"]
+        PROF_VIEW["ProfileView"]
+        ROUTE_MAP["RouteMap"]
+    end
+
+    W_HOME --> HEADER & FEATURED
+    W_CHEFS --> HEADER & CHEFS_LIST & CHEFS_FILTER
+    W_SLUG --> HEADER & SF_HEADER & SF_MENU
+    W_CART --> HEADER
+    W_CHECK --> HEADER
+    W_CONFIRM --> HEADER & TRACK_MAP & NOTIF_BELL
+    W_ACCOUNT --> HEADER
+    W_ORDERS --> HEADER
+
+    C_DASH --> SIDEBAR & C_HEADER
+    C_MENU --> SIDEBAR & C_HEADER & MENU_LIST
+    C_ORD --> SIDEBAR & C_HEADER & ORD_LIST
+    C_STORE --> SIDEBAR & C_HEADER & SF_FORM
+    C_STORE -.-> SF_SETUP
+
+    D_HOME --> DRV_DASH
+    D_DEL --> DEL_DET & ROUTE_MAP
+    D_EARN --> EARN_VIEW
+    D_HIST --> HIST_VIEW
+    D_PROF --> PROF_VIEW

@@ -1,0 +1,49 @@
+%% Ride N Dine — Auth Roles & Access Map
+graph TB
+    subgraph "Auth Provider"
+        SUPA_AUTH["Supabase Auth\n(email/password)"]
+    end
+
+    subgraph "User Types"
+        CUST_USER["Customer\n(auth.users + customers)"]
+        CHEF_USER["Chef\n(auth.users + chef_profiles)"]
+        DRV_USER["Driver\n(auth.users + drivers)"]
+        OPS_USER["Ops\n(auth.users + platform_users)"]
+    end
+
+    subgraph "Apps & Middleware"
+        WEB_MW["web middleware\n/account/* protected"]
+        CHEF_MW["chef-admin middleware\nall dashboard protected"]
+        OPS_MW["ops-admin middleware\nall dashboard protected"]
+        DRV_MW["driver-app middleware\nall protected + status check"]
+    end
+
+    subgraph "Roles"
+        R_CUST["customer"]
+        R_CHEF["chef_user"]
+        R_DRV["driver"]
+        R_AGENT["ops_agent"]
+        R_MGR["ops_manager"]
+        R_FIN["finance_admin"]
+        R_SUPER["super_admin"]
+        R_SYS["system"]
+    end
+
+    subgraph "Access Levels"
+        BASIC["Basic Ops Access\n- View all entities\n- Manage orders/deliveries\n- Handle support"]
+        ELEVATED["Elevated Access\n- Chef/driver governance\n- Finance operations\n- Platform settings"]
+        FULL["Full Access\n- Everything"]
+    end
+
+    SUPA_AUTH --> CUST_USER & CHEF_USER & DRV_USER & OPS_USER
+
+    CUST_USER --> WEB_MW --> R_CUST
+    CHEF_USER --> CHEF_MW --> R_CHEF
+    DRV_USER --> DRV_MW --> R_DRV
+    OPS_USER --> OPS_MW --> R_AGENT & R_MGR & R_FIN & R_SUPER
+
+    R_AGENT --> BASIC
+    R_MGR --> ELEVATED
+    R_FIN --> ELEVATED
+    R_SUPER --> FULL
+    R_SYS --> FULL

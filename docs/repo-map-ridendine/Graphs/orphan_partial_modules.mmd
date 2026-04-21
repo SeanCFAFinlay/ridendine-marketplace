@@ -1,0 +1,45 @@
+%% Ride N Dine — Orphaned, Partial, and Placeholder Modules
+graph TB
+    subgraph "Schema Exists, No UI (Implied)"
+        CHEF_DOCS["chef_documents\n(compliance)"]
+        CHEF_AVAIL["chef_availability\n(hours)"]
+        CHEF_ZONES["chef_delivery_zones\n(PostGIS)"]
+        MENU_OPTS["menu_item_options\n+ option_values"]
+        MENU_AVAIL["menu_item_availability\n(time-based)"]
+        DRV_DOCS["driver_documents\n(license/insurance)"]
+        ADMIN_NOTES["admin_notes"]
+        PAYOUT_RUNS["payout_runs\n(batch)"]
+        ORD_MODS["order_item_modifiers"]
+    end
+
+    subgraph "Orphaned / Superseded"
+        DEL_ASSIGN["delivery_assignments\n(superseded by\nassignment_attempts)"]
+        DRV_EARN["driver_earnings\n(calculated from\ndeliveries instead)"]
+        DRV_SHIFTS["driver_shifts\n(not populated)"]
+        STORAGE_SVC["StorageService\n(engine, not called)"]
+        NOTIF_PKG["@ridendine/notifications\n(templates defined,\nnever dispatched)"]
+    end
+
+    subgraph "Placeholder UI"
+        FORGOT_PW["Forgot Password page\n(no API call)"]
+        FAVORITES["Favorites page\n(empty state only)"]
+        SETTINGS["Account Settings\n(setTimeout mock)"]
+        FILTERS["Chef Filters\n(non-functional)"]
+        UPLOAD["Image Upload buttons\n(stub, no backend)"]
+        TODAY_STATS["Driver todayStats\n(hardcoded zeros)"]
+    end
+
+    subgraph "Partially Connected"
+        SUPPORT_WEB["Web contact form\n(logs, no DB write)"]
+        PUSH_SUB["Push subscriptions\n(stored, not sent)"]
+        DRV_VEHICLES["driver_vehicles\n(seeded, no CRUD)"]
+        DRV_PAYOUTS["driver_payouts\n(schema, minimal use)"]
+    end
+
+    subgraph "Validation Without Callers"
+        RESET_PW["resetPasswordSchema\nchangePasswordSchema"]
+        ZONE_SCHEMA["createDeliveryZoneSchema"]
+        AVAIL_SCHEMA["setAvailabilitySchema"]
+        OPTION_SCHEMA["createMenuItemOptionSchema"]
+        DRIVER_SCHEMAS["createDriverProfile/Vehicle\nuploadDocument\nconfirmPickup/Dropoff"]
+    end

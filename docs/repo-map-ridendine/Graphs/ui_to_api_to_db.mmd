@@ -1,0 +1,84 @@
+%% Ride N Dine — UI → API → Engine → DB Flow
+graph LR
+    subgraph "Customer UI (web)"
+        BROWSE["Browse Chefs"]
+        CART["Cart"]
+        CHECKOUT["Checkout"]
+        TRACK["Order Tracking"]
+    end
+
+    subgraph "Chef UI (chef-admin)"
+        MENU_UI["Menu Management"]
+        ORDERS_UI["Orders List"]
+        STORE_UI["Storefront"]
+        PAYOUTS_UI["Payouts"]
+    end
+
+    subgraph "Ops UI (ops-admin)"
+        DASH_UI["Dashboard"]
+        DISPATCH_UI["Dispatch Center"]
+        FIN_UI["Finance"]
+        GOV_UI["Governance"]
+    end
+
+    subgraph "Driver UI (driver-app)"
+        OFFERS_UI["Offers"]
+        DELIVERY_UI["Delivery Detail"]
+        LOC_UI["Location Tracker"]
+    end
+
+    subgraph "API Routes"
+        CART_API["GET/POST/PATCH/DELETE\n/api/cart"]
+        CHECK_API["POST\n/api/checkout"]
+        WEBHOOK["POST\n/api/webhooks/stripe"]
+        MENU_API["CRUD\n/api/menu"]
+        ORD_API["GET/PATCH\n/api/orders"]
+        STORE_API["GET/POST/PATCH\n/api/storefront"]
+        PAY_API["POST\n/api/payouts"]
+        ENG_DASH["GET\n/api/engine/dashboard"]
+        ENG_DISP["POST\n/api/engine/dispatch"]
+        ENG_FIN["POST\n/api/engine/finance"]
+        ENG_GOV["PATCH\n/api/chefs|drivers"]
+        OFFER_API["GET/POST\n/api/offers"]
+        DEL_API["PATCH\n/api/deliveries"]
+        LOC_API["POST\n/api/location"]
+    end
+
+    subgraph "Engine"
+        ORD_ENG["OrderOrchestrator"]
+        DISP_ENG["DispatchEngine"]
+        KITCH_ENG["KitchenEngine"]
+        COMM_ENG["CommerceLedgerEngine"]
+        PLAT_ENG["PlatformWorkflowEngine"]
+        OPS_ENG["OpsControlEngine"]
+    end
+
+    subgraph "Database"
+        DB_ORDERS["orders\norder_items"]
+        DB_MENU["menu_items\nmenu_categories"]
+        DB_DELIVERY["deliveries\nassignment_attempts"]
+        DB_TRACK["driver_presence\ndriver_locations"]
+        DB_FINANCE["ledger_entries\nrefund_cases"]
+        DB_CHEF["chef_profiles\nchef_storefronts"]
+    end
+
+    BROWSE --> CART_API --> DB_MENU
+    CART --> CART_API
+    CHECKOUT --> CHECK_API --> ORD_ENG --> DB_ORDERS
+    TRACK --> DB_TRACK
+
+    MENU_UI --> MENU_API --> DB_MENU
+    ORDERS_UI --> ORD_API --> ORD_ENG --> DB_ORDERS
+    STORE_UI --> STORE_API --> DB_CHEF
+    PAYOUTS_UI --> PAY_API
+
+    DASH_UI --> ENG_DASH --> OPS_ENG
+    DISPATCH_UI --> ENG_DISP --> DISP_ENG --> DB_DELIVERY
+    FIN_UI --> ENG_FIN --> COMM_ENG --> DB_FINANCE
+    GOV_UI --> ENG_GOV --> PLAT_ENG --> DB_CHEF
+
+    OFFERS_UI --> OFFER_API --> DISP_ENG --> DB_DELIVERY
+    DELIVERY_UI --> DEL_API --> DISP_ENG --> DB_DELIVERY
+    LOC_UI --> LOC_API --> DB_TRACK
+
+    WEBHOOK --> ORD_ENG

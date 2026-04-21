@@ -1,0 +1,32 @@
+%% Ride N Dine — Domain Relationships
+graph LR
+    CUST["Customer\nDomain"] -->|"places"| ORD["Orders\nDomain"]
+    ORD -->|"dispatches"| DEL["Delivery\nDomain"]
+    DEL -->|"assigned to"| DRV["Driver\nDomain"]
+
+    CHEF["Chef\nDomain"] -->|"owns"| MENU["Menu/Catalog\nDomain"]
+    CHEF -->|"fulfills"| ORD
+
+    ORD -->|"charges"| PAY["Payments\nDomain"]
+    PAY -->|"pays out"| CHEF
+    PAY -->|"pays out"| DRV
+
+    OPS["Platform/Ops\nDomain"] -->|"governs"| CHEF
+    OPS -->|"governs"| DRV
+    OPS -->|"dispatches"| DEL
+    OPS -->|"overrides"| ORD
+    OPS -->|"manages"| PAY
+
+    SUPP["Support\nDomain"] -->|"monitors"| ORD
+    SUPP -->|"monitors"| DEL
+    SUPP -->|"escalates to"| OPS
+
+    NOTIF["Notifications\nDomain"] -.->|"notifies"| CUST
+    NOTIF -.->|"notifies"| CHEF
+    NOTIF -.->|"notifies"| DRV
+
+    PROMO["Promo\nDomain"] -->|"discounts"| ORD
+    REV["Reviews\nDomain"] -->|"rates"| CHEF
+
+    TRACK["Tracking\nDomain"] -->|"locates"| DRV
+    TRACK -->|"shows to"| CUST

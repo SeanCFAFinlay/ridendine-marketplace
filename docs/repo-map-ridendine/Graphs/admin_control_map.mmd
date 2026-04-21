@@ -1,0 +1,64 @@
+%% Ride N Dine — Admin Control Map
+graph TB
+    subgraph "Ops Admin Controls"
+        subgraph "Chef Governance"
+            CHEF_APPROVE["Approve Chef\nstatus: pending → approved"]
+            CHEF_REJECT["Reject Chef\nstatus: pending → rejected"]
+            CHEF_SUSPEND["Suspend Chef\nstatus: approved → suspended"]
+            CHEF_UNSUSPEND["Unsuspend Chef\nstatus: suspended → approved"]
+        end
+
+        subgraph "Storefront Governance"
+            SF_PUBLISH["Publish Storefront\nis_active: false → true"]
+            SF_UNPUBLISH["Unpublish Storefront\nis_active: true → false"]
+            SF_PAUSE["Pause Storefront\nis_paused: true"]
+            SF_UNPAUSE["Unpause Storefront\nis_paused: false"]
+        end
+
+        subgraph "Driver Governance"
+            DRV_APPROVE["Approve Driver\nstatus: pending → approved"]
+            DRV_REJECT["Reject Driver"]
+            DRV_SUSPEND["Suspend Driver"]
+            DRV_RESTORE["Restore Driver"]
+        end
+
+        subgraph "Order Override"
+            ORD_ACCEPT["Accept Order"]
+            ORD_CANCEL["Cancel Order"]
+            ORD_COMPLETE["Complete Order"]
+            ORD_OVERRIDE["Override Status\n(manager+ only)"]
+        end
+
+        subgraph "Dispatch Control"
+            MANUAL_ASSIGN["Manual Assign Driver"]
+            REASSIGN["Reassign Driver"]
+            ESCALATE["Escalate Delivery"]
+            CANCEL_DEL["Cancel Delivery"]
+        end
+
+        subgraph "Finance Control"
+            APPROVE_REFUND["Approve Refund"]
+            DENY_REFUND["Deny Refund"]
+            PROCESS_REFUND["Process Refund\n(Stripe)"]
+            RELEASE_HOLD["Release Payout Hold"]
+        end
+
+        subgraph "Platform Config"
+            SETTINGS["Update Platform Rules\n(11 settings)"]
+        end
+    end
+
+    subgraph "Role Gates"
+        AGENT["ops_agent"]
+        MANAGER["ops_manager"]
+        FINANCE["finance_admin"]
+        SUPER["super_admin"]
+    end
+
+    AGENT --> ORD_ACCEPT & ORD_CANCEL & MANUAL_ASSIGN & REASSIGN & ESCALATE
+    MANAGER --> CHEF_APPROVE & CHEF_REJECT & CHEF_SUSPEND & CHEF_UNSUSPEND
+    MANAGER --> SF_PUBLISH & SF_UNPUBLISH & SF_PAUSE & SF_UNPAUSE
+    MANAGER --> DRV_APPROVE & DRV_REJECT & DRV_SUSPEND & DRV_RESTORE
+    MANAGER --> ORD_OVERRIDE & ORD_COMPLETE & SETTINGS
+    FINANCE --> APPROVE_REFUND & DENY_REFUND & PROCESS_REFUND & RELEASE_HOLD
+    SUPER --> MANAGER & FINANCE
