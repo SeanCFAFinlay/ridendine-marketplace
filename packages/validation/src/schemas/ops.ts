@@ -100,7 +100,71 @@ export const financeActionSchema = z.discriminatedUnion('action', [
   }),
 ]);
 
+// ==========================================
+// OPS-ADMIN ROUTE SCHEMAS
+// ==========================================
+
+export const chefPatchSchema = z.object({
+  action: z.enum(['approve', 'reject', 'suspend', 'unsuspend']).optional(),
+  status: z.enum(['approved', 'rejected', 'suspended']).optional(),
+  reason: z.string().optional(),
+});
+
+export const driverPatchSchema = z.object({
+  status: z.string().min(1),
+  reason: z.string().optional(),
+});
+
+export const opsDeliveryPatchSchema = z.object({
+  driverId: z.string().uuid('driverId must be a valid UUID'),
+});
+
+export const refundSchema = z.object({
+  amount: z.number().positive('Valid refund amount is required'),
+  reason: z.string().optional(),
+});
+
+export const orderPatchSchema = z.object({
+  status: z.string().optional(),
+  action: z.string().optional(),
+  reason: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export const supportTicketSchema = z.object({
+  subject: z.string().min(1, 'Subject is required'),
+  description: z.string().min(1, 'Description is required'),
+  priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+  order_id: z.string().uuid().optional(),
+  customer_id: z.string().uuid().optional(),
+  chef_id: z.string().uuid().optional(),
+  driver_id: z.string().uuid().optional(),
+}).passthrough();
+
+export const supportPatchSchema = z.object({
+  action: z.enum(['start_review', 'resolve']).optional(),
+  status: z.string().optional(),
+  assigned_to: z.string().optional(),
+  resolution_notes: z.string().optional(),
+}).passthrough();
+
+export const supportRequestSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Valid email is required'),
+  subject: z.string().min(1, 'Subject is required'),
+  message: z.string().min(10, 'Message must be at least 10 characters'),
+  category: z.enum(['general', 'order', 'technical', 'chef', 'other']).optional(),
+});
+
 export type PlatformSettingsInput = z.infer<typeof platformSettingsSchema>;
 export type PlatformSettingsUpdateInput = z.infer<typeof platformSettingsUpdateSchema>;
 export type DeliveryInterventionActionInput = z.infer<typeof deliveryInterventionActionSchema>;
 export type FinanceActionInput = z.infer<typeof financeActionSchema>;
+export type ChefPatchInput = z.infer<typeof chefPatchSchema>;
+export type DriverPatchInput = z.infer<typeof driverPatchSchema>;
+export type OpsDeliveryPatchInput = z.infer<typeof opsDeliveryPatchSchema>;
+export type RefundInput = z.infer<typeof refundSchema>;
+export type OrderPatchInput = z.infer<typeof orderPatchSchema>;
+export type SupportTicketInput = z.infer<typeof supportTicketSchema>;
+export type SupportPatchInput = z.infer<typeof supportPatchSchema>;
+export type SupportRequestInput = z.infer<typeof supportRequestSchema>;

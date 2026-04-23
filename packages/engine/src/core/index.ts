@@ -6,3 +6,4 @@ export * from './engine.factory';
 export * from './event-emitter';
 export * from './audit-logger';
 export * from './sla-manager';
+export * from './notification-sender';

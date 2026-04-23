@@ -1,0 +1,68 @@
+graph LR
+    subgraph WebApp["apps/web (Customer, Port 3000)"]
+        WEB["web"]
+    end
+
+    subgraph ChefApp["apps/chef-admin (Chef, Port 3001)"]
+        CHEF["chef-admin"]
+    end
+
+    subgraph OpsApp["apps/ops-admin (Ops, Port 3002)"]
+        OPS["ops-admin"]
+    end
+
+    subgraph DriverApp["apps/driver-app (Driver, Port 3003)"]
+        DRIVER["driver-app"]
+    end
+
+    subgraph Packages["Shared Packages"]
+        DB["@ridendine/db"]
+        UI["@ridendine/ui"]
+        AUTH["@ridendine/auth"]
+        TYPES["@ridendine/types"]
+        VALIDATION["@ridendine/validation"]
+        UTILS["@ridendine/utils"]
+        CONFIG["@ridendine/config"]
+        NOTIFICATIONS["@ridendine/notifications"]
+        ENGINE["@ridendine/engine"]
+    end
+
+    WEB -->|"DB access"| DB
+    WEB -->|"Components"| UI
+    WEB -->|"Auth guards"| AUTH
+    WEB -->|"Type defs"| TYPES
+    WEB -->|"Form schemas"| VALIDATION
+    WEB -->|"Helpers"| UTILS
+    WEB -->|"TS/Tailwind"| CONFIG
+    WEB -->|"Emails/SMS"| NOTIFICATIONS
+    WEB -->|"Order logic"| ENGINE
+
+    CHEF -->|"DB access"| DB
+    CHEF -->|"Components"| UI
+    CHEF -->|"Auth guards"| AUTH
+    CHEF -->|"Type defs"| TYPES
+    CHEF -->|"Form schemas"| VALIDATION
+    CHEF -->|"Helpers"| UTILS
+    CHEF -->|"TS/Tailwind"| CONFIG
+    CHEF -->|"Menu/order logic"| ENGINE
+
+    OPS -->|"DB access"| DB
+    OPS -->|"Components"| UI
+    OPS -->|"Auth guards"| AUTH
+    OPS -->|"Type defs"| TYPES
+    OPS -->|"Form schemas"| VALIDATION
+    OPS -->|"Helpers"| UTILS
+    OPS -->|"TS/Tailwind"| CONFIG
+    OPS -->|"Dispatch/refund logic"| ENGINE
+
+    DRIVER -->|"DB access"| DB
+    DRIVER -->|"Components"| UI
+    DRIVER -->|"Auth guards"| AUTH
+    DRIVER -->|"Type defs"| TYPES
+    DRIVER -->|"Helpers"| UTILS
+    DRIVER -->|"TS/Tailwind"| CONFIG
+    DRIVER -->|"Delivery logic"| ENGINE
+
+    ENGINE -->|"Supabase repos"| DB
+    ENGINE -->|"Type defs"| TYPES
+    ENGINE -->|"Validation"| VALIDATION

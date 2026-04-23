@@ -22,7 +22,7 @@ export default async function DeliveryDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [detail, drivers] = await Promise.all([
+  const [detail, { items: drivers }] = await Promise.all([
     getEngine().ops.getDeliveryInterventionDetail(id),
     listOpsDrivers(createAdminClient() as unknown as SupabaseClient, { status: 'approved' }),
   ]);

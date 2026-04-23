@@ -196,9 +196,18 @@ export async function getPendingChefApprovals(
 
 export async function listChefsWithStorefronts(
   client: SupabaseClient,
-  options: { status?: string } = {}
-): Promise<ChefProfileWithStorefronts[]> {
-  let query = client
+  options: { status?: string; page?: number; limit?: number } = {}
+): Promise<{ items: ChefProfileWithStorefronts[]; total: number }> {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 20;
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  let countQuery = client
+    .from('chef_profiles')
+    .select('*', { count: 'exact', head: true });
+
+  let dataQuery = client
     .from('chef_profiles')
     .select(`
       *,
@@ -210,16 +219,19 @@ export async function listChefsWithStorefronts(
         is_featured
       )
     `)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(from, to);
 
   if (options.status) {
-    query = query.eq('status', options.status);
+    countQuery = countQuery.eq('status', options.status);
+    dataQuery = dataQuery.eq('status', options.status);
   }
 
-  const { data, error } = await query;
+  const [{ count, error: countError }, { data, error }] = await Promise.all([countQuery, dataQuery]);
 
+  if (countError) throw countError;
   if (error) throw error;
-  return (data ?? []) as unknown as ChefProfileWithStorefronts[];
+  return { items: (data ?? []) as unknown as ChefProfileWithStorefronts[], total: count ?? 0 };
 }
 
 export async function approveChef(

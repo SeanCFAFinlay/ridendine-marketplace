@@ -99,6 +99,81 @@ export const createDeliveryZoneSchema = z.object({
 
 export const updateDeliveryZoneSchema = createDeliveryZoneSchema.partial();
 
+// ==========================================
+// ROUTE-COMPATIBLE SCHEMAS (snake_case DB fields)
+// ==========================================
+
+export const routeCreateMenuCategorySchema = z.object({
+  name: z.string().min(1, 'Category name is required'),
+  description: z.string().optional().nullable(),
+  sort_order: z.number().int().optional(),
+});
+
+export const routeCreateMenuItemSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
+  price: z.number({ required_error: 'Price is required' }),
+  category_id: z.string().min(1, 'Category ID is required'),
+  image_url: z.string().url().optional().nullable(),
+  is_available: z.boolean().optional(),
+  is_featured: z.boolean().optional(),
+  sort_order: z.number().int().optional(),
+  dietary_tags: z.array(z.string()).optional(),
+  prep_time_minutes: z.number().int().positive().optional().nullable(),
+});
+
+export const routeUpdateMenuItemSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().optional().nullable(),
+  price: z.number().positive().optional(),
+  category_id: z.string().optional(),
+  image_url: z.string().url().optional().nullable(),
+  is_available: z.boolean().optional(),
+  is_featured: z.boolean().optional(),
+  sort_order: z.number().int().optional(),
+  dietary_tags: z.array(z.string()).optional(),
+  prep_time_minutes: z.number().int().positive().optional().nullable(),
+});
+
+export const routeCreateStorefrontSchema = z.object({
+  name: z.string().min(1, 'Storefront name is required'),
+  description: z.string().optional().nullable(),
+  cuisine_types: z.array(z.string()).optional(),
+  min_order_amount: z.number().nonnegative().optional(),
+  estimated_prep_time_min: z.number().int().positive().optional(),
+  estimated_prep_time_max: z.number().int().positive().optional(),
+});
+
+export const routeUpdateStorefrontSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().optional().nullable(),
+  cuisine_types: z.array(z.string()).optional(),
+  min_order_amount: z.number().nonnegative().optional(),
+  estimated_prep_time_min: z.number().int().positive().optional(),
+  estimated_prep_time_max: z.number().int().positive().optional(),
+  accepting_orders: z.boolean().optional(),
+  is_active: z.boolean().optional(),
+});
+
+export const routeUpdateChefProfileSchema = z.object({
+  display_name: z.string().min(1).optional(),
+  bio: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  profile_image_url: z.string().url().optional().nullable(),
+});
+
+export const payoutRequestSchema = z.object({
+  amount: z.number({ required_error: 'Amount is required' }).min(10, 'Minimum payout amount is $10'),
+});
+
+export const chefOrderActionSchema = z.object({
+  action: z.string().optional(),
+  status: z.string().optional(),
+  estimatedPrepMinutes: z.number().optional(),
+  reason: z.string().optional(),
+  notes: z.string().optional(),
+});
+
 // Type exports
 export type CreateChefProfileInput = z.infer<typeof createChefProfileSchema>;
 export type UpdateChefProfileInput = z.infer<typeof updateChefProfileSchema>;
@@ -111,3 +186,11 @@ export type UpdateMenuItemInput = z.infer<typeof updateMenuItemSchema>;
 export type CreateMenuItemOptionInput = z.infer<typeof createMenuItemOptionSchema>;
 export type SetAvailabilityInput = z.infer<typeof setAvailabilitySchema>;
 export type CreateDeliveryZoneInput = z.infer<typeof createDeliveryZoneSchema>;
+export type RouteCreateMenuCategoryInput = z.infer<typeof routeCreateMenuCategorySchema>;
+export type RouteCreateMenuItemInput = z.infer<typeof routeCreateMenuItemSchema>;
+export type RouteUpdateMenuItemInput = z.infer<typeof routeUpdateMenuItemSchema>;
+export type RouteCreateStorefrontInput = z.infer<typeof routeCreateStorefrontSchema>;
+export type RouteUpdateStorefrontInput = z.infer<typeof routeUpdateStorefrontSchema>;
+export type RouteUpdateChefProfileInput = z.infer<typeof routeUpdateChefProfileSchema>;
+export type PayoutRequestInput = z.infer<typeof payoutRequestSchema>;
+export type ChefOrderActionInput = z.infer<typeof chefOrderActionSchema>;

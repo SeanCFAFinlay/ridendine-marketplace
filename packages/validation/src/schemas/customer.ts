@@ -52,9 +52,18 @@ export const addFavoriteSchema = z.object({
   storefrontId: z.string().uuid(),
 });
 
+export const checkoutSchema = z.object({
+  storefrontId: z.string().uuid('storefrontId must be a valid UUID'),
+  deliveryAddressId: z.string().uuid('deliveryAddressId must be a valid UUID'),
+  tip: z.number().min(0).optional().default(0),
+  promoCode: z.string().optional(),
+  specialInstructions: z.string().optional(),
+});
+
 // Type exports
 export type UpdateCustomerProfileInput = z.infer<typeof updateCustomerProfileSchema>;
 export type CreateCustomerAddressInput = z.infer<typeof createCustomerAddressSchema>;
 export type UpdateCustomerAddressInput = z.infer<typeof updateCustomerAddressSchema>;
 export type AddToCartInput = z.infer<typeof addToCartSchema>;
 export type UpdateCartItemInput = z.infer<typeof updateCartItemSchema>;
+export type CheckoutInput = z.infer<typeof checkoutSchema>;

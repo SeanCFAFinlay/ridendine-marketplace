@@ -20,10 +20,7 @@ export const passwordSchema = z
   .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
   .regex(/[0-9]/, 'Password must contain at least one number');
 
-export const paginationSchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20),
-});
+// paginationSchema is in pagination.ts
 
 export const searchSchema = z.object({
   query: z.string().optional(),
@@ -65,7 +62,6 @@ export const timeSchema = z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Inval
 export const dayOfWeekSchema = z.number().int().min(0).max(6);
 
 // Type exports
-export type Pagination = z.infer<typeof paginationSchema>;
 export type Search = z.infer<typeof searchSchema>;
 export type Address = z.infer<typeof addressSchema>;
 export type Coordinates = z.infer<typeof coordinatesSchema>;

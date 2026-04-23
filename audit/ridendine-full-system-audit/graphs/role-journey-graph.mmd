@@ -1,0 +1,119 @@
+graph TD
+    subgraph CustomerJourney["Customer Journey"]
+        C_ANON["Anonymous Visitor"]
+        C_BROWSE["Browse Chefs /chefs"]
+        C_MENU["View Chef Menu /chefs/slug"]
+        C_CART["Add to Cart /cart"]
+        C_LOGIN["Login /auth/login"]
+        C_CHECKOUT["Checkout /checkout"]
+        C_PAY["Payment via Stripe"]
+        C_CONFIRM["Order Confirmed /order-confirmation/id"]
+        C_TRACK["Track Order /account/orders"]
+        C_REVIEW["Leave Review (post delivery)"]
+
+        C_ANON --> C_BROWSE
+        C_BROWSE --> C_MENU
+        C_MENU --> C_CART
+        C_CART --> C_LOGIN
+        C_LOGIN --> C_CHECKOUT
+        C_CHECKOUT --> C_PAY
+        C_PAY --> C_CONFIRM
+        C_CONFIRM --> C_TRACK
+        C_TRACK --> C_REVIEW
+    end
+
+    subgraph ChefJourney["Chef Journey"]
+        CH_SIGNUP["Chef Signup /auth/signup"]
+        CH_PENDING["Pending Approval\nstatus: pending"]
+        CH_APPROVED["Approved Chef\nstatus: approved"]
+        CH_SETUP["Setup Storefront\n/dashboard/storefront"]
+        CH_MENU["Build Menu\n/dashboard/menu"]
+        CH_ONLINE["Go Online\navailability set"]
+        CH_ORDER["Receive Order\n/dashboard/orders"]
+        CH_ACCEPT["Accept Order\nstatus: accepted"]
+        CH_PREPARE["Prepare Food\nstatus: preparing"]
+        CH_READY["Mark Ready\nstatus: ready"]
+        CH_PAYOUT["Collect Payout\n/dashboard/payouts"]
+
+        CH_SIGNUP --> CH_PENDING
+        CH_PENDING --> CH_APPROVED
+        CH_APPROVED --> CH_SETUP
+        CH_SETUP --> CH_MENU
+        CH_MENU --> CH_ONLINE
+        CH_ONLINE --> CH_ORDER
+        CH_ORDER --> CH_ACCEPT
+        CH_ACCEPT --> CH_PREPARE
+        CH_PREPARE --> CH_READY
+        CH_READY --> CH_PAYOUT
+    end
+
+    subgraph DriverJourney["Driver Journey"]
+        D_APPLY["Driver Apply\n/auth/signup"]
+        D_VERIFY["Document Verification\nstatus: pending"]
+        D_APPROVED["Approved Driver\nstatus: approved"]
+        D_ONLINE["Go Online\ndriver_presence: online"]
+        D_OFFER["Receive Offer\ndelivery_assignments"]
+        D_ACCEPT["Accept Delivery\nstatus: accepted"]
+        D_PICKUP["En Route to Pickup\nstatus: en_route_to_pickup"]
+        D_ARRIVE_PICKUP["Arrive at Pickup\nstatus: arrived_at_pickup"]
+        D_PICKED["Pick Up Order\nstatus: picked_up"]
+        D_DELIVER["Deliver Order\nstatus: delivered"]
+        D_EARN["Earnings Credited\ndriver_earnings"]
+
+        D_APPLY --> D_VERIFY
+        D_VERIFY --> D_APPROVED
+        D_APPROVED --> D_ONLINE
+        D_ONLINE --> D_OFFER
+        D_OFFER --> D_ACCEPT
+        D_ACCEPT --> D_PICKUP
+        D_PICKUP --> D_ARRIVE_PICKUP
+        D_ARRIVE_PICKUP --> D_PICKED
+        D_PICKED --> D_DELIVER
+        D_DELIVER --> D_EARN
+    end
+
+    subgraph OpsJourney["Ops Admin Journey"]
+        O_LOGIN["Login\n/auth/login"]
+        O_DASH["Dashboard Overview\n/dashboard"]
+        O_CHEF_APPROVAL["Approve/Reject Chefs\n/dashboard/chefs/approvals"]
+        O_DRIVER_APPROVAL["Approve Drivers\n/dashboard/drivers/id"]
+        O_ORDER_WATCH["Monitor Orders\n/dashboard/orders"]
+        O_DISPATCH["Assign Driver\n/dashboard/deliveries/id"]
+        O_LIVE_MAP["Live Map View\n/dashboard/map"]
+        O_REFUND["Process Refund\n/dashboard/orders/id"]
+        O_SUPPORT["Handle Support\n/dashboard/support"]
+
+        O_LOGIN --> O_DASH
+        O_DASH --> O_CHEF_APPROVAL
+        O_DASH --> O_DRIVER_APPROVAL
+        O_DASH --> O_ORDER_WATCH
+        O_ORDER_WATCH --> O_DISPATCH
+        O_DISPATCH --> O_LIVE_MAP
+        O_ORDER_WATCH --> O_REFUND
+        O_DASH --> O_SUPPORT
+    end
+
+    subgraph StatusTransitions["Order Status Transitions"]
+        S_PENDING["pending"]
+        S_ACCEPTED["accepted"]
+        S_PREPARING["preparing"]
+        S_READY["ready"]
+        S_PICKED_UP["picked_up"]
+        S_DELIVERED["delivered"]
+        S_COMPLETED["completed"]
+        S_CANCELLED["cancelled"]
+
+        S_PENDING -->|"Chef accepts"| S_ACCEPTED
+        S_ACCEPTED -->|"Chef starts"| S_PREPARING
+        S_PREPARING -->|"Chef marks ready"| S_READY
+        S_READY -->|"Driver picks up"| S_PICKED_UP
+        S_PICKED_UP -->|"Driver delivers"| S_DELIVERED
+        S_DELIVERED -->|"Auto complete"| S_COMPLETED
+        S_PENDING -->|"Chef/Ops cancels"| S_CANCELLED
+    end
+
+    CH_ACCEPT --> S_ACCEPTED
+    CH_PREPARE --> S_PREPARING
+    CH_READY --> S_READY
+    D_PICKED --> S_PICKED_UP
+    D_DELIVER --> S_DELIVERED

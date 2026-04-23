@@ -1,0 +1,271 @@
+file_path,app_domain,file_type,purpose,imported_by,imports,route_association,api_association,db_association,role_association,status,confidence,notes
+apps/web/src/app/page.tsx,web,page,Homepage with hero and featured chefs,layout.tsx,featured-chefs component,/,none,chef_storefronts,public,working,confirmed,Server component with real data
+apps/web/src/app/layout.tsx,web,layout,Root layout with AuthProvider + CartProvider,next.js,AuthProvider CartProvider,all web routes,none,none,all,working,confirmed,Wraps entire web app
+apps/web/src/app/chefs/page.tsx,web,page,Browse chefs with filters,layout.tsx,chefs-list chefs-filters,/chefs,none,chef_storefronts menu_items,public,working,confirmed,Real DB queries via shared helpers
+apps/web/src/app/chefs/[slug]/page.tsx,web,page,Chef storefront detail + menu,layout.tsx,storefront-header storefront-menu,/chefs/[slug],none,chef_storefronts menu_items menu_categories,public,working,confirmed,Real storefront data
+apps/web/src/app/cart/page.tsx,web,page,Shopping cart UI,layout.tsx,CartContext,/cart,/api/cart,carts cart_items,customer,working,confirmed,Client-side cart state
+apps/web/src/app/cart/layout.tsx,web,layout,Cart page layout wrapper,layout.tsx,none,/cart,none,none,customer,working,confirmed,Simple wrapper
+apps/web/src/app/checkout/page.tsx,web,page,Multi-step checkout with Stripe,layout.tsx,StripePaymentForm CartContext,/checkout,/api/checkout,orders order_items,customer,working,confirmed,Real Stripe PaymentIntent
+apps/web/src/app/order-confirmation/[orderId]/page.tsx,web,page,Order confirmation + tracking,layout.tsx,OrderTrackingMap,/order-confirmation/[orderId],/api/orders/[id],orders deliveries driver_presence,customer,working,confirmed,Real order data + driver tracking
+apps/web/src/app/orders/[id]/confirmation/page.tsx,web,page,Duplicate confirmation route,layout.tsx,unknown,/orders/[id]/confirmation,/api/orders/[id],orders,customer,partial,inferred,Duplicate of order-confirmation route
+apps/web/src/app/account/page.tsx,web,page,Account dashboard,account/layout.tsx,none,/account,/api/profile,customers,customer,working,confirmed,Protected by middleware
+apps/web/src/app/account/layout.tsx,web,layout,Account section layout,layout.tsx,none,/account/*,none,none,customer,working,confirmed,Auth-protected wrapper
+apps/web/src/app/account/orders/page.tsx,web,page,Order history,account/layout.tsx,none,/account/orders,/api/orders,orders order_items,customer,working,confirmed,Lists customer orders
+apps/web/src/app/account/addresses/page.tsx,web,page,Address management,account/layout.tsx,none,/account/addresses,/api/addresses,customer_addresses,customer,working,confirmed,Full CRUD
+apps/web/src/app/account/favorites/page.tsx,web,page,Saved chefs,account/layout.tsx,none,/account/favorites,none,favorites,customer,partial,inferred,DB table exists but no CRUD API
+apps/web/src/app/account/settings/page.tsx,web,page,Profile settings,account/layout.tsx,none,/account/settings,/api/profile,customers,customer,working,confirmed,Profile update form
+apps/web/src/app/auth/login/page.tsx,web,page,Customer login,auth/layout.tsx,useAuth,/auth/login,none,auth.users,public,working,confirmed,Supabase email/password
+apps/web/src/app/auth/signup/page.tsx,web,page,Customer signup,auth/layout.tsx,useAuth,/auth/signup,/api/auth/signup,auth.users customers,public,working,confirmed,Creates auth user + customer profile
+apps/web/src/app/auth/forgot-password/page.tsx,web,page,Password reset,auth/layout.tsx,useAuth,/auth/forgot-password,none,auth.users,public,working,confirmed,Supabase password reset
+apps/web/src/app/auth/layout.tsx,web,layout,Auth pages wrapper,layout.tsx,AuthLayout,/auth/*,none,none,public,working,confirmed,Shared auth styling
+apps/web/src/app/chef-signup/page.tsx,web,page,Chef application form,layout.tsx,none,/chef-signup,none,none,public,working,confirmed,Landing page for chef signups
+apps/web/src/app/chef-resources/page.tsx,web,page,Chef guidance page,layout.tsx,none,/chef-resources,none,none,public,working,confirmed,Static content
+apps/web/src/app/how-it-works/page.tsx,web,page,Process explanation,layout.tsx,none,/how-it-works,none,none,public,working,confirmed,Static content
+apps/web/src/app/about/page.tsx,web,page,Company info,layout.tsx,none,/about,none,none,public,working,confirmed,Static content
+apps/web/src/app/contact/page.tsx,web,page,Contact page,layout.tsx,none,/contact,none,none,public,working,confirmed,Static content
+apps/web/src/app/privacy/page.tsx,web,page,Privacy policy,layout.tsx,none,/privacy,none,none,public,working,confirmed,Static content
+apps/web/src/app/terms/page.tsx,web,page,Terms of service,layout.tsx,none,/terms,none,none,public,working,confirmed,Static content
+apps/web/src/app/not-found.tsx,web,page,404 handler,next.js,none,/*,none,none,public,working,confirmed,Standard 404
+apps/web/src/app/loading.tsx,web,page,Loading state,next.js,Spinner,all,none,none,public,working,confirmed,Global loading
+apps/web/src/app/error.tsx,web,page,Error boundary,next.js,none,all,none,none,public,working,confirmed,React error boundary
+apps/web/src/app/api/auth/signup/route.ts,web,api,Customer registration,frontend,signupSchema createAdminClient,none,POST /api/auth/signup,auth.users customers,public,working,confirmed,Zod validation + Supabase auth
+apps/web/src/app/api/auth/login/route.ts,web,api,Customer login,frontend,loginSchema,none,POST /api/auth/login,auth.users customers,public,working,confirmed,Supabase signInWithPassword
+apps/web/src/app/api/profile/route.ts,web,api,Customer profile CRUD,frontend,createServerClient,none,GET PATCH /api/profile,customers,customer,working,confirmed,Profile read/update
+apps/web/src/app/api/addresses/route.ts,web,api,Address management,frontend,createServerClient,none,GET POST PATCH DELETE /api/addresses,customer_addresses,customer,working,confirmed,Full CRUD with validation
+apps/web/src/app/api/cart/route.ts,web,api,Cart management,CartContext,createServerClient,none,GET POST PATCH DELETE /api/cart,carts cart_items,customer,working,confirmed,Zod validation
+apps/web/src/app/api/checkout/route.ts,web,api,Order creation + Stripe,checkout page,engine stripe,none,POST /api/checkout,orders order_items promo_codes,customer,working,confirmed,Engine-powered with Stripe PaymentIntent
+apps/web/src/app/api/orders/route.ts,web,api,Order history,account/orders,engine,none,GET /api/orders,orders,customer,working,confirmed,Engine-powered
+apps/web/src/app/api/orders/[id]/route.ts,web,api,Order detail + cancel,order pages,engine,none,GET PATCH /api/orders/[id],orders order_items deliveries,customer,working,confirmed,Engine-powered with timeline
+apps/web/src/app/api/webhooks/stripe/route.ts,web,api,Stripe webhook handler,Stripe,engine stripe,none,POST /api/webhooks/stripe,orders,system,working,confirmed,Handles succeeded/failed/refunded
+apps/web/src/app/api/notifications/route.ts,web,api,Notification management,NotificationBell,createServerClient,none,GET POST PATCH /api/notifications,notifications,customer,working,confirmed,Read/create/mark-read
+apps/web/src/app/api/notifications/subscribe/route.ts,web,api,Push subscription,frontend,createServerClient,none,POST DELETE /api/notifications/subscribe,push_subscriptions,customer,working,confirmed,Store push endpoint
+apps/web/src/app/api/support/route.ts,web,api,Support ticket creation,frontend,createServerClient,none,POST /api/support,support_tickets,customer,working,confirmed,Customer support
+apps/web/src/components/layout/header.tsx,web,component,Navigation bar,layout.tsx,useAuth NotificationBell,all,none,none,all,working,confirmed,Auth-aware header
+apps/web/src/components/home/featured-chefs.tsx,web,component,Featured chef cards,page.tsx,none,/,none,chef_storefronts,public,working,confirmed,Server component
+apps/web/src/components/chefs/chefs-list.tsx,web,component,Chef grid with search,chefs/page.tsx,getActiveStorefronts,/chefs,none,chef_storefronts,public,working,confirmed,Real DB data
+apps/web/src/components/chefs/chefs-filters.tsx,web,component,Filter sidebar,chefs/page.tsx,none,/chefs,none,none,public,working,confirmed,Client-side filters
+apps/web/src/components/storefront/storefront-header.tsx,web,component,Chef header banner,chefs/[slug],none,/chefs/[slug],none,chef_storefronts,public,working,confirmed,Display component
+apps/web/src/components/storefront/storefront-menu.tsx,web,component,Menu browsing + cart,chefs/[slug],CartContext,/chefs/[slug],/api/cart,menu_items menu_categories,public,working,confirmed,Add-to-cart integration
+apps/web/src/components/checkout/stripe-payment-form.tsx,web,component,Stripe payment form,checkout/page.tsx,@stripe/react-stripe-js,/checkout,none,none,customer,working,confirmed,Stripe Elements integration
+apps/web/src/components/tracking/order-tracking-map.tsx,web,component,Delivery tracking map,order-confirmation,leaflet react-leaflet,/order-confirmation/*,none,driver_presence,customer,working,confirmed,Dynamic import SSR:false
+apps/web/src/components/auth/auth-layout.tsx,web,component,Auth page wrapper,auth/layout.tsx,none,/auth/*,none,none,public,working,confirmed,Shared auth styling
+apps/web/src/components/auth/password-strength.tsx,web,component,Password meter,signup page,none,/auth/signup,none,none,public,working,confirmed,Visual password strength
+apps/web/src/components/notifications/notification-bell.tsx,web,component,Notification icon,header.tsx,none,all,/api/notifications,notifications,customer,working,confirmed,Badge with count
+apps/web/src/contexts/cart-context.tsx,web,context,Cart state management,layout.tsx,none,all,/api/cart,carts cart_items,customer,working,confirmed,React context + useReducer
+apps/web/src/lib/engine.ts,web,utility,Engine singleton,API routes,createCentralEngine createAdminClient,none,all,none,system,working,confirmed,Server-side only
+apps/web/src/lib/auth-helpers.ts,web,utility,Auth helper functions,API routes,createServerClient,none,all,auth.users,all,working,confirmed,Session management
+apps/web/src/lib/order-helpers.ts,web,utility,Order helper functions,order pages,none,none,all,orders,customer,working,confirmed,Order utilities
+apps/web/src/middleware.ts,web,middleware,Auth guard,next.js,@supabase/ssr,all,none,auth.users,all,working,confirmed,Protects /account/* routes
+apps/chef-admin/src/app/page.tsx,chef-admin,page,Redirect to dashboard,layout.tsx,redirect,/,none,none,chef,working,confirmed,Simple redirect
+apps/chef-admin/src/app/layout.tsx,chef-admin,layout,Root layout,next.js,AuthProvider,all chef routes,none,none,chef,working,confirmed,App wrapper
+apps/chef-admin/src/app/auth/login/page.tsx,chef-admin,page,Chef login,auth/layout.tsx,useAuth,/auth/login,none,auth.users,public,working,confirmed,Email/password
+apps/chef-admin/src/app/auth/signup/page.tsx,chef-admin,page,Chef registration,auth/layout.tsx,useAuth,/auth/signup,/api/auth/signup,auth.users chef_profiles,public,working,confirmed,Creates auth + chef profile
+apps/chef-admin/src/app/auth/layout.tsx,chef-admin,layout,Auth layout,layout.tsx,AuthLayout,/auth/*,none,none,public,working,confirmed,Auth page wrapper
+apps/chef-admin/src/app/dashboard/page.tsx,chef-admin,page,Chef dashboard overview,dashboard/layout.tsx,none,/dashboard,none,orders chef_storefronts,chef,working,confirmed,Real order stats
+apps/chef-admin/src/app/dashboard/layout.tsx,chef-admin,layout,Dashboard layout with sidebar,layout.tsx,Sidebar Header,/dashboard/*,none,none,chef,working,confirmed,Navigation shell
+apps/chef-admin/src/app/dashboard/orders/page.tsx,chef-admin,page,Order management,dashboard/layout.tsx,OrdersList,/dashboard/orders,/api/orders,orders order_items,chef,working,confirmed,Real-time subscription
+apps/chef-admin/src/app/dashboard/menu/page.tsx,chef-admin,page,Menu management,dashboard/layout.tsx,MenuList,/dashboard/menu,/api/menu,menu_items menu_categories,chef,working,confirmed,Full CRUD
+apps/chef-admin/src/app/dashboard/storefront/page.tsx,chef-admin,page,Storefront settings,dashboard/layout.tsx,StorefrontForm StorefrontSetupForm,/dashboard/storefront,/api/storefront,chef_storefronts chef_kitchens,chef,working,confirmed,Create + edit
+apps/chef-admin/src/app/dashboard/analytics/page.tsx,chef-admin,page,Revenue analytics,dashboard/layout.tsx,none,/dashboard/analytics,none,orders order_items,chef,partial,confirmed,Client-side calculations only
+apps/chef-admin/src/app/dashboard/reviews/page.tsx,chef-admin,page,Review management,dashboard/layout.tsx,none,/dashboard/reviews,none,reviews,chef,working,confirmed,Response capability
+apps/chef-admin/src/app/dashboard/payouts/page.tsx,chef-admin,page,Payout management,dashboard/layout.tsx,none,/dashboard/payouts,/api/payouts/*,chef_payout_accounts orders,chef,working,confirmed,Stripe Connect
+apps/chef-admin/src/app/dashboard/settings/page.tsx,chef-admin,page,Chef profile settings,dashboard/layout.tsx,ProfileForm,/dashboard/settings,/api/profile,chef_profiles,chef,working,confirmed,Profile editing
+apps/chef-admin/src/app/dashboard/loading.tsx,chef-admin,page,Loading state,next.js,Spinner,/dashboard/*,none,none,chef,working,confirmed,Dashboard loading
+apps/chef-admin/src/app/error.tsx,chef-admin,page,Error boundary,next.js,none,all,none,none,chef,working,confirmed,Error handler
+apps/chef-admin/src/app/loading.tsx,chef-admin,page,Global loading,next.js,Spinner,all,none,none,chef,working,confirmed,App loading
+apps/chef-admin/src/app/api/auth/signup/route.ts,chef-admin,api,Chef registration,frontend,createAdminClient,none,POST /api/auth/signup,auth.users chef_profiles,public,working,confirmed,Creates auth + chef + kitchen
+apps/chef-admin/src/app/api/orders/route.ts,chef-admin,api,Chef orders list,orders page,engine,none,GET /api/orders,orders,chef,working,confirmed,Engine-powered
+apps/chef-admin/src/app/api/orders/[id]/route.ts,chef-admin,api,Order detail + actions,orders page,engine,none,GET PATCH /api/orders/[id],orders order_items,chef,working,confirmed,Accept/reject/prepare/ready
+apps/chef-admin/src/app/api/menu/route.ts,chef-admin,api,Menu list + create,menu page,engine,none,GET POST /api/menu,menu_items,chef,working,confirmed,With audit logging
+apps/chef-admin/src/app/api/menu/[id]/route.ts,chef-admin,api,Menu item CRUD,menu page,engine,none,GET PATCH DELETE /api/menu/[id],menu_items,chef,working,confirmed,Soft delete
+apps/chef-admin/src/app/api/menu/categories/route.ts,chef-admin,api,Category management,menu page,createAdminClient,none,GET POST /api/menu/categories,menu_categories,chef,working,confirmed,CRUD
+apps/chef-admin/src/app/api/storefront/route.ts,chef-admin,api,Storefront CRUD,storefront page,createAdminClient,none,GET POST PATCH /api/storefront,chef_storefronts chef_kitchens,chef,working,confirmed,Slug generation + kitchen creation
+apps/chef-admin/src/app/api/profile/route.ts,chef-admin,api,Chef profile,settings page,createAdminClient,none,GET PATCH /api/profile,chef_profiles,chef,working,confirmed,Profile read/update
+apps/chef-admin/src/app/api/payouts/setup/route.ts,chef-admin,api,Stripe Connect setup,payouts page,stripe,none,POST /api/payouts/setup,chef_payout_accounts,chef,working,confirmed,Express account creation
+apps/chef-admin/src/app/api/payouts/request/route.ts,chef-admin,api,Payout request,payouts page,stripe,none,POST /api/payouts/request,chef_payout_accounts,chef,working,confirmed,Stripe transfer
+apps/chef-admin/src/components/layout/header.tsx,chef-admin,component,Top navigation,dashboard/layout.tsx,useAuth,/dashboard/*,none,none,chef,working,confirmed,User menu
+apps/chef-admin/src/components/layout/sidebar.tsx,chef-admin,component,Dashboard navigation,dashboard/layout.tsx,none,/dashboard/*,none,none,chef,working,confirmed,Nav links
+apps/chef-admin/src/components/orders/orders-list.tsx,chef-admin,component,Order cards + real-time,orders/page.tsx,none,/dashboard/orders,/api/orders,orders,chef,working,confirmed,Supabase subscription
+apps/chef-admin/src/components/menu/menu-list.tsx,chef-admin,component,Menu category + items,menu/page.tsx,none,/dashboard/menu,/api/menu,menu_items menu_categories,chef,working,confirmed,Inline modals
+apps/chef-admin/src/components/auth/auth-layout.tsx,chef-admin,component,Auth page wrapper,auth/layout.tsx,none,/auth/*,none,none,public,working,confirmed,Shared styling
+apps/chef-admin/src/components/auth/password-strength.tsx,chef-admin,component,Password meter,none,none,none,none,none,public,dead_code,confirmed,Imported but never used
+apps/chef-admin/src/components/profile/profile-form.tsx,chef-admin,component,Profile editor,settings/page.tsx,none,/dashboard/settings,/api/profile,chef_profiles,chef,working,inferred,Form component
+apps/chef-admin/src/components/storefront/storefront-form.tsx,chef-admin,component,Storefront editor,storefront/page.tsx,none,/dashboard/storefront,/api/storefront,chef_storefronts,chef,working,inferred,Edit form
+apps/chef-admin/src/components/storefront/storefront-setup-form.tsx,chef-admin,component,Onboarding form,storefront/page.tsx,none,/dashboard/storefront,/api/storefront,chef_storefronts,chef,working,inferred,Creation form
+apps/chef-admin/src/lib/engine.ts,chef-admin,utility,Engine singleton,API routes,createCentralEngine createAdminClient,none,all,none,system,working,confirmed,Server-side only
+apps/chef-admin/src/middleware.ts,chef-admin,middleware,Auth guard,next.js,@supabase/ssr,all,none,auth.users,chef,working,confirmed,Protects dashboard routes
+apps/ops-admin/src/app/page.tsx,ops-admin,page,Redirect to dashboard,layout.tsx,redirect,/,none,none,ops,working,confirmed,Simple redirect
+apps/ops-admin/src/app/layout.tsx,ops-admin,layout,Root layout,next.js,AuthProvider,all ops routes,none,none,ops,working,confirmed,App wrapper
+apps/ops-admin/src/app/auth/login/page.tsx,ops-admin,page,Ops login,layout.tsx,useAuth,/auth/login,none,auth.users platform_users,public,working,confirmed,Email/password
+apps/ops-admin/src/app/dashboard/page.tsx,ops-admin,page,Command center,DashboardLayout,engine,/dashboard,/api/engine/dashboard,orders deliveries system_alerts,ops,working,confirmed,Engine-backed stats
+apps/ops-admin/src/app/dashboard/orders/page.tsx,ops-admin,page,Order oversight,DashboardLayout,none,/dashboard/orders,/api/orders,orders,ops,working,confirmed,All platform orders
+apps/ops-admin/src/app/dashboard/orders/[id]/page.tsx,ops-admin,page,Order detail + actions,DashboardLayout,status-actions,/dashboard/orders/[id],/api/engine/orders/[id],orders order_items deliveries,ops,working,confirmed,Timeline + financials
+apps/ops-admin/src/app/dashboard/orders/[id]/status-actions.tsx,ops-admin,component,Order action buttons,orders/[id]/page.tsx,none,/dashboard/orders/[id],/api/engine/orders/[id],orders,ops,working,confirmed,Client component
+apps/ops-admin/src/app/dashboard/chefs/page.tsx,ops-admin,page,Chef list,DashboardLayout,none,/dashboard/chefs,/api/chefs,chef_profiles chef_storefronts,ops,working,confirmed,Platform-wide chef list
+apps/ops-admin/src/app/dashboard/chefs/[id]/page.tsx,ops-admin,page,Chef detail + governance,DashboardLayout,chef-governance-actions storefront-governance-actions,/dashboard/chefs/[id],/api/chefs/[id],chef_profiles chef_storefronts,ops,working,confirmed,Approve/reject/suspend
+apps/ops-admin/src/app/dashboard/chefs/[id]/chef-governance-actions.tsx,ops-admin,component,Chef governance buttons,chefs/[id]/page.tsx,none,/dashboard/chefs/[id],/api/chefs/[id],chef_profiles,ops,working,confirmed,Client component
+apps/ops-admin/src/app/dashboard/chefs/[id]/storefront-governance-actions.tsx,ops-admin,component,Storefront governance,chefs/[id]/page.tsx,none,/dashboard/chefs/[id],/api/engine/storefronts/[id],chef_storefronts,ops,working,confirmed,Publish/unpublish/pause
+apps/ops-admin/src/app/dashboard/chefs/approvals/page.tsx,ops-admin,page,Pending approvals,DashboardLayout,none,/dashboard/chefs/approvals,/api/chefs,chef_profiles,ops,working,confirmed,Filtered pending chefs
+apps/ops-admin/src/app/dashboard/customers/page.tsx,ops-admin,page,Customer list,DashboardLayout,none,/dashboard/customers,/api/customers,customers,ops,working,confirmed,Platform-wide list
+apps/ops-admin/src/app/dashboard/customers/[id]/page.tsx,ops-admin,page,Customer detail,DashboardLayout,none,/dashboard/customers/[id],/api/customers,customers orders,ops,working,confirmed,Customer profile
+apps/ops-admin/src/app/dashboard/drivers/page.tsx,ops-admin,page,Driver list,DashboardLayout,none,/dashboard/drivers,/api/drivers,drivers,ops,working,confirmed,Platform-wide list
+apps/ops-admin/src/app/dashboard/drivers/[id]/page.tsx,ops-admin,page,Driver detail + governance,DashboardLayout,driver-governance-actions,/dashboard/drivers/[id],/api/drivers/[id],drivers driver_presence,ops,working,confirmed,Approve/suspend
+apps/ops-admin/src/app/dashboard/drivers/[id]/driver-governance-actions.tsx,ops-admin,component,Driver governance buttons,drivers/[id]/page.tsx,none,/dashboard/drivers/[id],/api/drivers/[id],drivers,ops,working,confirmed,Client component
+apps/ops-admin/src/app/dashboard/deliveries/page.tsx,ops-admin,page,Dispatch command center,DashboardLayout,none,/dashboard/deliveries,/api/engine/dispatch,deliveries orders drivers,ops,working,confirmed,4 queues: pending/active/escalated/stale
+apps/ops-admin/src/app/dashboard/deliveries/[id]/page.tsx,ops-admin,page,Delivery detail,DashboardLayout,delivery-actions,/dashboard/deliveries/[id],/api/deliveries/[id],deliveries orders,ops,working,confirmed,Delivery management
+apps/ops-admin/src/app/dashboard/deliveries/[id]/delivery-actions.tsx,ops-admin,component,Delivery action buttons,deliveries/[id]/page.tsx,none,/dashboard/deliveries/[id],/api/engine/dispatch,deliveries,ops,working,confirmed,Assign/reassign/escalate
+apps/ops-admin/src/app/dashboard/finance/page.tsx,ops-admin,page,Finance operations,DashboardLayout,finance-actions,/dashboard/finance,/api/engine/finance,ledger_entries refund_cases payout_adjustments,ops,working,confirmed,Role-gated to ops_manager+
+apps/ops-admin/src/app/dashboard/finance/finance-actions.tsx,ops-admin,component,Finance action buttons,finance/page.tsx,none,/dashboard/finance,/api/engine/refunds,refund_cases,ops,working,confirmed,Approve/deny refunds
+apps/ops-admin/src/app/dashboard/support/page.tsx,ops-admin,page,Support ticket queue,DashboardLayout,none,/dashboard/support,/api/support,support_tickets,ops,working,confirmed,Ticket management
+apps/ops-admin/src/app/dashboard/analytics/page.tsx,ops-admin,page,Analytics,DashboardLayout,none,/dashboard/analytics,none,none,ops,placeholder,confirmed,Placeholder data
+apps/ops-admin/src/app/dashboard/map/page.tsx,ops-admin,page,Live delivery map,DashboardLayout,live-map delivery-map,/dashboard/map,none,deliveries driver_presence,ops,partial,confirmed,Basic Leaflet map
+apps/ops-admin/src/app/dashboard/settings/page.tsx,ops-admin,page,Platform settings,DashboardLayout,settings-form,/dashboard/settings,/api/engine/settings,platform_settings,ops,working,confirmed,Platform rules editor
+apps/ops-admin/src/app/dashboard/settings/settings-form.tsx,ops-admin,component,Settings form,settings/page.tsx,none,/dashboard/settings,/api/engine/settings,platform_settings,ops,working,confirmed,Form submission
+apps/ops-admin/src/app/error.tsx,ops-admin,page,Error boundary,next.js,none,all,none,none,ops,working,confirmed,Error handler
+apps/ops-admin/src/app/loading.tsx,ops-admin,page,Loading state,next.js,Spinner,all,none,none,ops,working,confirmed,Global loading
+apps/ops-admin/src/app/api/chefs/route.ts,ops-admin,api,Chef list,frontend,createAdminClient,none,GET /api/chefs,chef_profiles chef_storefronts,ops,working,confirmed,With status filter
+apps/ops-admin/src/app/api/chefs/[id]/route.ts,ops-admin,api,Chef governance,frontend,engine,none,PATCH /api/chefs/[id],chef_profiles,ops,working,confirmed,Approve/reject/suspend
+apps/ops-admin/src/app/api/customers/route.ts,ops-admin,api,Customer list,frontend,createAdminClient,none,GET /api/customers,customers,ops,working,confirmed,Platform-wide
+apps/ops-admin/src/app/api/drivers/route.ts,ops-admin,api,Driver list,frontend,createAdminClient,none,GET /api/drivers,drivers,ops,working,confirmed,POST rejected by design
+apps/ops-admin/src/app/api/drivers/[id]/route.ts,ops-admin,api,Driver governance,frontend,engine,none,PATCH /api/drivers/[id],drivers,ops,working,confirmed,Approve/suspend
+apps/ops-admin/src/app/api/orders/route.ts,ops-admin,api,Order list,frontend,createAdminClient,none,GET /api/orders,orders,ops,working,confirmed,With filters
+apps/ops-admin/src/app/api/orders/[id]/route.ts,ops-admin,api,Order detail + actions,frontend,engine,none,GET PATCH /api/orders/[id],orders,ops,working,confirmed,Status mutations
+apps/ops-admin/src/app/api/orders/[id]/refund/route.ts,ops-admin,api,Initiate refund,frontend,engine,none,POST /api/orders/[id]/refund,refund_cases,ops,working,confirmed,Creates refund case
+apps/ops-admin/src/app/api/deliveries/route.ts,ops-admin,api,Delivery list,frontend,createAdminClient,none,GET /api/deliveries,deliveries,ops,working,confirmed,Platform-wide
+apps/ops-admin/src/app/api/deliveries/[id]/route.ts,ops-admin,api,Delivery actions,frontend,engine,none,PATCH /api/deliveries/[id],deliveries,ops,working,confirmed,Assign/status
+apps/ops-admin/src/app/api/support/route.ts,ops-admin,api,Support tickets,frontend,createAdminClient,none,GET POST /api/support,support_tickets,ops,working,confirmed,Queue management
+apps/ops-admin/src/app/api/support/[id]/route.ts,ops-admin,api,Ticket detail,frontend,createAdminClient,none,GET PATCH /api/support/[id],support_tickets,ops,working,confirmed,Status updates
+apps/ops-admin/src/app/api/engine/dashboard/route.ts,ops-admin,api,Dashboard stats,frontend,engine,none,GET POST /api/engine/dashboard,orders deliveries system_alerts,ops,working,confirmed,Engine-backed metrics
+apps/ops-admin/src/app/api/engine/dispatch/route.ts,ops-admin,api,Dispatch actions,frontend,engine,none,GET POST /api/engine/dispatch,deliveries assignment_attempts,ops,working,confirmed,Zod validated
+apps/ops-admin/src/app/api/engine/exceptions/route.ts,ops-admin,api,Exception queue,frontend,engine,none,GET POST /api/engine/exceptions,order_exceptions,ops,working,confirmed,Create/list
+apps/ops-admin/src/app/api/engine/exceptions/[id]/route.ts,ops-admin,api,Exception update,frontend,engine,none,PATCH /api/engine/exceptions/[id],order_exceptions,ops,working,confirmed,Status changes
+apps/ops-admin/src/app/api/engine/finance/route.ts,ops-admin,api,Financial summary,frontend,engine,none,GET /api/engine/finance,ledger_entries,ops,working,confirmed,Commerce engine
+apps/ops-admin/src/app/api/engine/orders/[id]/route.ts,ops-admin,api,Engine order detail,frontend,engine,none,GET PATCH /api/engine/orders/[id],orders,ops,working,confirmed,Engine-backed
+apps/ops-admin/src/app/api/engine/refunds/route.ts,ops-admin,api,Refund management,frontend,engine,none,GET POST /api/engine/refunds,refund_cases,ops,partial,confirmed,Mock Stripe refund IDs
+apps/ops-admin/src/app/api/engine/settings/route.ts,ops-admin,api,Platform settings,frontend,engine,none,GET PATCH /api/engine/settings,platform_settings,ops,working,confirmed,Rules management
+apps/ops-admin/src/app/api/engine/storefronts/[id]/route.ts,ops-admin,api,Storefront governance,frontend,engine,none,PATCH /api/engine/storefronts/[id],chef_storefronts,ops,working,confirmed,Publish/unpublish/pause
+apps/ops-admin/src/components/DashboardLayout.tsx,ops-admin,component,Main sidebar + nav,all dashboard pages,none,/dashboard/*,none,none,ops,working,confirmed,11 nav sections
+apps/ops-admin/src/components/dashboard/alerts-panel.tsx,ops-admin,component,Alert notifications,dashboard/page.tsx,none,/dashboard,none,system_alerts,ops,working,confirmed,Alert display
+apps/ops-admin/src/components/dashboard/orders-heatmap.tsx,ops-admin,component,Order visualization,dashboard/page.tsx,none,/dashboard,none,orders,ops,working,confirmed,Chart component
+apps/ops-admin/src/components/dashboard/real-time-stats.tsx,ops-admin,component,Live statistics,dashboard/page.tsx,none,/dashboard,none,orders deliveries,ops,working,confirmed,Stats display
+apps/ops-admin/src/components/dashboard/revenue-chart.tsx,ops-admin,component,Revenue chart,dashboard/page.tsx,none,/dashboard,none,orders,ops,working,confirmed,Chart component
+apps/ops-admin/src/components/map/delivery-map.tsx,ops-admin,component,Delivery map,map/page.tsx,leaflet,/dashboard/map,none,deliveries,ops,partial,confirmed,Basic Leaflet
+apps/ops-admin/src/components/map/live-map.tsx,ops-admin,component,Live tracking map,map/page.tsx,leaflet,/dashboard/map,none,driver_presence,ops,partial,confirmed,Basic Leaflet
+apps/ops-admin/src/lib/engine.ts,ops-admin,utility,Engine singleton,API routes,createCentralEngine createAdminClient,none,all,none,system,working,confirmed,Server-side only
+apps/ops-admin/src/middleware.ts,ops-admin,middleware,Auth guard,next.js,@supabase/ssr,all,none,auth.users platform_users,ops,working,confirmed,Protects all non-auth routes
+apps/driver-app/src/app/page.tsx,driver-app,page,Driver dashboard,layout.tsx,DriverDashboard,/,none,drivers deliveries,driver,working,confirmed,Status toggle + active delivery
+apps/driver-app/src/app/layout.tsx,driver-app,layout,Root layout,next.js,AuthProvider,all driver routes,none,none,driver,working,confirmed,PWA-ready
+apps/driver-app/src/app/auth/login/page.tsx,driver-app,page,Driver login,layout.tsx,useAuth,/auth/login,/api/auth/login,auth.users drivers,public,working,confirmed,Approved status check
+apps/driver-app/src/app/delivery/[id]/page.tsx,driver-app,page,Delivery detail,layout.tsx,DeliveryDetail,/delivery/[id],/api/deliveries/[id],deliveries orders,driver,working,confirmed,Full delivery tracking
+apps/driver-app/src/app/delivery/[id]/components/DeliveryDetail.tsx,driver-app,component,Delivery UI + status,delivery/[id]/page.tsx,RouteMap,/delivery/[id],/api/deliveries/[id],deliveries,driver,working,confirmed,Status workflow + proof capture
+apps/driver-app/src/app/earnings/page.tsx,driver-app,page,Earnings summary,layout.tsx,EarningsView,/earnings,/api/earnings,deliveries,driver,partial,confirmed,Hours always 0
+apps/driver-app/src/app/earnings/components/EarningsView.tsx,driver-app,component,Earnings display,earnings/page.tsx,none,/earnings,/api/earnings,deliveries,driver,partial,confirmed,Missing hours calculation
+apps/driver-app/src/app/history/page.tsx,driver-app,page,Delivery history,layout.tsx,HistoryView,/history,/api/deliveries,deliveries,driver,working,confirmed,Past deliveries
+apps/driver-app/src/app/history/components/HistoryView.tsx,driver-app,component,History list,history/page.tsx,none,/history,/api/deliveries,deliveries,driver,working,confirmed,List display
+apps/driver-app/src/app/profile/page.tsx,driver-app,page,Driver profile,layout.tsx,ProfileView,/profile,/api/driver,drivers,driver,working,confirmed,Profile editor
+apps/driver-app/src/app/profile/components/ProfileView.tsx,driver-app,component,Profile form,profile/page.tsx,none,/profile,/api/driver,drivers,driver,working,confirmed,Edit form
+apps/driver-app/src/app/components/DriverDashboard.tsx,driver-app,component,Main dashboard UI,page.tsx,none,/,/api/driver/presence /api/deliveries /api/offers,drivers deliveries,driver,working,confirmed,Status toggle + stats
+apps/driver-app/src/app/loading.tsx,driver-app,page,Loading state,next.js,Spinner,all,none,none,driver,working,confirmed,App loading
+apps/driver-app/src/app/error.tsx,driver-app,page,Error boundary,next.js,none,all,none,none,driver,working,confirmed,Error handler
+apps/driver-app/src/app/api/auth/login/route.ts,driver-app,api,Driver login,frontend,createServerClient,none,POST /api/auth/login,auth.users drivers,public,working,confirmed,Checks approved status
+apps/driver-app/src/app/api/auth/logout/route.ts,driver-app,api,Driver logout,frontend,createServerClient,none,POST /api/auth/logout,auth.users,driver,working,confirmed,Session clear
+apps/driver-app/src/app/api/driver/route.ts,driver-app,api,Driver profile,frontend,createServerClient,none,GET PATCH /api/driver,drivers,driver,working,confirmed,Profile CRUD
+apps/driver-app/src/app/api/driver/presence/route.ts,driver-app,api,Online status,frontend,engine,none,GET PATCH /api/driver/presence,driver_presence,driver,working,confirmed,Production-grade with events
+apps/driver-app/src/app/api/deliveries/route.ts,driver-app,api,Active deliveries,frontend,createServerClient,none,GET /api/deliveries,deliveries,driver,working,confirmed,Driver-scoped
+apps/driver-app/src/app/api/deliveries/[id]/route.ts,driver-app,api,Delivery detail + status,frontend,engine,none,GET PATCH /api/deliveries/[id],deliveries orders customers chef_storefronts,driver,working,confirmed,Engine-integrated workflow
+apps/driver-app/src/app/api/offers/route.ts,driver-app,api,Delivery offers,frontend,engine,none,GET POST /api/offers,assignment_attempts deliveries,driver,working,confirmed,Accept/decline via engine
+apps/driver-app/src/app/api/location/route.ts,driver-app,api,GPS location update,useLocationTracker,engine,none,POST /api/location,driver_presence driver_locations delivery_tracking_events,driver,working,confirmed,Rate-limited 5s + Zod validated
+apps/driver-app/src/app/api/earnings/route.ts,driver-app,api,Earnings data,frontend,createServerClient,none,GET /api/earnings,deliveries,driver,working,confirmed,Today/week/month breakdown
+apps/driver-app/src/components/map/route-map.tsx,driver-app,component,Route map,DeliveryDetail,leaflet react-leaflet,/delivery/[id],none,none,driver,working,confirmed,Dynamic map component
+apps/driver-app/src/hooks/use-location-tracker.ts,driver-app,hook,Geolocation tracking,DriverDashboard,createBrowserClient,/,/api/location,driver_presence driver_locations,driver,working,confirmed,15s update interval
+apps/driver-app/src/lib/engine.ts,driver-app,utility,Engine singleton,API routes,createCentralEngine createAdminClient,none,all,none,system,working,confirmed,Server-side only
+apps/driver-app/src/middleware.ts,driver-app,middleware,Auth guard,next.js,@supabase/ssr,all,none,auth.users drivers,driver,working,confirmed,Protects all non-auth routes
+packages/types/src/index.ts,types,barrel,Package exports,all packages,all domain types,none,none,none,all,working,confirmed,Re-exports everything
+packages/types/src/enums.ts,types,types,Status enums,all packages,none,none,none,none,all,working,confirmed,OrderStatus DeliveryStatus etc
+packages/types/src/api.ts,types,types,API contract types,apps,none,none,none,none,all,working,confirmed,Request/response types
+packages/types/src/domains/chef.ts,types,types,Chef domain types,apps packages,none,none,none,chef_profiles chef_storefronts,chef,working,confirmed,Chef interfaces
+packages/types/src/domains/customer.ts,types,types,Customer domain types,apps packages,none,none,none,customers,customer,working,confirmed,Customer interfaces
+packages/types/src/domains/order.ts,types,types,Order domain types,apps packages,none,none,none,orders order_items,all,working,confirmed,Order interfaces
+packages/types/src/domains/driver.ts,types,types,Driver domain types,apps packages,none,none,none,drivers deliveries,driver,working,confirmed,Driver interfaces
+packages/types/src/domains/delivery.ts,types,types,Delivery domain types,apps packages,none,none,none,deliveries,all,working,confirmed,Delivery interfaces
+packages/types/src/domains/platform.ts,types,types,Platform domain types,apps packages,none,none,none,platform_users platform_settings,ops,working,confirmed,Admin interfaces
+packages/types/src/engine/index.ts,types,types,Engine type definitions,engine package,none,none,none,none,all,working,confirmed,700+ lines state machines
+packages/types/src/engine/transitions.ts,types,types,State transitions,engine package,none,none,none,none,all,working,confirmed,Valid state transitions
+packages/validation/src/index.ts,validation,barrel,Package exports,all packages,all schemas,none,none,none,all,working,confirmed,Re-exports
+packages/validation/src/schemas/auth.ts,validation,schema,Auth validation,apps,zod,none,none,none,all,working,confirmed,Login/signup schemas
+packages/validation/src/schemas/common.ts,validation,schema,Common validators,all schemas,zod,none,none,none,all,working,confirmed,UUID email phone etc
+packages/validation/src/schemas/order.ts,validation,schema,Order validation,apps engine,zod,none,none,none,all,working,confirmed,Order/review/promo schemas
+packages/validation/src/schemas/chef.ts,validation,schema,Chef validation,apps,zod,none,none,none,chef,working,confirmed,Chef schemas
+packages/validation/src/schemas/customer.ts,validation,schema,Customer validation,apps,zod,none,none,none,customer,working,confirmed,Customer schemas
+packages/validation/src/schemas/driver.ts,validation,schema,Driver validation,apps,zod,none,none,none,driver,working,confirmed,Driver schemas
+packages/validation/src/schemas/ops.ts,validation,schema,Ops validation,ops-admin,zod,none,none,none,ops,working,confirmed,Ops schemas
+packages/auth/src/index.ts,auth,barrel,Package exports,all apps,hooks components utils,none,none,none,all,working,confirmed,Re-exports
+packages/auth/src/server.ts,auth,utility,Server auth utils,apps,roles session,none,none,auth.users,all,working,confirmed,Server-side helpers
+packages/auth/src/hooks/use-auth.ts,auth,hook,Auth state hook,all apps,@supabase/supabase-js,none,none,auth.users,all,working,confirmed,signIn signUp signOut
+packages/auth/src/hooks/use-user.ts,auth,hook,User context hook,all apps,none,none,none,auth.users,all,working,confirmed,Current user
+packages/auth/src/components/auth-provider.tsx,auth,component,Auth context provider,all app layouts,use-auth use-user,none,none,auth.users,all,working,confirmed,React context wrapper
+packages/auth/src/utils/roles.ts,auth,utility,Role checking,apps engine,@ridendine/db,none,none,customers chef_profiles drivers platform_users,all,working,confirmed,getUserRoles hasRole isAdmin
+packages/auth/src/utils/session.ts,auth,utility,Session management,apps,none,none,none,none,all,working,confirmed,Cookie helpers
+packages/db/src/index.ts,db,barrel,Package exports,all packages apps,clients repositories,none,none,all tables,all,working,confirmed,Central data access
+packages/db/src/client/index.ts,db,barrel,Client exports,db/index.ts,admin browser server,none,none,none,all,working,confirmed,3 client variants
+packages/db/src/client/admin.ts,db,client,Admin Supabase client,engine API routes,@supabase/supabase-js,none,none,all tables,system,working,confirmed,Service role key
+packages/db/src/client/browser.ts,db,client,Browser Supabase client,client components,@supabase/ssr,none,none,all tables (RLS),all,working,confirmed,Anon key
+packages/db/src/client/server.ts,db,client,Server Supabase client,server components API routes,@supabase/ssr,none,none,all tables (RLS),all,working,confirmed,Cookie session
+packages/db/src/client/types.ts,db,types,Client type exports,db package,database.types.ts,none,none,none,all,working,confirmed,Generated types
+packages/db/src/generated/database.types.ts,db,generated,Supabase types,all packages,none,none,none,all tables,all,stale,confirmed,Missing tables from migrations 7-10
+packages/db/src/repositories/order.repository.ts,db,repository,Order data access,engine apps,supabase-js,none,none,orders order_items,all,working,confirmed,11 table references
+packages/db/src/repositories/chef.repository.ts,db,repository,Chef data access,engine apps,supabase-js,none,none,chef_profiles,all,working,confirmed,6 table references
+packages/db/src/repositories/storefront.repository.ts,db,repository,Storefront data access,engine apps,supabase-js,none,none,chef_storefronts,all,working,confirmed,7 table references
+packages/db/src/repositories/menu.repository.ts,db,repository,Menu data access,apps,supabase-js,none,none,menu_items menu_categories,all,working,confirmed,Full CRUD
+packages/db/src/repositories/customer.repository.ts,db,repository,Customer data access,apps,supabase-js,none,none,customers customer_addresses orders,all,working,confirmed,7 table references
+packages/db/src/repositories/driver.repository.ts,db,repository,Driver data access,engine apps,supabase-js,none,none,drivers deliveries,all,working,confirmed,7 table references
+packages/db/src/repositories/delivery.repository.ts,db,repository,Delivery data access,engine apps,supabase-js,none,none,deliveries delivery_tracking_events,all,working,confirmed,9 table references
+packages/db/src/repositories/cart.repository.ts,db,repository,Cart data access,web app,supabase-js,none,none,carts cart_items,customer,working,confirmed,Full CRUD
+packages/db/src/repositories/address.repository.ts,db,repository,Address data access,web app,supabase-js,none,none,customer_addresses,customer,working,confirmed,Full CRUD
+packages/db/src/repositories/driver-presence.repository.ts,db,repository,Driver presence,driver-app,supabase-js,none,none,driver_presence,driver,working,confirmed,Upsert pattern
+packages/db/src/repositories/promo.repository.ts,db,repository,Promo code data access,web app engine,supabase-js,none,none,promo_codes,all,working,confirmed,With RPC
+packages/db/src/repositories/finance.repository.ts,db,repository,Finance data access,ops-admin engine,supabase-js,none,none,refund_cases payout_adjustments ledger_entries,ops,working,confirmed,Engine tables
+packages/db/src/repositories/ops.repository.ts,db,repository,Ops data access,ops-admin engine,supabase-js,none,none,drivers deliveries assignment_attempts support_tickets order_exceptions,ops,working,confirmed,RPC + multi-table
+packages/db/src/repositories/platform.repository.ts,db,repository,Platform settings,ops-admin engine,supabase-js,none,none,platform_settings,ops,working,confirmed,With fallback defaults
+packages/db/src/repositories/support.repository.ts,db,repository,Support ticket data access,ops-admin,supabase-js,none,none,support_tickets,ops,working,confirmed,Full CRUD
+packages/db/src/repositories/index.ts,db,barrel,Repository exports,db/index.ts,all repositories,none,none,none,all,working,confirmed,Re-exports all repos
+packages/engine/src/index.ts,engine,barrel,Package exports,all apps,factory orchestrators services,none,none,none,all,working,confirmed,createCentralEngine getEngine
+packages/engine/src/constants.ts,engine,config,Business constants,orchestrators,none,none,none,none,all,working,confirmed,Fee rates status colors
+packages/engine/src/core/engine.factory.ts,engine,factory,Engine factory,index.ts,all orchestrators,none,none,none,all,working,confirmed,Creates CentralEngine
+packages/engine/src/core/event-emitter.ts,engine,core,Domain events,orchestrators,supabase-js,none,none,domain_events,all,working,confirmed,Event bus
+packages/engine/src/core/audit-logger.ts,engine,core,Audit logging,orchestrators,supabase-js,none,none,audit_logs,all,working,confirmed,Audit trail
+packages/engine/src/core/sla-manager.ts,engine,core,SLA tracking,orchestrators,supabase-js,none,none,sla_timers,all,working,confirmed,Deadline management
+packages/engine/src/core/index.ts,engine,barrel,Core exports,engine,event-emitter audit-logger sla-manager,none,none,none,all,working,confirmed,Re-exports
+packages/engine/src/orchestrators/order.orchestrator.ts,engine,orchestrator,Order state machine,engine factory,db types validation,none,none,orders order_items order_status_history,all,working,confirmed,Create/accept/reject/prepare/ready
+packages/engine/src/orchestrators/kitchen.engine.ts,engine,orchestrator,Kitchen queue,engine factory,db,none,none,kitchen_queue_entries chef_storefronts,chef,working,confirmed,Queue management
+packages/engine/src/orchestrators/dispatch.engine.ts,engine,orchestrator,Driver dispatch,engine factory,db,none,none,deliveries assignment_attempts drivers,all,working,confirmed,Assignment + routing
+packages/engine/src/orchestrators/commerce.engine.ts,engine,orchestrator,Financial ledger,engine factory,db,none,none,ledger_entries orders,all,working,confirmed,Fee calculations
+packages/engine/src/orchestrators/support.engine.ts,engine,orchestrator,Exception handling,engine factory,db,none,none,order_exceptions support_tickets,ops,working,confirmed,Exception queue
+packages/engine/src/orchestrators/platform.engine.ts,engine,orchestrator,Platform workflows,engine factory,all other orchestrators,none,none,orders deliveries,all,working,confirmed,Cross-domain orchestration
+packages/engine/src/orchestrators/ops.engine.ts,engine,orchestrator,Ops controls,engine factory,db,none,none,platform_settings storefront_state_changes,ops,working,confirmed,Platform rules
+packages/engine/src/services/orders.service.ts,engine,service,Order utilities,orchestrators,none,none,none,none,all,working,confirmed,generateOrderNumber calculateTotals
+packages/engine/src/services/chefs.service.ts,engine,service,Chef utilities,orchestrators,db,none,none,chef_profiles,chef,working,confirmed,Chef helpers
+packages/engine/src/services/customers.service.ts,engine,service,Customer utilities,orchestrators,db,none,none,customers,customer,working,confirmed,Customer helpers
+packages/engine/src/services/dispatch.service.ts,engine,service,Dispatch utilities,orchestrators,db,none,none,deliveries drivers,all,working,confirmed,Legacy dispatch helpers
+packages/engine/src/services/permissions.service.ts,engine,service,Permission checks,orchestrators,types,none,none,none,all,working,confirmed,Role validation
+packages/engine/src/services/storage.service.ts,engine,service,File upload utils,orchestrators,supabase-js,none,none,none,all,working,confirmed,Supabase Storage (no UI)
+packages/ui/src/index.ts,ui,barrel,Package exports,all apps,all components,none,none,none,all,working,confirmed,9 components
+packages/ui/src/utils.ts,ui,utility,Class name utils,components,clsx tailwind-merge,none,none,none,all,working,confirmed,cn() helper
+packages/ui/src/components/button.tsx,ui,component,Button component,all apps,cva,none,none,none,all,working,confirmed,6 variants 3 sizes
+packages/ui/src/components/input.tsx,ui,component,Input component,all apps,cva,none,none,none,all,working,confirmed,Form input
+packages/ui/src/components/card.tsx,ui,component,Card component,all apps,none,none,none,none,all,working,confirmed,Container
+packages/ui/src/components/badge.tsx,ui,component,Badge component,all apps,cva,none,none,none,all,working,confirmed,Label/tag
+packages/ui/src/components/spinner.tsx,ui,component,Loading spinner,all apps,none,none,none,none,all,working,confirmed,SVG animation
+packages/ui/src/components/avatar.tsx,ui,component,Avatar component,all apps,none,none,none,none,all,working,confirmed,With fallback
+packages/ui/src/components/modal.tsx,ui,component,Modal dialog,all apps,none,none,none,none,all,working,confirmed,Dialog component
+packages/ui/src/components/empty-state.tsx,ui,component,Empty state display,all apps,none,none,none,none,all,working,confirmed,Placeholder UI
+packages/ui/src/components/error-state.tsx,ui,component,Error display,all apps,none,none,none,none,all,working,confirmed,Error UI
+packages/utils/src/index.ts,utils,barrel,Package exports,all packages apps,all utils,none,none,none,all,working,confirmed,Re-exports
+packages/utils/src/dates.ts,utils,utility,Date formatting,apps engine,none,none,none,none,all,working,confirmed,Date helpers
+packages/utils/src/formatting.ts,utils,utility,String/number formatting,apps,none,none,none,none,all,working,confirmed,Format helpers
+packages/utils/src/errors.ts,utils,utility,Error handling,apps engine,none,none,none,none,all,working,confirmed,Error utilities
+packages/utils/src/helpers.ts,utils,utility,General helpers,apps engine,none,none,none,none,all,working,confirmed,generateId sleep debounce etc
+packages/notifications/src/index.ts,notifications,barrel,Package exports,engine,templates types,none,none,none,all,working,confirmed,Re-exports
+packages/notifications/src/templates.ts,notifications,templates,Notification templates,engine,types,none,none,notifications,all,working,confirmed,10 templates
+packages/notifications/src/types.ts,notifications,types,Notification types,engine templates,none,none,none,none,all,working,confirmed,Payload interfaces
+packages/config/tailwind.config.ts,config,config,Shared Tailwind config,all apps,none,none,none,none,all,working,confirmed,Brand colors tokens

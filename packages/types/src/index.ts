@@ -13,6 +13,12 @@ export * from './domains/platform';
 // Re-export enums
 export * from './enums';
 
+// Re-export unified role definitions
+export * from './roles';
+
+// Re-export layout strategy contract
+export * from './layout';
+
 // Re-export API types
 export * from './api';
 

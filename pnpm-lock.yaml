@@ -376,6 +376,12 @@ importers:
       '@ridendine/db':
         specifier: workspace:*
         version: link:../db
+      '@ridendine/types':
+        specifier: workspace:*
+        version: link:../types
+      '@supabase/ssr':
+        specifier: ^0.5.0
+        version: 0.5.2(@supabase/supabase-js@2.99.3)
       '@supabase/supabase-js':
         specifier: ^2.45.0
         version: 2.99.3
@@ -410,10 +416,16 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.47.0
         version: 2.99.3
+      react:
+        specifier: '>=18'
+        version: 18.3.1
     devDependencies:
       '@ridendine/types':
         specifier: workspace:*
         version: link:../types
+      '@types/react':
+        specifier: ^18.3.0
+        version: 18.3.28
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
@@ -423,6 +435,9 @@ importers:
       '@ridendine/db':
         specifier: workspace:*
         version: link:../db
+      '@ridendine/notifications':
+        specifier: workspace:*
+        version: link:../notifications
       '@ridendine/types':
         specifier: workspace:*
         version: link:../types

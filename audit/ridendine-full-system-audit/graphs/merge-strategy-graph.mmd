@@ -1,0 +1,75 @@
+graph TD
+    subgraph Current["Current Architecture (4-App Split)"]
+        CUR_WEB["apps/web\nridendine.ca\n22 pages\nCustomer only"]
+        CUR_CHEF["apps/chef-admin\nchef.ridendine.ca\n11 pages\nChef only"]
+        CUR_OPS["apps/ops-admin\nops.ridendine.ca\n18 pages\nOps only"]
+        CUR_DRIVER["apps/driver-app\ndriver.ridendine.ca\n5 pages\nDriver only"]
+
+        CUR_WEB -.->|"4 separate\nVercel projects"| CUR_CHEF
+        CUR_CHEF -.-> CUR_OPS
+        CUR_OPS -.-> CUR_DRIVER
+    end
+
+    subgraph Duplications["Current Duplications (Problems)"]
+        DUP1["Auth middleware\nduplicated x4"]
+        DUP2["Order status\nlogic duplicated"]
+        DUP3["Notification\ntemplates split"]
+        DUP4["Supabase client\nconfiguration x4"]
+    end
+
+    subgraph Phase1["Phase 1: Package Consolidation (Weeks 1-2)"]
+        P1_ENGINE["Centralize all\nbusiness logic in\n@ridendine/engine"]
+        P1_AUTH["Single auth\nmiddleware in\n@ridendine/auth"]
+        P1_NOTIFY["Unified notifications\nin @ridendine/notifications"]
+        P1_TYPES["Canonical types\nin @ridendine/types"]
+
+        P1_ENGINE --> P1_AUTH
+        P1_AUTH --> P1_NOTIFY
+        P1_NOTIFY --> P1_TYPES
+    end
+
+    subgraph Phase2["Phase 2: Route Normalization (Weeks 3-4)"]
+        P2_ROUTES["Standardize API\nroute patterns\nacross all apps"]
+        P2_ERRORS["Unified error\nhandling middleware"]
+        P2_LOGGING["Centralized\naudit logging"]
+
+        P2_ROUTES --> P2_ERRORS
+        P2_ERRORS --> P2_LOGGING
+    end
+
+    subgraph Phase3["Phase 3: Optional Merge (Weeks 5-8)"]
+        P3A["Option A: Keep 4 apps\nbut share more code\n(Lower risk)"]
+        P3B["Option B: Merge to\n2 apps (public + admin)\n(Medium risk)"]
+        P3C["Option C: Single app\nwith role routing\n(Higher risk)"]
+    end
+
+    subgraph Unified["Proposed Unified Architecture (Option B)"]
+        UNI_PUBLIC["apps/web\nPublic domain\nCustomer + Chef signup\nDriver signup"]
+        UNI_ADMIN["apps/admin\nAdmin domain\nChef + Ops + Driver\nRole-based routing"]
+        UNI_SUPABASE["Supabase\nSingle instance\n(unchanged)"]
+        UNI_PACKAGES["Shared packages\n(consolidated)"]
+
+        UNI_PUBLIC --> UNI_SUPABASE
+        UNI_ADMIN --> UNI_SUPABASE
+        UNI_PUBLIC --> UNI_PACKAGES
+        UNI_ADMIN --> UNI_PACKAGES
+    end
+
+    subgraph Benefits["Expected Benefits"]
+        B1["Eliminate 4x auth\nduplication"]
+        B2["Single deployment\npipeline for admin"]
+        B3["Shared session\nacross chef/ops/driver"]
+        B4["Reduce CI/CD\ncomplexity by 50%"]
+    end
+
+    Current --> Phase1
+    Phase1 --> Phase2
+    Phase2 --> Phase3
+    Phase3 --> Unified
+
+    CUR_WEB -.->|"duplicates"| DUP1
+    CUR_CHEF -.->|"duplicates"| DUP1
+    CUR_OPS -.->|"duplicates"| DUP1
+    CUR_DRIVER -.->|"duplicates"| DUP1
+
+    Unified --> Benefits

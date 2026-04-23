@@ -1,0 +1,1106 @@
+{
+  "meta": {
+    "project": "Ridendine Food Delivery Marketplace",
+    "audit_date": "2026-04-23",
+    "version": "1.0.0",
+    "description": "Full system graph nodes and edges for Ridendine audit"
+  },
+  "nodes": [
+    {
+      "id": "app:web",
+      "label": "apps/web",
+      "category": "app",
+      "url": "ridendine.ca",
+      "port": 3000,
+      "maturity": 0.8,
+      "pages": 22,
+      "primary_role": "customer"
+    },
+    {
+      "id": "app:chef-admin",
+      "label": "apps/chef-admin",
+      "category": "app",
+      "url": "chef.ridendine.ca",
+      "port": 3001,
+      "maturity": 0.75,
+      "pages": 11,
+      "primary_role": "chef"
+    },
+    {
+      "id": "app:ops-admin",
+      "label": "apps/ops-admin",
+      "category": "app",
+      "url": "ops.ridendine.ca",
+      "port": 3002,
+      "maturity": 0.65,
+      "pages": 18,
+      "primary_role": "ops_admin"
+    },
+    {
+      "id": "app:driver-app",
+      "label": "apps/driver-app",
+      "category": "app",
+      "url": "driver.ridendine.ca",
+      "port": 3003,
+      "maturity": 0.7,
+      "pages": 5,
+      "primary_role": "driver"
+    },
+    {
+      "id": "pkg:db",
+      "label": "@ridendine/db",
+      "category": "app",
+      "description": "Supabase clients and 22 repositories",
+      "repositories": 22
+    },
+    {
+      "id": "pkg:ui",
+      "label": "@ridendine/ui",
+      "category": "app",
+      "description": "Shared React components"
+    },
+    {
+      "id": "pkg:auth",
+      "label": "@ridendine/auth",
+      "category": "app",
+      "description": "Authentication utilities and middleware"
+    },
+    {
+      "id": "pkg:types",
+      "label": "@ridendine/types",
+      "category": "app",
+      "description": "TypeScript type definitions"
+    },
+    {
+      "id": "pkg:validation",
+      "label": "@ridendine/validation",
+      "category": "app",
+      "description": "Zod validation schemas"
+    },
+    {
+      "id": "pkg:utils",
+      "label": "@ridendine/utils",
+      "category": "app",
+      "description": "Utility functions"
+    },
+    {
+      "id": "pkg:config",
+      "label": "@ridendine/config",
+      "category": "app",
+      "description": "Shared TS/Tailwind/ESLint configs"
+    },
+    {
+      "id": "pkg:notifications",
+      "label": "@ridendine/notifications",
+      "category": "app",
+      "description": "Email and SMS notification templates"
+    },
+    {
+      "id": "pkg:engine",
+      "label": "@ridendine/engine",
+      "category": "app",
+      "description": "Business logic orchestrators",
+      "orchestrators": 7
+    },
+    {
+      "id": "route:home",
+      "label": "/ (Home)",
+      "category": "route",
+      "app": "web",
+      "status": "working",
+      "visibility": "public"
+    },
+    {
+      "id": "route:browse",
+      "label": "/chefs (Browse)",
+      "category": "route",
+      "app": "web",
+      "status": "working",
+      "visibility": "public"
+    },
+    {
+      "id": "route:chef-menu",
+      "label": "/chefs/[slug] (Chef Menu)",
+      "category": "route",
+      "app": "web",
+      "status": "working",
+      "visibility": "public"
+    },
+    {
+      "id": "route:cart",
+      "label": "/cart (Cart)",
+      "category": "route",
+      "app": "web",
+      "status": "working",
+      "visibility": "protected"
+    },
+    {
+      "id": "route:checkout",
+      "label": "/checkout (Checkout)",
+      "category": "route",
+      "app": "web",
+      "status": "working",
+      "visibility": "protected"
+    },
+    {
+      "id": "route:order-confirmation",
+      "label": "/order-confirmation/[id]",
+      "category": "route",
+      "app": "web",
+      "status": "working",
+      "visibility": "protected"
+    },
+    {
+      "id": "route:account-orders",
+      "label": "/account/orders",
+      "category": "route",
+      "app": "web",
+      "status": "working",
+      "visibility": "protected"
+    },
+    {
+      "id": "route:chef-dashboard",
+      "label": "/dashboard (Chef)",
+      "category": "route",
+      "app": "chef-admin",
+      "status": "working",
+      "visibility": "protected"
+    },
+    {
+      "id": "route:chef-orders",
+      "label": "/dashboard/orders (Chef)",
+      "category": "route",
+      "app": "chef-admin",
+      "status": "partial",
+      "visibility": "protected",
+      "gap": "No real-time push"
+    },
+    {
+      "id": "route:chef-menu",
+      "label": "/dashboard/menu (Chef)",
+      "category": "route",
+      "app": "chef-admin",
+      "status": "working",
+      "visibility": "protected"
+    },
+    {
+      "id": "route:ops-dashboard",
+      "label": "/dashboard (Ops)",
+      "category": "route",
+      "app": "ops-admin",
+      "status": "working",
+      "visibility": "protected"
+    },
+    {
+      "id": "route:ops-orders",
+      "label": "/dashboard/orders (Ops)",
+      "category": "route",
+      "app": "ops-admin",
+      "status": "working",
+      "visibility": "protected"
+    },
+    {
+      "id": "route:ops-map",
+      "label": "/dashboard/map (Live Map)",
+      "category": "route",
+      "app": "ops-admin",
+      "status": "placeholder",
+      "visibility": "protected",
+      "gap": "Not implemented"
+    },
+    {
+      "id": "route:ops-deliveries",
+      "label": "/dashboard/deliveries/[id] (Ops)",
+      "category": "route",
+      "app": "ops-admin",
+      "status": "working",
+      "visibility": "protected"
+    },
+    {
+      "id": "route:driver-home",
+      "label": "/ (Driver Active Jobs)",
+      "category": "route",
+      "app": "driver-app",
+      "status": "working",
+      "visibility": "protected"
+    },
+    {
+      "id": "route:driver-delivery",
+      "label": "/delivery/[id] (Driver)",
+      "category": "route",
+      "app": "driver-app",
+      "status": "working",
+      "visibility": "protected"
+    },
+    {
+      "id": "route:driver-history",
+      "label": "/history (Driver)",
+      "category": "route",
+      "app": "driver-app",
+      "status": "placeholder",
+      "visibility": "protected",
+      "gap": "Placeholder - no API"
+    },
+    {
+      "id": "api:web-chefs",
+      "label": "GET /api/chefs (web)",
+      "category": "api",
+      "app": "web",
+      "method": "GET",
+      "auth": "none",
+      "status": "working"
+    },
+    {
+      "id": "api:web-checkout",
+      "label": "POST /api/checkout (web)",
+      "category": "api",
+      "app": "web",
+      "method": "POST",
+      "auth": "customer",
+      "status": "working"
+    },
+    {
+      "id": "api:web-cart",
+      "label": "POST /api/cart (web)",
+      "category": "api",
+      "app": "web",
+      "method": "POST",
+      "auth": "customer",
+      "status": "working"
+    },
+    {
+      "id": "api:web-orders",
+      "label": "GET /api/orders (web)",
+      "category": "api",
+      "app": "web",
+      "method": "GET",
+      "auth": "customer",
+      "status": "working"
+    },
+    {
+      "id": "api:web-stripe-webhook",
+      "label": "POST /api/stripe/webhook",
+      "category": "api",
+      "app": "web",
+      "method": "POST",
+      "auth": "stripe-signature",
+      "status": "working"
+    },
+    {
+      "id": "api:web-review",
+      "label": "POST /api/orders/[id]/review",
+      "category": "api",
+      "app": "web",
+      "method": "POST",
+      "auth": "customer",
+      "status": "missing"
+    },
+    {
+      "id": "api:chef-orders-patch",
+      "label": "PATCH /api/orders/[id] (chef)",
+      "category": "api",
+      "app": "chef-admin",
+      "method": "PATCH",
+      "auth": "chef",
+      "status": "working"
+    },
+    {
+      "id": "api:chef-menu",
+      "label": "GET/POST/PATCH /api/menu",
+      "category": "api",
+      "app": "chef-admin",
+      "method": "MULTIPLE",
+      "auth": "chef",
+      "status": "working"
+    },
+    {
+      "id": "api:chef-analytics",
+      "label": "GET /api/analytics (chef)",
+      "category": "api",
+      "app": "chef-admin",
+      "method": "GET",
+      "auth": "chef",
+      "status": "partial"
+    },
+    {
+      "id": "api:ops-orders",
+      "label": "GET /api/orders (ops)",
+      "category": "api",
+      "app": "ops-admin",
+      "method": "GET",
+      "auth": "ops",
+      "status": "working"
+    },
+    {
+      "id": "api:ops-refund",
+      "label": "POST /api/refund (ops)",
+      "category": "api",
+      "app": "ops-admin",
+      "method": "POST",
+      "auth": "ops",
+      "status": "working"
+    },
+    {
+      "id": "api:ops-deliveries-patch",
+      "label": "PATCH /api/deliveries/[id] (ops)",
+      "category": "api",
+      "app": "ops-admin",
+      "method": "PATCH",
+      "auth": "ops",
+      "status": "working"
+    },
+    {
+      "id": "api:driver-deliveries",
+      "label": "GET /api/deliveries (driver)",
+      "category": "api",
+      "app": "driver-app",
+      "method": "GET",
+      "auth": "driver",
+      "status": "working"
+    },
+    {
+      "id": "api:driver-status",
+      "label": "PATCH /api/deliveries/[id] (driver)",
+      "category": "api",
+      "app": "driver-app",
+      "method": "PATCH",
+      "auth": "driver",
+      "status": "working"
+    },
+    {
+      "id": "api:driver-location",
+      "label": "POST /api/location (driver)",
+      "category": "api",
+      "app": "driver-app",
+      "method": "POST",
+      "auth": "driver",
+      "status": "working"
+    },
+    {
+      "id": "api:driver-history",
+      "label": "GET /api/history (driver)",
+      "category": "api",
+      "app": "driver-app",
+      "method": "GET",
+      "auth": "driver",
+      "status": "missing"
+    },
+    {
+      "id": "db:chef_profiles",
+      "label": "chef_profiles",
+      "category": "db_entity",
+      "domain": "chef",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:chef_storefronts",
+      "label": "chef_storefronts",
+      "category": "db_entity",
+      "domain": "chef",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:menu_categories",
+      "label": "menu_categories",
+      "category": "db_entity",
+      "domain": "catalog",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:menu_items",
+      "label": "menu_items",
+      "category": "db_entity",
+      "domain": "catalog",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:menu_item_options",
+      "label": "menu_item_options",
+      "category": "db_entity",
+      "domain": "catalog",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:customers",
+      "label": "customers",
+      "category": "db_entity",
+      "domain": "customer",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:carts",
+      "label": "carts",
+      "category": "db_entity",
+      "domain": "customer",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:cart_items",
+      "label": "cart_items",
+      "category": "db_entity",
+      "domain": "customer",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:orders",
+      "label": "orders",
+      "category": "db_entity",
+      "domain": "order",
+      "primary_key": "id",
+      "status_values": ["pending", "accepted", "preparing", "ready", "picked_up", "delivered", "completed", "cancelled", "failed"]
+    },
+    {
+      "id": "db:order_items",
+      "label": "order_items",
+      "category": "db_entity",
+      "domain": "order",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:order_status_history",
+      "label": "order_status_history",
+      "category": "db_entity",
+      "domain": "order",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:reviews",
+      "label": "reviews",
+      "category": "db_entity",
+      "domain": "order",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:drivers",
+      "label": "drivers",
+      "category": "db_entity",
+      "domain": "driver",
+      "primary_key": "id",
+      "status_values": ["pending", "approved", "rejected", "suspended"]
+    },
+    {
+      "id": "db:driver_presence",
+      "label": "driver_presence",
+      "category": "db_entity",
+      "domain": "driver",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:driver_locations",
+      "label": "driver_locations",
+      "category": "db_entity",
+      "domain": "driver",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:driver_earnings",
+      "label": "driver_earnings",
+      "category": "db_entity",
+      "domain": "driver",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:deliveries",
+      "label": "deliveries",
+      "category": "db_entity",
+      "domain": "delivery",
+      "primary_key": "id",
+      "status_values": ["pending", "assigned", "accepted", "en_route_to_pickup", "arrived_at_pickup", "picked_up", "en_route_to_dropoff", "arrived_at_dropoff", "delivered", "completed"]
+    },
+    {
+      "id": "db:delivery_assignments",
+      "label": "delivery_assignments",
+      "category": "db_entity",
+      "domain": "delivery",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:delivery_events",
+      "label": "delivery_events",
+      "category": "db_entity",
+      "domain": "delivery",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:platform_users",
+      "label": "platform_users",
+      "category": "db_entity",
+      "domain": "platform",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:notifications",
+      "label": "notifications",
+      "category": "db_entity",
+      "domain": "platform",
+      "primary_key": "id"
+    },
+    {
+      "id": "db:audit_logs",
+      "label": "audit_logs",
+      "category": "db_entity",
+      "domain": "platform",
+      "primary_key": "id"
+    },
+    {
+      "id": "role:customer",
+      "label": "Customer",
+      "category": "role",
+      "auth_type": "email_password",
+      "app": "web"
+    },
+    {
+      "id": "role:chef",
+      "label": "Chef",
+      "category": "role",
+      "auth_type": "email_password",
+      "app": "chef-admin",
+      "lifecycle": ["pending", "approved", "rejected", "suspended"]
+    },
+    {
+      "id": "role:driver",
+      "label": "Driver",
+      "category": "role",
+      "auth_type": "email_password",
+      "app": "driver-app",
+      "lifecycle": ["pending", "approved", "rejected", "suspended"]
+    },
+    {
+      "id": "role:ops_admin",
+      "label": "Ops Admin",
+      "category": "role",
+      "auth_type": "email_password",
+      "app": "ops-admin"
+    },
+    {
+      "id": "role:system",
+      "label": "System (Webhook)",
+      "category": "role",
+      "auth_type": "stripe_signature",
+      "app": "web"
+    },
+    {
+      "id": "int:supabase",
+      "label": "Supabase",
+      "category": "integration",
+      "services": ["postgresql", "auth", "storage", "realtime"],
+      "status": "healthy"
+    },
+    {
+      "id": "int:stripe",
+      "label": "Stripe",
+      "category": "integration",
+      "services": ["payment_intents", "webhooks", "refunds", "connect"],
+      "status": "partial",
+      "gap": "Connect payouts not wired"
+    },
+    {
+      "id": "int:vercel",
+      "label": "Vercel",
+      "category": "integration",
+      "deployments": 4,
+      "status": "healthy"
+    },
+    {
+      "id": "int:email",
+      "label": "Email Provider",
+      "category": "integration",
+      "status": "missing",
+      "gap": "No provider configured"
+    },
+    {
+      "id": "int:push",
+      "label": "Push Notifications",
+      "category": "integration",
+      "status": "missing",
+      "gap": "Not implemented"
+    },
+    {
+      "id": "risk:bypass-auth",
+      "label": "BYPASS_AUTH Security Gap",
+      "category": "risk",
+      "severity": "critical",
+      "affects": ["app:web", "app:chef-admin", "app:ops-admin", "app:driver-app"]
+    },
+    {
+      "id": "risk:test-coverage",
+      "label": "No Test Coverage",
+      "category": "risk",
+      "severity": "critical",
+      "test_files": 7,
+      "affects": ["app:web", "app:chef-admin", "app:ops-admin", "app:driver-app"]
+    },
+    {
+      "id": "risk:notification-gaps",
+      "label": "Notification Infrastructure Missing",
+      "category": "risk",
+      "severity": "critical",
+      "affects": ["app:chef-admin", "app:driver-app"]
+    },
+    {
+      "id": "risk:realtime-missing",
+      "label": "Chef Dashboard No Real-time",
+      "category": "risk",
+      "severity": "high",
+      "affects": ["app:chef-admin", "route:chef-orders"]
+    },
+    {
+      "id": "risk:live-map-placeholder",
+      "label": "Live Map Not Implemented",
+      "category": "risk",
+      "severity": "high",
+      "affects": ["app:ops-admin", "route:ops-map"]
+    },
+    {
+      "id": "risk:stripe-connect",
+      "label": "Stripe Connect Not Wired",
+      "category": "risk",
+      "severity": "high",
+      "affects": ["app:chef-admin", "int:stripe"]
+    },
+    {
+      "id": "risk:schema-drift",
+      "label": "Schema Count Discrepancy",
+      "category": "risk",
+      "severity": "high",
+      "affects": ["pkg:types", "pkg:db"]
+    },
+    {
+      "id": "risk:no-pagination",
+      "label": "No Pagination on List Routes",
+      "category": "risk",
+      "severity": "medium",
+      "affects": ["app:ops-admin", "app:web"]
+    },
+    {
+      "id": "risk:driver-history",
+      "label": "Driver History Placeholder",
+      "category": "risk",
+      "severity": "medium",
+      "affects": ["app:driver-app", "route:driver-history"]
+    },
+    {
+      "id": "risk:missing-apis",
+      "label": "Missing API Routes",
+      "category": "risk",
+      "severity": "medium",
+      "missing": ["api:web-review", "api:driver-history"],
+      "affects": ["app:web", "app:driver-app"]
+    },
+    {
+      "id": "missing:realtime-chef",
+      "label": "Real-time Order Push (Chef)",
+      "category": "missing_piece",
+      "priority": "high",
+      "effort_weeks": 1
+    },
+    {
+      "id": "missing:live-map",
+      "label": "Live Driver Map (Ops)",
+      "category": "missing_piece",
+      "priority": "high",
+      "effort_weeks": 2
+    },
+    {
+      "id": "missing:stripe-connect-payouts",
+      "label": "Stripe Connect Payout Flow",
+      "category": "missing_piece",
+      "priority": "high",
+      "effort_weeks": 3
+    },
+    {
+      "id": "missing:push-notifications",
+      "label": "Push Notifications (Driver)",
+      "category": "missing_piece",
+      "priority": "high",
+      "effort_weeks": 2
+    },
+    {
+      "id": "missing:review-api",
+      "label": "Review Submission API",
+      "category": "missing_piece",
+      "priority": "medium",
+      "effort_weeks": 0.5
+    }
+  ],
+  "edges": [
+    {
+      "from": "app:web",
+      "to": "pkg:db",
+      "category": "depends_on",
+      "label": "Supabase repos"
+    },
+    {
+      "from": "app:web",
+      "to": "pkg:engine",
+      "category": "depends_on",
+      "label": "Order/payment logic"
+    },
+    {
+      "from": "app:web",
+      "to": "pkg:auth",
+      "category": "depends_on",
+      "label": "Auth middleware"
+    },
+    {
+      "from": "app:chef-admin",
+      "to": "pkg:db",
+      "category": "depends_on",
+      "label": "Supabase repos"
+    },
+    {
+      "from": "app:chef-admin",
+      "to": "pkg:engine",
+      "category": "depends_on",
+      "label": "Menu/order logic"
+    },
+    {
+      "from": "app:chef-admin",
+      "to": "pkg:auth",
+      "category": "depends_on",
+      "label": "Auth middleware"
+    },
+    {
+      "from": "app:ops-admin",
+      "to": "pkg:db",
+      "category": "depends_on",
+      "label": "Supabase repos"
+    },
+    {
+      "from": "app:ops-admin",
+      "to": "pkg:engine",
+      "category": "depends_on",
+      "label": "Dispatch/refund logic"
+    },
+    {
+      "from": "app:ops-admin",
+      "to": "pkg:auth",
+      "category": "depends_on",
+      "label": "Auth middleware"
+    },
+    {
+      "from": "app:driver-app",
+      "to": "pkg:db",
+      "category": "depends_on",
+      "label": "Supabase repos"
+    },
+    {
+      "from": "app:driver-app",
+      "to": "pkg:engine",
+      "category": "depends_on",
+      "label": "Delivery logic"
+    },
+    {
+      "from": "app:driver-app",
+      "to": "pkg:auth",
+      "category": "depends_on",
+      "label": "Auth middleware"
+    },
+    {
+      "from": "pkg:db",
+      "to": "int:supabase",
+      "category": "reads",
+      "label": "PostgreSQL queries"
+    },
+    {
+      "from": "pkg:auth",
+      "to": "int:supabase",
+      "category": "authenticates",
+      "label": "JWT verification"
+    },
+    {
+      "from": "pkg:engine",
+      "to": "int:stripe",
+      "category": "calls",
+      "label": "PaymentIntents + Refunds"
+    },
+    {
+      "from": "pkg:engine",
+      "to": "pkg:db",
+      "category": "depends_on",
+      "label": "Repository calls"
+    },
+    {
+      "from": "route:browse",
+      "to": "api:web-chefs",
+      "category": "calls",
+      "label": "Fetch storefronts"
+    },
+    {
+      "from": "route:cart",
+      "to": "api:web-cart",
+      "category": "calls",
+      "label": "Cart CRUD"
+    },
+    {
+      "from": "route:checkout",
+      "to": "api:web-checkout",
+      "category": "calls",
+      "label": "Create order"
+    },
+    {
+      "from": "route:chef-orders",
+      "to": "api:chef-orders-patch",
+      "category": "calls",
+      "label": "Status transitions"
+    },
+    {
+      "from": "route:driver-delivery",
+      "to": "api:driver-status",
+      "category": "calls",
+      "label": "Delivery status"
+    },
+    {
+      "from": "route:driver-delivery",
+      "to": "api:driver-location",
+      "category": "calls",
+      "label": "GPS update"
+    },
+    {
+      "from": "route:ops-deliveries",
+      "to": "api:ops-deliveries-patch",
+      "category": "calls",
+      "label": "Assign driver"
+    },
+    {
+      "from": "api:web-checkout",
+      "to": "db:orders",
+      "category": "writes",
+      "label": "Creates order"
+    },
+    {
+      "from": "api:web-checkout",
+      "to": "db:order_items",
+      "category": "writes",
+      "label": "Creates order items"
+    },
+    {
+      "from": "api:web-cart",
+      "to": "db:carts",
+      "category": "reads",
+      "label": "Cart state"
+    },
+    {
+      "from": "api:web-cart",
+      "to": "db:cart_items",
+      "category": "writes",
+      "label": "Cart item mutations"
+    },
+    {
+      "from": "api:chef-orders-patch",
+      "to": "db:orders",
+      "category": "writes",
+      "label": "Status update"
+    },
+    {
+      "from": "api:chef-orders-patch",
+      "to": "db:order_status_history",
+      "category": "writes",
+      "label": "Audit log"
+    },
+    {
+      "from": "api:driver-status",
+      "to": "db:deliveries",
+      "category": "writes",
+      "label": "Delivery status"
+    },
+    {
+      "from": "api:driver-status",
+      "to": "db:delivery_events",
+      "category": "writes",
+      "label": "Event log"
+    },
+    {
+      "from": "api:driver-location",
+      "to": "db:driver_locations",
+      "category": "writes",
+      "label": "GPS history"
+    },
+    {
+      "from": "api:driver-location",
+      "to": "db:driver_presence",
+      "category": "writes",
+      "label": "Current position"
+    },
+    {
+      "from": "api:ops-deliveries-patch",
+      "to": "db:delivery_assignments",
+      "category": "writes",
+      "label": "Driver assignment"
+    },
+    {
+      "from": "api:ops-refund",
+      "to": "int:stripe",
+      "category": "calls",
+      "label": "Stripe Refund API"
+    },
+    {
+      "from": "api:web-stripe-webhook",
+      "to": "db:orders",
+      "category": "writes",
+      "label": "Payment status update"
+    },
+    {
+      "from": "db:chef_profiles",
+      "to": "db:chef_storefronts",
+      "category": "depends_on",
+      "label": "1:1"
+    },
+    {
+      "from": "db:chef_storefronts",
+      "to": "db:menu_categories",
+      "category": "depends_on",
+      "label": "1:many"
+    },
+    {
+      "from": "db:menu_categories",
+      "to": "db:menu_items",
+      "category": "depends_on",
+      "label": "1:many"
+    },
+    {
+      "from": "db:menu_items",
+      "to": "db:menu_item_options",
+      "category": "depends_on",
+      "label": "1:many"
+    },
+    {
+      "from": "db:customers",
+      "to": "db:orders",
+      "category": "depends_on",
+      "label": "1:many"
+    },
+    {
+      "from": "db:orders",
+      "to": "db:order_items",
+      "category": "depends_on",
+      "label": "1:many"
+    },
+    {
+      "from": "db:orders",
+      "to": "db:deliveries",
+      "category": "depends_on",
+      "label": "1:1"
+    },
+    {
+      "from": "db:drivers",
+      "to": "db:deliveries",
+      "category": "depends_on",
+      "label": "1:many"
+    },
+    {
+      "from": "db:drivers",
+      "to": "db:driver_presence",
+      "category": "depends_on",
+      "label": "1:1"
+    },
+    {
+      "from": "db:deliveries",
+      "to": "db:delivery_assignments",
+      "category": "depends_on",
+      "label": "1:many"
+    },
+    {
+      "from": "db:deliveries",
+      "to": "db:delivery_events",
+      "category": "depends_on",
+      "label": "1:many"
+    },
+    {
+      "from": "role:customer",
+      "to": "app:web",
+      "category": "depends_on",
+      "label": "Uses"
+    },
+    {
+      "from": "role:chef",
+      "to": "app:chef-admin",
+      "category": "depends_on",
+      "label": "Uses"
+    },
+    {
+      "from": "role:driver",
+      "to": "app:driver-app",
+      "category": "depends_on",
+      "label": "Uses"
+    },
+    {
+      "from": "role:ops_admin",
+      "to": "app:ops-admin",
+      "category": "depends_on",
+      "label": "Uses"
+    },
+    {
+      "from": "risk:bypass-auth",
+      "to": "pkg:auth",
+      "category": "blocks",
+      "label": "Auth bypass in dev"
+    },
+    {
+      "from": "risk:bypass-auth",
+      "to": "app:ops-admin",
+      "category": "blocks",
+      "label": "Exposes admin"
+    },
+    {
+      "from": "risk:realtime-missing",
+      "to": "route:chef-orders",
+      "category": "blocks",
+      "label": "No push updates"
+    },
+    {
+      "from": "risk:live-map-placeholder",
+      "to": "route:ops-map",
+      "category": "blocks",
+      "label": "Not implemented"
+    },
+    {
+      "from": "risk:stripe-connect",
+      "to": "int:stripe",
+      "category": "blocks",
+      "label": "Payout not wired"
+    },
+    {
+      "from": "risk:missing-apis",
+      "to": "api:web-review",
+      "category": "blocks",
+      "label": "API missing"
+    },
+    {
+      "from": "risk:missing-apis",
+      "to": "api:driver-history",
+      "category": "blocks",
+      "label": "API missing"
+    },
+    {
+      "from": "app:web",
+      "to": "app:chef-admin",
+      "category": "duplicates",
+      "label": "Duplicate auth middleware"
+    },
+    {
+      "from": "app:chef-admin",
+      "to": "app:ops-admin",
+      "category": "duplicates",
+      "label": "Duplicate auth middleware"
+    },
+    {
+      "from": "app:ops-admin",
+      "to": "app:driver-app",
+      "category": "duplicates",
+      "label": "Duplicate auth middleware"
+    },
+    {
+      "from": "app:chef-admin",
+      "to": "app:driver-app",
+      "category": "should_merge_with",
+      "label": "Phase 3 Option B merge"
+    },
+    {
+      "from": "app:ops-admin",
+      "to": "app:driver-app",
+      "category": "should_merge_with",
+      "label": "Phase 3 Option B merge"
+    }
+  ]
+}

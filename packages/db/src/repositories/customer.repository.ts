@@ -106,15 +106,26 @@ export async function updateCustomer(
 }
 
 export async function listOpsCustomers(
-  client: SupabaseClient
-): Promise<OpsCustomerListItem[]> {
-  const { data, error } = await client
-    .from('customers')
-    .select('*, orders(count)')
-    .order('created_at', { ascending: false });
+  client: SupabaseClient,
+  options: { page?: number; limit?: number } = {}
+): Promise<{ items: OpsCustomerListItem[]; total: number }> {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 20;
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
 
+  const [{ count, error: countError }, { data, error }] = await Promise.all([
+    client.from('customers').select('*', { count: 'exact', head: true }),
+    client
+      .from('customers')
+      .select('*, orders(count)')
+      .order('created_at', { ascending: false })
+      .range(from, to),
+  ]);
+
+  if (countError) throw countError;
   if (error) throw error;
-  return (data ?? []) as unknown as OpsCustomerListItem[];
+  return { items: (data ?? []) as unknown as OpsCustomerListItem[], total: count ?? 0 };
 }
 
 export async function getOpsCustomerDetail(

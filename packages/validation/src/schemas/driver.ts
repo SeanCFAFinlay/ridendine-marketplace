@@ -72,6 +72,37 @@ export const uploadDriverDocumentSchema = z.object({
   expiresAt: z.string().datetime().nullable().optional(),
 });
 
+// ==========================================
+// DRIVER-APP ROUTE SCHEMAS
+// ==========================================
+
+export const driverUpdateSchema = z.object({
+  first_name: z.string().min(1).optional(),
+  last_name: z.string().min(1).optional(),
+  phone: z.string().optional(),
+  profile_image_url: z.string().url().optional(),
+});
+
+export const presencePatchSchema = z.object({
+  status: z.enum(['online', 'offline', 'busy']),
+});
+
+export const driverDeliveryPatchSchema = z.object({
+  action: z.string().optional(),
+  status: z.string().optional(),
+  proofUrl: z.string().url().optional(),
+  notes: z.string().optional(),
+  attemptId: z.string().optional(),
+  reason: z.string().optional(),
+  newStatus: z.string().optional(),
+});
+
+export const offerActionSchema = z.object({
+  attemptId: z.string().min(1, 'Attempt ID is required'),
+  response: z.enum(['accepted', 'declined']),
+  reason: z.string().optional(),
+});
+
 // Type exports
 export type CreateDriverProfileInput = z.infer<typeof createDriverProfileSchema>;
 export type UpdateDriverProfileInput = z.infer<typeof updateDriverProfileSchema>;
@@ -84,3 +115,7 @@ export type RespondToDeliveryOfferInput = z.infer<typeof respondToDeliveryOfferS
 export type ConfirmPickupInput = z.infer<typeof confirmPickupSchema>;
 export type ConfirmDropoffInput = z.infer<typeof confirmDropoffSchema>;
 export type UploadDriverDocumentInput = z.infer<typeof uploadDriverDocumentSchema>;
+export type DriverUpdateInput = z.infer<typeof driverUpdateSchema>;
+export type PresencePatchInput = z.infer<typeof presencePatchSchema>;
+export type DriverDeliveryPatchInput = z.infer<typeof driverDeliveryPatchSchema>;
+export type OfferActionInput = z.infer<typeof offerActionSchema>;

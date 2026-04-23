@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, listOpsDrivers, type SupabaseClient } from '@ridendine/db';
+import { paginationSchema } from '@ridendine/validation';
 import { getOpsActorContext, errorResponse, hasRequiredRole } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    // Verify ops user is authenticated
     const actor = await getOpsActorContext();
     if (!actor) {
       return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
@@ -14,10 +14,23 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
-    const supabase = createAdminClient() as unknown as SupabaseClient;
-    const data = await listOpsDrivers(supabase, { status: status || undefined });
+    const { page, limit } = paginationSchema.parse({
+      page: searchParams.get('page') ?? undefined,
+      limit: searchParams.get('limit') ?? undefined,
+    });
 
-    return NextResponse.json({ data });
+    const supabase = createAdminClient() as unknown as SupabaseClient;
+    const { items, total } = await listOpsDrivers(supabase, {
+      status: status || undefined,
+      page,
+      limit,
+    });
+
+    const totalPages = Math.ceil(total / limit);
+    return NextResponse.json({
+      success: true,
+      data: { items, total, page, limit, totalPages, hasMore: page < totalPages },
+    });
   } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -28,7 +41,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    // Verify ops user is authenticated
     const actor = await getOpsActorContext();
     if (!actor) {
       return errorResponse('UNAUTHORIZED', 'Authentication required', 401);

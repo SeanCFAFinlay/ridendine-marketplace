@@ -17,6 +17,7 @@ import { isValidTransition, getAllowedActions } from '@ridendine/types';
 import { DomainEventEmitter } from '../core/event-emitter';
 import { AuditLogger } from '../core/audit-logger';
 import { SLAManager } from '../core/sla-manager';
+import { NotificationSender } from '../core/notification-sender';
 import {
   SERVICE_FEE_PERCENT,
   HST_RATE,
@@ -73,17 +74,20 @@ export class OrderOrchestrator {
   private eventEmitter: DomainEventEmitter;
   private auditLogger: AuditLogger;
   private slaManager: SLAManager;
+  private notificationSender?: NotificationSender;
 
   constructor(
     client: SupabaseClient,
     eventEmitter: DomainEventEmitter,
     auditLogger: AuditLogger,
-    slaManager: SLAManager
+    slaManager: SLAManager,
+    notificationSender?: NotificationSender,
   ) {
     this.client = client;
     this.eventEmitter = eventEmitter;
     this.auditLogger = auditLogger;
     this.slaManager = slaManager;
+    this.notificationSender = notificationSender;
   }
 
   /**
@@ -521,6 +525,24 @@ export class OrderOrchestrator {
 
     // Complete chef response SLA
     await this.slaManager.completeTimer('order', orderId, 'chef_response' as SLAType);
+
+    // Notify customer that order was accepted
+    if (this.notificationSender) {
+      try {
+        const { data: customer } = await this.client
+          .from('customers')
+          .select('user_id')
+          .eq('id', order.customer_id)
+          .single();
+        if (customer?.user_id) {
+          await this.notificationSender.send('order_accepted', customer.user_id, {
+            orderNumber: order.order_number,
+          });
+        }
+      } catch {
+        // Non-fatal: notification is best-effort
+      }
+    }
 
     // Add to kitchen queue
     const { data: queuePosition } = await this.client
@@ -1054,6 +1076,24 @@ export class OrderOrchestrator {
       };
     }
 
+    // Notify customer that order was delivered
+    if (this.notificationSender) {
+      try {
+        const { data: customer } = await this.client
+          .from('customers')
+          .select('user_id')
+          .eq('id', order.customer_id)
+          .single();
+        if (customer?.user_id) {
+          await this.notificationSender.send('order_delivered', customer.user_id, {
+            orderNumber: order.order_number,
+          });
+        }
+      } catch {
+        // Non-fatal: notification is best-effort
+      }
+    }
+
     // Create ledger entries for payouts
     const platformFee = Math.round(order.subtotal * (PLATFORM_FEE_PERCENT / 100) * 100);
     const chefPayable = Math.round((order.subtotal - platformFee / 100) * 100);
@@ -1301,7 +1341,8 @@ export function createOrderOrchestrator(
   client: SupabaseClient,
   eventEmitter: DomainEventEmitter,
   auditLogger: AuditLogger,
-  slaManager: SLAManager
+  slaManager: SLAManager,
+  notificationSender?: NotificationSender,
 ): OrderOrchestrator {
-  return new OrderOrchestrator(client, eventEmitter, auditLogger, slaManager);
+  return new OrderOrchestrator(client, eventEmitter, auditLogger, slaManager, notificationSender);
 }

@@ -7,6 +7,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { DomainEventEmitter, createEventEmitter } from './event-emitter';
 import { AuditLogger, createAuditLogger } from './audit-logger';
 import { SLAManager, createSLAManager } from './sla-manager';
+import { NotificationSender, createNotificationSender } from './notification-sender';
 import { OrderOrchestrator, createOrderOrchestrator } from '../orchestrators/order.orchestrator';
 import { KitchenEngine, createKitchenEngine } from '../orchestrators/kitchen.engine';
 import { DispatchEngine, createDispatchEngine } from '../orchestrators/dispatch.engine';
@@ -24,6 +25,7 @@ export interface CentralEngine {
   events: DomainEventEmitter;
   audit: AuditLogger;
   sla: SLAManager;
+  notifications: NotificationSender;
 
   // Domain orchestrators
   orders: OrderOrchestrator;
@@ -43,6 +45,7 @@ export function createCentralEngine(client: SupabaseClient): CentralEngine {
   const events = createEventEmitter(client);
   const audit = createAuditLogger(client);
   const sla = createSLAManager(client, events);
+  const notifications = createNotificationSender(client);
 
   // Create domain orchestrators
   const orders = createOrderOrchestrator(client, events, audit, sla);
@@ -57,6 +60,7 @@ export function createCentralEngine(client: SupabaseClient): CentralEngine {
     events,
     audit,
     sla,
+    notifications,
     orders,
     kitchen,
     dispatch,

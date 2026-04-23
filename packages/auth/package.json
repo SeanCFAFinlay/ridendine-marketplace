@@ -5,13 +5,17 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./middleware": "./src/middleware.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ridendine/db": "workspace:*",
+    "@ridendine/types": "workspace:*",
+    "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.45.0"
   },
   "peerDependencies": {

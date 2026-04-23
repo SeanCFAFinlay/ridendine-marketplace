@@ -1,0 +1,79 @@
+graph TD
+    subgraph Apps["Applications (4 Next.js Apps)"]
+        WEB["apps/web\nridendine.ca\nPort 3000\nCustomer Marketplace"]
+        CHEF["apps/chef-admin\nchef.ridendine.ca\nPort 3001\nChef Dashboard"]
+        OPS["apps/ops-admin\nops.ridendine.ca\nPort 3002\nOperations Admin"]
+        DRIVER["apps/driver-app\ndriver.ridendine.ca\nPort 3003\nDriver PWA"]
+    end
+
+    subgraph Packages["Shared Packages (9)"]
+        DB["@ridendine/db\nSupabase clients\n& repositories"]
+        UI["@ridendine/ui\nShared React\ncomponents"]
+        AUTH["@ridendine/auth\nAuthentication\nutilities"]
+        TYPES["@ridendine/types\nTypeScript\ntypes"]
+        VALIDATION["@ridendine/validation\nZod schemas"]
+        UTILS["@ridendine/utils\nUtility functions"]
+        CONFIG["@ridendine/config\nShared configs\nTS/Tailwind/ESLint"]
+        NOTIFICATIONS["@ridendine/notifications\nNotification\ntemplates"]
+        ENGINE["@ridendine/engine\nBusiness logic\norchestrators"]
+    end
+
+    subgraph Infrastructure["Infrastructure"]
+        SUPABASE["Supabase\nPostgreSQL + Auth\n+ Storage + RLS\n56 Tables"]
+        STRIPE["Stripe\nPaymentIntents\n+ Webhooks\n+ Refunds"]
+        VERCEL["Vercel\n4 Separate\nDeployments"]
+        REALTIME["Supabase\nReal-time\nSubscriptions"]
+    end
+
+    WEB --> DB
+    WEB --> UI
+    WEB --> AUTH
+    WEB --> TYPES
+    WEB --> VALIDATION
+    WEB --> UTILS
+    WEB --> ENGINE
+    WEB --> NOTIFICATIONS
+
+    CHEF --> DB
+    CHEF --> UI
+    CHEF --> AUTH
+    CHEF --> TYPES
+    CHEF --> VALIDATION
+    CHEF --> UTILS
+    CHEF --> ENGINE
+
+    OPS --> DB
+    OPS --> UI
+    OPS --> AUTH
+    OPS --> TYPES
+    OPS --> VALIDATION
+    OPS --> UTILS
+    OPS --> ENGINE
+
+    DRIVER --> DB
+    DRIVER --> UI
+    DRIVER --> AUTH
+    DRIVER --> TYPES
+    DRIVER --> UTILS
+    DRIVER --> ENGINE
+
+    DB --> SUPABASE
+    AUTH --> SUPABASE
+    ENGINE --> STRIPE
+    ENGINE --> DB
+
+    WEB --> VERCEL
+    CHEF --> VERCEL
+    OPS --> VERCEL
+    DRIVER --> VERCEL
+
+    SUPABASE --> REALTIME
+    REALTIME --> WEB
+    REALTIME --> CHEF
+    REALTIME --> OPS
+    REALTIME --> DRIVER
+
+    CONFIG --> WEB
+    CONFIG --> CHEF
+    CONFIG --> OPS
+    CONFIG --> DRIVER

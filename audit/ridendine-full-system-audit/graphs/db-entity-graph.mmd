@@ -1,0 +1,270 @@
+erDiagram
+    platform_users {
+        uuid id PK
+        string email
+        string role
+        string status
+        timestamp created_at
+    }
+
+    chef_profiles {
+        uuid id PK
+        uuid user_id FK
+        string status
+        string bio
+        string phone
+        timestamp created_at
+    }
+
+    chef_storefronts {
+        uuid id PK
+        uuid chef_id FK
+        string name
+        string slug
+        float rating
+        boolean is_active
+        timestamp created_at
+    }
+
+    chef_kitchens {
+        uuid id PK
+        uuid chef_id FK
+        string address
+        string city
+        string postal_code
+    }
+
+    chef_availability {
+        uuid id PK
+        uuid chef_id FK
+        int day_of_week
+        time open_time
+        time close_time
+    }
+
+    chef_delivery_zones {
+        uuid id PK
+        uuid chef_id FK
+        float radius_km
+        json polygon
+    }
+
+    chef_payout_accounts {
+        uuid id PK
+        uuid chef_id FK
+        string stripe_account_id
+        string status
+    }
+
+    menu_categories {
+        uuid id PK
+        uuid storefront_id FK
+        string name
+        int sort_order
+        boolean is_active
+    }
+
+    menu_items {
+        uuid id PK
+        uuid category_id FK
+        string name
+        string description
+        decimal price
+        boolean is_available
+    }
+
+    menu_item_options {
+        uuid id PK
+        uuid item_id FK
+        string name
+        boolean is_required
+    }
+
+    menu_item_option_values {
+        uuid id PK
+        uuid option_id FK
+        string label
+        decimal price_modifier
+    }
+
+    customers {
+        uuid id PK
+        uuid user_id FK
+        string first_name
+        string last_name
+        string email
+        string phone
+    }
+
+    customer_addresses {
+        uuid id PK
+        uuid customer_id FK
+        string street
+        string city
+        string postal_code
+        boolean is_default
+    }
+
+    carts {
+        uuid id PK
+        uuid customer_id FK
+        uuid storefront_id FK
+        timestamp expires_at
+    }
+
+    cart_items {
+        uuid id PK
+        uuid cart_id FK
+        uuid menu_item_id FK
+        int quantity
+        decimal unit_price
+    }
+
+    favorites {
+        uuid id PK
+        uuid customer_id FK
+        uuid storefront_id FK
+    }
+
+    orders {
+        uuid id PK
+        uuid customer_id FK
+        uuid storefront_id FK
+        string status
+        decimal subtotal
+        decimal delivery_fee
+        decimal service_fee
+        decimal tax
+        decimal total
+        string stripe_payment_intent_id
+        string payment_status
+        timestamp created_at
+    }
+
+    order_items {
+        uuid id PK
+        uuid order_id FK
+        uuid menu_item_id FK
+        int quantity
+        decimal unit_price
+        string item_name
+    }
+
+    order_item_modifiers {
+        uuid id PK
+        uuid order_item_id FK
+        string option_name
+        string value_label
+        decimal price_modifier
+    }
+
+    order_status_history {
+        uuid id PK
+        uuid order_id FK
+        string from_status
+        string to_status
+        uuid changed_by
+        timestamp changed_at
+    }
+
+    reviews {
+        uuid id PK
+        uuid order_id FK
+        uuid customer_id FK
+        uuid storefront_id FK
+        int rating
+        string comment
+        timestamp created_at
+    }
+
+    drivers {
+        uuid id PK
+        uuid user_id FK
+        string status
+        string first_name
+        string last_name
+        float rating
+    }
+
+    driver_presence {
+        uuid id PK
+        uuid driver_id FK
+        boolean is_online
+        float lat
+        float lng
+        timestamp updated_at
+    }
+
+    deliveries {
+        uuid id PK
+        uuid order_id FK
+        uuid driver_id FK
+        string status
+        float pickup_lat
+        float pickup_lng
+        float dropoff_lat
+        float dropoff_lng
+        timestamp picked_up_at
+        timestamp delivered_at
+    }
+
+    delivery_assignments {
+        uuid id PK
+        uuid delivery_id FK
+        uuid driver_id FK
+        string status
+        timestamp offered_at
+        timestamp responded_at
+    }
+
+    delivery_events {
+        uuid id PK
+        uuid delivery_id FK
+        string event_type
+        string from_status
+        string to_status
+        timestamp created_at
+    }
+
+    delivery_tracking_events {
+        uuid id PK
+        uuid delivery_id FK
+        float lat
+        float lng
+        timestamp recorded_at
+    }
+
+    driver_earnings {
+        uuid id PK
+        uuid driver_id FK
+        uuid delivery_id FK
+        decimal base_pay
+        decimal tip
+        decimal total
+    }
+
+    chef_profiles ||--|| chef_storefronts : "has"
+    chef_profiles ||--o{ chef_kitchens : "operates from"
+    chef_profiles ||--|| chef_payout_accounts : "paid via"
+    chef_profiles ||--o{ chef_availability : "available"
+    chef_profiles ||--o{ chef_delivery_zones : "delivers to"
+    chef_storefronts ||--o{ menu_categories : "contains"
+    menu_categories ||--o{ menu_items : "has"
+    menu_items ||--o{ menu_item_options : "has"
+    menu_item_options ||--o{ menu_item_option_values : "has"
+    customers ||--o{ customer_addresses : "has"
+    customers ||--o{ carts : "has"
+    customers ||--o{ favorites : "has"
+    customers ||--o{ orders : "places"
+    carts ||--o{ cart_items : "contains"
+    orders ||--o{ order_items : "contains"
+    order_items ||--o{ order_item_modifiers : "has"
+    orders ||--o{ order_status_history : "tracks"
+    orders ||--o| deliveries : "has"
+    orders ||--o| reviews : "receives"
+    drivers ||--|| driver_presence : "has"
+    drivers ||--o{ deliveries : "handles"
+    deliveries ||--o{ delivery_assignments : "offers"
+    deliveries ||--o{ delivery_events : "logs"
+    deliveries ||--o{ delivery_tracking_events : "tracks"
+    drivers ||--o{ driver_earnings : "earns"

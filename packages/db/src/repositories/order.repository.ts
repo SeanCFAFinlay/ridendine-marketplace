@@ -149,29 +149,43 @@ export async function getOrdersByStorefront(
 
 export async function listOpsOrders(
   client: SupabaseClient,
-  options: { status?: string; startDate?: string; endDate?: string } = {}
-): Promise<OpsOrderListItem[]> {
-  let query = client
+  options: { status?: string; startDate?: string; endDate?: string; page?: number; limit?: number } = {}
+): Promise<{ items: OpsOrderListItem[]; total: number }> {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 20;
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  let countQuery = client
+    .from('orders')
+    .select('*', { count: 'exact', head: true });
+
+  let dataQuery = client
     .from('orders')
     .select('*, customers(first_name, last_name, email), chef_storefronts(name)')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(from, to);
 
   if (options.status) {
-    query = query.eq('status', options.status);
+    countQuery = countQuery.eq('status', options.status);
+    dataQuery = dataQuery.eq('status', options.status);
   }
 
   if (options.startDate) {
-    query = query.gte('created_at', options.startDate);
+    countQuery = countQuery.gte('created_at', options.startDate);
+    dataQuery = dataQuery.gte('created_at', options.startDate);
   }
 
   if (options.endDate) {
-    query = query.lte('created_at', options.endDate);
+    countQuery = countQuery.lte('created_at', options.endDate);
+    dataQuery = dataQuery.lte('created_at', options.endDate);
   }
 
-  const { data, error } = await query;
+  const [{ count, error: countError }, { data, error }] = await Promise.all([countQuery, dataQuery]);
 
+  if (countError) throw countError;
   if (error) throw error;
-  return (data ?? []) as unknown as OpsOrderListItem[];
+  return { items: (data ?? []) as unknown as OpsOrderListItem[], total: count ?? 0 };
 }
 
 export async function getOpsOrderDetail(

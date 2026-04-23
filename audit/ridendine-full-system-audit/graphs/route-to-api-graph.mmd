@@ -1,0 +1,97 @@
+graph TD
+    subgraph CustomerFlow["Customer Browse → Cart → Checkout"]
+        HOME["/ Home Page"]
+        BROWSE["/chefs Browse"]
+        CHEF_PAGE["/chefs/[slug] Chef Menu"]
+        CART["/cart Cart"]
+        CHECKOUT["/checkout Checkout"]
+        CONFIRM["/order-confirmation/[id]"]
+
+        HOME --> BROWSE
+        BROWSE --> CHEF_PAGE
+        CHEF_PAGE --> CART
+        CART --> CHECKOUT
+        CHECKOUT --> CONFIRM
+    end
+
+    subgraph CustomerAPIs["Customer API Routes"]
+        API_CHEFS["GET /api/chefs\nList storefronts"]
+        API_CHEF_SLUG["GET /api/chefs/[slug]\nStorefront details + menu"]
+        API_CART["POST /api/cart\nManage cart items"]
+        API_CHECKOUT["POST /api/checkout\nCreate order + PaymentIntent"]
+        API_ORDERS["GET /api/orders\nOrder history"]
+        API_PAYMENT["POST /api/stripe/webhook\nPayment events"]
+        API_SUPPORT["POST /api/support\nCreate ticket"]
+    end
+
+    BROWSE --> API_CHEFS
+    CHEF_PAGE --> API_CHEF_SLUG
+    CART --> API_CART
+    CHECKOUT --> API_CHECKOUT
+    API_CHECKOUT --> API_PAYMENT
+    CONFIRM --> API_ORDERS
+
+    subgraph ChefFlow["Chef Order Management"]
+        CHEF_DASH["/dashboard Chef Dashboard"]
+        CHEF_ORDERS["/dashboard/orders Orders Queue"]
+        CHEF_MENU["/dashboard/menu Menu Mgmt"]
+        CHEF_STORE["/dashboard/storefront Settings"]
+        CHEF_ANALYTICS["/dashboard/analytics Analytics"]
+        CHEF_PAYOUTS["/dashboard/payouts Payouts"]
+    end
+
+    subgraph ChefAPIs["Chef Admin API Routes"]
+        CHEF_API_ORDERS["GET/PATCH /api/orders\nChef's orders + status updates"]
+        CHEF_API_MENU["GET/POST/PATCH/DELETE /api/menu\nMenu categories + items"]
+        CHEF_API_ANALYTICS["GET /api/analytics\nChef analytics"]
+        CHEF_API_PAYOUTS["GET /api/payouts\nPayout history"]
+        CHEF_API_STORE["GET/PATCH /api/storefront\nStorefront settings"]
+    end
+
+    CHEF_ORDERS --> CHEF_API_ORDERS
+    CHEF_MENU --> CHEF_API_MENU
+    CHEF_ANALYTICS --> CHEF_API_ANALYTICS
+    CHEF_PAYOUTS --> CHEF_API_PAYOUTS
+    CHEF_STORE --> CHEF_API_STORE
+
+    subgraph OpsFlow["Ops Dispatch & Admin"]
+        OPS_DASH["/dashboard Ops Dashboard"]
+        OPS_ORDERS["/dashboard/orders All Orders"]
+        OPS_ORDER_DETAIL["/dashboard/orders/[id] Order Detail"]
+        OPS_DRIVERS["/dashboard/drivers Drivers"]
+        OPS_DELIVERIES["/dashboard/deliveries Deliveries"]
+        OPS_MAP["/dashboard/map Live Map"]
+    end
+
+    subgraph OpsAPIs["Ops Admin API Routes"]
+        OPS_API_ORDERS["GET /api/orders\nAll orders"]
+        OPS_API_ORDER_DETAIL["GET/PATCH /api/orders/[id]\nOrder detail + refund"]
+        OPS_API_DRIVERS["GET /api/drivers\nAll drivers"]
+        OPS_API_DELIVERIES["GET/PATCH /api/deliveries/[id]\nAssign driver"]
+        OPS_API_REFUND["POST /api/refund\nStripe refund"]
+    end
+
+    OPS_ORDERS --> OPS_API_ORDERS
+    OPS_ORDER_DETAIL --> OPS_API_ORDER_DETAIL
+    OPS_DRIVERS --> OPS_API_DRIVERS
+    OPS_DELIVERIES --> OPS_API_DELIVERIES
+    OPS_ORDER_DETAIL --> OPS_API_REFUND
+
+    subgraph DriverFlow["Driver Delivery Flow"]
+        DRIVER_HOME["/ Active Jobs"]
+        DRIVER_DELIVERY["/delivery/[id] Delivery Detail"]
+        DRIVER_EARNINGS["/earnings Earnings"]
+        DRIVER_HISTORY["/history History"]
+    end
+
+    subgraph DriverAPIs["Driver App API Routes"]
+        DRIVER_API_DELIVERIES["GET /api/deliveries\nAvailable + active"]
+        DRIVER_API_STATUS["PATCH /api/deliveries/[id]\nStatus updates"]
+        DRIVER_API_LOCATION["POST /api/location\nGPS update"]
+        DRIVER_API_EARNINGS["GET /api/earnings\nDriver earnings"]
+    end
+
+    DRIVER_HOME --> DRIVER_API_DELIVERIES
+    DRIVER_DELIVERY --> DRIVER_API_STATUS
+    DRIVER_DELIVERY --> DRIVER_API_LOCATION
+    DRIVER_EARNINGS --> DRIVER_API_EARNINGS
