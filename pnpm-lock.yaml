@@ -385,6 +385,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.45.0
         version: 2.99.3
+      next:
+        specifier: ^14.0.0
+        version: 14.2.35(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18.0.0
         version: 18.3.1
@@ -447,6 +450,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.45.0
         version: 2.99.3
+      next:
+        specifier: ^14.0.0
+        version: 14.2.35(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
       typescript:
         specifier: ^5.6.0
@@ -500,6 +506,10 @@ importers:
         version: 5.9.3
 
   packages/utils:
+    dependencies:
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
     devDependencies:
       typescript:
         specifier: ^5.6.0

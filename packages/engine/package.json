@@ -18,7 +18,8 @@
     "./services/permissions": "./src/services/permissions.service.ts",
     "./services/storage": "./src/services/storage.service.ts",
     "./services/dispatch": "./src/services/dispatch.service.ts",
-    "./constants": "./src/constants.ts"
+    "./constants": "./src/constants.ts",
+    "./server": "./src/server.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -31,6 +32,9 @@
     "@ridendine/types": "workspace:*",
     "@ridendine/validation": "workspace:*",
     "@supabase/supabase-js": "^2.45.0"
+  },
+  "peerDependencies": {
+    "next": "^14.0.0"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
