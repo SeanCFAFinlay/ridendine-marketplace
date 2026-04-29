@@ -5,7 +5,19 @@
 // Core engine factory and utilities
 export * from './core';
 
-// Domain orchestrators
+// Business rules engine (validation layer)
+export * from './core/business-rules-engine';
+
+// SLA checks (standalone functions)
+export * from './core/sla-checks';
+
+// Canonical engines (single authority for lifecycle transitions)
+export * from './orchestrators/master-order-engine';
+export * from './orchestrators/delivery-engine';
+export * from './orchestrators/order-state-machine';
+export * from './orchestrators/payout-engine';
+
+// Domain orchestrators (facades)
 export * from './orchestrators/order.orchestrator';
 export * from './orchestrators/kitchen.engine';
 export * from './orchestrators/dispatch.engine';

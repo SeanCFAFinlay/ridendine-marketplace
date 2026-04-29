@@ -16,6 +16,10 @@ import { CommerceLedgerEngine, createCommerceLedgerEngine } from '../orchestrato
 import { SupportExceptionEngine, createSupportExceptionEngine } from '../orchestrators/support.engine';
 import { PlatformWorkflowEngine, createPlatformWorkflowEngine } from '../orchestrators/platform.engine';
 import { OpsControlEngine, createOpsControlEngine } from '../orchestrators/ops.engine';
+import { MasterOrderEngine, createMasterOrderEngine } from '../orchestrators/master-order-engine';
+import { DeliveryEngine as MasterDeliveryEngine, createDeliveryEngine } from '../orchestrators/delivery-engine';
+import { BusinessRulesEngine, createBusinessRulesEngine } from './business-rules-engine';
+import { PayoutEngine, createPayoutEngine } from '../orchestrators/payout-engine';
 
 /**
  * Central Engine instance
@@ -28,7 +32,15 @@ export interface CentralEngine {
   sla: SLAManager;
   notifications: NotificationSender;
 
-  // Domain orchestrators
+  // Business rules (validation layer)
+  rules: BusinessRulesEngine;
+
+  // Canonical engines (single authority for lifecycle transitions)
+  masterOrder: MasterOrderEngine;
+  masterDelivery: MasterDeliveryEngine;
+  payouts: PayoutEngine;
+
+  // Domain orchestrators (facades that delegate to canonical engines)
   orders: OrderOrchestrator;
   kitchen: KitchenEngine;
   dispatch: DispatchEngine;
@@ -55,7 +67,15 @@ export function createCentralEngine(
   // Register email provider (only active when RESEND_API_KEY is set)
   notifications.registerProvider(createResendProvider());
 
-  // Create domain orchestrators
+  // Create business rules engine (validation layer)
+  const rules = createBusinessRulesEngine(client);
+
+  // Create canonical engines (single authority for lifecycle transitions)
+  const masterOrder = createMasterOrderEngine(client, audit, events);
+  const masterDelivery = createDeliveryEngine(client, audit, events, masterOrder);
+  const payouts = createPayoutEngine(client, audit, events);
+
+  // Create domain orchestrators (facades that delegate to canonical engines)
   const orders = createOrderOrchestrator(client, events, audit, sla, undefined, paymentAdapter);
   const kitchen = createKitchenEngine(client, events, audit);
   const dispatch = createDispatchEngine(client, events, audit, sla);
@@ -69,6 +89,10 @@ export function createCentralEngine(
     audit,
     sla,
     notifications,
+    rules,
+    masterOrder,
+    masterDelivery,
+    payouts,
     orders,
     kitchen,
     dispatch,

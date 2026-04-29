@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createAdminClient, getOrderById, type SupabaseClient } from '@ridendine/db';
-import { getOpsActorContext, hasRequiredRole, errorResponse } from '@/lib/engine';
+import { getOpsActorContext, hasRequiredRole, errorResponse, getEngine } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,15 +84,21 @@ export async function POST(
       },
     });
 
-    // Update order payment status
+    // Transition order status through MasterOrderEngine
     const isFullRefund = amount >= order.total;
-    await (supabase as any)
-      .from('orders')
-      .update({
-        payment_status: isFullRefund ? 'refunded' : 'partial_refunded',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', order.id);
+    const engine = getEngine();
+    const result = await engine.masterOrder.refundOrder({
+      orderId: order.id,
+      actorId: actor.userId,
+      actorRole: actor.role as string,
+      reason: reason || 'Refund processed',
+    });
+
+    if (!result.success) {
+      // Refund was processed in Stripe but engine transition failed.
+      // Log warning but don't fail the request since money was already refunded.
+      console.warn(`Engine transition failed after Stripe refund: ${result.error}`);
+    }
 
     // Create notification for customer
     await (supabase as any).from('notifications').insert({

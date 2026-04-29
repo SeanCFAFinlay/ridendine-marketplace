@@ -36,12 +36,14 @@ export const EngineOrderStatus = {
 
   // Dispatch phase
   DISPATCH_PENDING: 'dispatch_pending',
+  DRIVER_OFFERED: 'driver_offered',
   DRIVER_ASSIGNED: 'driver_assigned',
   DRIVER_EN_ROUTE_PICKUP: 'driver_en_route_pickup',
 
   // Delivery phase
   PICKED_UP: 'picked_up',
   DRIVER_EN_ROUTE_DROPOFF: 'driver_en_route_dropoff',
+  DRIVER_EN_ROUTE_CUSTOMER: 'driver_en_route_customer',
   DELIVERED: 'delivered',
 
   // Terminal states
@@ -56,6 +58,23 @@ export const EngineOrderStatus = {
 } as const;
 
 export type EngineOrderStatus = (typeof EngineOrderStatus)[keyof typeof EngineOrderStatus];
+
+// Canonical delivery statuses for engine use
+export const EngineDeliveryStatus = {
+  UNASSIGNED: 'unassigned',
+  OFFERED: 'offered',
+  ACCEPTED: 'accepted',
+  EN_ROUTE_TO_PICKUP: 'en_route_to_pickup',
+  ARRIVED_AT_PICKUP: 'arrived_at_pickup',
+  PICKED_UP: 'picked_up',
+  EN_ROUTE_TO_CUSTOMER: 'en_route_to_customer',
+  ARRIVED_AT_CUSTOMER: 'arrived_at_customer',
+  DELIVERED: 'delivered',
+  FAILED: 'failed',
+  CANCELLED: 'cancelled',
+} as const;
+
+export type EngineDeliveryStatus = (typeof EngineDeliveryStatus)[keyof typeof EngineDeliveryStatus];
 
 // Reason codes for state transitions
 export const OrderRejectReason = {

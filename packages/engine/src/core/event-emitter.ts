@@ -13,9 +13,22 @@ import type {
 export class DomainEventEmitter {
   private client: SupabaseClient;
   private pendingEvents: DomainEvent[] = [];
+  private _correlationId: string | null = null;
 
   constructor(client: SupabaseClient) {
     this.client = client;
+  }
+
+  /**
+   * Set correlation context for subsequent events.
+   * All events emitted while this is set will share the same correlation_id.
+   */
+  setCorrelation(correlationId: string): void {
+    this._correlationId = correlationId;
+  }
+
+  clearCorrelation(): void {
+    this._correlationId = null;
   }
 
   /**
@@ -37,6 +50,14 @@ export class DomainEventEmitter {
       actor,
       timestamp: new Date().toISOString(),
       version: 1,
+    };
+
+    // Inject correlation metadata
+    event.payload = {
+      ...event.payload,
+      correlation_id: event.payload.correlation_id || this._correlationId || event.id,
+      order_id: event.payload.orderId || event.payload.order_id || null,
+      delivery_id: event.payload.deliveryId || event.payload.delivery_id || null,
     };
 
     this.pendingEvents.push(event);

@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@ridendine/db';
 import Stripe from 'stripe';
+import { getEngine } from '@/lib/engine';
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create payout record
+    // Create payout record with 'processing' status
     const now = new Date();
     const periodStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
@@ -74,6 +75,18 @@ export async function POST(request: Request) {
       .single();
 
     if (payoutError) throw payoutError;
+
+    // Audit the payout creation through engine
+    const engine = getEngine();
+    await engine.audit.log({
+      action: 'create' as any,
+      entityType: 'chef_payout',
+      entityId: payout.id,
+      actor: { userId: user.id, role: 'chef_user' as any },
+      beforeState: {},
+      afterState: { status: 'processing', amount },
+      reason: 'Chef requested payout',
+    });
 
     // Create Stripe transfer
     try {
@@ -98,6 +111,17 @@ export async function POST(request: Request) {
         })
         .eq('id', payout.id);
 
+      // Audit the successful payout
+      await engine.audit.log({
+        action: 'status_change' as any,
+        entityType: 'chef_payout',
+        entityId: payout.id,
+        actor: { userId: 'system', role: 'system' as any },
+        beforeState: { status: 'processing' },
+        afterState: { status: 'completed', stripe_transfer_id: transfer.id },
+        reason: 'Stripe transfer successful',
+      });
+
       payout.status = 'completed';
       payout.paid_at = new Date().toISOString();
     } catch (stripeError) {
@@ -108,6 +132,17 @@ export async function POST(request: Request) {
         .from('chef_payouts')
         .update({ status: 'failed' })
         .eq('id', payout.id);
+
+      // Audit the failed payout
+      await engine.audit.log({
+        action: 'status_change' as any,
+        entityType: 'chef_payout',
+        entityId: payout.id,
+        actor: { userId: 'system', role: 'system' as any },
+        beforeState: { status: 'processing' },
+        afterState: { status: 'failed' },
+        reason: stripeError instanceof Error ? stripeError.message : 'Stripe transfer failed',
+      });
 
       payout.status = 'failed';
     }
