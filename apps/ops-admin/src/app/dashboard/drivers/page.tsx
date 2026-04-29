@@ -88,7 +88,10 @@ export default function DriversPage() {
             <h1 className="text-3xl font-bold text-white">Drivers</h1>
             <p className="mt-2 text-gray-400">Oversee real driver records, approval state, and availability.</p>
           </div>
-          <Badge className="bg-[#E85D26] text-white">{drivers.length} Drivers</Badge>
+          <div className="flex items-center gap-3">
+            <a href="/api/export?type=drivers" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export CSV</a>
+            <Badge className="bg-[#E85D26] text-white">{drivers.length} Drivers</Badge>
+          </div>
         </div>
 
         <Card className="border-gray-800 bg-[#16213e]">

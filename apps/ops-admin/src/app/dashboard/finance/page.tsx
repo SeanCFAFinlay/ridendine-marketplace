@@ -2,6 +2,7 @@ import { Badge, Card } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { getEngine, getOpsActorContext, hasRequiredRole } from '@/lib/engine';
 import { FinanceActions } from './finance-actions';
+import { PayoutActions } from './payout-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,11 +78,17 @@ export default async function FinancePage() {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Finance Operations</h1>
-          <p className="mt-1 text-gray-400">
-            Review and action workflows for refunds, payout holds, liabilities, and ledger activity. Payout execution rails are still intentionally out of scope.
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Finance Operations</h1>
+            <p className="mt-1 text-gray-400">
+              Review and action workflows for refunds, payout holds, liabilities, and ledger activity.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <a href="/api/export?type=orders" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export Orders CSV</a>
+            <a href="/api/export?type=ledger" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export Ledger CSV</a>
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -183,6 +190,7 @@ export default async function FinancePage() {
             </table>
           </div>
         </Card>
+        <PayoutActions />
       </div>
     </DashboardLayout>
   );

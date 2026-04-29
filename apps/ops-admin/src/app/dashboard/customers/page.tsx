@@ -53,7 +53,10 @@ export default function CustomersPage() {
             <h1 className="text-3xl font-bold text-white">Customers</h1>
             <p className="mt-2 text-gray-400">Oversee real customer accounts, ordering history, and support context.</p>
           </div>
-          <Badge className="bg-[#E85D26] text-white">{customers.length} Customers</Badge>
+          <div className="flex items-center gap-3">
+            <a href="/api/export?type=customers" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export CSV</a>
+            <Badge className="bg-[#E85D26] text-white">{customers.length} Customers</Badge>
+          </div>
         </div>
 
         <Card className="border-gray-800 bg-[#16213e]">

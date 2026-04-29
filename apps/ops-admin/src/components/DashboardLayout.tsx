@@ -4,6 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
+import { OpsAlerts } from './ops-alerts';
+import { GlobalSearch } from './global-search';
 
 interface NavItem {
   href: string;
@@ -60,6 +62,11 @@ const navItems: NavItem[] = [
     href: '/dashboard/finance',
     label: 'Finance',
     iconPath: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+  },
+  {
+    href: '/dashboard/promos',
+    label: 'Promos',
+    iconPath: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z',
   },
   {
     href: '/dashboard/analytics',
@@ -180,6 +187,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex h-16 items-center justify-between border-b border-white/5 bg-[#0d1520] px-6">
           <div className="text-sm font-medium text-gray-400">Operations Command Centre</div>
           <div className="flex items-center gap-4">
+            <GlobalSearch />
+            <OpsAlerts />
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />

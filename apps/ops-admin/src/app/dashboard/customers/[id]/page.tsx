@@ -7,6 +7,7 @@ import {
 } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { notFound } from 'next/navigation';
+import { CustomerActions } from './customer-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,15 +78,13 @@ export default async function CustomerDetailPage({
             </div>
 
             <div className="mt-6 rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                Operational Notes
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">
+                Customer Actions
               </p>
-              <p className="mt-2 text-sm text-gray-200">
-                This page is for account and order oversight. Direct customer
-                credits or messaging tools are not implemented here yet, so the
-                page links operators into the real order and support surfaces
-                instead of presenting fake controls.
-              </p>
+              <CustomerActions
+                customerId={customer.id}
+                customerName={`${customer.first_name} ${customer.last_name}`}
+              />
             </div>
           </Card>
 
