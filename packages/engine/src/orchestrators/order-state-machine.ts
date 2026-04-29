@@ -270,6 +270,62 @@ export function isTerminalDeliveryStatus(status: string): boolean {
 }
 
 // ==========================================
+// PAYOUT TRANSITION MAP
+// ==========================================
+
+const PAYOUT_TRANSITION_MAP: Record<string, Set<string>> = {
+  [CanonicalPayoutStatus.NOT_ELIGIBLE]: new Set([
+    CanonicalPayoutStatus.ELIGIBLE,
+  ]),
+  [CanonicalPayoutStatus.ELIGIBLE]: new Set([
+    CanonicalPayoutStatus.PENDING,
+    CanonicalPayoutStatus.HELD,
+  ]),
+  [CanonicalPayoutStatus.PENDING]: new Set([
+    CanonicalPayoutStatus.PROCESSING,
+    CanonicalPayoutStatus.HELD,
+    CanonicalPayoutStatus.FAILED,
+  ]),
+  [CanonicalPayoutStatus.PROCESSING]: new Set([
+    CanonicalPayoutStatus.PAID,
+    CanonicalPayoutStatus.FAILED,
+  ]),
+  [CanonicalPayoutStatus.HELD]: new Set([
+    CanonicalPayoutStatus.PENDING,
+    CanonicalPayoutStatus.FAILED,
+  ]),
+  [CanonicalPayoutStatus.FAILED]: new Set([
+    CanonicalPayoutStatus.PENDING, // retry
+  ]),
+};
+
+export const TERMINAL_PAYOUT_STATUSES = new Set<string>([
+  CanonicalPayoutStatus.PAID,
+]);
+
+export const ALLOWED_PAYOUT_TRANSITIONS: Array<{ from: string; to: string }> = [];
+for (const [from, toSet] of Object.entries(PAYOUT_TRANSITION_MAP)) {
+  for (const to of toSet) {
+    ALLOWED_PAYOUT_TRANSITIONS.push({ from, to });
+  }
+}
+
+export function isValidPayoutTransition(from: string, to: string): boolean {
+  const allowed = PAYOUT_TRANSITION_MAP[from];
+  return allowed ? allowed.has(to) : false;
+}
+
+export function assertValidPayoutTransition(from: string, to: string): void {
+  if (!isValidPayoutTransition(from, to)) {
+    throw new InvalidTransitionError('payout', from, to);
+  }
+}
+
+export function isTerminalPayoutStatus(status: string): boolean {
+  return TERMINAL_PAYOUT_STATUSES.has(status);
+}
+
+// ==========================================
 // LEGACY STATUS MAPPING
 // Maps engine statuses to legacy DB statuses for backward compatibility
 // ==========================================

@@ -469,6 +469,9 @@ importers:
         specifier: ^4.0.0
         version: 4.8.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
+      stripe:
+        specifier: ^20.4.1
+        version: 20.4.1(@types/node@20.19.37)
       typescript:
         specifier: ^5.6.0
         version: 5.9.3

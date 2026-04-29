@@ -18,6 +18,11 @@ import { DomainEventEmitter } from '../core/event-emitter';
 import { AuditLogger } from '../core/audit-logger';
 import { SLAManager } from '../core/sla-manager';
 import { NotificationSender } from '../core/notification-sender';
+import { BusinessRulesEngine } from '../core/business-rules-engine';
+import { NotificationTriggers } from '../core/notification-triggers';
+import {
+  assertValidOrderTransition,
+} from './order-state-machine';
 import {
   SERVICE_FEE_PERCENT,
   HST_RATE,
@@ -89,6 +94,8 @@ export class OrderOrchestrator {
   private slaManager: SLAManager;
   private notificationSender?: NotificationSender;
   private paymentAdapter?: PaymentAdapter;
+  private rules?: BusinessRulesEngine;
+  private notifyTriggers?: NotificationTriggers;
 
   constructor(
     client: SupabaseClient,
@@ -104,6 +111,11 @@ export class OrderOrchestrator {
     this.slaManager = slaManager;
     this.notificationSender = notificationSender;
     this.paymentAdapter = paymentAdapter;
+    // Wire business rules and notification triggers
+    this.rules = new BusinessRulesEngine(client);
+    if (notificationSender) {
+      this.notifyTriggers = new NotificationTriggers(client, notificationSender);
+    }
   }
 
   /**
@@ -508,6 +520,16 @@ export class OrderOrchestrator {
       };
     }
 
+    // Canonical state machine validation
+    try {
+      assertValidOrderTransition(order.engine_status, 'accepted');
+    } catch {
+      return {
+        success: false,
+        error: { code: 'INVALID_TRANSITION', message: `Cannot transition from ${order.engine_status} to accepted` },
+      };
+    }
+
     const validation = isValidTransition(
       order.engine_status as EngineOrderStatus,
       'accepted',
@@ -522,13 +544,23 @@ export class OrderOrchestrator {
       };
     }
 
-    // Verify chef owns this storefront (unless ops override)
+    // Business rules pre-flight: verify chef owns storefront and order is acceptable
     if (actor.role === 'chef_user' || actor.role === 'chef_manager') {
       const { data: chef } = await this.client
         .from('chef_profiles')
         .select('id')
         .eq('user_id', actor.userId)
         .single();
+
+      if (this.rules && chef) {
+        const ruleCheck = await this.rules.canChefAcceptOrder({ orderId, chefId: chef.id });
+        if (!ruleCheck.allowed) {
+          return {
+            success: false,
+            error: { code: 'BUSINESS_RULE_VIOLATION', message: ruleCheck.reason },
+          };
+        }
+      }
 
       const { data: storefront } = await this.client
         .from('chef_storefronts')
@@ -635,6 +667,15 @@ export class OrderOrchestrator {
       metadata: { estimatedPrepMinutes },
     });
 
+    // Trigger notifications
+    if (this.notifyTriggers) {
+      await this.notifyTriggers.onChefAccepted({
+        orderId,
+        customerId: order.customer_id,
+        orderNumber: order.order_number,
+      });
+    }
+
     await this.eventEmitter.flush();
 
     return { success: true, data: updated as OrderData };
@@ -654,6 +695,16 @@ export class OrderOrchestrator {
       return {
         success: false,
         error: { code: 'NOT_FOUND', message: 'Order not found' },
+      };
+    }
+
+    // Canonical state machine validation
+    try {
+      assertValidOrderTransition(order.engine_status, 'rejected');
+    } catch {
+      return {
+        success: false,
+        error: { code: 'INVALID_TRANSITION', message: `Cannot transition from ${order.engine_status} to rejected` },
       };
     }
 
@@ -787,6 +838,16 @@ export class OrderOrchestrator {
       reason: `${reason}: ${notes || ''}`,
     });
 
+    // Trigger notifications
+    if (this.notifyTriggers) {
+      await this.notifyTriggers.onChefRejected({
+        orderId,
+        customerId: order.customer_id,
+        orderNumber: order.order_number,
+        reason: `${reason}${notes ? `: ${notes}` : ''}`,
+      });
+    }
+
     await this.eventEmitter.flush();
 
     return { success: true, data: updated as OrderData };
@@ -804,6 +865,16 @@ export class OrderOrchestrator {
       return {
         success: false,
         error: { code: 'NOT_FOUND', message: 'Order not found' },
+      };
+    }
+
+    // Canonical state machine validation
+    try {
+      assertValidOrderTransition(order.engine_status, 'preparing');
+    } catch {
+      return {
+        success: false,
+        error: { code: 'INVALID_TRANSITION', message: `Cannot transition from ${order.engine_status} to preparing` },
       };
     }
 
@@ -903,6 +974,16 @@ export class OrderOrchestrator {
       };
     }
 
+    // Canonical state machine validation
+    try {
+      assertValidOrderTransition(order.engine_status, 'ready');
+    } catch {
+      return {
+        success: false,
+        error: { code: 'INVALID_TRANSITION', message: `Cannot transition from ${order.engine_status} to ready` },
+      };
+    }
+
     const validation = isValidTransition(
       order.engine_status as EngineOrderStatus,
       'ready',
@@ -990,6 +1071,15 @@ export class OrderOrchestrator {
       metadata: { actualPrepMinutes },
     });
 
+    // Trigger notifications
+    if (this.notifyTriggers) {
+      await this.notifyTriggers.onOrderReady({
+        orderId,
+        customerId: order.customer_id,
+        orderNumber: order.order_number,
+      });
+    }
+
     await this.eventEmitter.flush();
 
     return { success: true, data: updated as OrderData };
@@ -1010,6 +1100,27 @@ export class OrderOrchestrator {
         success: false,
         error: { code: 'NOT_FOUND', message: 'Order not found' },
       };
+    }
+
+    // Canonical state machine validation
+    try {
+      assertValidOrderTransition(order.engine_status, 'cancelled');
+    } catch {
+      return {
+        success: false,
+        error: { code: 'INVALID_TRANSITION', message: `Cannot transition from ${order.engine_status} to cancelled` },
+      };
+    }
+
+    // Business rules pre-flight for customer cancellations
+    if (actor.role === 'customer' && this.rules) {
+      const ruleCheck = await this.rules.canCustomerCancelOrder({ orderId, customerId: actor.userId });
+      if (!ruleCheck.allowed) {
+        return {
+          success: false,
+          error: { code: 'BUSINESS_RULE_VIOLATION', message: ruleCheck.reason },
+        };
+      }
     }
 
     const validation = isValidTransition(
@@ -1138,6 +1249,16 @@ export class OrderOrchestrator {
       reason: `${reason}: ${notes || ''}`,
     });
 
+    // Trigger notifications
+    if (this.notifyTriggers) {
+      await this.notifyTriggers.onOrderCancelled({
+        orderId,
+        customerId: order.customer_id,
+        orderNumber: order.order_number,
+        reason: `${reason}${notes ? `: ${notes}` : ''}`,
+      });
+    }
+
     await this.eventEmitter.flush();
 
     return { success: true, data: updated as OrderData };
@@ -1155,6 +1276,16 @@ export class OrderOrchestrator {
       return {
         success: false,
         error: { code: 'NOT_FOUND', message: 'Order not found' },
+      };
+    }
+
+    // Canonical state machine validation
+    try {
+      assertValidOrderTransition(order.engine_status, 'completed');
+    } catch {
+      return {
+        success: false,
+        error: { code: 'INVALID_TRANSITION', message: `Cannot transition from ${order.engine_status} to completed` },
       };
     }
 
@@ -1302,6 +1433,15 @@ export class OrderOrchestrator {
       previousStatus,
       newStatus: 'completed',
     });
+
+    // Trigger notifications
+    if (this.notifyTriggers) {
+      await this.notifyTriggers.onOrderDelivered({
+        orderId,
+        customerId: order.customer_id,
+        orderNumber: order.order_number,
+      });
+    }
 
     await this.eventEmitter.flush();
 

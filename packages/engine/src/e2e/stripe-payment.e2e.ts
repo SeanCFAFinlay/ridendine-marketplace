@@ -11,6 +11,7 @@
 
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { createCentralEngine } from '../core/engine.factory';
 
 const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -28,6 +29,7 @@ if (!STRIPE_KEY.startsWith('sk_test_')) {
 
 const stripe = new Stripe(STRIPE_KEY);
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const engine = createCentralEngine(supabase);
 
 const results: Array<{ step: string; status: 'PASS' | 'FAIL'; detail: string }> = [];
 
@@ -98,7 +100,7 @@ async function run() {
   }
   log('Payment Confirm', 'PASS', `Payment succeeded. Card: Visa ending 4242`);
 
-  // Step 5: Create the order in DB (mimics what checkout route does before webhook)
+  // Step 5: Create the order in DB (TEST SETUP: mimics what checkout route does before webhook)
   const orderNumber = `STRIPE-E2E-${Date.now().toString(36).toUpperCase()}`;
   const { data: order, error: orderError } = await supabase
     .from('orders')
@@ -128,7 +130,7 @@ async function run() {
   }
   log('Create Order', 'PASS', `Order ${orderNumber} linked to ${paymentIntent.id}`);
 
-  // Step 6: Create order items
+  // Step 6: Create order items (TEST SETUP: not a status transition)
   for (const item of items) {
     await supabase.from('order_items').insert({
       order_id: order.id,
@@ -144,18 +146,10 @@ async function run() {
   // Step 7: Simulate webhook — payment_intent.succeeded
   // (In production, Stripe sends this to /api/webhooks/stripe)
   // We simulate what the webhook handler does: submit to kitchen + create ledger entry
-  await supabase.from('orders').update({
-    status: 'pending',
-    engine_status: 'pending',
-    payment_status: 'processing',
-  }).eq('id', order.id);
-
-  await supabase.from('order_status_history').insert({
-    order_id: order.id,
-    previous_status: 'payment_authorized',
-    new_status: 'pending',
-    status: 'pending',
-    notes: 'Payment confirmed via Stripe webhook (e2e test)',
+  // Route the status transition through the engine (payment_authorized → pending)
+  await engine.masterOrder.submitToChef({
+    orderId: order.id,
+    actorId: 'system',
   });
 
   await supabase.from('ledger_entries').insert({
@@ -170,16 +164,32 @@ async function run() {
   log('Webhook Sim', 'PASS', 'Simulated payment_intent.succeeded → order submitted to kitchen');
 
   // Step 8: Verify the order can be processed through the full lifecycle
-  // Chef accepts
-  await supabase.from('orders').update({ status: 'accepted', engine_status: 'accepted' }).eq('id', order.id);
+  // Chef accepts — routed through engine
+  const chefAcceptResult = await engine.masterOrder.chefAccept({
+    orderId: order.id,
+    actorId: storefront.chef_id,
+    actorRole: 'chef_user',
+  });
+  if (!chefAcceptResult.success) {
+    log('Chef Accept', 'FAIL', chefAcceptResult.error || 'Engine returned failure');
+    return done();
+  }
   log('Chef Accept', 'PASS', 'Chef accepted order');
 
-  // Chef prepares and marks ready
-  await supabase.from('orders').update({ status: 'preparing', engine_status: 'preparing', prep_started_at: new Date().toISOString() }).eq('id', order.id);
-  await supabase.from('orders').update({ status: 'ready_for_pickup', engine_status: 'ready', ready_at: new Date().toISOString() }).eq('id', order.id);
+  // Chef prepares and marks ready — routed through engine
+  await engine.masterOrder.markPreparing({
+    orderId: order.id,
+    actorId: storefront.chef_id,
+    actorRole: 'chef_user',
+  });
+  await engine.masterOrder.markReadyForPickup({
+    orderId: order.id,
+    actorId: storefront.chef_id,
+    actorRole: 'chef_user',
+  });
   log('Chef Ready', 'PASS', 'Order prepared and ready for pickup');
 
-  // Delivery + completion
+  // Delivery creation (TEST SETUP: not a status transition)
   const { data: delivery } = await supabase.from('deliveries').insert({
     order_id: order.id, status: 'pending',
     pickup_address: 'Every Bite Yum Kitchen', pickup_lat: 43.2557, pickup_lng: -79.8711,
@@ -188,17 +198,61 @@ async function run() {
   }).select().single();
 
   const { data: drivers } = await supabase.from('drivers').select('id, first_name').eq('status', 'approved').limit(1);
-  if (drivers?.[0] && delivery?.data) {
-    await supabase.from('deliveries').update({ driver_id: drivers[0].id, status: 'assigned' }).eq('id', delivery.data.id);
-    await supabase.from('deliveries').update({ status: 'picked_up', actual_pickup_at: new Date().toISOString() }).eq('id', delivery.data.id);
-    await supabase.from('deliveries').update({ status: 'delivered', actual_dropoff_at: new Date().toISOString() }).eq('id', delivery.data.id);
+  if (drivers?.[0] && delivery) {
+    const driver = drivers[0];
+
+    // Request dispatch (READY → DISPATCH_PENDING) — routed through engine
+    await engine.masterOrder.requestDriverAssignment({
+      orderId: order.id,
+      actorId: 'system',
+      actorRole: 'system',
+    });
+
+    // Assign driver (DISPATCH_PENDING → DRIVER_ASSIGNED) — routed through engine
+    await engine.masterOrder.markDriverAssigned({
+      orderId: order.id,
+      actorId: 'system',
+      driverId: driver.id,
+    });
+
+    // Driver accepts delivery (pending → accepted) — routed through engine
+    await engine.masterDelivery.driverAcceptDelivery({
+      deliveryId: delivery.id,
+      actorId: driver.id,
+      driverId: driver.id,
+    });
+
+    // En route to pickup — also syncs order to DRIVER_EN_ROUTE_PICKUP
+    await engine.masterDelivery.markEnRouteToPickup({
+      deliveryId: delivery.id,
+      actorId: driver.id,
+    });
+
+    // Picked up — also syncs order status to PICKED_UP
+    await engine.masterDelivery.markPickedUp({
+      deliveryId: delivery.id,
+      actorId: driver.id,
+    });
+
+    // En route to customer — syncs order to DRIVER_EN_ROUTE_CUSTOMER
+    await engine.masterDelivery.markEnRouteToCustomer({
+      deliveryId: delivery.id,
+      actorId: driver.id,
+    });
+
+    // Delivered — also syncs order status to DELIVERED
+    await engine.masterDelivery.markDelivered({
+      deliveryId: delivery.id,
+      actorId: driver.id,
+    });
   }
 
-  // Complete order + capture payment in ledger
-  await supabase.from('orders').update({
-    status: 'completed', engine_status: 'completed',
-    payment_status: 'completed', completed_at: new Date().toISOString(),
-  }).eq('id', order.id);
+  // Complete order + capture payment in ledger — routed through engine
+  await engine.masterOrder.completeOrder({
+    orderId: order.id,
+    actorId: 'system',
+    actorRole: 'system',
+  });
 
   await supabase.from('ledger_entries').insert([
     { order_id: order.id, entry_type: 'customer_charge_capture', amount_cents: totalCents, currency: 'CAD', description: 'Payment captured', stripe_id: paymentIntent.id },
@@ -224,7 +278,7 @@ async function run() {
     return done();
   }
 
-  // Record refund in ledger
+  // Record refund in ledger (TEST SETUP: ledger entry, not an order status transition)
   await supabase.from('ledger_entries').insert({
     order_id: order.id,
     entry_type: 'customer_refund',
@@ -234,7 +288,13 @@ async function run() {
     stripe_id: refund.id,
   });
 
-  await supabase.from('orders').update({ payment_status: 'refunded', engine_status: 'refunded' }).eq('id', order.id);
+  // Refund order status — routed through engine
+  await engine.masterOrder.refundOrder({
+    orderId: order.id,
+    actorId: 'system',
+    actorRole: 'ops_manager',
+    reason: 'E2E test refund',
+  });
   log('Refund Recorded', 'PASS', `Order refunded. Net: $0.00`);
 
   // Step 10: Final verification
@@ -246,8 +306,10 @@ async function run() {
 
   if (finalOrder?.payment_status === 'refunded' && entryTypes.includes('customer_refund')) {
     log('Final Check', 'PASS', `Order ${orderNumber}: refunded. ${finalLedger?.length} ledger entries. Net: $${(netCents / 100).toFixed(2)}`);
+  } else if (finalOrder?.engine_status === 'refunded' && entryTypes.includes('customer_refund')) {
+    log('Final Check', 'PASS', `Order ${orderNumber}: engine_status=refunded. ${finalLedger?.length} ledger entries. Net: $${(netCents / 100).toFixed(2)}`);
   } else {
-    log('Final Check', 'FAIL', `payment_status=${finalOrder?.payment_status}, entries=${finalLedger?.length}`);
+    log('Final Check', 'FAIL', `payment_status=${finalOrder?.payment_status}, engine_status=${finalOrder?.engine_status}, entries=${finalLedger?.length}`);
   }
 
   // Print Stripe dashboard link

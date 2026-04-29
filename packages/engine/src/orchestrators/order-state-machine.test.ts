@@ -4,7 +4,7 @@
 // ==========================================
 
 import { describe, expect, it } from 'vitest';
-import { EngineOrderStatus, EngineDeliveryStatus } from '@ridendine/types';
+import { CanonicalPayoutStatus, EngineOrderStatus, EngineDeliveryStatus } from '@ridendine/types';
 import {
   isValidOrderTransition,
   isValidDeliveryTransition,
@@ -15,6 +15,10 @@ import {
   ALLOWED_ORDER_TRANSITIONS,
   ALLOWED_DELIVERY_TRANSITIONS,
   InvalidTransitionError,
+  isValidPayoutTransition,
+  assertValidPayoutTransition,
+  isTerminalPayoutStatus,
+  ALLOWED_PAYOUT_TRANSITIONS,
 } from './order-state-machine';
 
 describe('Order State Machine', () => {
@@ -238,6 +242,116 @@ describe('Delivery State Machine', () => {
         EngineDeliveryStatus.DELIVERED,
         EngineDeliveryStatus.PICKED_UP
       )).toThrow(InvalidTransitionError);
+    });
+  });
+});
+
+describe('Payout State Machine', () => {
+  describe('isValidPayoutTransition', () => {
+    it('allows valid full lifecycle: NOT_ELIGIBLE -> ELIGIBLE -> PENDING -> PROCESSING -> PAID', () => {
+      const lifecycle = [
+        [CanonicalPayoutStatus.NOT_ELIGIBLE, CanonicalPayoutStatus.ELIGIBLE],
+        [CanonicalPayoutStatus.ELIGIBLE, CanonicalPayoutStatus.PENDING],
+        [CanonicalPayoutStatus.PENDING, CanonicalPayoutStatus.PROCESSING],
+        [CanonicalPayoutStatus.PROCESSING, CanonicalPayoutStatus.PAID],
+      ];
+
+      for (const [from, to] of lifecycle) {
+        expect(isValidPayoutTransition(from, to)).toBe(true);
+      }
+    });
+
+    it('FAILED can retry to PENDING', () => {
+      expect(isValidPayoutTransition(
+        CanonicalPayoutStatus.FAILED,
+        CanonicalPayoutStatus.PENDING
+      )).toBe(true);
+    });
+
+    it('HELD can release to PENDING', () => {
+      expect(isValidPayoutTransition(
+        CanonicalPayoutStatus.HELD,
+        CanonicalPayoutStatus.PENDING
+      )).toBe(true);
+    });
+
+    it('rejects invalid skip NOT_ELIGIBLE -> PAID', () => {
+      expect(isValidPayoutTransition(
+        CanonicalPayoutStatus.NOT_ELIGIBLE,
+        CanonicalPayoutStatus.PAID
+      )).toBe(false);
+    });
+
+    it('rejects unknown from status', () => {
+      expect(isValidPayoutTransition('unknown_status', CanonicalPayoutStatus.PAID)).toBe(false);
+    });
+  });
+
+  describe('terminal payout status', () => {
+    it('PAID is terminal', () => {
+      expect(isTerminalPayoutStatus(CanonicalPayoutStatus.PAID)).toBe(true);
+    });
+
+    it('PAID cannot transition further', () => {
+      const allStatuses = Object.values(CanonicalPayoutStatus);
+      for (const status of allStatuses) {
+        expect(isValidPayoutTransition(CanonicalPayoutStatus.PAID, status)).toBe(false);
+      }
+    });
+
+    it('non-terminal statuses are not terminal', () => {
+      expect(isTerminalPayoutStatus(CanonicalPayoutStatus.PENDING)).toBe(false);
+      expect(isTerminalPayoutStatus(CanonicalPayoutStatus.PROCESSING)).toBe(false);
+      expect(isTerminalPayoutStatus(CanonicalPayoutStatus.FAILED)).toBe(false);
+      expect(isTerminalPayoutStatus(CanonicalPayoutStatus.HELD)).toBe(false);
+      expect(isTerminalPayoutStatus(CanonicalPayoutStatus.ELIGIBLE)).toBe(false);
+    });
+  });
+
+  describe('assertValidPayoutTransition', () => {
+    it('does not throw for valid transitions', () => {
+      expect(() => assertValidPayoutTransition(
+        CanonicalPayoutStatus.ELIGIBLE,
+        CanonicalPayoutStatus.PENDING
+      )).not.toThrow();
+    });
+
+    it('throws InvalidTransitionError for invalid transitions', () => {
+      expect(() => assertValidPayoutTransition(
+        CanonicalPayoutStatus.NOT_ELIGIBLE,
+        CanonicalPayoutStatus.PAID
+      )).toThrow(InvalidTransitionError);
+    });
+
+    it('throws with correct entity type payout', () => {
+      try {
+        assertValidPayoutTransition(CanonicalPayoutStatus.PAID, CanonicalPayoutStatus.PENDING);
+        expect.fail('Should have thrown');
+      } catch (e) {
+        const err = e as InvalidTransitionError;
+        expect(err.entityType).toBe('payout');
+        expect(err.from).toBe(CanonicalPayoutStatus.PAID);
+        expect(err.to).toBe(CanonicalPayoutStatus.PENDING);
+      }
+    });
+  });
+
+  describe('ALLOWED_PAYOUT_TRANSITIONS', () => {
+    it('contains valid transitions', () => {
+      const has = (from: string, to: string) =>
+        ALLOWED_PAYOUT_TRANSITIONS.some(t => t.from === from && t.to === to);
+
+      expect(has(CanonicalPayoutStatus.NOT_ELIGIBLE, CanonicalPayoutStatus.ELIGIBLE)).toBe(true);
+      expect(has(CanonicalPayoutStatus.PROCESSING, CanonicalPayoutStatus.PAID)).toBe(true);
+      expect(has(CanonicalPayoutStatus.FAILED, CanonicalPayoutStatus.PENDING)).toBe(true);
+    });
+
+    it('does not contain invalid transitions', () => {
+      const has = (from: string, to: string) =>
+        ALLOWED_PAYOUT_TRANSITIONS.some(t => t.from === from && t.to === to);
+
+      expect(has(CanonicalPayoutStatus.PAID, CanonicalPayoutStatus.PENDING)).toBe(false);
+      expect(has(CanonicalPayoutStatus.NOT_ELIGIBLE, CanonicalPayoutStatus.PAID)).toBe(false);
     });
   });
 });

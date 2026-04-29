@@ -16,6 +16,8 @@ import { DomainEventEmitter } from '../core/event-emitter';
 import { AuditLogger } from '../core/audit-logger';
 import { SLAManager } from '../core/sla-manager';
 import { DRIVER_PAYOUT_PERCENT, BASE_DELIVERY_FEE } from '../constants';
+import { assertValidDeliveryTransition } from './order-state-machine';
+import { BusinessRulesEngine } from '../core/business-rules-engine';
 
 interface DeliveryData {
   id: string;
@@ -457,6 +459,15 @@ export class DispatchEngine {
       };
     }
 
+    const rules = new BusinessRulesEngine(this.client);
+    const ruleCheck = await rules.canDriverAcceptDelivery({ deliveryId: attempt.delivery_id, driverId: actor.entityId || actor.userId });
+    if (!ruleCheck.allowed) {
+      return {
+        success: false,
+        error: { code: 'BUSINESS_RULE_VIOLATION', message: ruleCheck.reason },
+      };
+    }
+
     const now = new Date().toISOString();
 
     // Update attempt
@@ -657,6 +668,18 @@ export class DispatchEngine {
           error: { code: 'FORBIDDEN', message: 'This delivery is not assigned to you' },
         };
       }
+    }
+
+    // Canonical delivery state machine validation
+    try {
+      const currentEngine = this.mapDeliveryStatusForValidation(delivery.status);
+      const targetEngine = this.mapDeliveryStatusForValidation(status);
+      assertValidDeliveryTransition(currentEngine, targetEngine);
+    } catch {
+      return {
+        success: false,
+        error: { code: 'INVALID_TRANSITION', message: `Cannot transition delivery from ${delivery.status} to ${status}` },
+      };
     }
 
     const now = new Date().toISOString();
@@ -1186,6 +1209,25 @@ export class DispatchEngine {
 
     // Return highest scored
     return scored.sort((a, b) => b.score - a.score)[0]!;
+  }
+
+  private mapDeliveryStatusForValidation(legacyStatus: string): string {
+    const map: Record<string, string> = {
+      pending: 'unassigned',
+      assigned: 'accepted',
+      accepted: 'accepted',
+      en_route_to_pickup: 'en_route_to_pickup',
+      arrived_at_pickup: 'arrived_at_pickup',
+      picked_up: 'picked_up',
+      en_route_to_dropoff: 'en_route_to_customer',
+      en_route_to_customer: 'en_route_to_customer',
+      arrived_at_dropoff: 'arrived_at_customer',
+      arrived_at_customer: 'arrived_at_customer',
+      delivered: 'delivered',
+      failed: 'failed',
+      cancelled: 'cancelled',
+    };
+    return map[legacyStatus] || legacyStatus;
   }
 
   /**
