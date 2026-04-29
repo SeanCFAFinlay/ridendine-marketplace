@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { DEFAULT_SERVICE_REGION_CENTER } from '@ridendine/engine';
 
 // Dynamically import Leaflet components to avoid SSR issues
 const MapContainer = dynamic(
@@ -37,8 +38,6 @@ interface RouteMapProps {
   className?: string;
 }
 
-// Hamilton, ON coordinates
-const HAMILTON_CENTER: [number, number] = [43.2557, -79.8711];
 
 export function RouteMap({
   pickupLat,
@@ -116,7 +115,7 @@ export function RouteMap({
     if (driverLat && driverLng) {
       return [driverLat, driverLng];
     }
-    return HAMILTON_CENTER;
+    return DEFAULT_SERVICE_REGION_CENTER;
   };
 
   const hasPickup = pickupLat && pickupLng;

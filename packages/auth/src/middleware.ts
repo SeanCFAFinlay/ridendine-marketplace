@@ -81,9 +81,14 @@ export function createAuthMiddleware(config: AuthMiddlewareConfig) {
   return async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Auth bypass requires explicit opt-in via BYPASS_AUTH=true env var.
-    // Never enabled automatically — not even in development.
+    // Auth bypass — development only. Crashes in production to prevent accidental deployment.
     if (process.env.BYPASS_AUTH === 'true') {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(
+          'FATAL: BYPASS_AUTH=true is not allowed in production. ' +
+          'Remove BYPASS_AUTH from your production environment variables.'
+        );
+      }
       return NextResponse.next();
     }
 

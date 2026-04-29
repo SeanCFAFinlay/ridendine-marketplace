@@ -15,3 +15,5 @@ export * from './components/avatar';
 export * from './components/empty-state';
 export * from './components/error-state';
 export * from './components/modal';
+export { PasswordStrength } from './components/password-strength';
+export { AuthLayout } from './components/auth-layout';

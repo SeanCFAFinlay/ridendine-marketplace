@@ -1,26 +1,14 @@
 // ==========================================
 // WEB APP ENGINE CLIENT
-// Provides access to the central business engine
+// FND-016: uses shared getEngine/errorResponse/successResponse
 // ==========================================
 
 import { createServerClient, createAdminClient } from '@ridendine/db';
-import { createCentralEngine, type CentralEngine } from '@ridendine/engine';
 import type { ActorContext } from '@ridendine/types';
 import { cookies } from 'next/headers';
 
-// Singleton engine instance
-let engineInstance: CentralEngine | null = null;
-
-/**
- * Get the central engine instance
- */
-export function getEngine(): CentralEngine {
-  if (!engineInstance) {
-    const client = createAdminClient();
-    engineInstance = createCentralEngine(client);
-  }
-  return engineInstance;
-}
+// Re-export shared helpers so existing imports don't break
+export { getAdminEngine as getEngine, errorResponse, successResponse } from '@ridendine/engine';
 
 /**
  * Get actor context for current customer user
@@ -37,7 +25,6 @@ export async function getCustomerActorContext(): Promise<{
     return null;
   }
 
-  // Get customer profile
   const adminClient = createAdminClient();
   const { data: customer } = await adminClient
     .from('customers')
@@ -67,28 +54,4 @@ export function getSystemActor(): ActorContext {
     userId: 'system',
     role: 'system',
   };
-}
-
-/**
- * Standard error response
- */
-export function errorResponse(
-  code: string,
-  message: string,
-  status: number = 400
-): Response {
-  return Response.json(
-    { success: false, error: { code, message } },
-    { status }
-  );
-}
-
-/**
- * Standard success response
- */
-export function successResponse<T>(data: T, status: number = 200): Response {
-  return Response.json(
-    { success: true, data },
-    { status }
-  );
 }

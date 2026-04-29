@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { DEFAULT_SERVICE_REGION_CENTER } from '@ridendine/engine';
 
 interface OrderTrackingMapProps {
   driverLocation: { lat: number; lng: number } | null;
@@ -20,8 +21,7 @@ export default function OrderTrackingMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    // Default center: Hamilton, ON
-    const defaultCenter: [number, number] = [43.2557, -79.8711];
+    const defaultCenter = DEFAULT_SERVICE_REGION_CENTER;
 
     mapRef.current = L.map(containerRef.current).setView(
       driverLocation ? [driverLocation.lat, driverLocation.lng] : defaultCenter,

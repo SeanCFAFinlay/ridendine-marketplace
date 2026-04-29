@@ -733,7 +733,9 @@ export class DispatchEngine {
     await this.client.from('delivery_events').insert({
       delivery_id: deliveryId,
       event_type: `status_${status}`,
-      data: { previousStatus, newStatus: status, ...metadata },
+      event_data: { previousStatus, newStatus: status, ...metadata },
+      actor_type: actor.role === 'driver' ? 'driver' : actor.role === 'system' ? 'system' : 'ops',
+      actor_id: actor.userId !== 'system' ? actor.userId : undefined,
     });
 
     // Emit event

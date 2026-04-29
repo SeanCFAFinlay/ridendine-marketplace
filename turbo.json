@@ -10,7 +10,9 @@
         "SUPABASE_SERVICE_ROLE_KEY",
         "STRIPE_SECRET_KEY",
         "STRIPE_WEBHOOK_SECRET",
-        "NEXT_PUBLIC_APP_URL"
+        "NEXT_PUBLIC_APP_URL",
+        "ENGINE_PROCESSOR_TOKEN",
+        "CRON_SECRET"
       ]
     },
     "dev": {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { DEFAULT_SERVICE_REGION_CENTER } from '@ridendine/engine';
 
 // Dynamically import Leaflet components to avoid SSR issues
 const MapContainer = dynamic(
@@ -43,8 +44,6 @@ interface DeliveryMapProps {
   className?: string;
 }
 
-// Hamilton, ON coordinates
-const HAMILTON_CENTER: [number, number] = [43.2557, -79.8711];
 
 export function DeliveryMap({ deliveries, className }: DeliveryMapProps) {
   const [isMounted, setIsMounted] = useState(false);
@@ -122,7 +121,7 @@ export function DeliveryMap({ deliveries, className }: DeliveryMapProps) {
         href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css"
       />
       <MapContainer
-        center={HAMILTON_CENTER}
+        center={DEFAULT_SERVICE_REGION_CENTER}
         zoom={13}
         style={{ height: '100%', width: '100%', borderRadius: '0.5rem' }}
       >

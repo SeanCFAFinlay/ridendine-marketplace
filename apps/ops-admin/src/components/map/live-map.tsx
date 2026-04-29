@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { createBrowserClient } from '@ridendine/db';
+import { DEFAULT_SERVICE_REGION_CENTER, DEFAULT_MAP_ZOOM } from '@ridendine/engine';
 
 type DriverMapRow = {
   id: string;
@@ -88,7 +89,7 @@ export default function LiveMap() {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    mapRef.current = L.map(containerRef.current).setView([43.2557, -79.8711], 12);
+    mapRef.current = L.map(containerRef.current).setView(DEFAULT_SERVICE_REGION_CENTER, DEFAULT_MAP_ZOOM);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',

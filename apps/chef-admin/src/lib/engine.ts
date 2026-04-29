@@ -1,26 +1,14 @@
 // ==========================================
 // CHEF-ADMIN ENGINE CLIENT
-// Provides access to the central business engine
+// FND-016: uses shared getEngine/errorResponse/successResponse
 // ==========================================
 
 import { createServerClient, createAdminClient } from '@ridendine/db';
-import { createCentralEngine, type CentralEngine } from '@ridendine/engine';
 import type { ActorContext } from '@ridendine/types';
 import { cookies } from 'next/headers';
 
-// Singleton engine instance (uses admin client for full access)
-let engineInstance: CentralEngine | null = null;
-
-/**
- * Get the central engine instance
- */
-export function getEngine(): CentralEngine {
-  if (!engineInstance) {
-    const client = createAdminClient();
-    engineInstance = createCentralEngine(client);
-  }
-  return engineInstance;
-}
+// Re-export shared helpers
+export { getAdminEngine as getEngine, errorResponse, successResponse } from '@ridendine/engine';
 
 /**
  * Get actor context for current chef user
@@ -150,28 +138,4 @@ export async function verifyChefOwnsOrder(
     .single();
 
   return order?.storefront_id === storefrontId;
-}
-
-/**
- * Standard error response
- */
-export function errorResponse(
-  code: string,
-  message: string,
-  status: number = 400
-): Response {
-  return Response.json(
-    { success: false, error: { code, message } },
-    { status }
-  );
-}
-
-/**
- * Standard success response
- */
-export function successResponse<T>(data: T, status: number = 200): Response {
-  return Response.json(
-    { success: true, data },
-    { status }
-  );
 }

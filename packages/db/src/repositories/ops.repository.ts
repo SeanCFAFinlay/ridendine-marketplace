@@ -9,6 +9,7 @@ import type {
   PlatformRuleSet,
 } from '@ridendine/types';
 import type { SupabaseClient } from '../client/types';
+import { calculateDistanceKm, extractAreaFromAddress, scoreDriverForDispatch } from '@ridendine/utils';
 import {
   getChefLiabilitySummaries,
   getDriverLiabilitySummaries,
@@ -18,45 +19,6 @@ import {
 } from './finance.repository';
 
 type AnyRow = Record<string, any>;
-
-function extractArea(address: string | null | undefined): string {
-  if (!address) return 'Unknown';
-  const parts = address.split(',').map((part) => part.trim()).filter(Boolean);
-  return parts[1] ?? parts[0] ?? 'Unknown';
-}
-
-function calculateDistanceKm(
-  lat1?: number | null,
-  lng1?: number | null,
-  lat2?: number | null,
-  lng2?: number | null
-): number | null {
-  if (!lat1 || !lng1 || !lat2 || !lng2) return null;
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const radius = 6371;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return radius * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-}
-
-function scoreDriver(driver: DriverSupplySnapshot, rules: PlatformRuleSet): number {
-  const distanceScore =
-    driver.distanceKm == null
-      ? 0
-      : Math.max(0, (rules.dispatchRadiusKm - driver.distanceKm) * 12);
-  const workloadPenalty = driver.activeDeliveries * 20;
-  const declinePenalty = driver.recentDeclines * 8;
-  const expiryPenalty = driver.recentExpiries * 10;
-  const fairnessBonus = driver.fairnessScore * 10;
-  const availabilityBonus =
-    driver.status === 'online' ? 20 : driver.status === 'busy' ? -25 : -50;
-  return Math.round(
-    distanceScore + fairnessBonus + availabilityBonus - workloadPenalty - declinePenalty - expiryPenalty
-  );
-}
 
 function mapAssignmentAttempt(row: AnyRow): AssignmentAttempt {
   return {
@@ -158,7 +120,7 @@ async function listDriverSupply(
       dispatchRadiusKm: 10,
       maxDeliveryDistanceKm: 15,
     } as PlatformRuleSet);
-  return snapshots.sort((a, b) => scoreDriver(b, effectiveRules) - scoreDriver(a, effectiveRules));
+  return snapshots.sort((a, b) => scoreDriverForDispatch(b, effectiveRules) - scoreDriverForDispatch(a, effectiveRules));
 }
 
 function buildDispatchItem(
@@ -174,7 +136,7 @@ function buildDispatchItem(
     status: delivery.status,
     pickupAddress: delivery.pickup_address,
     dropoffAddress: delivery.dropoff_address,
-    pickupArea: extractArea(delivery.pickup_address),
+    pickupArea: extractAreaFromAddress(delivery.pickup_address),
     customerName:
       [delivery.order?.customer?.first_name, delivery.order?.customer?.last_name]
         .filter(Boolean)

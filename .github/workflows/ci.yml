@@ -5,6 +5,16 @@ on:
   pull_request:
     branches: [master, main]
 
+env:
+  # Required for Next.js build (dummy values for CI only)
+  NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder_anon_key
+  SUPABASE_SERVICE_ROLE_KEY: placeholder_service_role_key
+  NEXT_PUBLIC_APP_URL: http://localhost:3000
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
+  STRIPE_SECRET_KEY: sk_test_placeholder
+  STRIPE_WEBHOOK_SECRET: whsec_placeholder
+
 jobs:
   quality:
     name: Lint, Typecheck, Test, Build
@@ -19,6 +29,12 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm --filter @ridendine/engine test
-      - run: pnpm build
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+        continue-on-error: true
+      - name: Test (engine)
+        run: pnpm --filter @ridendine/engine test
+      - name: Build
+        run: pnpm build

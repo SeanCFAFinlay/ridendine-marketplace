@@ -21,6 +21,10 @@ out/
 *.swp
 *.swo
 
+# Obsidian (root-level only — docs/.obsidian is tracked)
+/.obsidian/
+Untitled.canvas
+
 # OS
 .DS_Store
 Thumbs.db

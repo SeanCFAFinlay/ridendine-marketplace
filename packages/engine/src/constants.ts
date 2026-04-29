@@ -101,3 +101,14 @@ export const VALID_ORDER_TRANSITIONS: Record<OrderStatusType, OrderStatusType[]>
   cancelled: [],
   refunded: [],
 };
+
+// ==========================================
+// GEO CONSTANTS
+// ==========================================
+
+/**
+ * Default service region center (Hamilton, ON, Canada)
+ * Used as fallback center for all map views
+ */
+export const DEFAULT_SERVICE_REGION_CENTER: [number, number] = [43.2557, -79.8711];
+export const DEFAULT_MAP_ZOOM = 12;

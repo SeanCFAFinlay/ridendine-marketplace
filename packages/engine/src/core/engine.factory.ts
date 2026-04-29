@@ -8,7 +8,7 @@ import { DomainEventEmitter, createEventEmitter } from './event-emitter';
 import { AuditLogger, createAuditLogger } from './audit-logger';
 import { SLAManager, createSLAManager } from './sla-manager';
 import { NotificationSender, createNotificationSender } from './notification-sender';
-import { OrderOrchestrator, createOrderOrchestrator } from '../orchestrators/order.orchestrator';
+import { OrderOrchestrator, createOrderOrchestrator, type PaymentAdapter } from '../orchestrators/order.orchestrator';
 import { KitchenEngine, createKitchenEngine } from '../orchestrators/kitchen.engine';
 import { DispatchEngine, createDispatchEngine } from '../orchestrators/dispatch.engine';
 import { CommerceLedgerEngine, createCommerceLedgerEngine } from '../orchestrators/commerce.engine';
@@ -39,8 +39,12 @@ export interface CentralEngine {
 
 /**
  * Create a fully initialized Central Engine
+ * @param paymentAdapter Optional Stripe adapter for voiding payments on rejection/cancel (FND-017)
  */
-export function createCentralEngine(client: SupabaseClient): CentralEngine {
+export function createCentralEngine(
+  client: SupabaseClient,
+  paymentAdapter?: PaymentAdapter,
+): CentralEngine {
   // Create core utilities
   const events = createEventEmitter(client);
   const audit = createAuditLogger(client);
@@ -48,7 +52,7 @@ export function createCentralEngine(client: SupabaseClient): CentralEngine {
   const notifications = createNotificationSender(client);
 
   // Create domain orchestrators
-  const orders = createOrderOrchestrator(client, events, audit, sla);
+  const orders = createOrderOrchestrator(client, events, audit, sla, undefined, paymentAdapter);
   const kitchen = createKitchenEngine(client, events, audit);
   const dispatch = createDispatchEngine(client, events, audit, sla);
   const commerce = createCommerceLedgerEngine(client, events, audit);

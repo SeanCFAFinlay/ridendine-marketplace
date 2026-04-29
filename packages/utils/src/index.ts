@@ -8,3 +8,5 @@ export * from './errors';
 export * from './helpers';
 export * from './api';
 export * from './logger';
+export * from './geo';
+export * from './scoring';

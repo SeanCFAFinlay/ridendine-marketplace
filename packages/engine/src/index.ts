@@ -14,6 +14,9 @@ export * from './orchestrators/support.engine';
 export * from './orchestrators/platform.engine';
 export * from './orchestrators/ops.engine';
 
+// Analytics services
+export * from './services/ops-analytics.service';
+
 // Legacy services (for backwards compatibility)
 export * from './services/orders.service';
 export * from './services/chefs.service';
@@ -24,3 +27,12 @@ export * from './services/dispatch.service';
 
 // Constants
 export * from './constants';
+
+// Shared client helpers (explicit to avoid naming conflicts with core getEngine)
+export {
+  getAdminEngine,
+  registerPaymentAdapter,
+  resetEngineClient,
+  errorResponse,
+  successResponse,
+} from './client-helpers';

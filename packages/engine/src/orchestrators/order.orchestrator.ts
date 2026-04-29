@@ -69,12 +69,26 @@ interface CreateOrderInput {
   specialInstructions?: string;
 }
 
+/**
+ * Payment adapter interface for Stripe operations.
+ * Implementations are provided by app-level code to keep Stripe SDK out of the engine.
+ */
+export interface PaymentAdapter {
+  /**
+   * Cancel/void a payment intent.
+   * Returns true if successfully cancelled, false if already captured or other non-retryable state.
+   * Throws on transient failures that should be retried.
+   */
+  cancelPaymentIntent(paymentIntentId: string): Promise<{ cancelled: boolean; status: string }>;
+}
+
 export class OrderOrchestrator {
   private client: SupabaseClient;
   private eventEmitter: DomainEventEmitter;
   private auditLogger: AuditLogger;
   private slaManager: SLAManager;
   private notificationSender?: NotificationSender;
+  private paymentAdapter?: PaymentAdapter;
 
   constructor(
     client: SupabaseClient,
@@ -82,12 +96,14 @@ export class OrderOrchestrator {
     auditLogger: AuditLogger,
     slaManager: SLAManager,
     notificationSender?: NotificationSender,
+    paymentAdapter?: PaymentAdapter,
   ) {
     this.client = client;
     this.eventEmitter = eventEmitter;
     this.auditLogger = auditLogger;
     this.slaManager = slaManager;
     this.notificationSender = notificationSender;
+    this.paymentAdapter = paymentAdapter;
   }
 
   /**
@@ -391,6 +407,7 @@ export class OrderOrchestrator {
     });
 
     // Create notification for chef — look up chef's user_id via storefront → chef_profile
+    // FND-018 fix: guard against null user_id (notifications.user_id is NOT NULL)
     let chefUserId: string | null = null;
     try {
       const { data: storefront } = await this.client
@@ -409,14 +426,40 @@ export class OrderOrchestrator {
     } catch {
       // Non-fatal: notification is best-effort
     }
-    await this.client.from('notifications').insert({
-      user_id: chefUserId,
-      type: 'order_placed',
-      title: 'New Order Received',
-      body: `Order ${order.order_number} has been placed`,
-      message: `Order ${order.order_number} has been placed`,
-      data: { orderId, orderNumber: order.order_number },
-    });
+
+    if (chefUserId) {
+      await this.client.from('notifications').insert({
+        user_id: chefUserId,
+        type: 'order_placed',
+        title: 'New Order Received',
+        body: `Order ${order.order_number} has been placed`,
+        message: `Order ${order.order_number} has been placed`,
+        data: { orderId, orderNumber: order.order_number },
+      });
+    } else {
+      // Chef user lookup failed — log for ops visibility and create exception
+      await this.auditLogger.log({
+        action: 'override',
+        entityType: 'order',
+        entityId: orderId,
+        actor,
+        metadata: {
+          warning: 'chef_notification_skipped',
+          reason: 'Could not resolve chef user_id for storefront',
+          storefrontId: order.storefront_id,
+        },
+      });
+
+      await this.client.from('order_exceptions').insert({
+        exception_type: 'chef_notification_failed',
+        severity: 'low',
+        status: 'open',
+        order_id: orderId,
+        title: 'Chef Notification Not Sent',
+        description: `Could not send order notification for ${order.order_number} — chef user_id could not be resolved for storefront ${order.storefront_id}.`,
+        recommended_actions: ['Check storefront-chef linkage', 'Manually notify chef'],
+      });
+    }
 
     // Add to order status history
     await this.client.from('order_status_history').insert({
@@ -654,16 +697,56 @@ export class OrderOrchestrator {
     // Complete chef response SLA
     await this.slaManager.completeTimer('order', orderId, 'chef_response' as SLAType);
 
-    // Void payment authorization if exists
+    // Void payment authorization if exists (FND-017 fix: actually call Stripe)
     if (order.payment_intent_id) {
+      let stripeVoidSucceeded = false;
+      let stripeStatus = 'unknown';
+
+      if (this.paymentAdapter) {
+        try {
+          const result = await this.paymentAdapter.cancelPaymentIntent(order.payment_intent_id);
+          stripeVoidSucceeded = result.cancelled;
+          stripeStatus = result.status;
+        } catch (err) {
+          stripeStatus = 'stripe_error';
+          // Log the failure but continue — we still need to reject the order
+          await this.auditLogger.log({
+            action: 'override',
+            entityType: 'order',
+            entityId: orderId,
+            actor,
+            metadata: {
+              warning: 'stripe_void_failed',
+              paymentIntentId: order.payment_intent_id,
+              error: err instanceof Error ? err.message : String(err),
+            },
+          });
+        }
+      }
+
+      // Record ledger entry reflecting actual Stripe result
       await this.client.from('ledger_entries').insert({
         order_id: orderId,
-        entry_type: 'customer_charge_void',
+        entry_type: stripeVoidSucceeded ? 'customer_charge_void' : 'customer_charge_void_pending',
         amount_cents: -Math.round(order.total * 100),
         currency: 'CAD',
-        description: `Payment voided due to rejection: ${reason}`,
+        description: `Payment void ${stripeVoidSucceeded ? 'completed' : 'pending'} due to rejection: ${reason} (stripe: ${stripeStatus})`,
         stripe_id: order.payment_intent_id,
+        metadata: { stripeStatus, voidAttempted: !!this.paymentAdapter },
       });
+
+      // If Stripe void failed, create an exception for ops to handle
+      if (!stripeVoidSucceeded && this.paymentAdapter) {
+        await this.client.from('order_exceptions').insert({
+          exception_type: 'payment_void_failed',
+          severity: 'high',
+          status: 'open',
+          order_id: orderId,
+          title: 'Payment Void Failed',
+          description: `Failed to void Stripe PaymentIntent ${order.payment_intent_id} for rejected order ${order.order_number}. Status: ${stripeStatus}`,
+          recommended_actions: ['Check Stripe dashboard', 'Manual void or refund may be required'],
+        });
+      }
     }
 
     // Create exception
@@ -979,16 +1062,53 @@ export class OrderOrchestrator {
       .eq('order_id', orderId)
       .in('status', ['queued', 'in_progress']);
 
-    // Void payment if authorized
+    // Void payment if authorized (FND-017 fix: actually call Stripe)
     if (order.payment_intent_id && order.payment_status === 'processing') {
+      let stripeVoidSucceeded = false;
+      let stripeStatus = 'unknown';
+
+      if (this.paymentAdapter) {
+        try {
+          const result = await this.paymentAdapter.cancelPaymentIntent(order.payment_intent_id);
+          stripeVoidSucceeded = result.cancelled;
+          stripeStatus = result.status;
+        } catch (err) {
+          stripeStatus = 'stripe_error';
+          await this.auditLogger.log({
+            action: 'override',
+            entityType: 'order',
+            entityId: orderId,
+            actor,
+            metadata: {
+              warning: 'stripe_void_failed',
+              paymentIntentId: order.payment_intent_id,
+              error: err instanceof Error ? err.message : String(err),
+            },
+          });
+        }
+      }
+
       await this.client.from('ledger_entries').insert({
         order_id: orderId,
-        entry_type: 'customer_charge_void',
+        entry_type: stripeVoidSucceeded ? 'customer_charge_void' : 'customer_charge_void_pending',
         amount_cents: -Math.round(order.total * 100),
         currency: 'CAD',
-        description: `Payment voided due to cancellation: ${reason}`,
+        description: `Payment void ${stripeVoidSucceeded ? 'completed' : 'pending'} due to cancellation: ${reason} (stripe: ${stripeStatus})`,
         stripe_id: order.payment_intent_id,
+        metadata: { stripeStatus, voidAttempted: !!this.paymentAdapter },
       });
+
+      if (!stripeVoidSucceeded && this.paymentAdapter) {
+        await this.client.from('order_exceptions').insert({
+          exception_type: 'payment_void_failed',
+          severity: 'high',
+          status: 'open',
+          order_id: orderId,
+          title: 'Payment Void Failed on Cancellation',
+          description: `Failed to void Stripe PaymentIntent ${order.payment_intent_id} for cancelled order ${order.order_number}. Status: ${stripeStatus}`,
+          recommended_actions: ['Check Stripe dashboard', 'Manual void or refund may be required'],
+        });
+      }
     }
 
     // Add to order status history
@@ -1343,6 +1463,7 @@ export function createOrderOrchestrator(
   auditLogger: AuditLogger,
   slaManager: SLAManager,
   notificationSender?: NotificationSender,
+  paymentAdapter?: PaymentAdapter,
 ): OrderOrchestrator {
-  return new OrderOrchestrator(client, eventEmitter, auditLogger, slaManager, notificationSender);
+  return new OrderOrchestrator(client, eventEmitter, auditLogger, slaManager, notificationSender, paymentAdapter);
 }
