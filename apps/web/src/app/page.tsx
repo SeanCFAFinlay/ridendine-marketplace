@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@ridendine/ui';
@@ -6,6 +7,22 @@ import { FeaturedChefs } from '@/components/home/featured-chefs';
 
 // Opt out of static generation due to auth context requirements
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'RideNDine - Chef-First Food Delivery',
+  description: 'Order delicious home-cooked meals from local chefs in Hamilton, ON. RideNDine connects you with talented home chefs for authentic, chef-made food delivered to your door.',
+  openGraph: {
+    title: 'RideNDine - Chef-First Food Delivery',
+    description: 'Home-cooked meals from local chefs, delivered to your door.',
+    type: 'website',
+    siteName: 'RideNDine',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'RideNDine - Chef-First Food Delivery',
+    description: 'Home-cooked meals from local chefs, delivered to your door.',
+  },
+};
 
 export default function HomePage() {
   return (

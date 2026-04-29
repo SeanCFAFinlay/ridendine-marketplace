@@ -1,6 +1,7 @@
 import { Card } from '@ridendine/ui';
 import { createAdminClient, type SupabaseClient } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { EventMetrics } from './components/event-metrics';
 
 export const dynamic = 'force-dynamic';
 
@@ -219,6 +220,8 @@ export default async function AnalyticsPage() {
             ))}
           </div>
         </Card>
+
+        <EventMetrics />
 
         <Card className="border-gray-800 bg-[#16213e] p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">

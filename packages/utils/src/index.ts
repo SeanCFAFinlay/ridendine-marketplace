@@ -11,3 +11,4 @@ export * from './logger';
 export * from './geo';
 export * from './scoring';
 export * from './rate-limiter';
+export * from './analytics';

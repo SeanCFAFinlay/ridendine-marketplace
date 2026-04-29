@@ -8,11 +8,82 @@ type SettingsFormProps = {
   canEdit: boolean;
 };
 
+const inputClass =
+  'w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-white disabled:opacity-60';
+
+function NumberField({
+  label,
+  value,
+  step,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  step?: string;
+  disabled: boolean;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="space-y-2">
+      <span className="text-sm text-gray-300">{label}</span>
+      <input
+        type="number"
+        step={step}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className={inputClass}
+      />
+    </label>
+  );
+}
+
+function ToggleField({
+  label,
+  checked,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  disabled: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center justify-between rounded-lg border border-gray-700 bg-[#1a1a2e] px-4 py-3">
+      <span className="text-sm text-gray-300">{label}</span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        disabled={disabled}
+      />
+    </label>
+  );
+}
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+      {children}
+    </h3>
+  );
+}
+
 export function SettingsForm({ initialRules, canEdit }: SettingsFormProps) {
   const [form, setForm] = useState(initialRules);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  function setNumber<K extends keyof PlatformRuleSet>(key: K, value: string) {
+    setForm((cur) => ({ ...cur, [key]: Number(value) }));
+  }
+
+  function setBool<K extends keyof PlatformRuleSet>(key: K, value: boolean) {
+    setForm((cur) => ({ ...cur, [key]: value }));
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -40,131 +111,145 @@ export function SettingsForm({ initialRules, canEdit }: SettingsFormProps) {
     }
   }
 
-  function updateNumber<K extends keyof PlatformRuleSet>(key: K, value: string) {
-    setForm((current) => ({ ...current, [key]: Number(value) }));
-  }
-
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
-      <div className="grid gap-4 lg:grid-cols-3">
-        <label className="space-y-2">
-          <span className="text-sm text-gray-300">Platform fee %</span>
-          <input
-            type="number"
-            step="0.01"
+    <form onSubmit={onSubmit} className="space-y-8">
+      {/* Financial */}
+      <div className="space-y-4">
+        <SectionHeading>Financial</SectionHeading>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <NumberField
+            label="Platform fee %"
             value={form.platformFeePercent}
-            onChange={(event) => updateNumber('platformFeePercent', event.target.value)}
+            step="0.01"
             disabled={!canEdit}
-            className="w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-white disabled:opacity-60"
+            onChange={(v) => setNumber('platformFeePercent', v)}
           />
-        </label>
-        <label className="space-y-2">
-          <span className="text-sm text-gray-300">Dispatch radius km</span>
-          <input
-            type="number"
-            step="0.1"
-            value={form.dispatchRadiusKm}
-            onChange={(event) => updateNumber('dispatchRadiusKm', event.target.value)}
+          <NumberField
+            label="Service fee %"
+            value={form.serviceFeePercent}
+            step="0.01"
             disabled={!canEdit}
-            className="w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-white disabled:opacity-60"
+            onChange={(v) => setNumber('serviceFeePercent', v)}
           />
-        </label>
-        <label className="space-y-2">
-          <span className="text-sm text-gray-300">Max delivery distance km</span>
-          <input
-            type="number"
-            step="0.1"
-            value={form.maxDeliveryDistanceKm}
-            onChange={(event) => updateNumber('maxDeliveryDistanceKm', event.target.value)}
+          <NumberField
+            label="HST rate %"
+            value={form.hstRate}
+            step="0.01"
             disabled={!canEdit}
-            className="w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-white disabled:opacity-60"
+            onChange={(v) => setNumber('hstRate', v)}
           />
-        </label>
-        <label className="space-y-2">
-          <span className="text-sm text-gray-300">Default prep time minutes</span>
-          <input
-            type="number"
-            value={form.defaultPrepTimeMinutes}
-            onChange={(event) => updateNumber('defaultPrepTimeMinutes', event.target.value)}
+          <NumberField
+            label="Min order amount (cents)"
+            value={form.minOrderAmount}
             disabled={!canEdit}
-            className="w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-white disabled:opacity-60"
+            onChange={(v) => setNumber('minOrderAmount', v)}
           />
-        </label>
-        <label className="space-y-2">
-          <span className="text-sm text-gray-300">Offer timeout seconds</span>
-          <input
-            type="number"
-            value={form.offerTimeoutSeconds}
-            onChange={(event) => updateNumber('offerTimeoutSeconds', event.target.value)}
-            disabled={!canEdit}
-            className="w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-white disabled:opacity-60"
-          />
-        </label>
-        <label className="space-y-2">
-          <span className="text-sm text-gray-300">Max assignment attempts</span>
-          <input
-            type="number"
-            value={form.maxAssignmentAttempts}
-            onChange={(event) => updateNumber('maxAssignmentAttempts', event.target.value)}
-            disabled={!canEdit}
-            className="w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-white disabled:opacity-60"
-          />
-        </label>
-        <label className="space-y-2">
-          <span className="text-sm text-gray-300">Refund auto-review threshold cents</span>
-          <input
-            type="number"
+          <NumberField
+            label="Refund auto-review threshold (cents)"
             value={form.refundAutoReviewThresholdCents}
-            onChange={(event) => updateNumber('refundAutoReviewThresholdCents', event.target.value)}
             disabled={!canEdit}
-            className="w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-white disabled:opacity-60"
+            onChange={(v) => setNumber('refundAutoReviewThresholdCents', v)}
           />
-        </label>
-        <label className="space-y-2">
-          <span className="text-sm text-gray-300">Support SLA warning minutes</span>
-          <input
-            type="number"
-            value={form.supportSlaWarningMinutes}
-            onChange={(event) => updateNumber('supportSlaWarningMinutes', event.target.value)}
-            disabled={!canEdit}
-            className="w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-white disabled:opacity-60"
-          />
-        </label>
-        <label className="space-y-2">
-          <span className="text-sm text-gray-300">Support SLA breach minutes</span>
-          <input
-            type="number"
-            value={form.supportSlaBreachMinutes}
-            onChange={(event) => updateNumber('supportSlaBreachMinutes', event.target.value)}
-            disabled={!canEdit}
-            className="w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-white disabled:opacity-60"
-          />
-        </label>
+        </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <label className="flex items-center justify-between rounded-lg border border-gray-700 bg-[#1a1a2e] px-4 py-3">
-          <span className="text-sm text-gray-300">Auto-assign enabled</span>
-          <input
-            type="checkbox"
+      {/* Dispatch */}
+      <div className="space-y-4">
+        <SectionHeading>Dispatch</SectionHeading>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <NumberField
+            label="Dispatch radius km"
+            value={form.dispatchRadiusKm}
+            step="0.1"
+            disabled={!canEdit}
+            onChange={(v) => setNumber('dispatchRadiusKm', v)}
+          />
+          <NumberField
+            label="Max delivery distance km"
+            value={form.maxDeliveryDistanceKm}
+            step="0.1"
+            disabled={!canEdit}
+            onChange={(v) => setNumber('maxDeliveryDistanceKm', v)}
+          />
+          <NumberField
+            label="Offer timeout seconds"
+            value={form.offerTimeoutSeconds}
+            disabled={!canEdit}
+            onChange={(v) => setNumber('offerTimeoutSeconds', v)}
+          />
+          <NumberField
+            label="Max assignment attempts"
+            value={form.maxAssignmentAttempts}
+            disabled={!canEdit}
+            onChange={(v) => setNumber('maxAssignmentAttempts', v)}
+          />
+          <NumberField
+            label="Default prep time minutes"
+            value={form.defaultPrepTimeMinutes}
+            disabled={!canEdit}
+            onChange={(v) => setNumber('defaultPrepTimeMinutes', v)}
+          />
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ToggleField
+            label="Auto-assign enabled"
             checked={form.autoAssignEnabled}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, autoAssignEnabled: event.target.checked }))
-            }
             disabled={!canEdit}
+            onChange={(v) => setBool('autoAssignEnabled', v)}
           />
-        </label>
-        <label className="flex items-center justify-between rounded-lg border border-gray-700 bg-[#1a1a2e] px-4 py-3">
-          <span className="text-sm text-gray-300">Storefront auto-pause enabled</span>
-          <input
-            type="checkbox"
+        </div>
+      </div>
+
+      {/* SLA */}
+      <div className="space-y-4">
+        <SectionHeading>SLA</SectionHeading>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <NumberField
+            label="Support SLA warning minutes"
+            value={form.supportSlaWarningMinutes}
+            disabled={!canEdit}
+            onChange={(v) => setNumber('supportSlaWarningMinutes', v)}
+          />
+          <NumberField
+            label="Support SLA breach minutes"
+            value={form.supportSlaBreachMinutes}
+            disabled={!canEdit}
+            onChange={(v) => setNumber('supportSlaBreachMinutes', v)}
+          />
+        </div>
+      </div>
+
+      {/* Storefront */}
+      <div className="space-y-4">
+        <SectionHeading>Storefront</SectionHeading>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <NumberField
+            label="Throttle order limit"
+            value={form.storefrontThrottleOrderLimit}
+            disabled={!canEdit}
+            onChange={(v) => setNumber('storefrontThrottleOrderLimit', v)}
+          />
+          <NumberField
+            label="Throttle window minutes"
+            value={form.storefrontThrottleWindowMinutes}
+            disabled={!canEdit}
+            onChange={(v) => setNumber('storefrontThrottleWindowMinutes', v)}
+          />
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ToggleField
+            label="Storefront auto-pause enabled"
             checked={form.storefrontAutoPauseEnabled}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, storefrontAutoPauseEnabled: event.target.checked }))
-            }
             disabled={!canEdit}
+            onChange={(v) => setBool('storefrontAutoPauseEnabled', v)}
           />
-        </label>
+          <ToggleField
+            label="Pause storefront on SLA breach"
+            checked={form.storefrontPauseOnSlaBreach}
+            disabled={!canEdit}
+            onChange={(v) => setBool('storefrontPauseOnSlaBreach', v)}
+          />
+        </div>
       </div>
 
       {(message || error) && (

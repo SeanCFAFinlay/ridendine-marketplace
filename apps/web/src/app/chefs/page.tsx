@@ -1,11 +1,18 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { Header } from '@/components/layout/header';
 import { ChefsList } from '@/components/chefs/chefs-list';
 import { ChefsFilters } from '@/components/chefs/chefs-filters';
 
-export const metadata = {
-  title: 'Browse Chefs - RideNDine',
-  description: 'Discover local home chefs and explore their unique menus. Order fresh, home-cooked meals in Hamilton.',
+export const metadata: Metadata = {
+  title: 'Browse Local Chefs | RideNDine',
+  description: 'Discover home chefs in your area. Browse menus, read reviews, and order chef-made meals delivered to your door on RideNDine.',
+  openGraph: {
+    title: 'Browse Local Chefs | RideNDine',
+    description: 'Discover home chefs in your area. Chef-made meals delivered to your door.',
+    type: 'website',
+    siteName: 'RideNDine',
+  },
 };
 
 // Opt out of static generation due to auth context requirements
