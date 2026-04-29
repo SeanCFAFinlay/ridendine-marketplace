@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Driver, Delivery } from '@ridendine/db';
+import { OfferAlert } from '@/components/offer-alert';
 
 interface DriverDashboardProps {
   driver: Driver;
@@ -81,6 +82,7 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] pb-24">
+      <OfferAlert isOnline={isOnline} />
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-5 py-4">
         <div className="flex items-center justify-between">

@@ -17,3 +17,4 @@ export * from './components/error-state';
 export * from './components/modal';
 export { PasswordStrength } from './components/password-strength';
 export { AuthLayout } from './components/auth-layout';
+export { AddressInput } from './components/address-input';

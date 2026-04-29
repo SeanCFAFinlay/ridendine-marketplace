@@ -1,7 +1,7 @@
 {
   "name": "RideNDine Driver",
-  "short_name": "RNDine Driver",
-  "description": "Deliver with RideNDine — earn on your schedule",
+  "short_name": "RideNDine",
+  "description": "RideNDine driver delivery app",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -14,7 +14,7 @@
       "type": "image/png"
     },
     {
-      "src": "/logo.png",
+      "src": "/logo-icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
