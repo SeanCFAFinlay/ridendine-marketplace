@@ -10,3 +10,4 @@ export * from './api';
 export * from './logger';
 export * from './geo';
 export * from './scoring';
+export * from './rate-limiter';

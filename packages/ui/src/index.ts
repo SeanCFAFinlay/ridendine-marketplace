@@ -18,3 +18,4 @@ export * from './components/modal';
 export { PasswordStrength } from './components/password-strength';
 export { AuthLayout } from './components/auth-layout';
 export { AddressInput } from './components/address-input';
+export { GlobalError } from './components/error-boundary';

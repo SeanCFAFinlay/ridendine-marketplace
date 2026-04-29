@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import { getChefBasicContext } from '@/lib/engine';
+import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitResponse } from '@ridendine/utils';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -62,6 +63,10 @@ async function uploadToStorage(
 }
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const limit = checkRateLimit(ip, RATE_LIMITS.upload, 'upload');
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter!);
+
   const context = await getChefBasicContext();
   if (!context) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

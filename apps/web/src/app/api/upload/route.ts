@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient, createServerClient } from '@ridendine/db';
 import { cookies } from 'next/headers';
+import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitResponse } from '@ridendine/utils';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -55,6 +56,10 @@ async function uploadProfileImage(
 }
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const limit = checkRateLimit(ip, RATE_LIMITS.upload, 'upload');
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter!);
+
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
   const {

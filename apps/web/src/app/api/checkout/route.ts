@@ -11,6 +11,7 @@ import {
   errorResponse,
   successResponse,
 } from '@/lib/engine';
+import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitResponse } from '@ridendine/utils';
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -40,6 +41,10 @@ interface PromoCodeRow {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  const ip = getClientIp(request);
+  const limit = checkRateLimit(ip, RATE_LIMITS.checkout, 'checkout');
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter!);
+
   try {
     const customerContext = await getCustomerActorContext();
     if (!customerContext) {

@@ -10,7 +10,9 @@
     "./middleware": "./src/middleware.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@ridendine/db": "workspace:*",
@@ -24,6 +26,7 @@
   },
   "devDependencies": {
     "@types/react": "^18.3.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^1.6.0"
   }
 }

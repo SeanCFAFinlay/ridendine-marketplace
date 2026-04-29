@@ -8,6 +8,7 @@ import {
   type SupabaseClient,
 } from '@ridendine/db';
 import { signupSchema } from '@ridendine/validation';
+import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitResponse } from '@ridendine/utils';
 
 function getErrorResponse(error: unknown) {
   if (error instanceof Error) {
@@ -18,6 +19,10 @@ function getErrorResponse(error: unknown) {
 }
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const limit = checkRateLimit(ip, RATE_LIMITS.auth, 'auth');
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter!);
+
   try {
     const body = await request.json();
     const validated = signupSchema.parse(body);
