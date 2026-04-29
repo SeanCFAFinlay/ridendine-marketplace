@@ -1,0 +1,77 @@
+flowchart LR
+    subgraph Actors
+        C[Customer]
+        CH[Chef]
+        D[Driver]
+        OP[Ops Admin]
+    end
+
+    subgraph Apps["Next.js Apps"]
+        WEB["web\n:3000"]
+        CA["chef-admin\n:3001"]
+        OA["ops-admin\n:3002"]
+        DA["driver-app\n:3003"]
+    end
+
+    subgraph Packages["Shared Packages"]
+        ENGINE["@ridendine/engine\nOrchestrators"]
+        DB["@ridendine/db\nRepositories"]
+        AUTH["@ridendine/auth"]
+        TYPES["@ridendine/types"]
+        VAL["@ridendine/validation"]
+        UI["@ridendine/ui"]
+        UTILS["@ridendine/utils"]
+        NOTIF["@ridendine/notifications"]
+    end
+
+    subgraph External
+        SUPA["Supabase\nPostgreSQL + Auth + Realtime"]
+        STRIPE["Stripe\nPayments"]
+    end
+
+    C --> WEB
+    CH --> CA
+    D --> DA
+    OP --> OA
+
+    WEB --> ENGINE
+    CA --> ENGINE
+    OA --> ENGINE
+    DA --> ENGINE
+
+    WEB --> AUTH
+    CA --> AUTH
+    OA --> AUTH
+    DA --> AUTH
+
+    WEB --> UI
+    CA --> UI
+    OA --> UI
+    DA --> UI
+
+    ENGINE --> DB
+    WEB --> DB
+    CA --> DB
+    OA --> DB
+    DA --> DB
+
+    ENGINE --> NOTIF
+    AUTH --> DB
+
+    DB --> SUPA
+    WEB -->|"Checkout\nWebhooks"| STRIPE
+
+    style WEB fill:#4A90D9,color:white
+    style CA fill:#4A90D9,color:white
+    style OA fill:#4A90D9,color:white
+    style DA fill:#4A90D9,color:white
+    style ENGINE fill:#50C878,color:white
+    style DB fill:#FFD700,color:black
+    style AUTH fill:#FF8C00,color:white
+    style TYPES fill:#A0A0A0,color:white
+    style VAL fill:#A0A0A0,color:white
+    style UI fill:#C084FC,color:white
+    style UTILS fill:#A0A0A0,color:white
+    style NOTIF fill:#F97316,color:white
+    style SUPA fill:#3ECF8E,color:white
+    style STRIPE fill:#635BFF,color:white

@@ -1,0 +1,49 @@
+sequenceDiagram
+    actor Chef
+    participant ChefApp as chef-admin
+    participant Engine as OrderOrchestrator
+    participant Kitchen as KitchenEngine
+    participant DB as Supabase
+
+    Note over DB: Order status = submitted
+    DB-->>ChefApp: Realtime notification (new order)
+
+    Chef->>ChefApp: View new orders dashboard
+    ChefApp->>DB: GET orders (status=submitted, storefront_id)
+    DB-->>ChefApp: list of pending orders
+
+    Chef->>ChefApp: Open order detail
+    ChefApp->>DB: GET order + order_items + customer info
+    DB-->>ChefApp: order detail
+
+    Chef->>ChefApp: Accept order (estimated prep = 25 min)
+    ChefApp->>Engine: acceptOrder(orderId, estimatedMinutes=25)
+
+    Engine->>DB: UPDATE orders (status=accepted, accepted_at=now())
+    Engine->>DB: INSERT order_status_history (accepted)
+    Engine->>Kitchen: updateQueue(orderId, status=accepted, eta=25)
+    Kitchen->>DB: UPDATE kitchen_queue_entries (estimated_mins=25)
+    Engine->>DB: INSERT notifications (customer, type=order_accepted)
+    Engine->>DB: INSERT sla_timers (stage=prep, target=1500s)
+    Engine-->>ChefApp: { status: "accepted" }
+
+    Chef->>ChefApp: Start preparing
+    ChefApp->>Engine: startPreparing(orderId)
+
+    Engine->>DB: UPDATE orders (status=preparing)
+    Engine->>DB: INSERT order_status_history (preparing)
+    Engine->>Kitchen: updateQueue(orderId, status=in_progress, started_at=now())
+    Kitchen->>DB: UPDATE kitchen_queue_entries (status=in_progress, started_at)
+    Engine-->>ChefApp: { status: "preparing" }
+
+    Chef->>ChefApp: Mark as ready for pickup
+    ChefApp->>Engine: markReady(orderId)
+
+    Engine->>DB: UPDATE orders (status=ready, ready_at=now())
+    Engine->>DB: INSERT order_status_history (ready)
+    Engine->>Kitchen: completeQueue(orderId)
+    Kitchen->>DB: UPDATE kitchen_queue_entries (status=completed, completed_at)
+    Engine->>DB: INSERT notifications (driver dispatcher)
+    Engine-->>ChefApp: { status: "ready" }
+
+    Note over Engine: Triggers DispatchEngine.createDelivery()

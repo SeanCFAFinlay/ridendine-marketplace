@@ -1,0 +1,46 @@
+sequenceDiagram
+    actor OpsUser as Ops Admin
+    participant OpsApp as ops-admin
+    participant OpsEngine as OpsEngine
+    participant OrderOrch as OrderOrchestrator
+    participant AL as AuditLogger
+    participant DB as Supabase
+
+    OpsUser->>OpsApp: Open order detail
+    OpsApp->>DB: GET order + order_status_history + exceptions
+    DB-->>OpsApp: full order context
+
+    OpsUser->>OpsApp: Trigger ops override (target status, reason)
+    OpsApp->>OpsEngine: opsOverride(orderId, targetStatus, reason, opsUserId)
+
+    OpsEngine->>DB: GET order (current status)
+    DB-->>OpsEngine: current order state
+
+    OpsEngine->>OpsEngine: validateTransition(currentStatus → targetStatus)
+
+    alt Invalid transition
+        OpsEngine-->>OpsApp: { error: "Invalid status transition" }
+        OpsApp-->>OpsUser: Error shown
+    else Valid transition
+        OpsEngine->>OrderOrch: forceStatusChange(orderId, targetStatus, actor=ops)
+
+        OrderOrch->>DB: UPDATE orders (status=targetStatus)
+        OrderOrch->>DB: INSERT order_status_history\n(status, actor_id=opsUserId, actor_role=ops, note=reason)
+
+        OrderOrch->>AL: log(action=ops_override, entity=order, before, after, actor)
+        AL->>DB: INSERT audit_logs\n(action=ops_override, entity_type=order,\n entity_id=orderId, before, after, actor_id)
+
+        OpsEngine->>DB: INSERT ops_override_logs\n(orderId, fromStatus, toStatus, reason, actor)
+
+        alt Status = cancelled
+            OpsEngine->>DB: INSERT notifications (customer, type=order_cancelled_ops)
+            OpsEngine->>DB: INSERT notifications (chef, type=order_cancelled_ops)
+        end
+
+        alt Status = delivered
+            OpsEngine->>DB: INSERT notifications (customer, type=order_force_completed)
+        end
+
+        OpsEngine-->>OpsApp: { success: true, newStatus: targetStatus }
+        OpsApp-->>OpsUser: Override applied confirmation
+    end

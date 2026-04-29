@@ -1,0 +1,45 @@
+sequenceDiagram
+    actor OpsUser as Ops Admin
+    participant OpsApp as ops-admin
+    participant Support as SupportEngine
+    participant Commerce as CommerceLedgerEngine
+    participant DB as Supabase
+    participant Stripe
+
+    OpsUser->>OpsApp: Navigate to Refunds
+    OpsApp->>DB: GET refund_cases (status=pending)
+    DB-->>OpsApp: list of pending refund requests
+
+    OpsUser->>OpsApp: Open refund case
+    OpsApp->>DB: GET refund_case + order + ledger_entries
+    DB-->>OpsApp: full refund context
+
+    OpsUser->>OpsApp: Initiate / approve refund (amount, reason)
+    OpsApp->>Support: approveRefund(refundCaseId, amount, opsNote)
+
+    Support->>DB: UPDATE refund_cases (status=approved, ops_note)
+    Support->>DB: INSERT audit_logs (action=refund_approved, actor=ops)
+    Support->>Commerce: processRefund(orderId, refundCaseId, amount)
+
+    Commerce->>DB: GET ledger_entries (type=payment_capture, orderId)
+    DB-->>Commerce: original payment record + stripe_ref
+
+    Commerce->>Stripe: refunds.create(paymentIntentId, amount)
+    Stripe-->>Commerce: { refundId, status: "succeeded" }
+
+    Commerce->>DB: INSERT ledger_entries (type=refund, amount=-amount, stripe_ref=refundId)
+    Commerce->>DB: UPDATE refund_cases (status=processed, stripe_refund_id)
+
+    Commerce->>DB: GET driver_earnings (orderId)
+    alt Driver was paid
+        Commerce->>DB: INSERT ledger_entries (type=driver_payout_clawback)
+        Commerce->>DB: UPDATE driver_earnings (adjustment=-amount)
+    end
+
+    Commerce->>DB: INSERT ledger_entries (type=chef_payout_clawback)
+    Commerce-->>Support: refund processed
+
+    Support->>DB: INSERT notifications (customer, type=refund_issued, amount)
+    Support->>DB: INSERT notifications (chef, type=order_refunded)
+    Support-->>OpsApp: { status: "processed", stripeRefundId }
+    OpsApp-->>OpsUser: Refund complete confirmation

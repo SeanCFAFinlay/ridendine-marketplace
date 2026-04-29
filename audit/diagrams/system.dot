@@ -1,0 +1,111 @@
+digraph RidendinSystem {
+    graph [
+        label="Ridendine Platform – System Architecture"
+        labelloc="t"
+        fontname="Helvetica"
+        fontsize=18
+        rankdir=LR
+        splines=ortho
+        nodesep=0.6
+        ranksep=1.2
+        bgcolor="#FAFAFA"
+    ]
+    node [fontname="Helvetica" fontsize=12 style="filled,rounded" shape=box]
+    edge [fontname="Helvetica" fontsize=10]
+
+    // ── Actors ──────────────────────────────────────────
+    subgraph cluster_actors {
+        label="Actors"
+        style=dashed
+        color="#AAAAAA"
+        node [shape=oval fillcolor="#E8E8E8"]
+        Customer [label="Customer"]
+        Chef     [label="Chef"]
+        Driver   [label="Driver"]
+        OpsAdmin [label="Ops Admin"]
+    }
+
+    // ── Next.js Apps ─────────────────────────────────────
+    subgraph cluster_apps {
+        label="Next.js Apps"
+        style=filled
+        fillcolor="#EBF4FF"
+        color="#4A90D9"
+        node [fillcolor="#4A90D9" fontcolor=white]
+        WEB [label="web\n:3000"]
+        CA  [label="chef-admin\n:3001"]
+        OA  [label="ops-admin\n:3002"]
+        DA  [label="driver-app\n:3003"]
+    }
+
+    // ── Shared Packages ───────────────────────────────────
+    subgraph cluster_packages {
+        label="Shared Packages"
+        style=filled
+        fillcolor="#F0FFF4"
+        color="#50C878"
+
+        ENGINE [label="@ridendine/engine\nOrchestrators" fillcolor="#50C878" fontcolor=white]
+        DB     [label="@ridendine/db\nRepositories"       fillcolor="#FFD700" fontcolor=black]
+        AUTH   [label="@ridendine/auth"                   fillcolor="#FF8C00" fontcolor=white]
+        TYPES  [label="@ridendine/types"                  fillcolor="#A0A0A0" fontcolor=white]
+        VAL    [label="@ridendine/validation"             fillcolor="#A0A0A0" fontcolor=white]
+        UI     [label="@ridendine/ui"                     fillcolor="#C084FC" fontcolor=white]
+        UTILS  [label="@ridendine/utils"                  fillcolor="#A0A0A0" fontcolor=white]
+        NOTIF  [label="@ridendine/notifications"          fillcolor="#F97316" fontcolor=white]
+    }
+
+    // ── External Services ─────────────────────────────────
+    subgraph cluster_external {
+        label="External Services"
+        style=filled
+        fillcolor="#F5F5FF"
+        color="#635BFF"
+        node [shape=cylinder]
+        SUPA   [label="Supabase\nPostgreSQL + Auth + Realtime" fillcolor="#3ECF8E" fontcolor=white]
+        STRIPE [label="Stripe\nPayments"                       fillcolor="#635BFF" fontcolor=white]
+    }
+
+    // ── Actor → App edges ─────────────────────────────────
+    Customer -> WEB
+    Chef     -> CA
+    Driver   -> DA
+    OpsAdmin -> OA
+
+    // ── App → Engine ──────────────────────────────────────
+    WEB -> ENGINE
+    CA  -> ENGINE
+    OA  -> ENGINE
+    DA  -> ENGINE
+
+    // ── App → Auth ────────────────────────────────────────
+    WEB -> AUTH
+    CA  -> AUTH
+    OA  -> AUTH
+    DA  -> AUTH
+
+    // ── App → UI ─────────────────────────────────────────
+    WEB -> UI
+    CA  -> UI
+    OA  -> UI
+    DA  -> UI
+
+    // ── App → DB (direct reads) ───────────────────────────
+    WEB -> DB
+    CA  -> DB
+    OA  -> DB
+    DA  -> DB
+
+    // ── Engine → DB / Notifications ───────────────────────
+    ENGINE -> DB
+    ENGINE -> NOTIF
+
+    // ── Auth → DB ─────────────────────────────────────────
+    AUTH -> DB
+
+    // ── DB → Supabase ─────────────────────────────────────
+    DB -> SUPA
+
+    // ── Web → Stripe ──────────────────────────────────────
+    WEB -> STRIPE [label="Checkout\nWebhooks" color="#635BFF"]
+}

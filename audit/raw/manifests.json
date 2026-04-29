@@ -1,0 +1,60 @@
+{
+  "package.json": {
+    "name": "@ridendine/monorepo",
+    "version": "0.1.0",
+    "packageManager": "pnpm@9.15.0",
+    "engines": {"node": ">=20.0.0"},
+    "dependencies": {"next": "^14.2.0", "react": "^18.3.0", "react-dom": "^18.3.0"},
+    "devDependencies": {"turbo": "^2.3.0", "typescript": "^5.6.0", "eslint": "^9.39.4", "prettier": "^3.4.0"},
+    "scripts": ["dev", "build", "lint", "typecheck", "clean", "db:generate", "db:migrate", "db:seed", "db:reset", "format"]
+  },
+  "apps/web/package.json": {
+    "name": "@ridendine/web",
+    "port": 3000,
+    "workspace_deps": ["@ridendine/auth", "@ridendine/db", "@ridendine/engine", "@ridendine/types", "@ridendine/ui", "@ridendine/utils", "@ridendine/validation", "@ridendine/config"],
+    "external_deps": ["next", "react", "@supabase/ssr", "@stripe/react-stripe-js", "@stripe/stripe-js", "stripe", "zod"],
+    "test_deps": ["@testing-library/react", "@testing-library/jest-dom", "jest"]
+  },
+  "apps/chef-admin/package.json": {
+    "name": "@ridendine/chef-admin",
+    "port": 3001,
+    "workspace_deps": ["@ridendine/auth", "@ridendine/db", "@ridendine/engine", "@ridendine/types", "@ridendine/ui", "@ridendine/utils", "@ridendine/validation", "@ridendine/config"],
+    "external_deps": ["next", "react", "@supabase/ssr", "@supabase/supabase-js", "stripe"]
+  },
+  "apps/ops-admin/package.json": {
+    "name": "@ridendine/ops-admin",
+    "port": 3002,
+    "workspace_deps": ["@ridendine/auth", "@ridendine/db", "@ridendine/engine", "@ridendine/types", "@ridendine/ui", "@ridendine/utils", "@ridendine/validation", "@ridendine/config"],
+    "external_deps": ["next", "react", "@supabase/ssr", "@supabase/supabase-js", "stripe", "leaflet", "react-leaflet"]
+  },
+  "apps/driver-app/package.json": {
+    "name": "@ridendine/driver-app",
+    "port": 3003,
+    "workspace_deps": ["@ridendine/auth", "@ridendine/db", "@ridendine/engine", "@ridendine/types", "@ridendine/ui", "@ridendine/utils", "@ridendine/validation", "@ridendine/config"],
+    "external_deps": ["next", "react", "@supabase/ssr", "@supabase/supabase-js", "leaflet", "react-leaflet"]
+  },
+  "packages/db/package.json": {
+    "name": "@ridendine/db",
+    "exports": [".", "./client", "./repositories"],
+    "deps": ["@supabase/supabase-js", "@supabase/ssr"],
+    "devDeps": ["@ridendine/types"]
+  },
+  "packages/engine/package.json": {
+    "name": "@ridendine/engine",
+    "version": "0.2.0",
+    "exports": [".", "./core", "./orders", "./kitchen", "./dispatch", "./commerce", "./support", "./services/*", "./constants"],
+    "deps": ["@ridendine/db", "@ridendine/notifications", "@ridendine/types", "@ridendine/validation", "@supabase/supabase-js"],
+    "devDeps": ["vitest"]
+  },
+  "packages/auth/package.json": {
+    "name": "@ridendine/auth",
+    "exports": [".", "./server", "./middleware"],
+    "deps": ["@ridendine/db", "@ridendine/types", "@supabase/ssr", "@supabase/supabase-js"]
+  },
+  "packages/types/package.json": {"name": "@ridendine/types", "deps": []},
+  "packages/validation/package.json": {"name": "@ridendine/validation", "deps": ["zod"]},
+  "packages/ui/package.json": {"name": "@ridendine/ui", "deps": ["class-variance-authority", "clsx", "tailwind-merge"]},
+  "packages/utils/package.json": {"name": "@ridendine/utils", "deps": ["zod"]},
+  "packages/notifications/package.json": {"name": "@ridendine/notifications", "deps": ["@ridendine/types"]},
+  "packages/config/package.json": {"name": "@ridendine/config", "deps": []}
+}

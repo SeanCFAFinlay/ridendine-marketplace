@@ -1,0 +1,44 @@
+sequenceDiagram
+    actor Customer
+    participant Web as web App
+    participant Engine as OrderOrchestrator
+    participant Commerce as CommerceLedgerEngine
+    participant DB as Supabase
+    participant Stripe
+
+    Customer->>Web: Add items to cart
+    Web->>DB: upsert cart_items
+    DB-->>Web: cart updated
+
+    Customer->>Web: View cart / proceed to checkout
+    Web->>DB: GET cart with menu_items
+    DB-->>Web: cart data
+
+    Customer->>Web: Submit checkout (address, payment)
+    Web->>Stripe: createPaymentIntent(amount, currency)
+    Stripe-->>Web: paymentIntentId + clientSecret
+
+    Web->>Engine: createOrder(customerId, cartId, addressId, paymentIntentId)
+
+    Engine->>DB: GET cart_items → validate menu_items (active, price)
+    DB-->>Engine: validated items
+
+    Engine->>DB: INSERT orders (status=pending)
+    Engine->>DB: INSERT order_items (with snapshot prices)
+    Engine->>DB: INSERT order_status_history (pending)
+
+    Engine->>Engine: authorizePayment(paymentIntentId)
+    Engine->>Commerce: recordPaymentAuth(orderId, amount)
+    Commerce->>DB: INSERT ledger_entries (type=payment_auth)
+    Commerce-->>Engine: ledger entry recorded
+
+    Engine->>Engine: submitToKitchen(orderId)
+    Engine->>DB: INSERT notifications (chef, type=new_order)
+    Engine->>DB: INSERT kitchen_queue_entries (status=queued)
+
+    Engine->>DB: UPDATE orders (status=submitted)
+    Engine->>DB: INSERT order_status_history (submitted)
+    Engine->>DB: DELETE cart_items (clear cart)
+
+    Engine-->>Web: { orderId, status: "submitted" }
+    Web-->>Customer: Order confirmation + order ID

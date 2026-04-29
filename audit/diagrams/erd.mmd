@@ -1,0 +1,400 @@
+erDiagram
+
+    %% ─── Chef Domain ────────────────────────────────────────────────────────────
+
+    chef_profiles {
+        uuid   id            PK
+        uuid   user_id       FK
+        string display_name
+        string bio
+        string avatar_url
+        string status
+        timestamp created_at
+    }
+
+    chef_kitchens {
+        uuid   id            PK
+        uuid   chef_id       FK
+        string name
+        string address
+        float  lat
+        float  lng
+        string status
+    }
+
+    chef_storefronts {
+        uuid   id            PK
+        uuid   chef_id       FK
+        uuid   kitchen_id    FK
+        string slug
+        string name
+        string cuisine_type
+        bool   is_active
+        bool   accepts_orders
+    }
+
+    chef_availability {
+        uuid   id            PK
+        uuid   chef_id       FK
+        string day_of_week
+        time   open_time
+        time   close_time
+    }
+
+    chef_delivery_zones {
+        uuid  id             PK
+        uuid  chef_id        FK
+        float radius_km
+        float lat
+        float lng
+    }
+
+    chef_profiles      ||--o{ chef_kitchens        : "operates"
+    chef_profiles      ||--o{ chef_storefronts      : "owns"
+    chef_profiles      ||--o{ chef_availability     : "sets"
+    chef_profiles      ||--o{ chef_delivery_zones   : "defines"
+    chef_kitchens      ||--o{ chef_storefronts      : "hosts"
+
+    %% ─── Catalog ────────────────────────────────────────────────────────────────
+
+    menu_categories {
+        uuid   id              PK
+        uuid   storefront_id   FK
+        string name
+        int    sort_order
+    }
+
+    menu_items {
+        uuid    id              PK
+        uuid    storefront_id   FK
+        uuid    category_id     FK
+        string  name
+        text    description
+        numeric price
+        bool    is_available
+        string  image_url
+    }
+
+    menu_item_options {
+        uuid    id              PK
+        uuid    menu_item_id    FK
+        string  name
+        numeric price_modifier
+    }
+
+    chef_storefronts   ||--o{ menu_categories    : "contains"
+    chef_storefronts   ||--o{ menu_items         : "lists"
+    menu_categories    ||--o{ menu_items         : "groups"
+    menu_items         ||--o{ menu_item_options  : "has"
+
+    %% ─── Customer ───────────────────────────────────────────────────────────────
+
+    customers {
+        uuid   id           PK
+        uuid   user_id      FK
+        string display_name
+        string phone
+        string email
+        timestamp created_at
+    }
+
+    customer_addresses {
+        uuid   id           PK
+        uuid   customer_id  FK
+        string label
+        string line1
+        string city
+        float  lat
+        float  lng
+        bool   is_default
+    }
+
+    carts {
+        uuid   id           PK
+        uuid   customer_id  FK
+        uuid   storefront_id FK
+        string status
+        timestamp updated_at
+    }
+
+    cart_items {
+        uuid    id              PK
+        uuid    cart_id         FK
+        uuid    menu_item_id    FK
+        int     quantity
+        jsonb   selected_options
+        numeric unit_price
+    }
+
+    favorites {
+        uuid id             PK
+        uuid customer_id    FK
+        uuid storefront_id  FK
+        timestamp created_at
+    }
+
+    customers         ||--o{ customer_addresses  : "has"
+    customers         ||--o{ carts               : "owns"
+    customers         ||--o{ favorites           : "saves"
+    carts             ||--o{ cart_items          : "contains"
+    menu_items        ||--o{ cart_items          : "referenced_in"
+    chef_storefronts  ||--o{ favorites           : "saved_by"
+    chef_storefronts  ||--o{ carts               : "sourced_from"
+
+    %% ─── Orders ─────────────────────────────────────────────────────────────────
+
+    orders {
+        uuid    id                  PK
+        uuid    customer_id         FK
+        uuid    storefront_id       FK
+        uuid    delivery_address_id FK
+        string  status
+        numeric subtotal
+        numeric delivery_fee
+        numeric platform_fee
+        numeric total
+        string  stripe_payment_intent_id
+        timestamp placed_at
+        timestamp accepted_at
+        timestamp ready_at
+        timestamp delivered_at
+    }
+
+    order_items {
+        uuid    id              PK
+        uuid    order_id        FK
+        uuid    menu_item_id    FK
+        int     quantity
+        jsonb   selected_options
+        numeric unit_price
+    }
+
+    order_status_history {
+        uuid      id         PK
+        uuid      order_id   FK
+        string    status
+        uuid      actor_id
+        string    actor_role
+        text      note
+        timestamp created_at
+    }
+
+    reviews {
+        uuid    id           PK
+        uuid    order_id     FK
+        uuid    customer_id  FK
+        uuid    chef_id      FK
+        int     rating
+        text    comment
+        timestamp created_at
+    }
+
+    customers         ||--o{ orders               : "places"
+    chef_storefronts  ||--o{ orders               : "receives"
+    orders            ||--o{ order_items          : "contains"
+    orders            ||--o{ order_status_history : "tracks"
+    orders            ||--o{ reviews              : "generates"
+    menu_items        ||--o{ order_items          : "referenced_in"
+
+    %% ─── Drivers ────────────────────────────────────────────────────────────────
+
+    drivers {
+        uuid   id           PK
+        uuid   user_id      FK
+        string display_name
+        string phone
+        string vehicle_type
+        string status
+    }
+
+    driver_presence {
+        uuid      id          PK
+        uuid      driver_id   FK
+        float     lat
+        float     lng
+        string    status
+        timestamp updated_at
+    }
+
+    driver_shifts {
+        uuid      id          PK
+        uuid      driver_id   FK
+        timestamp started_at
+        timestamp ended_at
+        string    status
+    }
+
+    driver_earnings {
+        uuid      id          PK
+        uuid      driver_id   FK
+        uuid      order_id    FK
+        numeric   amount
+        string    type
+        timestamp created_at
+    }
+
+    drivers        ||--|| driver_presence  : "has"
+    drivers        ||--o{ driver_shifts    : "logs"
+    drivers        ||--o{ driver_earnings  : "earns"
+    orders         ||--o{ driver_earnings  : "generates"
+
+    %% ─── Deliveries ─────────────────────────────────────────────────────────────
+
+    deliveries {
+        uuid      id             PK
+        uuid      order_id       FK
+        uuid      driver_id      FK
+        string    status
+        float     pickup_lat
+        float     pickup_lng
+        float     dropoff_lat
+        float     dropoff_lng
+        timestamp assigned_at
+        timestamp picked_up_at
+        timestamp delivered_at
+    }
+
+    delivery_assignments {
+        uuid      id             PK
+        uuid      delivery_id    FK
+        uuid      driver_id      FK
+        string    status
+        timestamp offered_at
+        timestamp responded_at
+    }
+
+    assignment_attempts {
+        uuid      id                    PK
+        uuid      delivery_assignment_id FK
+        int       attempt_number
+        string    result
+        timestamp attempted_at
+    }
+
+    delivery_events {
+        uuid      id           PK
+        uuid      delivery_id  FK
+        string    event_type
+        float     lat
+        float     lng
+        timestamp occurred_at
+    }
+
+    orders               ||--o{ deliveries             : "fulfilled_by"
+    drivers              ||--o{ deliveries             : "handles"
+    deliveries           ||--o{ delivery_assignments   : "offered_via"
+    deliveries           ||--o{ delivery_events        : "logs"
+    delivery_assignments ||--o{ assignment_attempts    : "tracks"
+
+    %% ─── Engine / Platform ──────────────────────────────────────────────────────
+
+    domain_events {
+        uuid      id              PK
+        string    aggregate_type
+        uuid      aggregate_id
+        string    event_type
+        jsonb     payload
+        timestamp occurred_at
+    }
+
+    order_exceptions {
+        uuid      id          PK
+        uuid      order_id    FK
+        string    type
+        string    severity
+        text      message
+        jsonb     context
+        timestamp created_at
+    }
+
+    sla_timers {
+        uuid      id              PK
+        uuid      order_id        FK
+        string    stage
+        int       target_seconds
+        timestamp started_at
+        timestamp completed_at
+        bool      breached
+    }
+
+    kitchen_queue_entries {
+        uuid      id             PK
+        uuid      order_id       FK
+        uuid      storefront_id  FK
+        string    status
+        int       estimated_mins
+        timestamp queued_at
+        timestamp started_at
+        timestamp completed_at
+    }
+
+    ledger_entries {
+        uuid      id           PK
+        uuid      order_id     FK
+        string    type
+        numeric   amount
+        string    currency
+        string    stripe_ref
+        jsonb     meta
+        timestamp created_at
+    }
+
+    refund_cases {
+        uuid      id             PK
+        uuid      order_id       FK
+        uuid      requested_by   FK
+        string    reason
+        numeric   amount
+        string    status
+        text      ops_note
+        timestamp created_at
+        timestamp resolved_at
+    }
+
+    orders  ||--o{ domain_events          : "emits"
+    orders  ||--o{ order_exceptions       : "raises"
+    orders  ||--o{ sla_timers             : "tracked_by"
+    orders  ||--o{ kitchen_queue_entries  : "queued_in"
+    orders  ||--o{ ledger_entries         : "recorded_in"
+    orders  ||--o{ refund_cases           : "subject_of"
+
+    %% ─── Platform ───────────────────────────────────────────────────────────────
+
+    platform_users {
+        uuid   id        PK
+        uuid   auth_id   FK
+        string role
+        string email
+        bool   is_active
+    }
+
+    platform_settings {
+        uuid   id    PK
+        string key
+        jsonb  value
+        string scope
+    }
+
+    notifications {
+        uuid      id           PK
+        uuid      recipient_id FK
+        string    channel
+        string    type
+        jsonb     payload
+        bool      read
+        timestamp created_at
+    }
+
+    audit_logs {
+        uuid      id          PK
+        uuid      actor_id    FK
+        string    action
+        string    entity_type
+        uuid      entity_id
+        jsonb     before
+        jsonb     after
+        timestamp created_at
+    }
+
+    platform_users ||--o{ notifications : "receives"
+    platform_users ||--o{ audit_logs    : "generates"

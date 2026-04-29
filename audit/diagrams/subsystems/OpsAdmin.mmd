@@ -1,0 +1,101 @@
+flowchart TD
+    subgraph Pages["Pages – apps/ops-admin/src/app"]
+        P1["/dashboard"]
+        P2["/orders"]
+        P3["/orders/[id]"]
+        P4["/chefs"]
+        P5["/chefs/[id]"]
+        P6["/drivers"]
+        P7["/drivers/[id]"]
+        P8["/customers"]
+        P9["/customers/[id]"]
+        P10["/refunds"]
+        P11["/refunds/[id]"]
+        P12["/settings"]
+        P13["/audit-logs"]
+        P14["/exceptions"]
+        P15["/sla"]
+    end
+
+    subgraph API["API Routes – apps/ops-admin/src/app/api"]
+        A1["/api/auth/*"]
+        A2["/api/orders/[id]/override"]
+        A3["/api/orders/[id]/cancel"]
+        A4["/api/refunds"]
+        A5["/api/refunds/[id]/approve"]
+        A6["/api/refunds/[id]/reject"]
+        A7["/api/chefs/*"]
+        A8["/api/drivers/*"]
+        A9["/api/customers/*"]
+        A10["/api/settings"]
+        A11["/api/audit-logs"]
+        A12["/api/exceptions"]
+        A13["/api/sla"]
+        A14["/api/notifications/*"]
+    end
+
+    subgraph Deps["Package Dependencies"]
+        ENG["@ridendine/engine\nOrderOrchestrator.opsOverride\nCommerceLedgerEngine\nSupportEngine\nOpsEngine\nPlatformEngine"]
+        DB["@ridendine/db\nOrdersRepo\nRefundCasesRepo\nAuditLogsRepo\nSLARepo\nPlatformSettingsRepo\nExceptionsRepo"]
+        AUTH["@ridendine/auth\nrequireOpsAuth()"]
+        UI["@ridendine/ui"]
+        TYPES["@ridendine/types"]
+        VAL["@ridendine/validation"]
+    end
+
+    subgraph Ext["External"]
+        SUPA["Supabase\nRealtime: exceptions\nRealtime: SLA breaches"]
+        STRIPE["Stripe\nRefund API"]
+    end
+
+    %% Pages → API (key flows)
+    P3 --> A2 & A3
+    P10 & P11 --> A4 & A5 & A6
+    P4 & P5 --> A7
+    P6 & P7 --> A8
+    P8 & P9 --> A9
+    P12 --> A10
+    P13 --> A11
+    P14 --> A12
+    P15 --> A13
+
+    %% API → Engine
+    A2 --> ENG
+    A3 --> ENG
+    A5 --> ENG
+    A12 --> ENG
+
+    %% API → DB
+    A1 --> AUTH
+    A4 & A5 & A6 --> DB
+    A7 --> DB
+    A8 --> DB
+    A9 --> DB
+    A10 --> DB
+    A11 --> DB
+    A12 --> DB
+    A13 --> DB
+    A14 --> DB
+
+    %% Engine → DB
+    ENG --> DB
+
+    %% DB → Supabase
+    DB --> SUPA
+
+    %% Refund → Stripe
+    ENG --> STRIPE
+
+    %% Pages
+    Pages --> UI
+    Pages --> TYPES
+    API --> VAL
+
+    style ENG fill:#50C878,color:white
+    style DB fill:#FFD700,color:black
+    style AUTH fill:#FF8C00,color:white
+    style UI fill:#C084FC,color:white
+    style TYPES fill:#A0A0A0,color:white
+    style VAL fill:#A0A0A0,color:white
+    style SUPA fill:#3ECF8E,color:white
+    style STRIPE fill:#635BFF,color:white

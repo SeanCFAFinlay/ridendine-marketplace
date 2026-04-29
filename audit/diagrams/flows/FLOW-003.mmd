@@ -1,0 +1,54 @@
+sequenceDiagram
+    actor Driver
+    participant DriverApp as driver-app
+    participant Dispatch as DispatchEngine
+    participant Commerce as CommerceLedgerEngine
+    participant DB as Supabase
+
+    Note over Dispatch: KitchenEngine signals order ready
+    Dispatch->>DB: INSERT deliveries (status=pending, pickup=kitchen coords, dropoff=customer addr)
+    Dispatch->>DB: GET drivers WHERE presence.status=online AND nearby pickup
+    Dispatch->>DB: INSERT delivery_assignments (driver candidates)
+    Dispatch->>DB: INSERT assignment_attempts (attempt=1)
+    Dispatch->>DB: INSERT notifications (drivers, type=delivery_offer)
+    DB-->>DriverApp: Realtime: new offer notification
+
+    Driver->>DriverApp: View offer (pickup addr, dropoff addr, fee)
+    DriverApp->>DB: GET assignment_attempt detail
+    DB-->>DriverApp: offer detail
+
+    Driver->>DriverApp: Accept offer
+    DriverApp->>Dispatch: acceptOffer(attemptId, driverId)
+
+    Dispatch->>DB: UPDATE assignment_attempts (status=accepted)
+    Dispatch->>DB: UPDATE delivery_assignments (status=accepted)
+    Dispatch->>DB: UPDATE deliveries (status=assigned, driver_id, assigned_at=now())
+    Dispatch->>DB: UPDATE driver_presence (status=busy)
+    Dispatch->>DB: INSERT order_status_history (driver_assigned)
+    Dispatch->>DB: INSERT notifications (customer, type=driver_assigned)
+    Dispatch-->>DriverApp: { deliveryId, pickupAddress, dropoffAddress }
+
+    Driver->>DriverApp: En route to pickup
+    DriverApp->>Dispatch: updateDeliveryStatus(deliveryId, en_route_to_pickup)
+    Dispatch->>DB: UPDATE deliveries (status=en_route_to_pickup)
+    Dispatch->>DB: INSERT delivery_events (type=en_route_to_pickup, lat, lng)
+    Dispatch->>DB: INSERT notifications (customer, type=driver_en_route)
+
+    Driver->>DriverApp: Confirm picked up
+    DriverApp->>Dispatch: updateDeliveryStatus(deliveryId, picked_up)
+    Dispatch->>DB: UPDATE deliveries (status=picked_up, picked_up_at=now())
+    Dispatch->>DB: INSERT delivery_events (type=picked_up)
+    Dispatch->>DB: INSERT order_status_history (picked_up)
+
+    Driver->>DriverApp: Confirm delivered
+    DriverApp->>Dispatch: updateDeliveryStatus(deliveryId, delivered)
+    Dispatch->>DB: UPDATE deliveries (status=delivered, delivered_at=now())
+    Dispatch->>DB: UPDATE orders (status=delivered, delivered_at=now())
+    Dispatch->>DB: INSERT order_status_history (delivered)
+    Dispatch->>DB: UPDATE driver_presence (status=online)
+    Dispatch->>Commerce: recordEarnings(driverId, deliveryId, amount)
+    Commerce->>DB: INSERT driver_earnings
+    Commerce->>DB: INSERT ledger_entries (type=driver_payout_accrued)
+    Dispatch->>DB: INSERT notifications (customer, type=order_delivered)
+
+    Note over Dispatch: Triggers CommerceLedgerEngine.capturePayment()

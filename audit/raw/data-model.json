@@ -1,0 +1,1244 @@
+{
+  "tables": [
+    {
+      "name": "chef_profiles",
+      "domain": "Chef",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "user_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "display_name", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "bio", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "profile_image_url", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "phone", "type": "VARCHAR(20)", "nullable": true, "default": null},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false, "default": "'pending'", "check": "IN ('pending','approved','rejected','suspended')"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "user_id"},
+        {"kind": "has_many", "target": "chef_kitchens", "fk_column": "chef_id"},
+        {"kind": "has_many", "target": "chef_storefronts", "fk_column": "chef_id"},
+        {"kind": "has_many", "target": "chef_documents", "fk_column": "chef_id"},
+        {"kind": "has_many", "target": "chef_payout_accounts", "fk_column": "chef_id"},
+        {"kind": "has_many", "target": "chef_payouts", "fk_column": "chef_id"}
+      ]
+    },
+    {
+      "name": "chef_kitchens",
+      "domain": "Chef",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "chef_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "address_line1", "type": "VARCHAR(255)", "nullable": false, "default": null},
+        {"name": "address_line2", "type": "VARCHAR(255)", "nullable": true, "default": null},
+        {"name": "city", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "state", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "postal_code", "type": "VARCHAR(20)", "nullable": false, "default": null},
+        {"name": "country", "type": "VARCHAR(50)", "nullable": false, "default": "'US'"},
+        {"name": "lat", "type": "DECIMAL(10,8)", "nullable": true, "default": null},
+        {"name": "lng", "type": "DECIMAL(11,8)", "nullable": true, "default": null},
+        {"name": "is_verified", "type": "BOOLEAN", "nullable": false, "default": "false"},
+        {"name": "phone", "type": "VARCHAR(20)", "nullable": true, "default": null},
+        {"name": "address", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "chef_profiles", "fk_column": "chef_id"},
+        {"kind": "has_many", "target": "chef_storefronts", "fk_column": "kitchen_id"}
+      ]
+    },
+    {
+      "name": "chef_storefronts",
+      "domain": "Chef",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "chef_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "kitchen_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "slug", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "description", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "cuisine_types", "type": "TEXT[]", "nullable": true, "default": "'{}'"},
+        {"name": "cover_image_url", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "logo_url", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": false, "default": "false"},
+        {"name": "is_featured", "type": "BOOLEAN", "nullable": false, "default": "false"},
+        {"name": "average_rating", "type": "DECIMAL(2,1)", "nullable": true, "default": null},
+        {"name": "total_reviews", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "min_order_amount", "type": "DECIMAL(10,2)", "nullable": false, "default": "0"},
+        {"name": "estimated_prep_time_min", "type": "INTEGER", "nullable": false, "default": "15"},
+        {"name": "estimated_prep_time_max", "type": "INTEGER", "nullable": false, "default": "45"},
+        {"name": "storefront_state", "type": "VARCHAR(50)", "nullable": true, "default": "'published'"},
+        {"name": "is_paused", "type": "BOOLEAN", "nullable": true, "default": "false"},
+        {"name": "paused_reason", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "paused_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "paused_by", "type": "UUID", "nullable": true, "default": null},
+        {"name": "current_queue_size", "type": "INTEGER", "nullable": true, "default": "0"},
+        {"name": "max_queue_size", "type": "INTEGER", "nullable": true, "default": "10"},
+        {"name": "is_overloaded", "type": "BOOLEAN", "nullable": true, "default": "false"},
+        {"name": "average_prep_minutes", "type": "INTEGER", "nullable": true, "default": "20"},
+        {"name": "phone", "type": "VARCHAR(20)", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "chef_profiles", "fk_column": "chef_id"},
+        {"kind": "belongs_to", "target": "chef_kitchens", "fk_column": "kitchen_id"},
+        {"kind": "has_many", "target": "menu_categories", "fk_column": "storefront_id"},
+        {"kind": "has_many", "target": "menu_items", "fk_column": "storefront_id"},
+        {"kind": "has_many", "target": "chef_availability", "fk_column": "storefront_id"},
+        {"kind": "has_many", "target": "chef_delivery_zones", "fk_column": "storefront_id"},
+        {"kind": "has_many", "target": "carts", "fk_column": "storefront_id"},
+        {"kind": "has_many", "target": "favorites", "fk_column": "storefront_id"},
+        {"kind": "has_many", "target": "orders", "fk_column": "storefront_id"},
+        {"kind": "has_many", "target": "reviews", "fk_column": "storefront_id"},
+        {"kind": "has_many", "target": "kitchen_queue_entries", "fk_column": "storefront_id"},
+        {"kind": "has_many", "target": "storefront_state_changes", "fk_column": "storefront_id"}
+      ]
+    },
+    {
+      "name": "chef_documents",
+      "domain": "Chef",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "chef_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "document_type", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "document_url", "type": "TEXT", "nullable": false, "default": null},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false, "default": "'pending'", "check": "IN ('pending','approved','rejected','expired')"},
+        {"name": "expires_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "notes", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "reviewed_by", "type": "UUID", "nullable": true, "default": null},
+        {"name": "reviewed_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "chef_profiles", "fk_column": "chef_id"},
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "reviewed_by"}
+      ]
+    },
+    {
+      "name": "chef_payout_accounts",
+      "domain": "Chef",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "chef_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "stripe_account_id", "type": "TEXT", "nullable": false, "default": null},
+        {"name": "stripe_account_status", "type": "TEXT", "nullable": false, "default": "'pending'"},
+        {"name": "payout_enabled", "type": "BOOLEAN", "nullable": false, "default": "false"},
+        {"name": "is_verified", "type": "BOOLEAN", "nullable": true, "default": "false"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "chef_profiles", "fk_column": "chef_id"}
+      ]
+    },
+    {
+      "name": "chef_availability",
+      "domain": "Chef",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "storefront_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "day_of_week", "type": "INTEGER", "nullable": false, "default": null, "check": ">= 0 AND <= 6"},
+        {"name": "start_time", "type": "TIME", "nullable": false, "default": null},
+        {"name": "end_time", "type": "TIME", "nullable": false, "default": null},
+        {"name": "is_available", "type": "BOOLEAN", "nullable": false, "default": "true"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "chef_storefronts", "fk_column": "storefront_id"}
+      ]
+    },
+    {
+      "name": "chef_delivery_zones",
+      "domain": "Chef",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "storefront_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "radius_km", "type": "DECIMAL(5,2)", "nullable": true, "default": null},
+        {"name": "polygon", "type": "GEOMETRY(POLYGON,4326)", "nullable": true, "default": null},
+        {"name": "delivery_fee", "type": "DECIMAL(10,2)", "nullable": false, "default": "0"},
+        {"name": "min_order_for_free_delivery", "type": "DECIMAL(10,2)", "nullable": true, "default": null},
+        {"name": "estimated_delivery_min", "type": "INTEGER", "nullable": false, "default": "15"},
+        {"name": "estimated_delivery_max", "type": "INTEGER", "nullable": false, "default": "45"},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": false, "default": "true"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "chef_storefronts", "fk_column": "storefront_id"}
+      ]
+    },
+    {
+      "name": "menu_categories",
+      "domain": "Catalog",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "storefront_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "description", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "sort_order", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": false, "default": "true"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "chef_storefronts", "fk_column": "storefront_id"},
+        {"kind": "has_many", "target": "menu_items", "fk_column": "category_id"}
+      ]
+    },
+    {
+      "name": "menu_items",
+      "domain": "Catalog",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "category_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "storefront_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "name", "type": "VARCHAR(200)", "nullable": false, "default": null},
+        {"name": "description", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "price", "type": "DECIMAL(10,2)", "nullable": false, "default": null},
+        {"name": "image_url", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "is_available", "type": "BOOLEAN", "nullable": false, "default": "true"},
+        {"name": "is_featured", "type": "BOOLEAN", "nullable": false, "default": "false"},
+        {"name": "dietary_tags", "type": "TEXT[]", "nullable": true, "default": "'{}'"},
+        {"name": "prep_time_minutes", "type": "INTEGER", "nullable": true, "default": null},
+        {"name": "sort_order", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "is_sold_out", "type": "BOOLEAN", "nullable": true, "default": "false"},
+        {"name": "sold_out_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "restock_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "daily_limit", "type": "INTEGER", "nullable": true, "default": null},
+        {"name": "daily_sold", "type": "INTEGER", "nullable": true, "default": "0"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "menu_categories", "fk_column": "category_id"},
+        {"kind": "belongs_to", "target": "chef_storefronts", "fk_column": "storefront_id"},
+        {"kind": "has_many", "target": "menu_item_options", "fk_column": "menu_item_id"},
+        {"kind": "has_many", "target": "menu_item_availability", "fk_column": "menu_item_id"}
+      ]
+    },
+    {
+      "name": "menu_item_options",
+      "domain": "Catalog",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "menu_item_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "is_required", "type": "BOOLEAN", "nullable": false, "default": "false"},
+        {"name": "max_selections", "type": "INTEGER", "nullable": false, "default": "1"},
+        {"name": "sort_order", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "menu_items", "fk_column": "menu_item_id"},
+        {"kind": "has_many", "target": "menu_item_option_values", "fk_column": "option_id"}
+      ]
+    },
+    {
+      "name": "menu_item_option_values",
+      "domain": "Catalog",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "option_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "price_adjustment", "type": "DECIMAL(10,2)", "nullable": false, "default": "0"},
+        {"name": "is_available", "type": "BOOLEAN", "nullable": false, "default": "true"},
+        {"name": "sort_order", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "menu_item_options", "fk_column": "option_id"}
+      ]
+    },
+    {
+      "name": "menu_item_availability",
+      "domain": "Catalog",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "menu_item_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "day_of_week", "type": "INTEGER", "nullable": false, "default": null, "check": ">= 0 AND <= 6"},
+        {"name": "start_time", "type": "TIME", "nullable": true, "default": null},
+        {"name": "end_time", "type": "TIME", "nullable": true, "default": null},
+        {"name": "is_available", "type": "BOOLEAN", "nullable": false, "default": "true"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "menu_items", "fk_column": "menu_item_id"}
+      ]
+    },
+    {
+      "name": "customers",
+      "domain": "Customer",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "user_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "first_name", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "last_name", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "phone", "type": "VARCHAR(20)", "nullable": true, "default": null},
+        {"name": "email", "type": "VARCHAR(255)", "nullable": false, "default": null},
+        {"name": "profile_image_url", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "user_id"},
+        {"kind": "has_many", "target": "customer_addresses", "fk_column": "customer_id"},
+        {"kind": "has_many", "target": "carts", "fk_column": "customer_id"},
+        {"kind": "has_many", "target": "favorites", "fk_column": "customer_id"},
+        {"kind": "has_many", "target": "orders", "fk_column": "customer_id"},
+        {"kind": "has_many", "target": "reviews", "fk_column": "customer_id"}
+      ]
+    },
+    {
+      "name": "customer_addresses",
+      "domain": "Customer",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "customer_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "label", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "address_line1", "type": "VARCHAR(255)", "nullable": false, "default": null},
+        {"name": "address_line2", "type": "VARCHAR(255)", "nullable": true, "default": null},
+        {"name": "city", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "state", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "postal_code", "type": "VARCHAR(20)", "nullable": false, "default": null},
+        {"name": "country", "type": "VARCHAR(50)", "nullable": false, "default": "'US'"},
+        {"name": "lat", "type": "DECIMAL(10,8)", "nullable": true, "default": null},
+        {"name": "lng", "type": "DECIMAL(11,8)", "nullable": true, "default": null},
+        {"name": "delivery_instructions", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "is_default", "type": "BOOLEAN", "nullable": false, "default": "false"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "customers", "fk_column": "customer_id"}
+      ]
+    },
+    {
+      "name": "carts",
+      "domain": "Customer",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "customer_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "storefront_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "customers", "fk_column": "customer_id"},
+        {"kind": "belongs_to", "target": "chef_storefronts", "fk_column": "storefront_id"},
+        {"kind": "has_many", "target": "cart_items", "fk_column": "cart_id"}
+      ]
+    },
+    {
+      "name": "cart_items",
+      "domain": "Customer",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "cart_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "menu_item_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "quantity", "type": "INTEGER", "nullable": false, "default": "1", "check": "> 0"},
+        {"name": "unit_price", "type": "DECIMAL(10,2)", "nullable": false, "default": null},
+        {"name": "special_instructions", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "selected_options", "type": "JSONB", "nullable": true, "default": "'[]'"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "carts", "fk_column": "cart_id"},
+        {"kind": "belongs_to", "target": "menu_items", "fk_column": "menu_item_id"}
+      ]
+    },
+    {
+      "name": "favorites",
+      "domain": "Customer",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "customer_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "storefront_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "customers", "fk_column": "customer_id"},
+        {"kind": "belongs_to", "target": "chef_storefronts", "fk_column": "storefront_id"}
+      ]
+    },
+    {
+      "name": "orders",
+      "domain": "Order",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "order_number", "type": "VARCHAR(20)", "nullable": false, "default": null},
+        {"name": "customer_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "storefront_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "delivery_address_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "status", "type": "VARCHAR(30)", "nullable": false, "default": "'pending'", "check": "IN ('pending','accepted','rejected','preparing','ready_for_pickup','picked_up','in_transit','delivered','completed','cancelled','refunded')"},
+        {"name": "subtotal", "type": "DECIMAL(10,2)", "nullable": false, "default": null},
+        {"name": "delivery_fee", "type": "DECIMAL(10,2)", "nullable": false, "default": "0"},
+        {"name": "service_fee", "type": "DECIMAL(10,2)", "nullable": false, "default": "0"},
+        {"name": "tax", "type": "DECIMAL(10,2)", "nullable": false, "default": "0"},
+        {"name": "tip", "type": "DECIMAL(10,2)", "nullable": false, "default": "0"},
+        {"name": "total", "type": "DECIMAL(10,2)", "nullable": false, "default": null},
+        {"name": "payment_status", "type": "VARCHAR(20)", "nullable": false, "default": "'pending'", "check": "IN ('pending','processing','completed','failed','refunded')"},
+        {"name": "payment_intent_id", "type": "VARCHAR(255)", "nullable": true, "default": null},
+        {"name": "special_instructions", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "estimated_ready_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "actual_ready_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "engine_status", "type": "VARCHAR(50)", "nullable": true, "default": "'pending'"},
+        {"name": "rejection_reason", "type": "VARCHAR(100)", "nullable": true, "default": null},
+        {"name": "rejection_notes", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "cancellation_reason", "type": "VARCHAR(100)", "nullable": true, "default": null},
+        {"name": "cancellation_notes", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "cancelled_by", "type": "UUID", "nullable": true, "default": null},
+        {"name": "cancelled_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "estimated_prep_minutes", "type": "INTEGER", "nullable": true, "default": "20"},
+        {"name": "actual_prep_minutes", "type": "INTEGER", "nullable": true, "default": null},
+        {"name": "prep_started_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "ready_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "completed_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "exception_count", "type": "INTEGER", "nullable": true, "default": "0"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "customers", "fk_column": "customer_id"},
+        {"kind": "belongs_to", "target": "chef_storefronts", "fk_column": "storefront_id"},
+        {"kind": "belongs_to", "target": "customer_addresses", "fk_column": "delivery_address_id"},
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "cancelled_by"},
+        {"kind": "has_many", "target": "order_items", "fk_column": "order_id"},
+        {"kind": "has_many", "target": "order_status_history", "fk_column": "order_id"},
+        {"kind": "has_many", "target": "reviews", "fk_column": "order_id"},
+        {"kind": "has_one", "target": "deliveries", "fk_column": "order_id"},
+        {"kind": "has_one", "target": "kitchen_queue_entries", "fk_column": "order_id"},
+        {"kind": "has_many", "target": "ledger_entries", "fk_column": "order_id"},
+        {"kind": "has_many", "target": "refund_cases", "fk_column": "order_id"}
+      ]
+    },
+    {
+      "name": "order_items",
+      "domain": "Order",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "order_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "menu_item_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "menu_item_name", "type": "VARCHAR(200)", "nullable": false, "default": null},
+        {"name": "quantity", "type": "INTEGER", "nullable": false, "default": null, "check": "> 0"},
+        {"name": "unit_price", "type": "DECIMAL(10,2)", "nullable": false, "default": null},
+        {"name": "total_price", "type": "DECIMAL(10,2)", "nullable": false, "default": null},
+        {"name": "special_instructions", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "orders", "fk_column": "order_id"},
+        {"kind": "belongs_to", "target": "menu_items", "fk_column": "menu_item_id"},
+        {"kind": "has_many", "target": "order_item_modifiers", "fk_column": "order_item_id"}
+      ]
+    },
+    {
+      "name": "order_item_modifiers",
+      "domain": "Order",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "order_item_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "option_name", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "value_name", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "price_adjustment", "type": "DECIMAL(10,2)", "nullable": false, "default": "0"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "order_items", "fk_column": "order_item_id"}
+      ]
+    },
+    {
+      "name": "order_status_history",
+      "domain": "Order",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "order_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "status", "type": "VARCHAR(30)", "nullable": false, "default": null},
+        {"name": "notes", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "changed_by", "type": "UUID", "nullable": true, "default": null},
+        {"name": "previous_status", "type": "VARCHAR(50)", "nullable": true, "default": null},
+        {"name": "new_status", "type": "VARCHAR(50)", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "orders", "fk_column": "order_id"},
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "changed_by"}
+      ]
+    },
+    {
+      "name": "reviews",
+      "domain": "Order",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "order_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "customer_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "storefront_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "rating", "type": "INTEGER", "nullable": false, "default": null, "check": ">= 1 AND <= 5"},
+        {"name": "comment", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "chef_response", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "chef_responded_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "is_visible", "type": "BOOLEAN", "nullable": false, "default": "true"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "orders", "fk_column": "order_id"},
+        {"kind": "belongs_to", "target": "customers", "fk_column": "customer_id"},
+        {"kind": "belongs_to", "target": "chef_storefronts", "fk_column": "storefront_id"}
+      ]
+    },
+    {
+      "name": "promo_codes",
+      "domain": "Order",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "code", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "description", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "discount_type", "type": "VARCHAR(20)", "nullable": false, "default": null, "check": "IN ('percentage','fixed')"},
+        {"name": "discount_value", "type": "DECIMAL(10,2)", "nullable": false, "default": null},
+        {"name": "min_order_amount", "type": "DECIMAL(10,2)", "nullable": true, "default": "0"},
+        {"name": "max_discount", "type": "DECIMAL(10,2)", "nullable": true, "default": null},
+        {"name": "usage_limit", "type": "INTEGER", "nullable": true, "default": null},
+        {"name": "usage_count", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "starts_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "expires_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": false, "default": "true"},
+        {"name": "valid_from", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "valid_until", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "max_uses", "type": "INTEGER", "nullable": true, "default": null},
+        {"name": "times_used", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": []
+    },
+    {
+      "name": "support_tickets",
+      "domain": "Order",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "order_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "customer_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "chef_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "driver_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "subject", "type": "VARCHAR(255)", "nullable": false, "default": null},
+        {"name": "description", "type": "TEXT", "nullable": false, "default": null},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false, "default": "'open'", "check": "IN ('open','in_progress','resolved','closed')"},
+        {"name": "priority", "type": "VARCHAR(20)", "nullable": false, "default": "'medium'", "check": "IN ('low','medium','high','urgent')"},
+        {"name": "assigned_to", "type": "UUID", "nullable": true, "default": null},
+        {"name": "resolved_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "orders", "fk_column": "order_id"},
+        {"kind": "belongs_to", "target": "customers", "fk_column": "customer_id"},
+        {"kind": "belongs_to", "target": "chef_profiles", "fk_column": "chef_id"},
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "assigned_to"}
+      ]
+    },
+    {
+      "name": "drivers",
+      "domain": "Driver",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "user_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "first_name", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "last_name", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "phone", "type": "VARCHAR(20)", "nullable": false, "default": null},
+        {"name": "email", "type": "VARCHAR(255)", "nullable": false, "default": null},
+        {"name": "profile_image_url", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false, "default": "'pending'", "check": "IN ('pending','approved','rejected','suspended')"},
+        {"name": "rating", "type": "DECIMAL(3,2)", "nullable": true, "default": "5.00"},
+        {"name": "total_deliveries", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "vehicle_type", "type": "VARCHAR(20)", "nullable": true, "default": null},
+        {"name": "vehicle_description", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "user_id"},
+        {"kind": "has_many", "target": "driver_documents", "fk_column": "driver_id"},
+        {"kind": "has_many", "target": "driver_vehicles", "fk_column": "driver_id"},
+        {"kind": "has_many", "target": "driver_shifts", "fk_column": "driver_id"},
+        {"kind": "has_one", "target": "driver_presence", "fk_column": "driver_id"},
+        {"kind": "has_many", "target": "driver_locations", "fk_column": "driver_id"},
+        {"kind": "has_many", "target": "driver_earnings", "fk_column": "driver_id"},
+        {"kind": "has_many", "target": "driver_payouts", "fk_column": "driver_id"}
+      ]
+    },
+    {
+      "name": "driver_documents",
+      "domain": "Driver",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "driver_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "document_type", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "document_url", "type": "TEXT", "nullable": false, "default": null},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false, "default": "'pending'", "check": "IN ('pending','approved','rejected','expired')"},
+        {"name": "expires_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "notes", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "reviewed_by", "type": "UUID", "nullable": true, "default": null},
+        {"name": "reviewed_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "drivers", "fk_column": "driver_id"},
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "reviewed_by"}
+      ]
+    },
+    {
+      "name": "driver_vehicles",
+      "domain": "Driver",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "driver_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "vehicle_type", "type": "VARCHAR(20)", "nullable": false, "default": null, "check": "IN ('car','motorcycle','bicycle','scooter')"},
+        {"name": "make", "type": "VARCHAR(50)", "nullable": true, "default": null},
+        {"name": "model", "type": "VARCHAR(50)", "nullable": true, "default": null},
+        {"name": "year", "type": "INTEGER", "nullable": true, "default": null},
+        {"name": "color", "type": "VARCHAR(30)", "nullable": true, "default": null},
+        {"name": "license_plate", "type": "VARCHAR(20)", "nullable": true, "default": null},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": false, "default": "true"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "drivers", "fk_column": "driver_id"}
+      ]
+    },
+    {
+      "name": "driver_shifts",
+      "domain": "Driver",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "driver_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "started_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "ended_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "total_deliveries", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "total_earnings", "type": "DECIMAL(10,2)", "nullable": false, "default": "0"},
+        {"name": "total_distance_km", "type": "DECIMAL(10,2)", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "drivers", "fk_column": "driver_id"}
+      ]
+    },
+    {
+      "name": "driver_presence",
+      "domain": "Driver",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "driver_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false, "default": "'offline'", "check": "IN ('offline','online','busy')"},
+        {"name": "current_lat", "type": "DECIMAL(10,8)", "nullable": true, "default": null},
+        {"name": "current_lng", "type": "DECIMAL(11,8)", "nullable": true, "default": null},
+        {"name": "last_location_update", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "current_shift_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "last_location_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "last_location_lat", "type": "DECIMAL(10,8)", "nullable": true, "default": null},
+        {"name": "last_location_lng", "type": "DECIMAL(11,8)", "nullable": true, "default": null},
+        {"name": "last_updated_at", "type": "TIMESTAMPTZ", "nullable": true, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "drivers", "fk_column": "driver_id"},
+        {"kind": "belongs_to", "target": "driver_shifts", "fk_column": "current_shift_id"}
+      ]
+    },
+    {
+      "name": "driver_locations",
+      "domain": "Driver",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "driver_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "shift_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "lat", "type": "DECIMAL(10,8)", "nullable": false, "default": null},
+        {"name": "lng", "type": "DECIMAL(11,8)", "nullable": false, "default": null},
+        {"name": "accuracy", "type": "DECIMAL(10,2)", "nullable": true, "default": null},
+        {"name": "heading", "type": "DECIMAL(5,2)", "nullable": true, "default": null},
+        {"name": "speed", "type": "DECIMAL(10,2)", "nullable": true, "default": null},
+        {"name": "recorded_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "drivers", "fk_column": "driver_id"},
+        {"kind": "belongs_to", "target": "driver_shifts", "fk_column": "shift_id"}
+      ]
+    },
+    {
+      "name": "driver_earnings",
+      "domain": "Driver",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "driver_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "delivery_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "shift_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "base_amount", "type": "DECIMAL(10,2)", "nullable": false, "default": null},
+        {"name": "tip_amount", "type": "DECIMAL(10,2)", "nullable": false, "default": "0"},
+        {"name": "bonus_amount", "type": "DECIMAL(10,2)", "nullable": false, "default": "0"},
+        {"name": "total_amount", "type": "DECIMAL(10,2)", "nullable": false, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "drivers", "fk_column": "driver_id"},
+        {"kind": "belongs_to", "target": "driver_shifts", "fk_column": "shift_id"},
+        {"kind": "belongs_to", "target": "deliveries", "fk_column": "delivery_id"}
+      ]
+    },
+    {
+      "name": "driver_payouts",
+      "domain": "Driver",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "driver_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "payout_run_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "amount", "type": "DECIMAL(10,2)", "nullable": false, "default": null},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false, "default": "'pending'", "check": "IN ('pending','processing','completed','failed')"},
+        {"name": "stripe_transfer_id", "type": "VARCHAR(255)", "nullable": true, "default": null},
+        {"name": "period_start", "type": "TIMESTAMPTZ", "nullable": false, "default": null},
+        {"name": "period_end", "type": "TIMESTAMPTZ", "nullable": false, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "drivers", "fk_column": "driver_id"},
+        {"kind": "belongs_to", "target": "payout_runs", "fk_column": "payout_run_id"}
+      ]
+    },
+    {
+      "name": "deliveries",
+      "domain": "Delivery",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "order_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "driver_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "status", "type": "VARCHAR(30)", "nullable": false, "default": "'pending'", "check": "IN ('pending','assigned','accepted','en_route_to_pickup','arrived_at_pickup','picked_up','en_route_to_dropoff','arrived_at_dropoff','delivered','completed','cancelled','failed')"},
+        {"name": "pickup_address", "type": "TEXT", "nullable": false, "default": null},
+        {"name": "pickup_lat", "type": "DECIMAL(10,8)", "nullable": true, "default": null},
+        {"name": "pickup_lng", "type": "DECIMAL(11,8)", "nullable": true, "default": null},
+        {"name": "dropoff_address", "type": "TEXT", "nullable": false, "default": null},
+        {"name": "dropoff_lat", "type": "DECIMAL(10,8)", "nullable": true, "default": null},
+        {"name": "dropoff_lng", "type": "DECIMAL(11,8)", "nullable": true, "default": null},
+        {"name": "estimated_pickup_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "actual_pickup_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "estimated_dropoff_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "actual_dropoff_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "distance_km", "type": "DECIMAL(10,2)", "nullable": true, "default": null},
+        {"name": "delivery_fee", "type": "DECIMAL(10,2)", "nullable": false, "default": null},
+        {"name": "driver_payout", "type": "DECIMAL(10,2)", "nullable": false, "default": null},
+        {"name": "pickup_photo_url", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "dropoff_photo_url", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "customer_signature_url", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "notes", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "assignment_attempts_count", "type": "INTEGER", "nullable": true, "default": "0"},
+        {"name": "last_assignment_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "escalated_to_ops", "type": "BOOLEAN", "nullable": true, "default": "false"},
+        {"name": "escalated_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "pickup_proof_url", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "dropoff_proof_url", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "delivery_notes", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "orders", "fk_column": "order_id"},
+        {"kind": "belongs_to", "target": "drivers", "fk_column": "driver_id"},
+        {"kind": "has_many", "target": "delivery_assignments", "fk_column": "delivery_id"},
+        {"kind": "has_many", "target": "delivery_events", "fk_column": "delivery_id"},
+        {"kind": "has_many", "target": "delivery_tracking_events", "fk_column": "delivery_id"},
+        {"kind": "has_many", "target": "assignment_attempts", "fk_column": "delivery_id"}
+      ]
+    },
+    {
+      "name": "delivery_assignments",
+      "domain": "Delivery",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "delivery_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "driver_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "offered_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "expires_at", "type": "TIMESTAMPTZ", "nullable": false, "default": null},
+        {"name": "responded_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "response", "type": "VARCHAR(20)", "nullable": true, "default": null, "check": "IN ('accepted','rejected','expired')"},
+        {"name": "rejection_reason", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "deliveries", "fk_column": "delivery_id"},
+        {"kind": "belongs_to", "target": "drivers", "fk_column": "driver_id"}
+      ]
+    },
+    {
+      "name": "delivery_events",
+      "domain": "Delivery",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "delivery_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "event_type", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "event_data", "type": "JSONB", "nullable": true, "default": null},
+        {"name": "actor_type", "type": "VARCHAR(20)", "nullable": false, "default": null, "check": "IN ('system','driver','customer','chef','ops')"},
+        {"name": "actor_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "deliveries", "fk_column": "delivery_id"}
+      ]
+    },
+    {
+      "name": "delivery_tracking_events",
+      "domain": "Delivery",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "delivery_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "driver_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "lat", "type": "DECIMAL(10,8)", "nullable": false, "default": null},
+        {"name": "lng", "type": "DECIMAL(11,8)", "nullable": false, "default": null},
+        {"name": "accuracy", "type": "DECIMAL(10,2)", "nullable": true, "default": null},
+        {"name": "recorded_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "deliveries", "fk_column": "delivery_id"},
+        {"kind": "belongs_to", "target": "drivers", "fk_column": "driver_id"}
+      ]
+    },
+    {
+      "name": "platform_users",
+      "domain": "Platform",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "user_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "email", "type": "VARCHAR(255)", "nullable": false, "default": null},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "role", "type": "VARCHAR(20)", "nullable": false, "default": null, "check": "IN ('ops_admin','ops_agent','ops_manager','super_admin','support','finance_admin')"},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": false, "default": "true"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "user_id"}
+      ]
+    },
+    {
+      "name": "admin_notes",
+      "domain": "Platform",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "entity_type", "type": "VARCHAR(20)", "nullable": false, "default": null, "check": "IN ('chef','customer','driver','order','delivery')"},
+        {"name": "entity_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "note", "type": "TEXT", "nullable": false, "default": null},
+        {"name": "created_by", "type": "UUID", "nullable": false, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "created_by"}
+      ]
+    },
+    {
+      "name": "notifications",
+      "domain": "Platform",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "user_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "type", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "title", "type": "VARCHAR(255)", "nullable": false, "default": null},
+        {"name": "body", "type": "TEXT", "nullable": false, "default": null},
+        {"name": "data", "type": "JSONB", "nullable": true, "default": null},
+        {"name": "is_read", "type": "BOOLEAN", "nullable": false, "default": "false"},
+        {"name": "read_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "message", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "user_id"}
+      ]
+    },
+    {
+      "name": "audit_logs",
+      "domain": "Platform",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "actor_type", "type": "VARCHAR(20)", "nullable": false, "default": "'user'"},
+        {"name": "actor_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "user_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "action", "type": "VARCHAR(100)", "nullable": true, "default": null},
+        {"name": "entity_type", "type": "VARCHAR(50)", "nullable": true, "default": null},
+        {"name": "entity_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "old_data", "type": "JSONB", "nullable": true, "default": null},
+        {"name": "new_data", "type": "JSONB", "nullable": true, "default": null},
+        {"name": "ip_address", "type": "INET", "nullable": true, "default": null},
+        {"name": "user_agent", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "actor_role", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "reason", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "metadata", "type": "JSONB", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "user_id"}
+      ]
+    },
+    {
+      "name": "payout_runs",
+      "domain": "Platform",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "run_type", "type": "VARCHAR(20)", "nullable": false, "default": null, "check": "IN ('chef','driver')"},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false, "default": "'pending'", "check": "IN ('pending','processing','completed','failed')"},
+        {"name": "period_start", "type": "TIMESTAMPTZ", "nullable": false, "default": null},
+        {"name": "period_end", "type": "TIMESTAMPTZ", "nullable": false, "default": null},
+        {"name": "total_amount", "type": "DECIMAL(10,2)", "nullable": false, "default": "0"},
+        {"name": "total_recipients", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "successful_payouts", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "failed_payouts", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "initiated_by", "type": "UUID", "nullable": false, "default": null},
+        {"name": "completed_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "initiated_by"},
+        {"kind": "has_many", "target": "driver_payouts", "fk_column": "payout_run_id"}
+      ]
+    },
+    {
+      "name": "push_subscriptions",
+      "domain": "Platform",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "user_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "endpoint", "type": "TEXT", "nullable": false, "default": null},
+        {"name": "p256dh", "type": "TEXT", "nullable": false, "default": null},
+        {"name": "auth", "type": "TEXT", "nullable": false, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "user_id"}
+      ]
+    },
+    {
+      "name": "chef_payouts",
+      "domain": "Platform",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "chef_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "stripe_transfer_id", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "amount", "type": "INTEGER", "nullable": false, "default": null},
+        {"name": "status", "type": "TEXT", "nullable": false, "default": "'pending'"},
+        {"name": "period_start", "type": "TIMESTAMPTZ", "nullable": false, "default": null},
+        {"name": "period_end", "type": "TIMESTAMPTZ", "nullable": false, "default": null},
+        {"name": "orders_count", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "paid_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "chef_profiles", "fk_column": "chef_id"}
+      ]
+    },
+    {
+      "name": "platform_settings",
+      "domain": "Platform",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "setting_key", "type": "VARCHAR(100)", "nullable": true, "default": null},
+        {"name": "setting_value", "type": "JSONB", "nullable": true, "default": null},
+        {"name": "description", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "platform_fee_percent", "type": "DECIMAL(5,2)", "nullable": false, "default": "15.00"},
+        {"name": "service_fee_percent", "type": "DECIMAL(5,2)", "nullable": false, "default": "8.00"},
+        {"name": "hst_rate", "type": "DECIMAL(5,2)", "nullable": false, "default": "13.00"},
+        {"name": "min_order_amount", "type": "DECIMAL(10,2)", "nullable": true, "default": "10.00"},
+        {"name": "max_delivery_radius_km", "type": "DECIMAL(5,2)", "nullable": false, "default": "15.00"},
+        {"name": "driver_payout_percent", "type": "DECIMAL(5,2)", "nullable": true, "default": "80.00"},
+        {"name": "base_delivery_fee_cents", "type": "INTEGER", "nullable": true, "default": "399"},
+        {"name": "chef_response_sla_minutes", "type": "INTEGER", "nullable": true, "default": "5"},
+        {"name": "dispatch_timeout_minutes", "type": "INTEGER", "nullable": true, "default": "10"},
+        {"name": "refund_window_hours", "type": "INTEGER", "nullable": true, "default": "24"},
+        {"name": "dispatch_radius_km", "type": "DECIMAL(5,2)", "nullable": false, "default": "10.00"},
+        {"name": "max_delivery_distance_km", "type": "DECIMAL(5,2)", "nullable": false, "default": "15.00"},
+        {"name": "default_prep_time_minutes", "type": "INTEGER", "nullable": false, "default": "20"},
+        {"name": "offer_timeout_seconds", "type": "INTEGER", "nullable": false, "default": "60"},
+        {"name": "max_assignment_attempts", "type": "INTEGER", "nullable": false, "default": "5"},
+        {"name": "auto_assign_enabled", "type": "BOOLEAN", "nullable": false, "default": "true"},
+        {"name": "refund_auto_review_threshold_cents", "type": "INTEGER", "nullable": false, "default": "2500"},
+        {"name": "support_sla_warning_minutes", "type": "INTEGER", "nullable": false, "default": "15"},
+        {"name": "support_sla_breach_minutes", "type": "INTEGER", "nullable": false, "default": "60"},
+        {"name": "storefront_throttle_order_limit", "type": "INTEGER", "nullable": false, "default": "0"},
+        {"name": "storefront_throttle_window_minutes", "type": "INTEGER", "nullable": false, "default": "30"},
+        {"name": "storefront_auto_pause_enabled", "type": "BOOLEAN", "nullable": false, "default": "false"},
+        {"name": "storefront_pause_on_sla_breach", "type": "BOOLEAN", "nullable": false, "default": "true"},
+        {"name": "updated_by", "type": "UUID", "nullable": true, "default": null},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": true, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "updated_by"}
+      ]
+    },
+    {
+      "name": "domain_events",
+      "domain": "Engine",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "event_type", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "entity_type", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "entity_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "payload", "type": "JSONB", "nullable": false, "default": "'{}'"},
+        {"name": "actor_user_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "actor_role", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "actor_entity_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "version", "type": "INTEGER", "nullable": false, "default": "1"},
+        {"name": "published", "type": "BOOLEAN", "nullable": false, "default": "false"},
+        {"name": "published_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "actor_user_id"}
+      ]
+    },
+    {
+      "name": "order_exceptions",
+      "domain": "Engine",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "exception_type", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "severity", "type": "VARCHAR(20)", "nullable": false, "default": null, "check": "IN ('low','medium','high','critical')"},
+        {"name": "status", "type": "VARCHAR(50)", "nullable": false, "default": "'open'", "check": "IN ('open','acknowledged','in_progress','pending_customer','pending_chef','pending_driver','resolved','closed','escalated')"},
+        {"name": "order_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "customer_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "chef_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "driver_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "delivery_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "title", "type": "VARCHAR(255)", "nullable": false, "default": null},
+        {"name": "description", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "recommended_actions", "type": "JSONB", "nullable": true, "default": "'[]'"},
+        {"name": "internal_notes", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "resolution", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "resolved_by", "type": "UUID", "nullable": true, "default": null},
+        {"name": "resolved_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "linked_refund_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "linked_payout_adjustment_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "sla_deadline", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "escalated_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "assigned_to", "type": "UUID", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "orders", "fk_column": "order_id"},
+        {"kind": "belongs_to", "target": "customers", "fk_column": "customer_id"},
+        {"kind": "belongs_to", "target": "chef_profiles", "fk_column": "chef_id"},
+        {"kind": "belongs_to", "target": "drivers", "fk_column": "driver_id"},
+        {"kind": "belongs_to", "target": "deliveries", "fk_column": "delivery_id"},
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "resolved_by"},
+        {"kind": "belongs_to", "target": "platform_users", "fk_column": "assigned_to"}
+      ]
+    },
+    {
+      "name": "sla_timers",
+      "domain": "Engine",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "sla_type", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false, "default": "'active'", "check": "IN ('active','warning','breached','completed','cancelled')"},
+        {"name": "entity_type", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "entity_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "started_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "warning_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "deadline_at", "type": "TIMESTAMPTZ", "nullable": false, "default": null},
+        {"name": "completed_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "breached_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "metadata", "type": "JSONB", "nullable": true, "default": "'{}'"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": []
+    },
+    {
+      "name": "kitchen_queue_entries",
+      "domain": "Engine",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "storefront_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "order_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "position", "type": "INTEGER", "nullable": false, "default": null},
+        {"name": "estimated_prep_minutes", "type": "INTEGER", "nullable": false, "default": "20"},
+        {"name": "actual_prep_minutes", "type": "INTEGER", "nullable": true, "default": null},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false, "default": "'queued'", "check": "IN ('queued','in_progress','completed','cancelled')"},
+        {"name": "started_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "completed_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "chef_storefronts", "fk_column": "storefront_id"},
+        {"kind": "belongs_to", "target": "orders", "fk_column": "order_id"}
+      ]
+    },
+    {
+      "name": "ledger_entries",
+      "domain": "Engine",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "order_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "entry_type", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "amount_cents", "type": "INTEGER", "nullable": false, "default": null},
+        {"name": "currency", "type": "VARCHAR(3)", "nullable": false, "default": "'CAD'"},
+        {"name": "description", "type": "VARCHAR(255)", "nullable": true, "default": null},
+        {"name": "entity_type", "type": "VARCHAR(50)", "nullable": true, "default": null},
+        {"name": "entity_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "stripe_id", "type": "VARCHAR(255)", "nullable": true, "default": null},
+        {"name": "metadata", "type": "JSONB", "nullable": true, "default": "'{}'"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "orders", "fk_column": "order_id"}
+      ]
+    },
+    {
+      "name": "assignment_attempts",
+      "domain": "Engine",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "delivery_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "driver_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "attempt_number", "type": "INTEGER", "nullable": false, "default": "1"},
+        {"name": "offered_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "expires_at", "type": "TIMESTAMPTZ", "nullable": false, "default": null},
+        {"name": "responded_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "response", "type": "VARCHAR(20)", "nullable": false, "default": "'pending'", "check": "IN ('pending','accepted','declined','expired','cancelled')"},
+        {"name": "decline_reason", "type": "VARCHAR(255)", "nullable": true, "default": null},
+        {"name": "distance_meters", "type": "INTEGER", "nullable": true, "default": null},
+        {"name": "estimated_minutes", "type": "INTEGER", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "deliveries", "fk_column": "delivery_id"},
+        {"kind": "belongs_to", "target": "drivers", "fk_column": "driver_id"}
+      ]
+    },
+    {
+      "name": "ops_override_logs",
+      "domain": "Engine",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "action", "type": "VARCHAR(100)", "nullable": false, "default": null},
+        {"name": "entity_type", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "entity_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "before_state", "type": "JSONB", "nullable": false, "default": null},
+        {"name": "after_state", "type": "JSONB", "nullable": false, "default": null},
+        {"name": "reason", "type": "TEXT", "nullable": false, "default": null},
+        {"name": "actor_user_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "actor_role", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "approved_by", "type": "UUID", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "actor_user_id"},
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "approved_by"}
+      ]
+    },
+    {
+      "name": "refund_cases",
+      "domain": "Engine",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "order_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "exception_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "requested_by", "type": "UUID", "nullable": false, "default": null},
+        {"name": "requested_amount_cents", "type": "INTEGER", "nullable": false, "default": null},
+        {"name": "approved_amount_cents", "type": "INTEGER", "nullable": true, "default": null},
+        {"name": "refund_reason", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "refund_notes", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false, "default": "'pending'", "check": "IN ('pending','approved','denied','processing','completed','failed')"},
+        {"name": "reviewed_by", "type": "UUID", "nullable": true, "default": null},
+        {"name": "reviewed_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "stripe_refund_id", "type": "VARCHAR(255)", "nullable": true, "default": null},
+        {"name": "processed_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "orders", "fk_column": "order_id"},
+        {"kind": "belongs_to", "target": "order_exceptions", "fk_column": "exception_id"},
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "requested_by"},
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "reviewed_by"}
+      ]
+    },
+    {
+      "name": "payout_adjustments",
+      "domain": "Engine",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "payee_type", "type": "VARCHAR(20)", "nullable": false, "default": null, "check": "IN ('chef','driver')"},
+        {"name": "payee_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "order_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "refund_case_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "adjustment_type", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "amount_cents", "type": "INTEGER", "nullable": false, "default": null},
+        {"name": "reason", "type": "TEXT", "nullable": false, "default": null},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false, "default": "'pending'", "check": "IN ('pending','applied','reversed')"},
+        {"name": "created_by", "type": "UUID", "nullable": false, "default": null},
+        {"name": "applied_to_payout_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"},
+        {"name": "updated_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "orders", "fk_column": "order_id"},
+        {"kind": "belongs_to", "target": "refund_cases", "fk_column": "refund_case_id"},
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "created_by"}
+      ]
+    },
+    {
+      "name": "storefront_state_changes",
+      "domain": "Engine",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "storefront_id", "type": "UUID", "nullable": false, "default": null},
+        {"name": "previous_state", "type": "VARCHAR(50)", "nullable": true, "default": null},
+        {"name": "new_state", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "reason", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "changed_by", "type": "UUID", "nullable": true, "default": null},
+        {"name": "changed_by_role", "type": "VARCHAR(50)", "nullable": true, "default": null},
+        {"name": "metadata", "type": "JSONB", "nullable": true, "default": "'{}'"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "chef_storefronts", "fk_column": "storefront_id"},
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "changed_by"}
+      ]
+    },
+    {
+      "name": "system_alerts",
+      "domain": "Engine",
+      "columns": [
+        {"name": "id", "type": "UUID", "nullable": false, "default": "gen_random_uuid()"},
+        {"name": "alert_type", "type": "VARCHAR(50)", "nullable": false, "default": null},
+        {"name": "severity", "type": "VARCHAR(20)", "nullable": false, "default": null, "check": "IN ('info','warning','error','critical')"},
+        {"name": "title", "type": "VARCHAR(255)", "nullable": false, "default": null},
+        {"name": "message", "type": "TEXT", "nullable": true, "default": null},
+        {"name": "entity_type", "type": "VARCHAR(50)", "nullable": true, "default": null},
+        {"name": "entity_id", "type": "UUID", "nullable": true, "default": null},
+        {"name": "acknowledged", "type": "BOOLEAN", "nullable": false, "default": "false"},
+        {"name": "acknowledged_by", "type": "UUID", "nullable": true, "default": null},
+        {"name": "acknowledged_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "auto_resolved", "type": "BOOLEAN", "nullable": false, "default": "false"},
+        {"name": "resolved_at", "type": "TIMESTAMPTZ", "nullable": true, "default": null},
+        {"name": "metadata", "type": "JSONB", "nullable": true, "default": "'{}'"},
+        {"name": "created_at", "type": "TIMESTAMPTZ", "nullable": false, "default": "NOW()"}
+      ],
+      "relations": [
+        {"kind": "belongs_to", "target": "auth.users", "fk_column": "acknowledged_by"}
+      ]
+    }
+  ]
+}

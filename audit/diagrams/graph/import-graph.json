@@ -1,0 +1,62 @@
+{
+  "nodes": [
+    { "id": "apps/web",          "label": "apps/web",          "type": "app",     "port": 3000 },
+    { "id": "apps/chef-admin",   "label": "apps/chef-admin",   "type": "app",     "port": 3001 },
+    { "id": "apps/ops-admin",    "label": "apps/ops-admin",    "type": "app",     "port": 3002 },
+    { "id": "apps/driver-app",   "label": "apps/driver-app",   "type": "app",     "port": 3003 },
+    { "id": "packages/engine",        "label": "@ridendine/engine",        "type": "package" },
+    { "id": "packages/db",            "label": "@ridendine/db",            "type": "package" },
+    { "id": "packages/auth",          "label": "@ridendine/auth",          "type": "package" },
+    { "id": "packages/types",         "label": "@ridendine/types",         "type": "package" },
+    { "id": "packages/validation",    "label": "@ridendine/validation",    "type": "package" },
+    { "id": "packages/ui",            "label": "@ridendine/ui",            "type": "package" },
+    { "id": "packages/utils",         "label": "@ridendine/utils",         "type": "package" },
+    { "id": "packages/config",        "label": "@ridendine/config",        "type": "package" },
+    { "id": "packages/notifications", "label": "@ridendine/notifications", "type": "package" }
+  ],
+  "edges": [
+    { "source": "apps/web",        "target": "packages/db",            "relation": "imports" },
+    { "source": "apps/web",        "target": "packages/engine",        "relation": "imports" },
+    { "source": "apps/web",        "target": "packages/auth",          "relation": "imports" },
+    { "source": "apps/web",        "target": "packages/types",         "relation": "imports" },
+    { "source": "apps/web",        "target": "packages/validation",    "relation": "imports" },
+    { "source": "apps/web",        "target": "packages/ui",            "relation": "imports" },
+    { "source": "apps/web",        "target": "packages/utils",         "relation": "imports" },
+
+    { "source": "apps/chef-admin", "target": "packages/db",            "relation": "imports" },
+    { "source": "apps/chef-admin", "target": "packages/engine",        "relation": "imports" },
+    { "source": "apps/chef-admin", "target": "packages/auth",          "relation": "imports" },
+    { "source": "apps/chef-admin", "target": "packages/types",         "relation": "imports" },
+    { "source": "apps/chef-admin", "target": "packages/ui",            "relation": "imports" },
+
+    { "source": "apps/ops-admin",  "target": "packages/db",            "relation": "imports" },
+    { "source": "apps/ops-admin",  "target": "packages/engine",        "relation": "imports" },
+    { "source": "apps/ops-admin",  "target": "packages/auth",          "relation": "imports" },
+    { "source": "apps/ops-admin",  "target": "packages/types",         "relation": "imports" },
+    { "source": "apps/ops-admin",  "target": "packages/ui",            "relation": "imports" },
+
+    { "source": "apps/driver-app", "target": "packages/db",            "relation": "imports" },
+    { "source": "apps/driver-app", "target": "packages/engine",        "relation": "imports" },
+    { "source": "apps/driver-app", "target": "packages/auth",          "relation": "imports" },
+    { "source": "apps/driver-app", "target": "packages/types",         "relation": "imports" },
+    { "source": "apps/driver-app", "target": "packages/ui",            "relation": "imports" },
+
+    { "source": "packages/engine",     "target": "packages/db",            "relation": "imports" },
+    { "source": "packages/engine",     "target": "packages/types",         "relation": "imports" },
+    { "source": "packages/engine",     "target": "packages/notifications", "relation": "imports" },
+
+    { "source": "packages/db",         "target": "packages/types",         "relation": "imports" },
+
+    { "source": "packages/auth",       "target": "packages/db",            "relation": "imports" },
+    { "source": "packages/auth",       "target": "packages/types",         "relation": "imports" },
+
+    { "source": "packages/validation", "target": "packages/types",         "relation": "imports" },
+
+    { "source": "packages/notifications", "target": "packages/types",      "relation": "imports" }
+  ],
+  "meta": {
+    "generated": "2026-04-27",
+    "platform": "ridendine",
+    "description": "Package import dependency graph for the Ridendine monorepo"
+  }
+}

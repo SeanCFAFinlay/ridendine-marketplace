@@ -1,0 +1,84 @@
+flowchart TD
+    subgraph Pages["Pages – apps/driver-app/src/app"]
+        P1["/dashboard"]
+        P2["/offers"]
+        P3["/offers/[attemptId]"]
+        P4["/active-delivery"]
+        P5["/history"]
+        P6["/earnings"]
+        P7["/profile"]
+        P8["/shift"]
+    end
+
+    subgraph API["API Routes – apps/driver-app/src/app/api"]
+        A1["/api/auth/*"]
+        A2["/api/offers/[attemptId]/accept"]
+        A3["/api/offers/[attemptId]/reject"]
+        A4["/api/delivery/[id]/status"]
+        A5["/api/delivery/[id]/location"]
+        A6["/api/shift/start"]
+        A7["/api/shift/end"]
+        A8["/api/presence"]
+        A9["/api/earnings"]
+        A10["/api/notifications/*"]
+    end
+
+    subgraph Deps["Package Dependencies"]
+        ENG["@ridendine/engine\nDispatchEngine\nCommerceLedgerEngine"]
+        DB["@ridendine/db\nDeliveriesRepo\nDriverPresenceRepo\nAssignmentAttemptsRepo\nDriverEarningsRepo\nNotificationsRepo\nDriverShiftsRepo"]
+        AUTH["@ridendine/auth\nrequireDriverAuth()"]
+        UI["@ridendine/ui"]
+        TYPES["@ridendine/types"]
+        VAL["@ridendine/validation"]
+    end
+
+    subgraph Ext["External"]
+        SUPA["Supabase\nRealtime: new offers\nRealtime: order status"]
+        GEO["Geolocation API\n(browser)"]
+    end
+
+    %% Pages → API
+    P2 & P3 --> A2 & A3
+    P4 --> A4 & A5
+    P8 --> A6 & A7
+    P1 --> A8
+    P6 --> A9
+    P1 --> A10
+
+    %% API → Engine
+    A2 --> ENG
+    A3 --> ENG
+    A4 --> ENG
+
+    %% API → DB
+    A1 --> AUTH
+    A2 & A3 --> DB
+    A4 & A5 --> DB
+    A6 & A7 --> DB
+    A8 --> DB
+    A9 --> DB
+    A10 --> DB
+
+    %% Engine → DB
+    ENG --> DB
+
+    %% DB → Supabase (+ realtime)
+    DB --> SUPA
+
+    %% Location tracking
+    P4 --> GEO
+    GEO --> A5
+
+    %% Pages
+    Pages --> UI
+    Pages --> TYPES
+    API --> VAL
+
+    style ENG fill:#50C878,color:white
+    style DB fill:#FFD700,color:black
+    style AUTH fill:#FF8C00,color:white
+    style UI fill:#C084FC,color:white
+    style TYPES fill:#A0A0A0,color:white
+    style VAL fill:#A0A0A0,color:white
+    style SUPA fill:#3ECF8E,color:white
+    style GEO fill:#10B981,color:white

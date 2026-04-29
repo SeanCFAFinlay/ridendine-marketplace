@@ -1,0 +1,18 @@
+[
+  {"key": "NEXT_PUBLIC_SUPABASE_URL", "is_secret_like": false, "has_default": true, "read_at": ["apps/web", "apps/chef-admin", "apps/ops-admin", "apps/driver-app", "packages/db"], "set_in": [".env.example", ".env.local", "turbo.json"]},
+  {"key": "NEXT_PUBLIC_SUPABASE_ANON_KEY", "is_secret_like": true, "has_default": false, "read_at": ["packages/db/src/client/browser.ts"], "set_in": [".env.example", ".env.local", "turbo.json"]},
+  {"key": "SUPABASE_SERVICE_ROLE_KEY", "is_secret_like": true, "has_default": false, "read_at": ["packages/db/src/client/admin.ts", "packages/db/src/client/server.ts"], "set_in": [".env.example", ".env.local", "turbo.json"]},
+  {"key": "DATABASE_URL", "is_secret_like": true, "has_default": false, "read_at": [], "set_in": [".env.example"]},
+  {"key": "NEXT_PUBLIC_APP_URL", "is_secret_like": false, "has_default": true, "read_at": ["apps/web"], "set_in": [".env.example", "turbo.json"]},
+  {"key": "NEXT_PUBLIC_CHEF_ADMIN_URL", "is_secret_like": false, "has_default": true, "read_at": ["apps/chef-admin"], "set_in": [".env.example"]},
+  {"key": "NEXT_PUBLIC_OPS_ADMIN_URL", "is_secret_like": false, "has_default": true, "read_at": ["apps/ops-admin"], "set_in": [".env.example"]},
+  {"key": "NEXT_PUBLIC_DRIVER_APP_URL", "is_secret_like": false, "has_default": true, "read_at": ["apps/driver-app"], "set_in": [".env.example"]},
+  {"key": "STRIPE_SECRET_KEY", "is_secret_like": true, "has_default": false, "read_at": ["apps/web/src/app/api/checkout", "apps/web/src/app/api/webhooks/stripe"], "set_in": [".env.example", "turbo.json"]},
+  {"key": "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", "is_secret_like": true, "has_default": false, "read_at": ["apps/web"], "set_in": [".env.example"]},
+  {"key": "STRIPE_WEBHOOK_SECRET", "is_secret_like": true, "has_default": false, "read_at": ["apps/web/src/app/api/webhooks/stripe"], "set_in": [".env.example", "turbo.json"]},
+  {"key": "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY", "is_secret_like": true, "has_default": false, "read_at": [], "set_in": [".env.example (commented)"]},
+  {"key": "RESEND_API_KEY", "is_secret_like": true, "has_default": false, "read_at": [], "set_in": [".env.example (commented)"]},
+  {"key": "NEXT_PUBLIC_ENABLE_REVIEWS", "is_secret_like": false, "has_default": true, "read_at": ["apps/web"], "set_in": [".env.example"]},
+  {"key": "NEXT_PUBLIC_ENABLE_DRIVER_TRACKING", "is_secret_like": false, "has_default": true, "read_at": ["apps/web"], "set_in": [".env.example"]},
+  {"key": "BYPASS_AUTH", "is_secret_like": false, "has_default": true, "read_at": ["packages/auth"], "set_in": [".env.example"]}
+]

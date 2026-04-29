@@ -1,0 +1,111 @@
+digraph RidendineImports {
+    graph [
+        label="Ridendine – Package Import Graph"
+        labelloc="t"
+        fontname="Helvetica"
+        fontsize=18
+        rankdir=LR
+        splines=curved
+        nodesep=0.5
+        ranksep=1.5
+        bgcolor="#FAFAFA"
+    ]
+    node [fontname="Helvetica" fontsize=12 style="filled,rounded" shape=box]
+    edge [fontname="Helvetica" fontsize=10 color="#555555"]
+
+    // ── Rank: Apps (left) ─────────────────────────────────────────────────────
+    { rank=source
+        "apps/web"
+        "apps/chef-admin"
+        "apps/ops-admin"
+        "apps/driver-app"
+    }
+
+    // ── Rank: Orchestration layer ─────────────────────────────────────────────
+    { rank=same
+        "packages/engine"
+        "packages/auth"
+    }
+
+    // ── Rank: Data layer ──────────────────────────────────────────────────────
+    { rank=same
+        "packages/db"
+        "packages/validation"
+        "packages/notifications"
+    }
+
+    // ── Rank: Leaf packages (right) ───────────────────────────────────────────
+    { rank=sink
+        "packages/types"
+        "packages/ui"
+        "packages/utils"
+        "packages/config"
+    }
+
+    // ── Node styles ───────────────────────────────────────────────────────────
+    "apps/web"          [label="apps/web\n:3000"        fillcolor="#4A90D9" fontcolor=white]
+    "apps/chef-admin"   [label="apps/chef-admin\n:3001" fillcolor="#4A90D9" fontcolor=white]
+    "apps/ops-admin"    [label="apps/ops-admin\n:3002"  fillcolor="#4A90D9" fontcolor=white]
+    "apps/driver-app"   [label="apps/driver-app\n:3003" fillcolor="#4A90D9" fontcolor=white]
+
+    "packages/engine"        [label="@ridendine/engine"        fillcolor="#50C878" fontcolor=white]
+    "packages/db"            [label="@ridendine/db"            fillcolor="#FFD700" fontcolor=black]
+    "packages/auth"          [label="@ridendine/auth"          fillcolor="#FF8C00" fontcolor=white]
+    "packages/types"         [label="@ridendine/types"         fillcolor="#A0A0A0" fontcolor=white]
+    "packages/validation"    [label="@ridendine/validation"    fillcolor="#CBD5E1" fontcolor=black]
+    "packages/ui"            [label="@ridendine/ui"            fillcolor="#C084FC" fontcolor=white]
+    "packages/utils"         [label="@ridendine/utils"         fillcolor="#94A3B8" fontcolor=white]
+    "packages/config"        [label="@ridendine/config"        fillcolor="#94A3B8" fontcolor=white]
+    "packages/notifications" [label="@ridendine/notifications" fillcolor="#F97316" fontcolor=white]
+
+    // ── apps/web imports ──────────────────────────────────────────────────────
+    "apps/web" -> "packages/db"
+    "apps/web" -> "packages/engine"
+    "apps/web" -> "packages/auth"
+    "apps/web" -> "packages/types"
+    "apps/web" -> "packages/validation"
+    "apps/web" -> "packages/ui"
+    "apps/web" -> "packages/utils"
+
+    // ── apps/chef-admin imports ───────────────────────────────────────────────
+    "apps/chef-admin" -> "packages/db"
+    "apps/chef-admin" -> "packages/engine"
+    "apps/chef-admin" -> "packages/auth"
+    "apps/chef-admin" -> "packages/types"
+    "apps/chef-admin" -> "packages/ui"
+
+    // ── apps/ops-admin imports ────────────────────────────────────────────────
+    "apps/ops-admin" -> "packages/db"
+    "apps/ops-admin" -> "packages/engine"
+    "apps/ops-admin" -> "packages/auth"
+    "apps/ops-admin" -> "packages/types"
+    "apps/ops-admin" -> "packages/ui"
+
+    // ── apps/driver-app imports ───────────────────────────────────────────────
+    "apps/driver-app" -> "packages/db"
+    "apps/driver-app" -> "packages/engine"
+    "apps/driver-app" -> "packages/auth"
+    "apps/driver-app" -> "packages/types"
+    "apps/driver-app" -> "packages/ui"
+
+    // ── packages/engine imports ───────────────────────────────────────────────
+    "packages/engine" -> "packages/db"
+    "packages/engine" -> "packages/types"
+    "packages/engine" -> "packages/notifications"
+
+    // ── packages/db imports ───────────────────────────────────────────────────
+    "packages/db" -> "packages/types"
+
+    // ── packages/auth imports ─────────────────────────────────────────────────
+    "packages/auth" -> "packages/db"
+    "packages/auth" -> "packages/types"
+
+    // ── packages/validation imports ───────────────────────────────────────────
+    "packages/validation" -> "packages/types"
+
+    // ── packages/notifications imports ────────────────────────────────────────
+    "packages/notifications" -> "packages/types"
+
+    // ── leaf packages (no internal deps) ─────────────────────────────────────
+    // packages/ui, packages/utils, packages/config → standalone
+}

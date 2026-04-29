@@ -1,0 +1,32 @@
+{
+  "detected_at": "2026-04-28T00:00:00Z",
+  "git_commit": "cc549db4fbad45091d7feff38bc54f318fb3166c",
+  "primary_languages": [
+    {"language": "TypeScript", "file_count": 172, "extensions": [".ts", ".tsx"]},
+    {"language": "JSON", "file_count": 678, "extensions": [".json"]},
+    {"language": "SQL", "file_count": 13, "extensions": [".sql"]},
+    {"language": "JavaScript", "file_count": 11, "extensions": [".js"]},
+    {"language": "CSS", "file_count": 4, "extensions": [".css"]}
+  ],
+  "frameworks": ["Next.js 14", "React 18", "Supabase", "Tailwind CSS"],
+  "build_tools": ["Turborepo", "pnpm"],
+  "package_managers": ["pnpm 9.15.0"],
+  "workspaces": [
+    {"path": "apps/web", "language": "TypeScript", "framework": "Next.js", "port": 3000, "description": "Customer marketplace"},
+    {"path": "apps/chef-admin", "language": "TypeScript", "framework": "Next.js", "port": 3001, "description": "Chef dashboard"},
+    {"path": "apps/ops-admin", "language": "TypeScript", "framework": "Next.js", "port": 3002, "description": "Operations admin"},
+    {"path": "apps/driver-app", "language": "TypeScript", "framework": "Next.js", "port": 3003, "description": "Driver PWA"},
+    {"path": "packages/db", "language": "TypeScript", "description": "Database clients and repositories"},
+    {"path": "packages/engine", "language": "TypeScript", "description": "Central business logic engine"},
+    {"path": "packages/auth", "language": "TypeScript", "description": "Authentication utilities"},
+    {"path": "packages/types", "language": "TypeScript", "description": "Shared TypeScript types"},
+    {"path": "packages/validation", "language": "TypeScript", "description": "Zod validation schemas"},
+    {"path": "packages/utils", "language": "TypeScript", "description": "Shared utilities"},
+    {"path": "packages/ui", "language": "TypeScript", "description": "Shared UI components"},
+    {"path": "packages/config", "language": "TypeScript", "description": "Shared configs (TS, Tailwind, ESLint)"},
+    {"path": "packages/notifications", "language": "TypeScript", "description": "Notification templates"}
+  ],
+  "excluded_globs": ["node_modules/", ".next/", "dist/", "build/", ".git/", "__pycache__/", "vendor/", "*.min.js", "graphify-out/", "out/", ".venv/", "venv/", "target/", ".nuxt/"],
+  "test_framework": "vitest (inferred from test file patterns)",
+  "test_paths": ["apps/web/__tests__/", "packages/engine/src/"]
+}

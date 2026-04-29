@@ -1,0 +1,76 @@
+flowchart TD
+    subgraph Clients["packages/db/src/clients"]
+        BC["createBrowserClient()\nsupabase-js (anon key)\nClient-side SSR"]
+        SC["createServerClient()\nsupabase-js (service key)\nServer Actions / API Routes"]
+        AC["createAdminClient()\nsupabase-js (service_role)\nAdmin / Engine operations"]
+    end
+
+    subgraph Repositories["packages/db/src/repositories"]
+        direction TB
+        subgraph Chef
+            ChefR["ChefsRepository\ncreate, findById\nfindByUserId, update\nlistStorefronts"]
+            StoreR["StorefrontsRepository\nfindBySlug, findNearby\nfindByChefId, upsert"]
+            MenuR["MenuItemsRepository\nlistByStorefront\ncreate, update\nfindById"]
+        end
+        subgraph Customer
+            CustR["CustomersRepository\nfindById, findByUserId\ncreate, update"]
+            CartR["CartRepository\ngetOrCreate, addItem\nupdateItem, clear\ncheckout"]
+            AddrR["AddressesRepository\nlistByCustomer\ncreate, setDefault"]
+        end
+        subgraph Order
+            OrderR["OrdersRepository\ncreate, findById\nupdateStatus\nlistByCustomer\nlistByChef"]
+            ReviewR["ReviewsRepository\ncreate, findByOrder\naverageByChef"]
+        end
+        subgraph Driver
+            DriverR["DriversRepository\nfindById, findNearby\nupdatePresence"]
+            DelivR["DeliveriesRepository\ncreate, assign\nupdateStatus\nfindByDriver"]
+            AttemptR["AssignmentAttemptsRepo\ncreate, accept, reject"]
+        end
+        subgraph Engine
+            LedgerR["LedgerRepository\ninsertEntry\ngetByOrder\ngetPayouts"]
+            EventR["DomainEventsRepository\npublish, listByAggregate"]
+            NotifR["NotificationsRepository\ncreate, markRead\nlistForUser"]
+            SLAR["SLARepository\nstartTimer, complete\ngetBreached"]
+            KQR["KitchenQueueRepository\nenqueue, dequeue\nlistByStorefront"]
+        end
+    end
+
+    subgraph Supabase["Supabase Platform"]
+        PG["PostgreSQL\n~50 tables\nRLS enabled"]
+        SBAUTH["Supabase Auth\nJWT / sessions"]
+        RT["Supabase Realtime\nPostgres changes"]
+        STORAGE["Supabase Storage\nImages / assets"]
+    end
+
+    %% Clients used by repositories
+    AC --> ChefR & StoreR & MenuR
+    AC --> OrderR & ReviewR
+    AC --> DriverR & DelivR & AttemptR
+    AC --> LedgerR & EventR & NotifR & SLAR & KQR
+    SC --> CustR & CartR & AddrR & OrderR & NotifR
+    BC --> StoreR & MenuR & NotifR
+
+    %% Repos → Supabase
+    ChefR & StoreR & MenuR --> PG
+    CustR & CartR & AddrR --> PG
+    OrderR & ReviewR --> PG
+    DriverR & DelivR & AttemptR --> PG
+    LedgerR & EventR & NotifR & SLAR & KQR --> PG
+
+    BC --> SBAUTH
+    SC --> SBAUTH
+
+    NotifR --> RT
+    DelivR --> RT
+    OrderR --> RT
+
+    StoreR --> STORAGE
+    MenuR --> STORAGE
+
+    style BC fill:#4A90D9,color:white
+    style SC fill:#4A90D9,color:white
+    style AC fill:#E74C3C,color:white
+    style PG fill:#3ECF8E,color:white
+    style SBAUTH fill:#3ECF8E,color:white
+    style RT fill:#3ECF8E,color:white
+    style STORAGE fill:#3ECF8E,color:white

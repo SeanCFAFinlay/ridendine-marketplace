@@ -1,0 +1,92 @@
+flowchart TD
+    subgraph Core["Core Infrastructure"]
+        EF["EngineFactory"]
+        EE["DomainEventEmitter"]
+        AL["AuditLogger"]
+        SM["SLAManager"]
+        NS["NotificationSender"]
+    end
+
+    subgraph Orchestrators["Orchestrators"]
+        OO["OrderOrchestrator"]
+        KE["KitchenEngine"]
+        DE["DispatchEngine"]
+        CE["CommerceLedgerEngine"]
+        SE["SupportEngine"]
+        PE["PlatformEngine"]
+        OEng["OpsEngine"]
+    end
+
+    subgraph Services["Legacy Services"]
+        OS["OrdersService"]
+        CS["ChefsService"]
+        CUS["CustomersService"]
+        PS["PermissionsService"]
+        SS["StorageService"]
+        DS["DispatchService"]
+    end
+
+    subgraph DB["@ridendine/db – Repositories"]
+        OR["OrdersRepo"]
+        CR["ChefsRepo"]
+        DR["DriversRepo"]
+        LR["LedgerRepo"]
+        KR["KitchenRepo"]
+        NR["NotificationsRepo"]
+        EVR["EventsRepo"]
+    end
+
+    %% Factory wires up all orchestrators
+    EF --> OO & KE & DE & CE & SE & PE & OEng
+
+    %% Orchestrators use core infra
+    OO --> EE & AL & SM & NS
+    KE --> EE & AL & SM
+    DE --> EE & AL & SM & NS
+    CE --> EE & AL
+    SE --> EE & AL & NS
+    PE --> AL
+    OEng --> EE & AL
+
+    %% Inter-orchestrator calls
+    OO -->|"submitToKitchen"| KE
+    OO -->|"authorizePayment"| CE
+    KE -->|"triggerDispatch"| DE
+    DE -->|"recordEarnings"| CE
+    OO -->|"createException"| SE
+
+    %% Orchestrators → repos
+    OO  --> OR & NR & EVR
+    KE  --> KR & EVR
+    DE  --> DR & NR & EVR
+    CE  --> LR & EVR
+    SE  --> OR & EVR
+    PE  --> NR & EVR
+    OEng --> OR & EVR
+
+    %% Legacy services (used by apps directly)
+    OS  --> OR
+    CS  --> CR
+    CUS --> CR
+    DS  --> DR
+    PS  --> CR
+
+    style EF fill:#50C878,color:white
+    style EE fill:#3B82F6,color:white
+    style AL fill:#6366F1,color:white
+    style SM fill:#8B5CF6,color:white
+    style NS fill:#F97316,color:white
+    style OO fill:#4A90D9,color:white
+    style KE fill:#4A90D9,color:white
+    style DE fill:#4A90D9,color:white
+    style CE fill:#4A90D9,color:white
+    style SE fill:#4A90D9,color:white
+    style PE fill:#4A90D9,color:white
+    style OEng fill:#4A90D9,color:white
+    style OR fill:#FFD700,color:black
+    style CR fill:#FFD700,color:black
+    style DR fill:#FFD700,color:black
+    style LR fill:#FFD700,color:black
+    style KR fill:#FFD700,color:black
+    style NR fill:#FFD700,color:black
+    style EVR fill:#FFD700,color:black

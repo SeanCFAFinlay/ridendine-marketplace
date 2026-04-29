@@ -1,0 +1,83 @@
+flowchart TD
+    subgraph Pages["Pages – apps/web/src/app"]
+        P1["/ (Home)"]
+        P2["/chefs"]
+        P3["/chefs/[slug]"]
+        P4["/cart"]
+        P5["/checkout"]
+        P6["/orders"]
+        P7["/orders/[id]"]
+        P8["/profile"]
+    end
+
+    subgraph API["API Routes – apps/web/src/app/api"]
+        A1["/api/auth/*"]
+        A2["/api/cart"]
+        A3["/api/checkout"]
+        A4["/api/orders/*"]
+        A5["/api/addresses"]
+        A6["/api/profile"]
+        A7["/api/webhooks/stripe"]
+        A8["/api/support"]
+        A9["/api/notifications/*"]
+    end
+
+    subgraph Deps["Package Dependencies"]
+        ENG["@ridendine/engine\nOrderOrchestrator\nCommerceLedgerEngine\nSupportEngine"]
+        DB["@ridendine/db\nStorefrontsRepo\nOrdersRepo\nCartRepo\nCustomersRepo\nNotificationsRepo"]
+        AUTH["@ridendine/auth\ngetSession()\nrequireAuth()"]
+        VAL["@ridendine/validation\nZod schemas"]
+        UI["@ridendine/ui\nComponents"]
+        TYPES["@ridendine/types"]
+    end
+
+    subgraph Ext["External"]
+        SUPA["Supabase\nRealtime Subscriptions"]
+        STRIPE["Stripe\nPaymentIntent\nWebhooks"]
+    end
+
+    %% Pages call API routes (server actions / fetch)
+    P4 --> A2
+    P5 --> A3
+    P6 & P7 --> A4
+    P8 --> A6
+
+    %% API routes → engine
+    A3 --> ENG
+    A4 --> ENG
+    A7 --> ENG
+    A8 --> ENG
+
+    %% API routes → db
+    A1 --> AUTH
+    A2 --> DB
+    A3 --> DB
+    A4 --> DB
+    A5 --> DB
+    A6 --> DB
+    A9 --> DB
+
+    %% Engine → db
+    ENG --> DB
+
+    %% DB → Supabase
+    DB --> SUPA
+
+    %% Checkout → Stripe
+    A3 --> STRIPE
+    A7 -.->|"webhook event"| STRIPE
+
+    %% Pages use shared packages
+    P1 & P2 & P3 --> DB
+    Pages --> UI
+    Pages --> TYPES
+    API --> VAL
+
+    style ENG fill:#50C878,color:white
+    style DB fill:#FFD700,color:black
+    style AUTH fill:#FF8C00,color:white
+    style VAL fill:#A0A0A0,color:white
+    style UI fill:#C084FC,color:white
+    style TYPES fill:#A0A0A0,color:white
+    style SUPA fill:#3ECF8E,color:white
+    style STRIPE fill:#635BFF,color:white

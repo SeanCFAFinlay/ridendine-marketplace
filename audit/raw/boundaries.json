@@ -1,0 +1,17 @@
+{
+  "ingress": [
+    {"kind": "http_api", "target": "Customer Web App", "source_files": ["apps/web/src/app/api/"], "config_keys": ["NEXT_PUBLIC_APP_URL"]},
+    {"kind": "http_api", "target": "Chef Admin App", "source_files": ["apps/chef-admin/src/app/api/"], "config_keys": ["NEXT_PUBLIC_CHEF_ADMIN_URL"]},
+    {"kind": "http_api", "target": "Ops Admin App", "source_files": ["apps/ops-admin/src/app/api/"], "config_keys": ["NEXT_PUBLIC_OPS_ADMIN_URL"]},
+    {"kind": "http_api", "target": "Driver App", "source_files": ["apps/driver-app/src/app/api/"], "config_keys": ["NEXT_PUBLIC_DRIVER_APP_URL"]},
+    {"kind": "webhook", "target": "Stripe Webhook", "source_files": ["apps/web/src/app/api/webhooks/stripe/route.ts"], "config_keys": ["STRIPE_WEBHOOK_SECRET"]}
+  ],
+  "egress": [
+    {"kind": "database", "target": "Supabase PostgreSQL", "source_files": ["packages/db/src/client/"], "config_keys": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"]},
+    {"kind": "auth_service", "target": "Supabase Auth", "source_files": ["packages/auth/src/"], "config_keys": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]},
+    {"kind": "realtime", "target": "Supabase Realtime", "source_files": ["packages/db/src/hooks/use-realtime.ts", "packages/engine/src/core/event-emitter.ts"], "config_keys": ["NEXT_PUBLIC_SUPABASE_URL"]},
+    {"kind": "payment", "target": "Stripe API (api.stripe.com)", "source_files": ["apps/web/src/app/api/checkout/route.ts", "apps/web/src/app/api/webhooks/stripe/route.ts", "apps/chef-admin/src/app/api/payouts/setup/route.ts", "apps/chef-admin/src/app/api/payouts/request/route.ts", "apps/ops-admin/src/app/api/orders/[id]/refund/route.ts"], "config_keys": ["STRIPE_SECRET_KEY", "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"]},
+    {"kind": "email", "target": "Resend (not integrated)", "source_files": [], "config_keys": ["RESEND_API_KEY"], "status": "commented_out"},
+    {"kind": "maps", "target": "Google Maps (not integrated)", "source_files": [], "config_keys": ["NEXT_PUBLIC_GOOGLE_MAPS_API_KEY"], "status": "commented_out"}
+  ]
+}

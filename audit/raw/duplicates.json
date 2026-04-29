@@ -1,0 +1,89 @@
+{
+  "exact_duplicates": [
+    {
+      "id": "DUP-001",
+      "type": "exact_code",
+      "files": [
+        "apps/web/src/components/auth/password-strength.tsx",
+        "apps/chef-admin/src/components/auth/password-strength.tsx"
+      ],
+      "description": "PasswordStrength component — identical implementation (90 LOC)",
+      "finding": "FND-001"
+    }
+  ],
+  "semantic_duplicates": [
+    {
+      "id": "DUP-002",
+      "type": "semantic",
+      "files": [
+        "apps/web/src/components/auth/auth-layout.tsx",
+        "apps/chef-admin/src/components/auth/auth-layout.tsx"
+      ],
+      "description": "AuthLayout wrappers — same structure, 6 LOC difference (gradient color, badge text)",
+      "finding": "FND-015"
+    },
+    {
+      "id": "DUP-003",
+      "type": "semantic",
+      "files": [
+        "apps/web/src/lib/engine.ts",
+        "apps/chef-admin/src/lib/engine.ts",
+        "apps/ops-admin/src/lib/engine.ts",
+        "apps/driver-app/src/lib/engine.ts"
+      ],
+      "description": "Engine client singleton wrappers — same getEngine() pattern, different actor context getters",
+      "finding": "FND-016"
+    }
+  ],
+  "duplicate_schema_definitions": [
+    {
+      "id": "DUP-004",
+      "type": "schema",
+      "entity": "promo_codes",
+      "migrations": ["00001_initial_schema.sql", "00004_additions.sql"],
+      "description": "Table defined twice with different column types (VARCHAR vs TEXT)",
+      "finding": "FND-002"
+    },
+    {
+      "id": "DUP-005",
+      "type": "schema",
+      "entity": "driver_locations",
+      "migrations": ["00001_initial_schema.sql", "00004_additions.sql"],
+      "description": "Table defined twice (00001 has more columns, 00004 is simpler version)",
+      "finding": "FND-002"
+    },
+    {
+      "id": "DUP-006",
+      "type": "schema",
+      "entity": "chef_payout_accounts",
+      "migrations": ["00001_initial_schema.sql", "00004_additions.sql"],
+      "description": "Table defined twice with different columns (VARCHAR vs TEXT, additional status columns in 00004)",
+      "finding": "FND-002"
+    },
+    {
+      "id": "DUP-007",
+      "type": "schema",
+      "entity": "platform_settings",
+      "migrations": ["00004_additions.sql", "00009_ops_admin_control_plane.sql", "00010_contract_drift_repair.sql"],
+      "description": "Table defined/altered in 3 migrations with conflicting schemas",
+      "finding": "FND-003"
+    }
+  ],
+  "duplicate_routes": [],
+  "duplicate_event_subscribers": [],
+  "duplicated_config_values": [
+    {
+      "id": "DUP-008",
+      "type": "config_value",
+      "value": "[43.2557, -79.8711]",
+      "files": [
+        "apps/web/src/components/tracking/order-tracking-map.tsx",
+        "apps/ops-admin/src/components/map/live-map.tsx",
+        "apps/ops-admin/src/components/map/delivery-map.tsx",
+        "apps/driver-app/src/components/map/route-map.tsx"
+      ],
+      "description": "Hamilton, ON default map center coordinates hardcoded in 4 files",
+      "finding": "FND-013"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "entry_points": [
+    {"id": "EP-001", "kind": "http_server", "path": "apps/web", "function": "next dev -p 3000", "invocation": "pnpm dev:web"},
+    {"id": "EP-002", "kind": "http_server", "path": "apps/chef-admin", "function": "next dev -p 3001", "invocation": "pnpm dev:chef"},
+    {"id": "EP-003", "kind": "http_server", "path": "apps/ops-admin", "function": "next dev -p 3002", "invocation": "pnpm dev:ops"},
+    {"id": "EP-004", "kind": "http_server", "path": "apps/driver-app", "function": "next dev -p 3003", "invocation": "pnpm dev:driver"},
+    {"id": "EP-005", "kind": "webhook", "path": "apps/web/src/app/api/webhooks/stripe/route.ts", "function": "POST handler", "invocation": "Stripe webhook callback"},
+    {"id": "EP-006", "kind": "middleware", "path": "apps/web/src/middleware.ts", "function": "createAuthMiddleware", "invocation": "Next.js middleware"},
+    {"id": "EP-007", "kind": "middleware", "path": "apps/chef-admin/src/middleware.ts", "function": "createAuthMiddleware", "invocation": "Next.js middleware"},
+    {"id": "EP-008", "kind": "middleware", "path": "apps/ops-admin/src/middleware.ts", "function": "createAuthMiddleware", "invocation": "Next.js middleware"},
+    {"id": "EP-009", "kind": "middleware", "path": "apps/driver-app/src/middleware.ts", "function": "createAuthMiddleware", "invocation": "Next.js middleware"}
+  ],
+  "note": "No cron jobs, lambda functions, CLI binaries, message consumers, or WebSocket servers detected. All real-time functionality uses Supabase Realtime (PostgreSQL LISTEN/NOTIFY)."
+}
