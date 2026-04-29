@@ -1,16 +1,19 @@
 // ==========================================
 // SLA PROCESSOR ENDPOINT
-// Called by external cron (Vercel/external) to process due SLA timers
-// FND-005 fix: automated SLA processing
+// Called by Vercel Cron every minute to process SLA timers
+// and enforce timeout automation.
 // ==========================================
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import { createCentralEngine } from '@ridendine/engine';
+import {
+  checkChefAcceptanceTimeout,
+  checkDriverAssignmentTimeout,
+  checkStalePreparingOrders,
+} from '@ridendine/engine';
 
 function validateProcessorToken(request: NextRequest): boolean {
-  // Support both Vercel Cron (Authorization: Bearer <CRON_SECRET>) and
-  // external cron (x-processor-token header)
   const vercelSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get('authorization');
   if (vercelSecret && authHeader === `Bearer ${vercelSecret}`) {
@@ -37,32 +40,81 @@ export async function POST(request: NextRequest) {
   try {
     const client = createAdminClient();
     const engine = createCentralEngine(client);
-
     const actor = { userId: 'system', role: 'system' as const };
 
-    const result = await engine.sla.processExpiredTimers(actor);
+    // Step 1: Process expired SLA timers (warnings + breaches)
+    const timerResult = await engine.sla.processExpiredTimers(actor);
 
-    // Flush any queued domain events
+    // Step 2: Auto-cancel orders where chef hasn't accepted within 5 minutes
+    let chefTimeoutsCancelled = 0;
+    const chefTimeouts = await checkChefAcceptanceTimeout(client, 5);
+    for (const v of chefTimeouts) {
+      try {
+        await engine.masterOrder.cancelOrder({
+          orderId: v.entityId,
+          actorId: 'system',
+          actorType: 'system',
+          reason: 'Chef acceptance timeout (5 min)',
+        });
+        chefTimeoutsCancelled++;
+      } catch {
+        console.warn(`[sla-processor] Failed to cancel order ${v.entityId}`);
+      }
+    }
+
+    // Step 3: Escalate deliveries with no driver assignment after 10 minutes
+    let driverEscalations = 0;
+    const driverTimeouts = await checkDriverAssignmentTimeout(client, 10);
+    for (const v of driverTimeouts) {
+      await client
+        .from('deliveries')
+        .update({ escalated_to_ops: true, updated_at: new Date().toISOString() })
+        .eq('id', v.entityId);
+
+      await client.from('system_alerts').insert({
+        alert_type: 'driver_assignment_timeout',
+        severity: 'error',
+        title: 'Driver assignment timeout',
+        message: `Delivery ${v.entityId} has no driver after ${v.elapsedMinutes} minutes.`,
+        entity_type: 'delivery',
+        entity_id: v.entityId,
+        metadata: { elapsedMinutes: v.elapsedMinutes },
+      });
+      driverEscalations++;
+    }
+
+    // Step 4: Alert on orders stuck in preparing > 45 minutes
+    let staleAlerts = 0;
+    const staleOrders = await checkStalePreparingOrders(client, 45);
+    for (const v of staleOrders) {
+      await client.from('system_alerts').insert({
+        alert_type: 'stale_preparing_order',
+        severity: 'warning',
+        title: 'Order stale in preparing state',
+        message: `Order ${v.entityId} has been preparing for ${v.elapsedMinutes} minutes.`,
+        entity_type: 'order',
+        entity_id: v.entityId,
+        metadata: { elapsedMinutes: v.elapsedMinutes },
+      });
+      staleAlerts++;
+    }
+
+    // Flush queued domain events
     await engine.events.flush();
 
     return NextResponse.json({
       success: true,
       data: {
         processedAt: new Date().toISOString(),
-        warnings: result.warnings.length,
-        breaches: result.breaches.length,
-        warningDetails: result.warnings.map((t) => ({
-          id: t.id,
-          type: t.type,
-          entityType: t.entityType,
-          entityId: t.entityId,
-        })),
-        breachDetails: result.breaches.map((t) => ({
-          id: t.id,
-          type: t.type,
-          entityType: t.entityType,
-          entityId: t.entityId,
-        })),
+        slaTimers: {
+          warnings: timerResult.warnings.length,
+          breaches: timerResult.breaches.length,
+        },
+        timeoutAutomation: {
+          chefTimeoutsCancelled,
+          driverEscalations,
+          staleAlerts,
+        },
       },
     });
   } catch (error) {
@@ -78,7 +130,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Also support GET for health checks
+// Health check
 export async function GET(request: NextRequest) {
   if (!validateProcessorToken(request)) {
     return NextResponse.json(
