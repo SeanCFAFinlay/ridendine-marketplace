@@ -2,6 +2,7 @@ import { Card } from '@ridendine/ui';
 import { createAdminClient, type SupabaseClient } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { EventMetrics } from './components/event-metrics';
+import { TrendCharts } from './components/trend-charts';
 
 export const dynamic = 'force-dynamic';
 
@@ -167,11 +168,11 @@ export default async function AnalyticsPage() {
         <div>
           <h1 className="text-3xl font-bold text-white">Analytics & Reports</h1>
           <p className="mt-1 text-gray-400">
-            Real current-state operational reporting from orders, governance, and
-            presence data. Advanced BI and trend exploration are not implemented
-            yet.
+            Historical trends, revenue analysis, and operational reporting.
           </p>
         </div>
+
+        <TrendCharts />
 
         <Card className="border-gray-800 bg-[#16213e] p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">Order Metrics</h2>
@@ -228,10 +229,9 @@ export default async function AnalyticsPage() {
             Reporting Scope
           </h2>
           <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4 text-sm text-gray-300">
-            This analytics surface currently reports live operational counts and
-            recent financial totals. Historical trend visualizations, cohort
-            analysis, and deep forecasting are still not implemented in the
-            current platform model.
+            This analytics surface reports live operational counts, recent
+            financial totals, and historical trend charts. Cohort analysis and
+            deep forecasting are not yet implemented.
           </div>
         </Card>
       </div>

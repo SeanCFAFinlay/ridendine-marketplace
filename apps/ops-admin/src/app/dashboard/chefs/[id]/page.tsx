@@ -15,11 +15,43 @@ async function getChefDetails(chefId: string) {
   return getChefGovernanceDetail(supabase, chefId);
 }
 
+async function getDeliveryZones(storefrontIds: string[]) {
+  if (storefrontIds.length === 0) return [];
+  const { createAdminClient } = await import('@ridendine/db');
+  const adminClient = createAdminClient() as any;
+  const { data } = await adminClient
+    .from('chef_delivery_zones')
+    .select('id, name, radius_km, delivery_fee, min_order_for_free_delivery, is_active, storefront_id')
+    .in('storefront_id', storefrontIds);
+  return data || [];
+}
+
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-500',
   approved: 'bg-green-500',
   rejected: 'bg-red-500',
   suspended: 'bg-orange-500',
+};
+
+type Storefront = {
+  id: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+  is_featured: boolean;
+  average_rating: number;
+  total_reviews: number;
+  cuisine_types: string[];
+};
+
+type DeliveryZone = {
+  id: string;
+  name: string;
+  radius_km: number;
+  delivery_fee: number;
+  min_order_for_free_delivery: number | null;
+  is_active: boolean;
+  storefront_id: string;
 };
 
 export default async function ChefDetailPage({ params }: { params: { id: string } }) {
@@ -30,16 +62,9 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
   }
 
   const chef = data;
-  const storefronts = chef.chef_storefronts as Array<{
-    id: string;
-    name: string;
-    slug: string;
-    is_active: boolean;
-    is_featured: boolean;
-    average_rating: number;
-    total_reviews: number;
-    cuisine_types: string[];
-  }> | null;
+  const storefronts = chef.chef_storefronts as Storefront[] | null;
+  const storefrontIds = (storefronts || []).map((s) => s.id);
+  const zones = (await getDeliveryZones(storefrontIds)) as DeliveryZone[];
 
   return (
     <DashboardLayout>
@@ -145,6 +170,52 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
             </div>
           ) : (
             <p className="text-gray-400">No storefronts created yet</p>
+          )}
+        </Card>
+
+        {/* Delivery Zones */}
+        <Card className="border-gray-800 bg-[#16213e] p-6 mt-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Delivery Zones</h3>
+          {zones.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-700 text-left">
+                    <th className="pb-3 text-gray-400 font-medium">Zone Name</th>
+                    <th className="pb-3 text-gray-400 font-medium">Storefront</th>
+                    <th className="pb-3 text-gray-400 font-medium">Radius (km)</th>
+                    <th className="pb-3 text-gray-400 font-medium">Delivery Fee</th>
+                    <th className="pb-3 text-gray-400 font-medium">Free Delivery Min</th>
+                    <th className="pb-3 text-gray-400 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800">
+                  {zones.map((zone) => {
+                    const sf = (storefronts || []).find((s) => s.id === zone.storefront_id);
+                    return (
+                      <tr key={zone.id}>
+                        <td className="py-3 text-white">{zone.name}</td>
+                        <td className="py-3 text-gray-300">{sf?.name || zone.storefront_id}</td>
+                        <td className="py-3 text-gray-300">{zone.radius_km}</td>
+                        <td className="py-3 text-gray-300">${zone.delivery_fee.toFixed(2)}</td>
+                        <td className="py-3 text-gray-300">
+                          {zone.min_order_for_free_delivery != null
+                            ? `$${zone.min_order_for_free_delivery.toFixed(2)}`
+                            : 'N/A'}
+                        </td>
+                        <td className="py-3">
+                          <Badge className={zone.is_active ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'}>
+                            {zone.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-400">No delivery zones configured</p>
           )}
         </Card>
 
