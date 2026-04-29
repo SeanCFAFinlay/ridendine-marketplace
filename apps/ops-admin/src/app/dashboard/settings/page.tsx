@@ -2,6 +2,7 @@ import { Badge, Card } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { getEngine, getOpsActorContext, hasRequiredRole } from '@/lib/engine';
 import { SettingsForm } from './settings-form';
+import { MaintenanceToggle } from './maintenance-toggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,8 @@ export default async function SettingsPage() {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-6xl space-y-6">
+        <MaintenanceToggle />
+
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Platform Rules</h1>
