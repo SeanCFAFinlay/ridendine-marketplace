@@ -4,6 +4,7 @@ import { createServerClient } from '@ridendine/db';
 import { Button, Card } from '@ridendine/ui';
 import { Header } from '@/components/layout/header';
 import { LiveOrderTracker } from '@/components/tracking/live-order-tracker';
+import { ReviewForm } from '@/components/reviews/review-form';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -124,6 +125,13 @@ export default async function OrderConfirmationPage({ params }: Props) {
             estimatedDeliveryMinutes={estimatedDeliveryMinutes}
             storefrontName={storefrontName}
           />
+
+          {/* Review form for delivered/completed orders */}
+          {(typedOrder.status === 'delivered' || typedOrder.status === 'completed') && (
+            <div className="mt-6">
+              <ReviewForm orderId={typedOrder.id} />
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">

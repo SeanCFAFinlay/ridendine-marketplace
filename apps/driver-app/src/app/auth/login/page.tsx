@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button, Input } from '@ridendine/ui';
 
@@ -114,9 +115,9 @@ export default function DriverLoginPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
               Want to become a driver?{' '}
-              <a href="https://ridendine.ca/driver-signup" className="font-medium text-[#E85D26] hover:text-[#d44e1e]">
+              <Link href="/auth/signup" className="font-medium text-[#E85D26] hover:text-[#d44e1e]">
                 Apply here
-              </a>
+              </Link>
             </p>
           </div>
         </div>
