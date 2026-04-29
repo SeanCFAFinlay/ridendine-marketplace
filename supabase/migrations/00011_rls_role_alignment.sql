@@ -47,18 +47,25 @@ CREATE POLICY "Ops can read all payout accounts" ON chef_payout_accounts
     )
   );
 
--- chef_payouts: allow finance/ops to read all
-DROP POLICY IF EXISTS "Ops can read all chef payouts" ON chef_payouts;
-CREATE POLICY "Ops can read all chef payouts" ON chef_payouts
-  FOR SELECT TO authenticated USING (
-    chef_id IN (SELECT id FROM chef_profiles WHERE user_id = auth.uid())
-    OR EXISTS (
-      SELECT 1 FROM platform_users
-      WHERE user_id = auth.uid()
-      AND role IN ('ops_admin', 'ops_agent', 'ops_manager', 'finance_admin', 'super_admin')
-      AND is_active = true
-    )
-  );
+-- chef_payouts: allow finance/ops to read all (only if table exists)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'chef_payouts' AND table_schema = 'public') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Ops can read all chef payouts" ON chef_payouts';
+    EXECUTE $policy$
+      CREATE POLICY "Ops can read all chef payouts" ON chef_payouts
+        FOR SELECT TO authenticated USING (
+          chef_id IN (SELECT id FROM chef_profiles WHERE user_id = auth.uid())
+          OR EXISTS (
+            SELECT 1 FROM platform_users
+            WHERE user_id = auth.uid()
+            AND role IN ('ops_admin', 'ops_agent', 'ops_manager', 'finance_admin', 'super_admin')
+            AND is_active = true
+          )
+        )
+    $policy$;
+  END IF;
+END $$;
 
 -- notifications: allow system/ops to insert for any user
 DROP POLICY IF EXISTS "System can insert notifications" ON notifications;
