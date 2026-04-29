@@ -3,9 +3,9 @@
 // Tests for createAuthMiddleware factory
 // ==========================================
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
-// Mock next/server before any imports
+// Mock next/server — hoisted before any imports
 vi.mock('next/server', () => {
   const NextResponse = {
     next: vi.fn((_opts?: unknown) => ({ type: 'next' })),
@@ -14,14 +14,23 @@ vi.mock('next/server', () => {
   return { NextResponse };
 });
 
-// Mock @supabase/ssr — session is null by default
+// Mock @supabase/ssr — default: no session
 vi.mock('@supabase/ssr', () => ({
-  createServerClient: vi.fn(() => ({
-    auth: {
-      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
-    },
-  })),
+  createServerClient: vi.fn(() => makeSupabaseClient(null)),
 }));
+
+// Import mocked modules at module scope so the same instances are used throughout
+import { NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { createAuthMiddleware } from './middleware';
+
+function makeSupabaseClient(session: unknown) {
+  return {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session } }),
+    },
+  };
+}
 
 function createMockRequest(pathname: string) {
   const url = new URL(`http://localhost:3000${pathname}`);
@@ -37,20 +46,26 @@ function createMockRequest(pathname: string) {
 }
 
 describe('createAuthMiddleware', () => {
+  const originalEnv = { ...process.env };
+
   beforeEach(() => {
-    vi.resetModules();
     vi.clearAllMocks();
+    // Restore default: no session
+    vi.mocked(createServerClient).mockImplementation(() => makeSupabaseClient(null) as any);
+    process.env = { ...originalEnv };
     delete process.env.BYPASS_AUTH;
-    delete (process.env as any).NODE_ENV;
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
   });
 
   // ---- BYPASS_AUTH guard ----
 
   it('throws in production when BYPASS_AUTH=true', async () => {
     process.env.BYPASS_AUTH = 'true';
-    (process.env as any).NODE_ENV = 'production';
+    process.env.NODE_ENV = 'production';
 
-    const { createAuthMiddleware } = await import('./middleware');
     const middleware = createAuthMiddleware({
       publicRoutes: ['/auth/login'],
       loginRoute: '/auth/login',
@@ -62,12 +77,9 @@ describe('createAuthMiddleware', () => {
     );
   });
 
-  it('allows bypass in development without calling Supabase', async () => {
+  it('allows bypass in development — returns next() immediately', async () => {
     process.env.BYPASS_AUTH = 'true';
-    (process.env as any).NODE_ENV = 'development';
-
-    const { createAuthMiddleware } = await import('./middleware');
-    const { NextResponse } = await import('next/server');
+    process.env.NODE_ENV = 'development';
 
     const middleware = createAuthMiddleware({
       publicRoutes: ['/auth/login'],
@@ -76,15 +88,12 @@ describe('createAuthMiddleware', () => {
 
     const request = createMockRequest('/dashboard');
     const result = await middleware(request);
-    expect(result).toEqual({ type: 'next' });
-    expect(NextResponse.next).toHaveBeenCalled();
+    expect((result as any).type).toBe('next');
   });
 
   // ---- Public routes ----
 
-  it('allows public routes without session — does not redirect', async () => {
-    const { createAuthMiddleware } = await import('./middleware');
-
+  it('allows public routes without session — does not redirect to login', async () => {
     const middleware = createAuthMiddleware({
       publicRoutes: ['/auth/login'],
       loginRoute: '/auth/login',
@@ -92,16 +101,15 @@ describe('createAuthMiddleware', () => {
 
     const request = createMockRequest('/auth/login');
     const result = await middleware(request);
-    // Result must be truthy; specifically must NOT be a redirect to login
+
+    // Must not be a redirect to the login route
     expect(result).toBeDefined();
     if ((result as any).type === 'redirect') {
       expect((result as any).url).not.toContain('/auth/login');
     }
   });
 
-  it('allows a nested public route path', async () => {
-    const { createAuthMiddleware } = await import('./middleware');
-
+  it('allows a nested public route path without redirect', async () => {
     const middleware = createAuthMiddleware({
       publicRoutes: ['/auth'],
       loginRoute: '/auth/login',
@@ -109,6 +117,7 @@ describe('createAuthMiddleware', () => {
 
     const request = createMockRequest('/auth/signup');
     const result = await middleware(request);
+
     expect(result).toBeDefined();
     if ((result as any).type === 'redirect') {
       expect((result as any).url).not.toContain('/auth/login');
@@ -118,9 +127,6 @@ describe('createAuthMiddleware', () => {
   // ---- Protected routes (default protection mode) ----
 
   it('redirects unauthenticated user accessing protected route to login', async () => {
-    const { createAuthMiddleware } = await import('./middleware');
-    const { NextResponse } = await import('next/server');
-
     const middleware = createAuthMiddleware({
       publicRoutes: ['/auth/login'],
       loginRoute: '/auth/login',
@@ -129,14 +135,12 @@ describe('createAuthMiddleware', () => {
     const request = createMockRequest('/dashboard');
     const result = await middleware(request);
 
-    expect(NextResponse.redirect).toHaveBeenCalled();
     expect((result as any).type).toBe('redirect');
     expect((result as any).url).toContain('/auth/login');
+    expect(NextResponse.redirect).toHaveBeenCalled();
   });
 
   it('adds redirect query param when bouncing unauthenticated user', async () => {
-    const { createAuthMiddleware } = await import('./middleware');
-
     const middleware = createAuthMiddleware({
       publicRoutes: ['/auth/login'],
       loginRoute: '/auth/login',
@@ -147,25 +151,17 @@ describe('createAuthMiddleware', () => {
 
     const resultUrl = (result as any).url as string;
     expect(resultUrl).toContain('redirect=');
-    // The pathname is URL-encoded in the query string
+    // Pathname is URL-encoded in the query string
     expect(decodeURIComponent(resultUrl)).toContain('/orders/123');
   });
 
   // ---- Auth routes — authenticated users redirected away ----
 
-  it('redirects authenticated user away from auth routes', async () => {
-    // Override @supabase/ssr to return a session for this test
-    const { createServerClient } = await import('@supabase/ssr');
-    (createServerClient as any).mockReturnValue({
-      auth: {
-        getSession: vi.fn().mockResolvedValue({
-          data: { session: { user: { id: 'user-abc' } } },
-        }),
-      },
-    });
-
-    const { createAuthMiddleware } = await import('./middleware');
-    const { NextResponse } = await import('next/server');
+  it('redirects authenticated user away from auth routes to authenticatedRedirect', async () => {
+    // Set up a session for this test
+    vi.mocked(createServerClient).mockImplementation(
+      () => makeSupabaseClient({ user: { id: 'user-abc' } }) as any
+    );
 
     const middleware = createAuthMiddleware({
       publicRoutes: ['/auth/login'],
@@ -177,34 +173,29 @@ describe('createAuthMiddleware', () => {
     const request = createMockRequest('/auth/login');
     const result = await middleware(request);
 
-    expect(NextResponse.redirect).toHaveBeenCalled();
     expect((result as any).type).toBe('redirect');
     expect((result as any).url).toContain('/dashboard');
+    expect(NextResponse.redirect).toHaveBeenCalled();
   });
 
   // ---- Selective protection mode (protectedRoutes) ----
 
   it('allows unauthenticated user on non-protected route in selective mode', async () => {
-    const { createAuthMiddleware } = await import('./middleware');
-    const { NextResponse } = await import('next/server');
-
     const middleware = createAuthMiddleware({
       publicRoutes: ['/auth/login'],
       loginRoute: '/auth/login',
       protectedRoutes: ['/account', '/orders'],
     });
 
-    // '/' is not in protectedRoutes — should pass through
+    // '/' is not in protectedRoutes — should pass through without redirect
     const request = createMockRequest('/');
-    await middleware(request);
+    const result = await middleware(request);
 
-    // Should NOT have called redirect
+    expect((result as any).type).not.toBe('redirect');
     expect(NextResponse.redirect).not.toHaveBeenCalled();
   });
 
   it('redirects unauthenticated user on protected route in selective mode', async () => {
-    const { createAuthMiddleware } = await import('./middleware');
-
     const middleware = createAuthMiddleware({
       publicRoutes: ['/auth/login'],
       loginRoute: '/auth/login',
@@ -214,7 +205,6 @@ describe('createAuthMiddleware', () => {
     const request = createMockRequest('/account/settings');
     const result = await middleware(request);
 
-    // Middleware must redirect (type = 'redirect') to the login route
     expect((result as any).type).toBe('redirect');
     expect((result as any).url).toContain('/auth/login');
   });
