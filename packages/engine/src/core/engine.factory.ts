@@ -8,6 +8,7 @@ import { DomainEventEmitter, createEventEmitter } from './event-emitter';
 import { AuditLogger, createAuditLogger } from './audit-logger';
 import { SLAManager, createSLAManager } from './sla-manager';
 import { NotificationSender, createNotificationSender } from './notification-sender';
+import { createResendProvider } from './email-provider';
 import { OrderOrchestrator, createOrderOrchestrator, type PaymentAdapter } from '../orchestrators/order.orchestrator';
 import { KitchenEngine, createKitchenEngine } from '../orchestrators/kitchen.engine';
 import { DispatchEngine, createDispatchEngine } from '../orchestrators/dispatch.engine';
@@ -50,6 +51,9 @@ export function createCentralEngine(
   const audit = createAuditLogger(client);
   const sla = createSLAManager(client, events);
   const notifications = createNotificationSender(client);
+
+  // Register email provider (only active when RESEND_API_KEY is set)
+  notifications.registerProvider(createResendProvider());
 
   // Create domain orchestrators
   const orders = createOrderOrchestrator(client, events, audit, sla, undefined, paymentAdapter);

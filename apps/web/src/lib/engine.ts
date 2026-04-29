@@ -6,6 +6,11 @@
 import { createServerClient, createAdminClient } from '@ridendine/db';
 import type { ActorContext } from '@ridendine/types';
 import { cookies } from 'next/headers';
+import { registerPaymentAdapter } from '@ridendine/engine';
+import { stripePaymentAdapter } from './stripe-adapter';
+
+// Wire Stripe adapter so engine can void payments on reject/cancel
+registerPaymentAdapter(stripePaymentAdapter);
 
 // Re-export shared helpers so existing imports don't break
 export { getAdminEngine as getEngine, errorResponse, successResponse } from '@ridendine/engine';

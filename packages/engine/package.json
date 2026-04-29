@@ -32,7 +32,8 @@
     "@ridendine/types": "workspace:*",
     "@ridendine/utils": "workspace:*",
     "@ridendine/validation": "workspace:*",
-    "@supabase/supabase-js": "^2.45.0"
+    "@supabase/supabase-js": "^2.45.0",
+    "resend": "^4.0.0"
   },
   "peerDependencies": {
     "next": "^14.0.0"
