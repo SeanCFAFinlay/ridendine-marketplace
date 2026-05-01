@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export default async function SettingsPage() {
   const actor = await getOpsActorContext();
   const rules = await getEngine().ops.getPlatformRules();
-  const canEdit = !!actor && hasRequiredRole(actor, ['ops_manager', 'super_admin']);
+  const canEdit = !!actor && hasRequiredRole(actor, ['super_admin']);
 
   return (
     <DashboardLayout>

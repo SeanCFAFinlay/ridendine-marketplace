@@ -4,16 +4,13 @@
 // Tier 1: Wire Stripe void/cancel on order rejection/cancellation
 // ==========================================
 
-import Stripe from 'stripe';
 import type { PaymentAdapter } from '@ridendine/engine';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia' as any,
-});
+import { getStripeClient } from '@ridendine/engine';
 
 export const stripePaymentAdapter: PaymentAdapter = {
   async cancelPaymentIntent(paymentIntentId: string): Promise<{ cancelled: boolean; status: string }> {
     try {
+      const stripe = getStripeClient();
       const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
 
       // Already cancelled or fully refunded

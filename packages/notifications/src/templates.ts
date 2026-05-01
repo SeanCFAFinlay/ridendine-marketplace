@@ -39,6 +39,16 @@ const templates: Record<NotificationType, (params: TemplateParams) => Notificati
     body: `Your order #${params.orderNumber} has been delivered. Enjoy your meal!`,
   }),
 
+  order_cancelled: (params) => ({
+    title: 'Order Cancelled',
+    body: `Your order #${params.orderNumber} has been cancelled. ${params.reason || ''}`,
+  }),
+
+  refund_processed: (params) => ({
+    title: 'Refund Processed',
+    body: `Your refund of $${Number(params.amount).toFixed(2)} for order #${params.orderNumber} has been processed.`,
+  }),
+
   delivery_offer: (params) => ({
     title: 'New Delivery Available',
     body: `New delivery offer: ${params.distance} km for $${params.earnings}`,

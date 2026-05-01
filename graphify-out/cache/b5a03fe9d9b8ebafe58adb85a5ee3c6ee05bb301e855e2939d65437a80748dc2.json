@@ -1,0 +1,1 @@
+{"nodes": [{"id": "no_unnecessary_parameter_property_assignment_d", "label": "no-unnecessary-parameter-property-assignment.d.ts", "file_type": "code", "source_file": "node_modules\\@typescript-eslint\\eslint-plugin\\dist\\rules\\no-unnecessary-parameter-property-assignment.d.ts", "source_location": "L1"}], "edges": []}

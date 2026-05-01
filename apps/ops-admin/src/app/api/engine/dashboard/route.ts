@@ -9,6 +9,8 @@ import {
   getEngine,
   getOpsActorContext,
   errorResponse,
+  finalizeOpsActor,
+  guardPlatformApi,
   successResponse,
 } from '@/lib/engine';
 
@@ -20,9 +22,8 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
+  const denied = guardPlatformApi(actor, 'dashboard_read');
+  if (denied) return denied;
 
   const { searchParams } = new URL(request.url);
   const today = new Date().toISOString().substring(0, 10);
@@ -114,9 +115,8 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'dashboard_actions'));
+  if (opsActor instanceof Response) return opsActor;
 
   const body = await request.json();
   const { action, ...actionParams } = body;
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
         .from('system_alerts')
         .update({
           acknowledged: true,
-          acknowledged_by: actor.userId,
+          acknowledged_by: opsActor.userId,
           acknowledged_at: new Date().toISOString(),
         })
         .eq('id', actionParams.alertId);
@@ -142,12 +142,12 @@ export async function POST(request: NextRequest) {
     }
 
     case 'process_expired_offers': {
-      const processed = await engine.dispatch.processExpiredOffers(actor);
+      const processed = await engine.dispatch.processExpiredOffers(opsActor);
       return successResponse({ processedCount: processed });
     }
 
     case 'process_sla_timers': {
-      const { warnings, breaches } = await engine.sla.processExpiredTimers(actor);
+      const { warnings, breaches } = await engine.sla.processExpiredTimers(opsActor);
       return successResponse({
         warningsCount: warnings.length,
         breachesCount: breaches.length,

@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, getOrderById, type SupabaseClient } from '@ridendine/db';
-import { getEngine, getOpsActorContext, errorResponse } from '@/lib/engine';
+import {
+  evaluateRateLimit,
+  RATE_LIMIT_POLICIES,
+  rateLimitPolicyResponse,
+} from '@ridendine/utils';
+import {
+  finalizeOpsActor,
+  getEngine,
+  getOpsActorContext,
+  guardPlatformApi,
+} from '@/lib/engine';
 import type { OrderCancelReason, OrderRejectReason } from '@ridendine/types';
 
 export const dynamic = 'force-dynamic';
@@ -11,9 +21,8 @@ export async function GET(
 ) {
   try {
     const actor = await getOpsActorContext();
-    if (!actor) {
-      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
-    }
+    const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'ops_orders_read'));
+    if (opsActor instanceof Response) return opsActor;
 
     const { id } = await params;
     const supabase = createAdminClient() as unknown as SupabaseClient;
@@ -39,9 +48,17 @@ export async function PATCH(
 ) {
   try {
     const actor = await getOpsActorContext();
-    if (!actor) {
-      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
-    }
+    const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'ops_orders_write'));
+    if (opsActor instanceof Response) return opsActor;
+
+    const limit = await evaluateRateLimit({
+      request,
+      policy: RATE_LIMIT_POLICIES.opsAdminMutation,
+      namespace: 'ops-orders-patch',
+      userId: opsActor.userId,
+      routeKey: 'PATCH:/api/orders/[id]',
+    });
+    if (!limit.allowed) return rateLimitPolicyResponse(limit);
 
     const { id } = await params;
     const body = await request.json();
@@ -68,7 +85,7 @@ export async function PATCH(
 
       switch (mapped.action) {
         case 'accept': {
-          const result = await engine.orders.acceptOrder(id, 20, actor);
+          const result = await engine.orders.acceptOrder(id, 20, opsActor);
           if (!result.success) {
             return NextResponse.json({ error: result.error?.message || 'Failed to accept order' }, { status: 400 });
           }
@@ -79,7 +96,7 @@ export async function PATCH(
             id,
             (mapped.extra?.reason as OrderRejectReason | undefined) || 'other',
             mapped.extra?.notes as string | undefined,
-            actor
+            opsActor
           );
           if (!result.success) {
             return NextResponse.json({ error: result.error?.message || 'Failed to reject order' }, { status: 400 });
@@ -87,14 +104,14 @@ export async function PATCH(
           return NextResponse.json({ data: result.data });
         }
         case 'start_preparing': {
-          const result = await engine.orders.startPreparing(id, actor);
+          const result = await engine.orders.startPreparing(id, opsActor);
           if (!result.success) {
             return NextResponse.json({ error: result.error?.message || 'Failed to start preparing' }, { status: 400 });
           }
           return NextResponse.json({ data: result.data });
         }
         case 'mark_ready': {
-          const result = await engine.platform.markOrderReady(id, actor);
+          const result = await engine.platform.markOrderReady(id, opsActor);
           if (!result.success) {
             return NextResponse.json({ error: result.error?.message || 'Failed to mark ready' }, { status: 400 });
           }
@@ -105,7 +122,7 @@ export async function PATCH(
             id,
             (mapped.extra?.reason as OrderCancelReason | undefined) || 'ops_override',
             mapped.extra?.notes as string | undefined,
-            actor
+            opsActor
           );
           if (!result.success) {
             return NextResponse.json({ error: result.error?.message || 'Failed to cancel order' }, { status: 400 });
@@ -113,7 +130,7 @@ export async function PATCH(
           return NextResponse.json({ data: result.data });
         }
         case 'complete': {
-          const result = await engine.orders.completeOrder(id, actor);
+          const result = await engine.orders.completeOrder(id, opsActor);
           if (!result.success) {
             return NextResponse.json({ error: result.error?.message || 'Failed to complete order' }, { status: 400 });
           }

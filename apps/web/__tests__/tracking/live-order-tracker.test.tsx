@@ -78,6 +78,9 @@ const mockSupabase = {
 
 jest.mock('@ridendine/db', () => ({
   createBrowserClient: jest.fn(() => mockSupabase),
+  /** Match `packages/db` realtime helpers used by LiveOrderTracker */
+  deliveryTrackingChannelLegacy: (deliveryId: string) => `tracking:${deliveryId}`,
+  entityDeliveryChannel: (deliveryId: string) => `entity:delivery:${deliveryId}`,
 }));
 
 // Mock @ridendine/ui

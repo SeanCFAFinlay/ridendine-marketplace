@@ -4,6 +4,7 @@
 // Supports database notifications (always) and external
 // delivery providers (email/SMS) when configured.
 // FND-006 fix: delivery abstraction layer
+// Phase 12: optional dedupe when order_id / delivery_id present in additionalData
 // ==========================================
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -41,21 +42,49 @@ export class NotificationSender {
   registerProvider(provider: NotificationDeliveryProvider): void {
     this.providers.push(provider);
     const available = provider.isAvailable();
-    console.log(JSON.stringify({
-      timestamp: new Date().toISOString(),
-      level: 'info',
-      message: `Notification provider registered: ${provider.name}`,
-      available,
-    }));
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: 'info',
+        message: `Notification provider registered: ${provider.name}`,
+        available,
+      })
+    );
   }
 
   async send(
     type: NotificationType,
     userId: string,
     params: Record<string, string | number> = {},
-    additionalData?: Record<string, unknown>,
+    additionalData?: Record<string, unknown>
   ): Promise<void> {
-    const payload = createNotification(type, userId, params, additionalData);
+    let mergedAdditional = additionalData ? { ...additionalData } : undefined;
+
+    try {
+      const dedupePart =
+        typeof mergedAdditional?.order_id === 'string'
+          ? mergedAdditional.order_id
+          : typeof mergedAdditional?.delivery_id === 'string'
+            ? mergedAdditional.delivery_id
+            : null;
+      if (dedupePart) {
+        const dedupeKey = `${String(type)}:${userId}:${dedupePart}`;
+        const { data: existing } = await (this.client as any)
+          .from('notifications')
+          .select('id')
+          .eq('user_id', userId)
+          .contains('data', { dedupe_key: dedupeKey })
+          .maybeSingle();
+        if (existing?.id) {
+          return;
+        }
+        mergedAdditional = { ...mergedAdditional, dedupe_key: dedupeKey };
+      }
+    } catch {
+      /* dedupe probe is best-effort; never block sends */
+    }
+
+    const payload = createNotification(type, userId, params, mergedAdditional);
 
     // Step 1: Always write to database (primary delivery channel)
     try {
@@ -65,15 +94,18 @@ export class NotificationSender {
         title: payload.title,
         body: payload.body,
         data: payload.data || null,
+        is_read: false,
       });
     } catch (err) {
-      console.error(JSON.stringify({
-        timestamp: new Date().toISOString(),
-        level: 'error',
-        message: 'Failed to send database notification',
-        context: { type, userId },
-        error: err instanceof Error ? err.message : String(err),
-      }));
+      console.error(
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: 'error',
+          message: 'Failed to send database notification',
+          context: { type, userId },
+          error: err instanceof Error ? err.message : String(err),
+        })
+      );
       // Database notification failed — still try external providers
     }
 
@@ -91,22 +123,26 @@ export class NotificationSender {
         });
 
         if (!result.delivered) {
-          console.warn(JSON.stringify({
-            timestamp: new Date().toISOString(),
-            level: 'warn',
-            message: `External notification not delivered via ${provider.name}`,
-            context: { type, userId },
-            error: result.error,
-          }));
+          console.warn(
+            JSON.stringify({
+              timestamp: new Date().toISOString(),
+              level: 'warn',
+              message: `External notification not delivered via ${provider.name}`,
+              context: { type, userId },
+              error: result.error,
+            })
+          );
         }
       } catch (err) {
-        console.error(JSON.stringify({
-          timestamp: new Date().toISOString(),
-          level: 'error',
-          message: `External notification provider ${provider.name} threw`,
-          context: { type, userId },
-          error: err instanceof Error ? err.message : String(err),
-        }));
+        console.error(
+          JSON.stringify({
+            timestamp: new Date().toISOString(),
+            level: 'error',
+            message: `External notification provider ${provider.name} threw`,
+            context: { type, userId },
+            error: err instanceof Error ? err.message : String(err),
+          })
+        );
       }
     }
   }

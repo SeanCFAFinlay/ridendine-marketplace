@@ -142,20 +142,29 @@ export async function getOpsActorContext(): Promise<ActorContext | null> {
     .from('platform_users')
     .select('id, role')
     .eq('user_id', user.id)
+    .eq('is_active', true)
     .single();
   if (!platformUser) return null;
 
   const roleMap: Record<string, ActorRole> = {
-    ops_admin: 'ops_agent',
+    ops_admin: 'ops_admin',
     ops_agent: 'ops_agent',
     ops_manager: 'ops_manager',
     finance_admin: 'finance_admin',
+    finance_manager: 'finance_manager',
     super_admin: 'super_admin',
+    support: 'support_agent',
+    support_agent: 'support_agent',
   };
+
+  const mappedRole = roleMap[platformUser.role as string];
+  if (!mappedRole) {
+    return null;
+  }
 
   return {
     userId: user.id,
-    role: roleMap[platformUser.role] || 'ops_agent',
+    role: mappedRole,
     entityId: platformUser.id,
     sessionId: user.id,
   };
@@ -202,3 +211,9 @@ export async function verifyMenuItemOwnership(storefrontId: string, menuItemId: 
     .single();
   return data?.storefront_id === storefrontId;
 }
+
+export {
+  guardPlatformApi,
+  hasPlatformApiCapability,
+  type PlatformApiCapability,
+} from './services/platform-api-guards';

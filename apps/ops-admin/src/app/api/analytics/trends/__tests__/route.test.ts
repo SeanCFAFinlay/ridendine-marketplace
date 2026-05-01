@@ -4,9 +4,23 @@
  */
 
 // Mock dependencies before importing
-jest.mock('@/lib/engine', () => ({
-  getOpsActorContext: jest.fn(),
-}));
+jest.mock('@/lib/engine', () => {
+  const { NextResponse } = require('next/server');
+  return {
+    getOpsActorContext: jest.fn(),
+    guardPlatformApi: jest.fn((actor: unknown) =>
+      actor
+        ? null
+        : NextResponse.json(
+            {
+              success: false,
+              error: { code: 'UNAUTHORIZED', message: 'Not authenticated' },
+            },
+            { status: 401 }
+          )
+    ),
+  };
+});
 
 const mockFrom = jest.fn();
 jest.mock('@ridendine/db', () => ({
@@ -67,12 +81,9 @@ describe('GET /api/analytics/trends', () => {
   it('returns 401 when actor is null', async () => {
     (getOpsActorContext as jest.Mock).mockResolvedValue(null);
 
-    await GET(makeRequest());
+    const res = await GET(makeRequest());
 
-    expect(NextResponse.json).toHaveBeenCalledWith(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
+    expect(res.status).toBe(401);
   });
 
   it('returns trend data with correct shape when authorized', async () => {

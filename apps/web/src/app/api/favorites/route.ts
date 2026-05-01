@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createAdminClient, createServerClient } from '@ridendine/db';
 import { cookies } from 'next/headers';
+import { isUuid } from '@ridendine/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,12 @@ export async function POST(request: NextRequest) {
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { storefrontId } = await request.json();
-  if (!storefrontId) return Response.json({ error: 'storefrontId required' }, { status: 400 });
+  if (!storefrontId || typeof storefrontId !== 'string') {
+    return Response.json({ error: 'storefrontId required' }, { status: 400 });
+  }
+  if (!isUuid(storefrontId)) {
+    return Response.json({ error: 'Invalid storefrontId' }, { status: 400 });
+  }
 
   const adminClient = createAdminClient() as any;
   const { data: customer } = await adminClient.from('customers').select('id').eq('user_id', user.id).single();

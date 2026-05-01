@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getEngine, getOpsActorContext, errorResponse } from '@/lib/engine';
+import {
+  finalizeOpsActor,
+  getEngine,
+  getOpsActorContext,
+  guardPlatformApi,
+} from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,16 +14,15 @@ export async function PATCH(
 ) {
   try {
     const actor = await getOpsActorContext();
-    if (!actor) {
-      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
-    }
+    const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'deliveries_write'));
+    if (opsActor instanceof Response) return opsActor;
 
     const { id } = await params;
     const body = await request.json();
     const engine = getEngine();
 
     if (body.driverId) {
-      const result = await engine.dispatch.manualAssign(id, body.driverId, actor);
+      const result = await engine.dispatch.manualAssign(id, body.driverId, opsActor);
       if (!result.success) {
         return NextResponse.json({ error: result.error?.message || 'Failed to assign driver' }, { status: 400 });
       }

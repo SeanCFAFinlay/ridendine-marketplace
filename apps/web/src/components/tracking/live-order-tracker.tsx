@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Card } from '@ridendine/ui';
-import { createBrowserClient } from '@ridendine/db';
+import { createBrowserClient, deliveryTrackingChannelLegacy, entityDeliveryChannel } from '@ridendine/db';
 
 const OrderTrackingMap = dynamic(
   () => import('./order-tracking-map'),
@@ -60,7 +60,7 @@ function useRealtimeTracking(
     if (!deliveryId || !supabase) return;
 
     const trackingChannel = supabase
-      .channel(`tracking:${deliveryId}`)
+      .channel(deliveryTrackingChannelLegacy(deliveryId))
       .on('broadcast', { event: 'driver_location_updated' }, (payload: { payload?: { lat?: number; lng?: number } }) => {
         const data = payload.payload;
         if (data?.lat && data?.lng) onLocation(data.lat, data.lng);
@@ -72,7 +72,7 @@ function useRealtimeTracking(
       .subscribe();
 
     const entityChannel = supabase
-      .channel(`entity:delivery:${deliveryId}`)
+      .channel(entityDeliveryChannel(deliveryId))
       .on('broadcast', { event: 'broadcast' }, (payload: { payload?: { lat?: number; lng?: number; status?: string } }) => {
         const data = payload.payload;
         if (data?.lat && data?.lng) onLocation(data.lat, data.lng);

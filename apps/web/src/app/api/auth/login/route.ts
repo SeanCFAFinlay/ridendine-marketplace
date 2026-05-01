@@ -3,12 +3,20 @@ import { cookies } from 'next/headers';
 import { createServerClient, getCustomerByUserId } from '@ridendine/db';
 import { loginSchema } from '@ridendine/validation';
 import { handleApiError } from '@/lib/auth-helpers';
-import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitResponse } from '@ridendine/utils';
+import {
+  evaluateRateLimit,
+  RATE_LIMIT_POLICIES,
+  rateLimitPolicyResponse,
+} from '@ridendine/utils';
 
 export async function POST(request: Request) {
-  const ip = getClientIp(request);
-  const limit = checkRateLimit(ip, RATE_LIMITS.auth, 'auth');
-  if (!limit.allowed) return rateLimitResponse(limit.retryAfter!);
+  const limit = await evaluateRateLimit({
+    request,
+    policy: RATE_LIMIT_POLICIES.auth,
+    namespace: 'web-auth-login',
+    routeKey: 'POST:/api/auth/login',
+  });
+  if (!limit.allowed) return rateLimitPolicyResponse(limit);
 
   try {
     const body = await request.json();

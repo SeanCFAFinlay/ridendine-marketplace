@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
-import { getOpsActorContext } from '@/lib/engine';
+import { finalizeOpsActor, getOpsActorContext, guardPlatformApi } from '@/lib/engine';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const actor = await getOpsActorContext();
-  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'customers_write'));
+  if (opsActor instanceof Response) return opsActor;
 
   const { id: customerId } = await params;
   const { title, body } = await request.json();
@@ -34,7 +35,7 @@ export async function POST(
     title,
     body,
     message: body,
-    data: { from: 'ops', sentBy: actor.userId },
+    data: { from: 'ops', sentBy: opsActor.userId },
   });
 
   return NextResponse.json({ success: true });

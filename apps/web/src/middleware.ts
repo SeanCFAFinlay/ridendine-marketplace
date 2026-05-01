@@ -5,9 +5,10 @@ export const middleware = createAuthMiddleware({
   authRoutes: ['/auth/login', '/auth/signup'],
   loginRoute: '/auth/login',
   authenticatedRedirect: '/chefs',
-  protectedRoutes: ['/account'],
+  /** OPTION A (Phase 2 / IRR-002): checkout requires authenticated customer session */
+  protectedRoutes: ['/account', '/checkout'],
 });
 
 export const config = {
-  matcher: ['/account/:path*', '/auth/login', '/auth/signup'],
+  matcher: ['/account/:path*', '/checkout/:path*', '/auth/login', '/auth/signup'],
 };

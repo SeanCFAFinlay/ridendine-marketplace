@@ -20,11 +20,26 @@ vi.mock('@ridendine/notifications', () => ({
 
 import { NotificationSender, type NotificationDeliveryProvider } from './notification-sender';
 
-function createMockClient() {
-  const insertMock = vi.fn().mockResolvedValue({ error: null });
+function createDedupeChain(maybeSingleResult: { data: { id: string } | null }) {
   return {
-    from: vi.fn(() => ({ insert: insertMock })),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    contains: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue(maybeSingleResult),
+  };
+}
+
+function createMockClient(dedupeHit = false) {
+  const insertMock = vi.fn().mockResolvedValue({ error: null });
+  const dedupeChain = createDedupeChain(dedupeHit ? { data: { id: 'dup' } } : { data: null });
+  const chain = {
+    ...dedupeChain,
+    insert: insertMock,
+  };
+  return {
+    from: vi.fn(() => chain),
     _insertMock: insertMock,
+    _maybeSingle: dedupeChain.maybeSingle,
   };
 }
 
@@ -64,6 +79,22 @@ describe('NotificationSender', () => {
     );
   });
 
+  it('skips insert and providers when dedupe finds existing row (order_id)', async () => {
+    const client = createMockClient(true);
+    const sender = new NotificationSender(client as any);
+    const provider: NotificationDeliveryProvider = {
+      name: 'p',
+      isAvailable: () => true,
+      deliver: vi.fn().mockResolvedValue({ delivered: true }),
+    };
+    sender.registerProvider(provider);
+
+    await sender.send('order_placed' as any, 'u1', { orderNumber: '1' }, { order_id: 'ord-99' });
+
+    expect(client._insertMock).not.toHaveBeenCalled();
+    expect(provider.deliver).not.toHaveBeenCalled();
+  });
+
   // ---- Provider registration ----
 
   it('calls registered available providers after DB write', async () => {
@@ -77,7 +108,7 @@ describe('NotificationSender', () => {
     };
 
     sender.registerProvider(mockProvider);
-    await sender.send('order_placed' as any, 'user-456', { orderNumber: 'RD-002' });
+    await sender.send('order_placed' as any, 'user-456', { orderNumber: 'RD-002' }, { order_id: 'o1' });
 
     expect(mockProvider.deliver).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -98,7 +129,7 @@ describe('NotificationSender', () => {
     };
 
     sender.registerProvider(unavailableProvider);
-    await sender.send('order_placed' as any, 'user-789');
+    await sender.send('order_placed' as any, 'user-789', {}, { order_id: 'x' });
 
     expect(unavailableProvider.deliver).not.toHaveBeenCalled();
   });
@@ -120,7 +151,7 @@ describe('NotificationSender', () => {
 
     sender.registerProvider(providerA);
     sender.registerProvider(providerB);
-    await sender.send('order_ready' as any, 'user-multi');
+    await sender.send('order_ready' as any, 'user-multi', {}, { order_id: 'o2' });
 
     expect(providerA.deliver).toHaveBeenCalledTimes(1);
     expect(providerB.deliver).toHaveBeenCalledTimes(1);
@@ -140,14 +171,14 @@ describe('NotificationSender', () => {
 
     sender.registerProvider(crashProvider);
 
-    await expect(
-      sender.send('order_placed' as any, 'user-000')
-    ).resolves.not.toThrow();
+    await expect(sender.send('order_placed' as any, 'user-000', {}, { order_id: 'o3' })).resolves.not.toThrow();
   });
 
   it('does not throw when DB insert throws synchronously', async () => {
+    const dedupe = createDedupeChain({ data: null });
     const badClient = {
       from: vi.fn(() => ({
+        ...dedupe,
         insert: vi.fn().mockImplementation(() => {
           throw new Error('DB error');
         }),
@@ -155,14 +186,14 @@ describe('NotificationSender', () => {
     };
     const sender = new NotificationSender(badClient as any);
 
-    await expect(
-      sender.send('order_placed' as any, 'user-err')
-    ).resolves.not.toThrow();
+    await expect(sender.send('order_placed' as any, 'user-err', {}, { order_id: 'o4' })).resolves.not.toThrow();
   });
 
   it('still calls available providers even when DB write fails', async () => {
+    const dedupe = createDedupeChain({ data: null });
     const badClient = {
       from: vi.fn(() => ({
+        ...dedupe,
         insert: vi.fn().mockImplementation(() => {
           throw new Error('DB error');
         }),
@@ -177,7 +208,7 @@ describe('NotificationSender', () => {
     };
     sender.registerProvider(provider);
 
-    await sender.send('order_placed' as any, 'user-fallback');
+    await sender.send('order_placed' as any, 'user-fallback', {}, { order_id: 'o5' });
 
     expect(provider.deliver).toHaveBeenCalledTimes(1);
   });
@@ -194,8 +225,6 @@ describe('NotificationSender', () => {
 
     sender.registerProvider(failProvider);
 
-    await expect(
-      sender.send('order_delivered' as any, 'user-rl')
-    ).resolves.not.toThrow();
+    await expect(sender.send('order_delivered' as any, 'user-rl', {}, { order_id: 'o6' })).resolves.not.toThrow();
   });
 });

@@ -1,0 +1,1 @@
+{"nodes": [{"id": "no_unnecessary_type_assertion_d", "label": "no-unnecessary-type-assertion.d.ts", "file_type": "code", "source_file": "node_modules\\@typescript-eslint\\eslint-plugin\\dist\\rules\\no-unnecessary-type-assertion.d.ts", "source_location": "L1"}], "edges": []}

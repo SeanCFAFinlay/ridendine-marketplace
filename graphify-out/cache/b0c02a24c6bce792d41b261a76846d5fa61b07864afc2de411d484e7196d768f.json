@@ -1,0 +1,1 @@
+{"nodes": [{"id": "plugin_syntax_dynamic_import", "label": "plugin-syntax-dynamic-import.js", "file_type": "code", "source_file": "packages\\engine\\node_modules\\next\\dist\\compiled\\babel\\plugin-syntax-dynamic-import.js", "source_location": "L1"}], "edges": []}

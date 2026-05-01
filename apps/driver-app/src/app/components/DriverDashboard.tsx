@@ -66,10 +66,12 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
       try {
         const response = await fetch('/api/earnings');
         if (response.ok) {
-          const data = await response.json();
+          const json = await response.json();
+          const payload =
+            json.success === true && json.data != null ? json.data : json;
           setTodayStats({
-            deliveries: data.today?.count ?? 0,
-            earnings: data.today?.earnings ?? 0,
+            deliveries: payload.today?.count ?? 0,
+            earnings: payload.today?.earnings ?? 0,
             hours: 0,
           });
         }

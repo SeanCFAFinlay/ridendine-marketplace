@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { PasswordStrength } from '../../src/components/auth/password-strength';
+import { PasswordStrength } from '@ridendine/ui';
 
 describe('PasswordStrength', () => {
   it('renders nothing when password is empty', () => {
@@ -21,8 +21,8 @@ describe('PasswordStrength', () => {
     expect(screen.getByText(/Fair/)).toBeInTheDocument();
   });
 
-  it('shows good strength for varied password', () => {
-    render(<PasswordStrength password="Abc12345" />);
+  it('shows good strength when length + character variety reaches UI threshold', () => {
+    render(<PasswordStrength password="Abc1!def" />);
     expect(screen.getByText(/Good/)).toBeInTheDocument();
   });
 

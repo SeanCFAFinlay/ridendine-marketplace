@@ -3,9 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Input } from '@ridendine/ui';
+import { Button, Input, PasswordStrength } from '@ridendine/ui';
 import { AuthLayout } from '../../../components/auth/auth-layout';
-import { PasswordStrength } from '../../../components/auth/password-strength';
 
 export default function SignupPage() {
   const router = useRouter();

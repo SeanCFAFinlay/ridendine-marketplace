@@ -12,6 +12,7 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { createCentralEngine } from '../core/engine.factory';
+import { STRIPE_API_VERSION } from '../services/stripe.service';
 
 const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -27,7 +28,9 @@ if (!STRIPE_KEY.startsWith('sk_test_')) {
   process.exit(1);
 }
 
-const stripe = new Stripe(STRIPE_KEY);
+const stripe = new Stripe(STRIPE_KEY, {
+  apiVersion: STRIPE_API_VERSION as unknown as Stripe.LatestApiVersion,
+});
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const engine = createCentralEngine(supabase);
 

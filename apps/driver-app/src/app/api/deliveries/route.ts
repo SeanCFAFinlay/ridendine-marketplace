@@ -1,40 +1,28 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient, getDriverByUserId, getActiveDeliveriesForDriver, type SupabaseClient } from '@ridendine/db';
+import {
+  createAdminClient,
+  getActiveDeliveriesForDriver,
+  type SupabaseClient,
+} from '@ridendine/db';
+import { getDriverActorContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore) as unknown as SupabaseClient;
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const driverContext = await getDriverActorContext();
+    if (!driverContext) {
+      return errorResponse('UNAUTHORIZED', 'Not authenticated or not approved', 401);
     }
 
-    const driver = await getDriverByUserId(supabase, user.id);
+    const adminClient = createAdminClient();
+    const deliveries = await getActiveDeliveriesForDriver(
+      adminClient as unknown as SupabaseClient,
+      driverContext.driverId
+    );
 
-    if (!driver) {
-      return NextResponse.json(
-        { error: 'Driver profile not found' },
-        { status: 404 }
-      );
-    }
-
-    const deliveries = await getActiveDeliveriesForDriver(supabase, driver.id);
-
-    return NextResponse.json({ deliveries });
+    return successResponse({ deliveries });
   } catch (error) {
     console.error('Error fetching deliveries:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }

@@ -4,7 +4,8 @@
 // and enforce timeout automation.
 // ==========================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import { createCentralEngine } from '@ridendine/engine';
 import {
@@ -12,25 +13,10 @@ import {
   checkDriverAssignmentTimeout,
   checkStalePreparingOrders,
 } from '@ridendine/engine';
-
-function validateProcessorToken(request: NextRequest): boolean {
-  const vercelSecret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get('authorization');
-  if (vercelSecret && authHeader === `Bearer ${vercelSecret}`) {
-    return true;
-  }
-
-  const token = request.headers.get('x-processor-token');
-  const expected = process.env.ENGINE_PROCESSOR_TOKEN;
-  if (!expected && !vercelSecret) {
-    console.error('Neither ENGINE_PROCESSOR_TOKEN nor CRON_SECRET configured');
-    return false;
-  }
-  return !!expected && token === expected;
-}
+import { validateEngineProcessorHeaders } from '@ridendine/utils';
 
 export async function POST(request: NextRequest) {
-  if (!validateProcessorToken(request)) {
+  if (!validateEngineProcessorHeaders(request.headers)) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized' },
       { status: 401 }
@@ -71,7 +57,7 @@ export async function POST(request: NextRequest) {
         .update({ escalated_to_ops: true, updated_at: new Date().toISOString() })
         .eq('id', v.entityId);
 
-      await client.from('system_alerts').insert({
+      await (client as any).from('system_alerts').insert({
         alert_type: 'driver_assignment_timeout',
         severity: 'error',
         title: 'Driver assignment timeout',
@@ -87,7 +73,7 @@ export async function POST(request: NextRequest) {
     let staleAlerts = 0;
     const staleOrders = await checkStalePreparingOrders(client, 45);
     for (const v of staleOrders) {
-      await client.from('system_alerts').insert({
+      await (client as any).from('system_alerts').insert({
         alert_type: 'stale_preparing_order',
         severity: 'warning',
         title: 'Order stale in preparing state',
@@ -132,7 +118,7 @@ export async function POST(request: NextRequest) {
 
 // Health check
 export async function GET(request: NextRequest) {
-  if (!validateProcessorToken(request)) {
+  if (!validateEngineProcessorHeaders(request.headers)) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized' },
       { status: 401 }

@@ -1,0 +1,1 @@
+{"nodes": [{"id": "platform", "label": "platform.ts", "file_type": "code", "source_file": "packages\\types\\src\\domains\\platform.ts", "source_location": "L1"}], "edges": [{"source": "platform", "target": "enums", "relation": "imports_from", "confidence": "EXTRACTED", "source_file": "packages\\types\\src\\domains\\platform.ts", "source_location": "L5", "weight": 1.0}]}

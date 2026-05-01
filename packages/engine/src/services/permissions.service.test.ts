@@ -13,72 +13,72 @@ import {
   type UserRoles,
   type UserRole,
 } from './permissions.service';
+import { AppRole } from '@ridendine/types';
 
-// --- Test fixtures ---
+const FINANCE_SET = new Set<UserRole>(
+  [AppRole.FINANCE_ADMIN, AppRole.FINANCE_MANAGER, AppRole.SUPER_ADMIN] as UserRole[]
+);
 
 function makeRoles(roles: UserRole[]): UserRoles {
+  const isFinance = roles.some((r) => FINANCE_SET.has(r));
   return {
-    isCustomer: roles.includes('customer'),
-    isChef: roles.includes('chef'),
-    isDriver: roles.includes('driver'),
-    isOpsAdmin: roles.includes('ops_admin'),
-    isSuperAdmin: roles.includes('super_admin'),
+    isCustomer: roles.includes(AppRole.CUSTOMER),
+    isChef: roles.includes(AppRole.CHEF),
+    isDriver: roles.includes(AppRole.DRIVER),
+    isOpsAdmin: roles.includes(AppRole.OPS_ADMIN),
+    isSuperAdmin: roles.includes(AppRole.SUPER_ADMIN),
+    isSupportAgent: roles.includes(AppRole.SUPPORT_AGENT),
+    isFinanceRole: isFinance,
     roles,
     highestRole: roles.at(-1) ?? null,
   };
 }
 
-const CUSTOMER = makeRoles(['customer']);
-const CHEF = makeRoles(['chef']);
-const DRIVER = makeRoles(['driver']);
-const OPS_ADMIN = makeRoles(['ops_admin']);
-const SUPER_ADMIN = makeRoles(['super_admin']);
-const MULTI_ROLE = makeRoles(['customer', 'chef']);
+const CUSTOMER = makeRoles([AppRole.CUSTOMER]);
+const CHEF = makeRoles([AppRole.CHEF]);
+const DRIVER = makeRoles([AppRole.DRIVER]);
+const OPS_ADMIN = makeRoles([AppRole.OPS_ADMIN]);
+const SUPER_ADMIN = makeRoles([AppRole.SUPER_ADMIN]);
+const MULTI_ROLE = makeRoles([AppRole.CUSTOMER, AppRole.CHEF]);
 const NO_ROLES = makeRoles([]);
-
-// --- hasRole ---
 
 describe('hasRole', () => {
   it('returns true when user has the role', () => {
-    expect(hasRole(CUSTOMER, 'customer')).toBe(true);
-    expect(hasRole(CHEF, 'chef')).toBe(true);
+    expect(hasRole(CUSTOMER, AppRole.CUSTOMER)).toBe(true);
+    expect(hasRole(CHEF, AppRole.CHEF)).toBe(true);
   });
 
   it('returns false when user does not have the role', () => {
-    expect(hasRole(CUSTOMER, 'chef')).toBe(false);
-    expect(hasRole(DRIVER, 'ops_admin')).toBe(false);
+    expect(hasRole(CUSTOMER, AppRole.CHEF)).toBe(false);
+    expect(hasRole(DRIVER, AppRole.OPS_ADMIN)).toBe(false);
   });
 
   it('works with multi-role users', () => {
-    expect(hasRole(MULTI_ROLE, 'customer')).toBe(true);
-    expect(hasRole(MULTI_ROLE, 'chef')).toBe(true);
-    expect(hasRole(MULTI_ROLE, 'driver')).toBe(false);
+    expect(hasRole(MULTI_ROLE, AppRole.CUSTOMER)).toBe(true);
+    expect(hasRole(MULTI_ROLE, AppRole.CHEF)).toBe(true);
+    expect(hasRole(MULTI_ROLE, AppRole.DRIVER)).toBe(false);
   });
 
   it('returns false for empty role set', () => {
-    expect(hasRole(NO_ROLES, 'customer')).toBe(false);
+    expect(hasRole(NO_ROLES, AppRole.CUSTOMER)).toBe(false);
   });
 });
 
-// --- hasAnyRole ---
-
 describe('hasAnyRole', () => {
   it('returns true when user has at least one of the specified roles', () => {
-    expect(hasAnyRole(OPS_ADMIN, ['ops_admin', 'super_admin'])).toBe(true);
-    expect(hasAnyRole(CHEF, ['chef', 'ops_admin'])).toBe(true);
+    expect(hasAnyRole(OPS_ADMIN, [AppRole.OPS_ADMIN, AppRole.SUPER_ADMIN])).toBe(true);
+    expect(hasAnyRole(CHEF, [AppRole.CHEF, AppRole.OPS_ADMIN])).toBe(true);
   });
 
   it('returns false when user has none of the specified roles', () => {
-    expect(hasAnyRole(CUSTOMER, ['chef', 'driver'])).toBe(false);
-    expect(hasAnyRole(NO_ROLES, ['chef', 'ops_admin'])).toBe(false);
+    expect(hasAnyRole(CUSTOMER, [AppRole.CHEF, AppRole.DRIVER])).toBe(false);
+    expect(hasAnyRole(NO_ROLES, [AppRole.CHEF, AppRole.OPS_ADMIN])).toBe(false);
   });
 
   it('returns false for empty role list', () => {
     expect(hasAnyRole(SUPER_ADMIN, [])).toBe(false);
   });
 });
-
-// --- isAdmin ---
 
 describe('isAdmin', () => {
   it('returns true for ops_admin', () => {
@@ -102,8 +102,6 @@ describe('isAdmin', () => {
   });
 });
 
-// --- canAccessAdminDashboard ---
-
 describe('canAccessAdminDashboard', () => {
   it('grants access to ops_admin', () => {
     expect(canAccessAdminDashboard(OPS_ADMIN)).toBe(true);
@@ -121,8 +119,6 @@ describe('canAccessAdminDashboard', () => {
     expect(canAccessAdminDashboard(CUSTOMER)).toBe(false);
   });
 });
-
-// --- canManageOrders ---
 
 describe('canManageOrders', () => {
   it('allows ops_admin to manage orders', () => {
@@ -146,8 +142,6 @@ describe('canManageOrders', () => {
   });
 });
 
-// --- canManageChefs ---
-
 describe('canManageChefs', () => {
   it('allows ops_admin to manage chefs', () => {
     expect(canManageChefs(OPS_ADMIN)).toBe(true);
@@ -166,8 +160,6 @@ describe('canManageChefs', () => {
   });
 });
 
-// --- canManageDrivers ---
-
 describe('canManageDrivers', () => {
   it('allows ops_admin to manage drivers', () => {
     expect(canManageDrivers(OPS_ADMIN)).toBe(true);
@@ -181,8 +173,6 @@ describe('canManageDrivers', () => {
     expect(canManageDrivers(DRIVER)).toBe(false);
   });
 });
-
-// --- canViewFinancials ---
 
 describe('canViewFinancials', () => {
   it('allows super_admin to view financials', () => {
@@ -202,11 +192,17 @@ describe('canViewFinancials', () => {
   });
 });
 
-// --- canProcessRefunds ---
-
 describe('canProcessRefunds', () => {
-  it('allows ops_admin to process refunds', () => {
-    expect(canProcessRefunds(OPS_ADMIN)).toBe(true);
+  it('denies ops_admin from processing refunds (finance-only)', () => {
+    expect(canProcessRefunds(OPS_ADMIN)).toBe(false);
+  });
+
+  it('allows finance_admin to process refunds', () => {
+    expect(canProcessRefunds(makeRoles([AppRole.FINANCE_ADMIN]))).toBe(true);
+  });
+
+  it('allows finance_manager to process refunds', () => {
+    expect(canProcessRefunds(makeRoles([AppRole.FINANCE_MANAGER]))).toBe(true);
   });
 
   it('allows super_admin to process refunds', () => {
@@ -221,8 +217,6 @@ describe('canProcessRefunds', () => {
     expect(canProcessRefunds(CUSTOMER)).toBe(false);
   });
 });
-
-// --- hasPermission ---
 
 describe('hasPermission', () => {
   it('grants customer view_orders permission', () => {
@@ -245,8 +239,8 @@ describe('hasPermission', () => {
     expect(hasPermission(OPS_ADMIN, 'manage_chefs')).toBe(true);
   });
 
-  it('grants ops_admin process_refunds permission', () => {
-    expect(hasPermission(OPS_ADMIN, 'process_refunds')).toBe(true);
+  it('denies ops_admin process_refunds permission (finance-only)', () => {
+    expect(hasPermission(OPS_ADMIN, 'process_refunds')).toBe(false);
   });
 
   it('denies ops_admin view_financials permission', () => {
@@ -274,7 +268,6 @@ describe('hasPermission', () => {
   });
 
   it('grants permission via any matching role for multi-role user', () => {
-    // customer+chef user inherits chef's manage_orders permission
     expect(hasPermission(MULTI_ROLE, 'manage_orders')).toBe(true);
   });
 });

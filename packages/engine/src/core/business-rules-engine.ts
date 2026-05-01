@@ -21,7 +21,7 @@ const CANCELLABLE_STATUSES = new Set([
   'cancel_requested',
 ]);
 
-const OPS_ROLES = new Set(['ops_manager', 'super_admin']);
+const OPS_ROLES = new Set(['ops_admin', 'ops_manager', 'super_admin']);
 
 const MINIMUM_ORDER_AMOUNT = 10;
 

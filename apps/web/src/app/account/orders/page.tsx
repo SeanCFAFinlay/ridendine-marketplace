@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuthContext } from '@ridendine/auth';
 import { createBrowserClient } from '@ridendine/db';
 import { Header } from '@/components/layout/header';
+import { orderConfirmationPath } from '@/lib/customer-ordering';
 import { Card, Badge, Button, NoOrdersEmpty, Spinner } from '@ridendine/ui';
 
 interface Order {
@@ -169,7 +170,7 @@ export default function OrdersPage() {
                     <span className="font-semibold text-gray-900">
                       ${Number(order.total).toFixed(2)}
                     </span>
-                    <Link href={`/order-confirmation/${order.id}`}>
+                    <Link href={orderConfirmationPath(order.id)}>
                       <Button variant="outline" size="sm">
                         View Details
                       </Button>

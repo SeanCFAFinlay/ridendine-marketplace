@@ -178,6 +178,8 @@ export const NotificationType = {
   ORDER_READY: 'order_ready',
   ORDER_PICKED_UP: 'order_picked_up',
   ORDER_DELIVERED: 'order_delivered',
+  ORDER_CANCELLED: 'order_cancelled',
+  REFUND_PROCESSED: 'refund_processed',
   DELIVERY_OFFER: 'delivery_offer',
   CHEF_APPROVED: 'chef_approved',
   DRIVER_APPROVED: 'driver_approved',

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, Badge, Button } from '@ridendine/ui';
-import { createBrowserClient } from '@ridendine/db';
+import { chefStorefrontOrdersChannel, createBrowserClient, parseOrdersRealtimeRow } from '@ridendine/db';
 
 interface Order {
   id: string;
@@ -20,8 +20,7 @@ interface Order {
   };
   address?: {
     id: string;
-    address_line1: string;
-    address_line2?: string | null;
+    street_address: string;
     city: string;
     state?: string;
     postal_code?: string;
@@ -30,6 +29,7 @@ interface Order {
 
 interface OrdersListProps {
   initialOrders: Order[];
+  storefrontId: string;
 }
 
 const ACCEPT_TIMEOUT_MS = 8 * 60 * 1000; // 8 minutes
@@ -73,7 +73,7 @@ function CountdownTimer({ createdAt, onExpire }: { createdAt: string; onExpire: 
   );
 }
 
-export function OrdersList({ initialOrders }: OrdersListProps) {
+export function OrdersList({ initialOrders, storefrontId }: OrdersListProps) {
   const [filter, setFilter] = useState<string>('all');
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [loading, setLoading] = useState(false);
@@ -82,22 +82,27 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
 
   const supabase = useMemo(() => createBrowserClient(), []);
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time updates (scoped to this storefront — RLS + client filter)
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase || !storefrontId) return;
 
     const db = supabase;
+    const filter = `storefront_id=eq.${storefrontId}`;
     const channel = db
-      .channel('chef-orders')
+      .channel(chefStorefrontOrdersChannel(storefrontId))
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders' },
+        { event: '*', schema: 'public', table: 'orders', filter },
         (payload) => {
           if (payload.eventType === 'INSERT') {
+            const row = parseOrdersRealtimeRow(payload.new);
+            if (!row || row.storefront_id !== storefrontId) return;
             const newOrder = payload.new as Order;
             setOrders((prev) => [newOrder, ...prev]);
             setPlaySound(true);
           } else if (payload.eventType === 'UPDATE') {
+            const row = parseOrdersRealtimeRow(payload.new);
+            if (!row || row.storefront_id !== storefrontId) return;
             const updatedOrder = payload.new as Order;
             setOrders((prev) =>
               prev.map((o) => (o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o))
@@ -110,7 +115,7 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
     return () => {
       db.removeChannel(channel);
     };
-  }, [supabase]);
+  }, [supabase, storefrontId]);
 
   // Play notification sound for new orders
   useEffect(() => {
@@ -256,7 +261,7 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
                   )}
                   {order.address && (
                     <p className="text-sm text-gray-500">
-                      {order.address.address_line1}, {order.address.city}
+                      {order.address.street_address}, {order.address.city}
                     </p>
                   )}
                   {order.special_instructions && (

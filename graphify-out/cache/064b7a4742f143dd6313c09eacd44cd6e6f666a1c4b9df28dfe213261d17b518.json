@@ -1,0 +1,1 @@
+{"nodes": [{"id": "plugin_transform_modules_commonjs", "label": "plugin-transform-modules-commonjs.js", "file_type": "code", "source_file": "packages\\engine\\node_modules\\next\\dist\\compiled\\babel\\plugin-transform-modules-commonjs.js", "source_location": "L1"}], "edges": []}

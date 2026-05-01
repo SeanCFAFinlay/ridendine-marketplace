@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient, createServerClient } from '@ridendine/db';
 import { cookies } from 'next/headers';
-import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitResponse } from '@ridendine/utils';
+import {
+  canonicalImageExtensionForMime,
+  evaluateRateLimit,
+  RATE_LIMIT_POLICIES,
+  rateLimitPolicyResponse,
+  redactSensitiveForLog,
+} from '@ridendine/utils';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -56,9 +62,13 @@ async function uploadProfileImage(
 }
 
 export async function POST(request: NextRequest) {
-  const ip = getClientIp(request);
-  const limit = checkRateLimit(ip, RATE_LIMITS.upload, 'upload');
-  if (!limit.allowed) return rateLimitResponse(limit.retryAfter!);
+  const limit = await evaluateRateLimit({
+    request,
+    policy: RATE_LIMIT_POLICIES.upload,
+    namespace: 'web-upload',
+    routeKey: 'POST:/api/upload',
+  });
+  if (!limit.allowed) return rateLimitPolicyResponse(limit);
 
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
@@ -86,8 +96,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File too large. Maximum 5MB' }, { status: 400 });
     }
 
+    const ext = canonicalImageExtensionForMime(file.type);
+    if (!ext) {
+      return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
+    }
+
     const client = createAdminClient();
-    const ext = file.name.split('.').pop() || 'jpg';
     const buffer = new Uint8Array(await file.arrayBuffer());
 
     const result = await uploadProfileImage(client, user.id, buffer, file.type, ext);
@@ -98,7 +112,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, url: result.url });
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error(
+      'Upload error:',
+      redactSensitiveForLog(error instanceof Error ? error.message : String(error))
+    );
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }

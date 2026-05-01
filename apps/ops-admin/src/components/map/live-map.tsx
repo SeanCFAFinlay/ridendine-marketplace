@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { createBrowserClient } from '@ridendine/db';
+import { createBrowserClient, opsLiveMapChannel } from '@ridendine/db';
 import { DEFAULT_SERVICE_REGION_CENTER, DEFAULT_MAP_ZOOM } from '@ridendine/engine';
 
 type DriverMapRow = {
@@ -180,7 +180,7 @@ export default function LiveMap() {
     void fetchData();
 
     const channel = client
-      .channel('live-map')
+      .channel(opsLiveMapChannel())
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'driver_presence' },

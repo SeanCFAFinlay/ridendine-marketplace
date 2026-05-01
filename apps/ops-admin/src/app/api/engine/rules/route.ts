@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
-import { getOpsActorContext, hasRequiredRole } from '@/lib/engine';
+import { getOpsActorContext, guardPlatformApi } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,7 +72,8 @@ const DEFAULT_RULES: AutomationRule[] = [
 
 export async function GET() {
   const actor = await getOpsActorContext();
-  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = guardPlatformApi(actor, 'engine_rules');
+  if (denied) return denied;
 
   const client = createAdminClient() as any;
   const { data: settings } = await client.from('platform_settings').select('setting_value').limit(1).single();
@@ -83,9 +85,8 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor || !hasRequiredRole(actor, ['ops_manager', 'super_admin'])) {
-    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-  }
+  const denied = guardPlatformApi(actor, 'engine_rules');
+  if (denied) return denied;
 
   const { ruleId, enabled, params } = await request.json();
   if (!ruleId) return NextResponse.json({ error: 'ruleId required' }, { status: 400 });

@@ -9,8 +9,9 @@ import {
   getEngine,
   getOpsActorContext,
   errorResponse,
+  finalizeOpsActor,
+  guardPlatformApi,
   successResponse,
-  hasRequiredRole,
 } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
@@ -21,14 +22,8 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
-
-  // Finance data requires elevated permissions
-  if (!hasRequiredRole(actor, ['ops_manager', 'finance_admin', 'super_admin'])) {
-    return errorResponse('FORBIDDEN', 'Not authorized to view financial data', 403);
-  }
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'finance_engine'));
+  if (opsActor instanceof Response) return opsActor;
 
   const { searchParams } = new URL(request.url);
   const today = new Date().toISOString().substring(0, 10);
@@ -37,7 +32,7 @@ export async function GET(request: NextRequest) {
   const endDate = searchParams.get('endDate') || today;
 
   const engine = getEngine();
-  const result = await engine.ops.getFinanceOperations(actor, {
+  const result = await engine.ops.getFinanceOperations(opsActor, {
     start: `${startDate}T00:00:00`,
     end: `${endDate}T23:59:59`,
   });
@@ -55,13 +50,8 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
-
-  if (!hasRequiredRole(actor, ['ops_manager', 'finance_admin', 'super_admin'])) {
-    return errorResponse('FORBIDDEN', 'Not authorized for financial actions', 403);
-  }
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'finance_engine'));
+  if (opsActor instanceof Response) return opsActor;
 
   const body = await request.json();
   const parsed = financeActionSchema.safeParse(body);
@@ -78,7 +68,7 @@ export async function POST(request: NextRequest) {
       const result = await engine.commerce.approveRefund(
         actionInput.refundCaseId,
         actionInput.approvedAmountCents,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -90,7 +80,7 @@ export async function POST(request: NextRequest) {
       const result = await engine.commerce.denyRefund(
         actionInput.refundCaseId,
         actionInput.reason,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -102,7 +92,7 @@ export async function POST(request: NextRequest) {
       const result = await engine.commerce.processRefund(
         actionInput.refundCaseId,
         actionInput.stripeRefundId,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -117,7 +107,7 @@ export async function POST(request: NextRequest) {
         actionInput.orderId,
         actionInput.amountCents,
         actionInput.reason,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -128,7 +118,7 @@ export async function POST(request: NextRequest) {
     case 'release_payout_hold': {
       const result = await engine.commerce.releasePayoutHold(
         actionInput.adjustmentId,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);

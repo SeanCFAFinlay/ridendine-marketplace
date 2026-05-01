@@ -67,7 +67,7 @@ export async function GET() {
     const { data: addresses } = addressIds.length > 0
       ? await adminClient
           .from('customer_addresses')
-          .select('id, address_line1, address_line2, city, state, postal_code, country')
+          .select('id, street_address, city, state, postal_code, country')
           .in('id', addressIds)
       : { data: [] };
 

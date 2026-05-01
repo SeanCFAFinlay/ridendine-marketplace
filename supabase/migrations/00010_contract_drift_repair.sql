@@ -280,10 +280,28 @@ CREATE TABLE IF NOT EXISTS platform_settings (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- platform_settings may already exist from 00004 without setting_key / setting_value — add first.
+ALTER TABLE platform_settings
+  ADD COLUMN IF NOT EXISTS setting_key VARCHAR(100),
+  ADD COLUMN IF NOT EXISTS setting_value JSONB DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS description TEXT,
+  ADD COLUMN IF NOT EXISTS driver_payout_percent DECIMAL(5,2) DEFAULT 80.00,
+  ADD COLUMN IF NOT EXISTS base_delivery_fee_cents INTEGER DEFAULT 399,
+  ADD COLUMN IF NOT EXISTS chef_response_sla_minutes INTEGER DEFAULT 5,
+  ADD COLUMN IF NOT EXISTS dispatch_timeout_minutes INTEGER DEFAULT 10,
+  ADD COLUMN IF NOT EXISTS refund_window_hours INTEGER DEFAULT 24,
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
+UPDATE platform_settings
+SET
+  setting_key = COALESCE(setting_key, 'global'),
+  setting_value = COALESCE(setting_value, '{}'::jsonb)
+WHERE setting_key IS NULL;
+
 -- Insert default settings if empty
 INSERT INTO platform_settings (setting_key, setting_value)
-VALUES ('global', '{}')
-ON CONFLICT (setting_key) DO NOTHING;
+SELECT 'global', '{}'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM platform_settings WHERE setting_key = 'global');
 
 ALTER TABLE platform_settings ENABLE ROW LEVEL SECURITY;
 

@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getOpsActorContext, errorResponse, hasRequiredRole, getEngine } from '@/lib/engine';
+import {
+  finalizeOpsActor,
+  getOpsActorContext,
+  errorResponse,
+  guardPlatformApi,
+  getEngine,
+} from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,13 +17,8 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     const actor = await getOpsActorContext();
-    if (!actor) {
-      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
-    }
-
-    if (!hasRequiredRole(actor, ['ops_manager', 'super_admin'])) {
-      return errorResponse('FORBIDDEN', 'Not authorized to govern chefs', 403);
-    }
+    const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'chefs_governance'));
+    if (opsActor instanceof Response) return opsActor;
 
     const action = body.action ?? (
       body.status === 'approved'
@@ -33,7 +34,7 @@ export async function PATCH(
 
     switch (action) {
       case 'approve': {
-        const result = await engine.platform.updateChefGovernance(id, 'approved', actor, body.reason);
+        const result = await engine.platform.updateChefGovernance(id, 'approved', opsActor, body.reason);
         if (!result.success) {
           return errorResponse(result.error!.code, result.error!.message);
         }
@@ -41,7 +42,7 @@ export async function PATCH(
       }
 
       case 'reject': {
-        const result = await engine.platform.updateChefGovernance(id, 'rejected', actor, body.reason);
+        const result = await engine.platform.updateChefGovernance(id, 'rejected', opsActor, body.reason);
         if (!result.success) {
           return errorResponse(result.error!.code, result.error!.message);
         }
@@ -49,7 +50,7 @@ export async function PATCH(
       }
 
       case 'suspend': {
-        const result = await engine.platform.updateChefGovernance(id, 'suspended', actor, body.reason);
+        const result = await engine.platform.updateChefGovernance(id, 'suspended', opsActor, body.reason);
         if (!result.success) {
           return errorResponse(result.error!.code, result.error!.message);
         }
@@ -57,7 +58,7 @@ export async function PATCH(
       }
 
       case 'unsuspend': {
-        const result = await engine.platform.updateChefGovernance(id, 'approved', actor, body.reason);
+        const result = await engine.platform.updateChefGovernance(id, 'approved', opsActor, body.reason);
         if (!result.success) {
           return errorResponse(result.error!.code, result.error!.message);
         }

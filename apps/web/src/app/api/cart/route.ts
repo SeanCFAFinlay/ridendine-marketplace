@@ -11,6 +11,7 @@ import {
 } from '@ridendine/db';
 import { addToCartSchema, updateCartItemSchema } from '@ridendine/validation';
 import { getCurrentCustomer, handleApiError } from '@/lib/auth-helpers';
+import { getEngine } from '@/lib/engine';
 
 export async function GET(request: Request): Promise<NextResponse> {
   try {
@@ -82,6 +83,22 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
+    if (menuItem.storefront_id !== validated.storefrontId) {
+      return NextResponse.json(
+        { error: 'Item does not belong to this storefront' },
+        { status: 400 }
+      );
+    }
+
+    const engine = getEngine();
+    const ready = await engine.kitchen.validateCustomerCheckoutReadiness(
+      validated.storefrontId,
+      [validated.menuItemId]
+    );
+    if (!ready.ok) {
+      return NextResponse.json({ error: ready.message }, { status: 400 });
+    }
+
     const cartItem = await addCartItem(supabase, {
       cart_id: cart.id,
       menu_item_id: validated.menuItemId,
@@ -119,7 +136,20 @@ export async function PATCH(request: Request): Promise<NextResponse> {
     const cookieStore = await cookies();
     const supabase = createServerClient(cookieStore);
 
-    await getCurrentCustomer(supabase);
+    const customer = await getCurrentCustomer(supabase);
+    const { data: existingCartItem } = await supabase
+      .from('cart_items')
+      .select('id, carts!inner(customer_id)')
+      .eq('id', itemId)
+      .eq('carts.customer_id', customer.id)
+      .maybeSingle();
+
+    if (!existingCartItem) {
+      return NextResponse.json(
+        { error: 'Cart item not found' },
+        { status: 404 }
+      );
+    }
 
     const updates: any = {};
     if (validated.quantity !== undefined) {
@@ -159,7 +189,20 @@ export async function DELETE(request: Request): Promise<NextResponse> {
     const cookieStore = await cookies();
     const supabase = createServerClient(cookieStore);
 
-    await getCurrentCustomer(supabase);
+    const customer = await getCurrentCustomer(supabase);
+    const { data: existingCartItem } = await supabase
+      .from('cart_items')
+      .select('id, carts!inner(customer_id)')
+      .eq('id', itemId)
+      .eq('carts.customer_id', customer.id)
+      .maybeSingle();
+
+    if (!existingCartItem) {
+      return NextResponse.json(
+        { error: 'Cart item not found' },
+        { status: 404 }
+      );
+    }
 
     await deleteCartItem(supabase, itemId);
 

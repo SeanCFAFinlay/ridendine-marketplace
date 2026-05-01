@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkRateLimit } from './rate-limiter';
+import { checkRateLimit, RATE_LIMITS } from './rate-limiter';
 
 describe('checkRateLimit', () => {
   const config = { maxRequests: 3, windowSeconds: 60 };
@@ -43,5 +43,19 @@ describe('checkRateLimit', () => {
 
     expect(blocked.allowed).toBe(false);
     expect(allowed.allowed).toBe(true);
+  });
+
+  it('driverLocation preset blocks after maxRequests in window', () => {
+    const store = 'driver-location-preset-test';
+    const cfg = RATE_LIMITS.driverLocation;
+    const id = 'driver-uuid-test-1';
+    let last: ReturnType<typeof checkRateLimit> = { allowed: true, remaining: 0 };
+    for (let i = 0; i < cfg.maxRequests; i++) {
+      last = checkRateLimit(id, cfg, store);
+      expect(last.allowed).toBe(true);
+    }
+    const blocked = checkRateLimit(id, cfg, store);
+    expect(blocked.allowed).toBe(false);
+    expect(blocked.retryAfter).toBeDefined();
   });
 });

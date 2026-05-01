@@ -13,6 +13,7 @@ const mockSupabase = {
 };
 jest.mock('@ridendine/db', () => ({
   createBrowserClient: jest.fn(() => mockSupabase),
+  opsAlertsChannel: () => 'ops:alerts',
 }));
 
 // Mock next/link
@@ -143,7 +144,7 @@ describe('OpsAlerts', () => {
     mockSupabase.from.mockReturnValue(makeQueryBuilder([]));
     render(<OpsAlerts />);
     await waitFor(() => {
-      expect(mockSupabase.channel).toHaveBeenCalledWith('ops-alerts');
+      expect(mockSupabase.channel).toHaveBeenCalledWith('ops:alerts');
     });
   });
 });

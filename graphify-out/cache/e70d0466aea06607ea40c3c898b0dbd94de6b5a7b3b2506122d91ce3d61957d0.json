@@ -1,0 +1,1 @@
+{"nodes": [{"id": "plugin_invalid", "label": "plugin-invalid.js", "file_type": "code", "source_file": "node_modules\\eslint\\messages\\plugin-invalid.js", "source_location": "L1"}], "edges": []}

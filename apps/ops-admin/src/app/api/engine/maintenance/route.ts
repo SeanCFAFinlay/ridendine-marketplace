@@ -1,12 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
-import { getOpsActorContext, hasRequiredRole } from '@/lib/engine';
+import { finalizeOpsActor, getOpsActorContext, guardPlatformApi } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const actor = await getOpsActorContext();
-  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = guardPlatformApi(actor, 'engine_maintenance');
+  if (denied) return denied;
 
   const client = createAdminClient() as any;
 
@@ -32,9 +34,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor || !hasRequiredRole(actor, ['ops_manager', 'super_admin'])) {
-    return NextResponse.json({ error: 'Only managers can toggle maintenance' }, { status: 403 });
-  }
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'engine_maintenance'));
+  if (opsActor instanceof Response) return opsActor;
 
   const { action, message } = await request.json();
   const client = createAdminClient() as any;
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
         is_paused: true,
         paused_reason: `Maintenance mode: ${message || 'Platform maintenance'}`,
         paused_at: new Date().toISOString(),
-        paused_by: actor.userId,
+        paused_by: opsActor.userId,
       }).eq('id', sf.id);
     }
 
@@ -62,18 +63,18 @@ export async function POST(request: NextRequest) {
         maintenance_mode: true,
         maintenance_message: message || 'Platform is under maintenance',
         maintenance_activated_at: new Date().toISOString(),
-        maintenance_activated_by: actor.userId,
+        maintenance_activated_by: opsActor.userId,
         paused_storefront_ids: (activeStorefronts || []).map((s: any) => s.id),
       },
     }).not('id', 'is', null);
 
     // Create system alert
-    await client.from('system_alerts').insert({
+    await (client as any).from('system_alerts').insert({
       alert_type: 'maintenance_mode',
       severity: 'warning',
       title: 'Maintenance Mode Activated',
       message: `Platform maintenance activated by ops. ${(activeStorefronts || []).length} storefronts paused.`,
-      metadata: { activatedBy: actor.userId, storefrontsPaused: (activeStorefronts || []).length },
+      metadata: { activatedBy: opsActor.userId, storefrontsPaused: (activeStorefronts || []).length },
     });
 
     return NextResponse.json({
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
       setting_value: { maintenance_mode: false },
     }).not('id', 'is', null);
 
-    await client.from('system_alerts').insert({
+    await (client as any).from('system_alerts').insert({
       alert_type: 'maintenance_mode',
       severity: 'info',
       title: 'Maintenance Mode Deactivated',

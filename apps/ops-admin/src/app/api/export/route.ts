@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
-import { getOpsActorContext } from '@/lib/engine';
+import { getOpsActorContext, guardPlatformApi } from '@/lib/engine';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -32,6 +32,30 @@ async function fetchLedger(client: any, startDate: string, endDate: string) {
   return {
     rows: (data || []).map((r: any) => ({ ...r, amount: (r.amount_cents / 100).toFixed(2) })),
     headers: ['Type', 'Amount', 'Currency', 'Description', 'Entity Type', 'Entity ID', 'Date'],
+  };
+}
+
+async function fetchStripeEventsProcessed(client: any, startDate: string, endDate: string) {
+  const { data } = await client
+    .from('stripe_events_processed')
+    .select(
+      'stripe_event_id, event_type, livemode, processing_status, related_order_id, processed_at, error_message, created_at'
+    )
+    .gte('processed_at', startDate)
+    .lte('processed_at', endDate)
+    .order('processed_at', { ascending: false });
+  return {
+    rows: data || [],
+    headers: [
+      'Stripe Event ID',
+      'Event Type',
+      'Livemode',
+      'Status',
+      'Related Order ID',
+      'Processed At',
+      'Error',
+      'Created At',
+    ],
   };
 }
 
@@ -67,12 +91,17 @@ async function fetchDrivers(client: any) {
 
 export async function GET(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type');
   const startDate = searchParams.get('start') || new Date(Date.now() - THIRTY_DAYS_MS).toISOString();
   const endDate = searchParams.get('end') || new Date().toISOString();
+
+  const financeExportTypes = new Set(['ledger', 'stripe_events']);
+  const exportDenied = financeExportTypes.has(type || '')
+    ? guardPlatformApi(actor, 'finance_export_ledger')
+    : guardPlatformApi(actor, 'ops_export_operational');
+  if (exportDenied) return exportDenied;
 
   const client = createAdminClient() as any;
   let rows: any[] = [];
@@ -85,6 +114,10 @@ export async function GET(request: NextRequest) {
     }
     case 'ledger': {
       ({ rows, headers } = await fetchLedger(client, startDate, endDate));
+      break;
+    }
+    case 'stripe_events': {
+      ({ rows, headers } = await fetchStripeEventsProcessed(client, startDate, endDate));
       break;
     }
     case 'customers': {
@@ -100,7 +133,13 @@ export async function GET(request: NextRequest) {
       break;
     }
     default:
-      return NextResponse.json({ error: 'Invalid type. Use: orders, ledger, customers, chefs, drivers' }, { status: 400 });
+      return NextResponse.json(
+        {
+          error:
+            'Invalid type. Use: orders, ledger, stripe_events, customers, chefs, drivers',
+        },
+        { status: 400 }
+      );
   }
 
   const csvRows = [headers.join(','), ...rows.map(buildCsvRow)];

@@ -1,39 +1,68 @@
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createAdminClient, createSupportTicket } from '@ridendine/db';
-import type { SupabaseClient } from '@ridendine/db';
+import {
+  createAdminClient,
+  createServerClient,
+  createSupportTicket,
+  getCustomerByUserId,
+  type SupabaseClient,
+} from '@ridendine/db';
 import { supportRequestSchema } from '@ridendine/validation';
+import {
+  evaluateRateLimit,
+  RATE_LIMIT_POLICIES,
+  rateLimitPolicyResponse,
+} from '@ridendine/utils';
 
-async function getOptionalUserId(adminClient: SupabaseClient): Promise<string | null> {
-  try {
-    const { data: { user } } = await adminClient.auth.getUser();
-    return user?.id ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function buildDescription(name: string, email: string, message: string): string {
-  return `From: ${name} <${email}>\n\n${message}`;
+function buildDescription(
+  name: string,
+  email: string,
+  message: string,
+  category?: string
+): string {
+  const cat = category ? `Category: ${category}\n` : '';
+  return `${cat}From: ${name} <${email}>\n\n${message}`;
 }
 
 export async function POST(request: NextRequest) {
+  const limit = await evaluateRateLimit({
+    request,
+    policy: RATE_LIMIT_POLICIES.supportWrite,
+    namespace: 'web-support',
+    routeKey: 'POST:/api/support',
+  });
+  if (!limit.allowed) return rateLimitPolicyResponse(limit);
+
   try {
     const body = await request.json();
     const validated = supportRequestSchema.parse(body);
 
+    const cookieStore = await cookies();
+    const sessionClient = createServerClient(cookieStore);
     const adminClient = createAdminClient() as unknown as SupabaseClient;
-    const userId = await getOptionalUserId(adminClient);
+
+    let customerId: string | null = null;
+    const {
+      data: { user },
+    } = await sessionClient.auth.getUser();
+    if (user) {
+      const customer = await getCustomerByUserId(sessionClient as unknown as SupabaseClient, user.id);
+      customerId = customer?.id ?? null;
+    }
 
     const ticket = await createSupportTicket(adminClient, {
-      user_id: userId ?? '',
+      customer_id: customerId,
       subject: validated.subject,
-      description: buildDescription(validated.name, validated.email, validated.message),
+      description: buildDescription(
+        validated.name,
+        validated.email,
+        validated.message,
+        validated.category
+      ),
       status: 'open',
       priority: 'medium',
-      category: validated.category ?? 'general',
       order_id: null,
-      customer_id: null,
       chef_id: null,
       driver_id: null,
       assigned_to: null,
@@ -82,7 +111,7 @@ export async function GET() {
   return NextResponse.json(
     {
       success: false,
-      error: 'Method not allowed. Please use POST.',
+      error: 'Method not allowed. Please use POST or GET /api/support/tickets.',
     },
     { status: 405 }
   );

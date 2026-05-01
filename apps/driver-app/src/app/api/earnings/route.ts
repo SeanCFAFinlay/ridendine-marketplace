@@ -1,54 +1,44 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient, getDriverByUserId, getDeliveryHistory } from '@ridendine/db';
+import { createAdminClient, getDeliveryHistory, type SupabaseClient } from '@ridendine/db';
+import { getDriverActorContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const driverContext = await getDriverActorContext();
+    if (!driverContext) {
+      return errorResponse('UNAUTHORIZED', 'Not authenticated or not approved', 401);
     }
 
-    const driver = await getDriverByUserId(supabase as any, user.id);
-
-    if (!driver) {
-      return NextResponse.json(
-        { error: 'Driver profile not found' },
-        { status: 404 }
-      );
+    const adminClient = createAdminClient();
+    const allDeliveries = await getDeliveryHistory(
+      adminClient as unknown as SupabaseClient,
+      driverContext.driverId,
+      {
+      limit: 1000,
     }
-
-    const allDeliveries = await getDeliveryHistory(supabase as any, driver.id, { limit: 1000 });
+    );
 
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const todayDeliveries = allDeliveries.filter(d =>
-      d.actual_dropoff_at && new Date(d.actual_dropoff_at) >= todayStart
+    const todayDeliveries = allDeliveries.filter(
+      (d) => d.actual_dropoff_at && new Date(d.actual_dropoff_at) >= todayStart
     );
 
-    const weekDeliveries = allDeliveries.filter(d =>
-      d.actual_dropoff_at && new Date(d.actual_dropoff_at) >= weekStart
+    const weekDeliveries = allDeliveries.filter(
+      (d) => d.actual_dropoff_at && new Date(d.actual_dropoff_at) >= weekStart
     );
 
-    const monthDeliveries = allDeliveries.filter(d =>
-      d.actual_dropoff_at && new Date(d.actual_dropoff_at) >= monthStart
+    const monthDeliveries = allDeliveries.filter(
+      (d) => d.actual_dropoff_at && new Date(d.actual_dropoff_at) >= monthStart
     );
 
     const dayBreakdown: Record<string, { count: number; earnings: number }> = {};
 
-    weekDeliveries.forEach(delivery => {
+    weekDeliveries.forEach((delivery) => {
       if (!delivery.actual_dropoff_at) return;
 
       const date = new Date(delivery.actual_dropoff_at);
@@ -75,10 +65,12 @@ export async function GET() {
     const week = {
       count: weekDeliveries.length,
       earnings: weekDeliveries.reduce((sum, d) => sum + d.driver_payout, 0),
-      breakdown: Object.entries(dayBreakdown).map(([date, data]) => ({
-        date,
-        ...data,
-      })).sort((a, b) => a.date.localeCompare(b.date)),
+      breakdown: Object.entries(dayBreakdown)
+        .map(([date, data]) => ({
+          date,
+          ...data,
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date)),
     };
 
     const month = {
@@ -86,16 +78,13 @@ export async function GET() {
       earnings: monthDeliveries.reduce((sum, d) => sum + d.driver_payout, 0),
     };
 
-    return NextResponse.json({
+    return successResponse({
       today,
       week,
       month,
     });
   } catch (error) {
     console.error('Error fetching earnings:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }

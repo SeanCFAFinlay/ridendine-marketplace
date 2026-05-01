@@ -28,7 +28,7 @@ export async function GET() {
     const adminClient = createAdminClient();
 
     // Get pending offers for this driver
-    const { data: offers, error } = await (adminClient as any)
+    const { data: offers, error } = await adminClient
       .from('assignment_attempts')
       .select(`
         *,

@@ -1,10 +1,27 @@
 import { Card, Badge } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { createAdminClient } from '@ridendine/db';
+import { getOpsActorContext, hasPlatformApiCapability } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ActivityPage() {
+  const actor = await getOpsActorContext();
+  if (!actor || !hasPlatformApiCapability(actor, 'audit_timeline_read')) {
+    return (
+      <DashboardLayout>
+        <div className="mx-auto max-w-4xl">
+          <Card className="border-gray-800 bg-[#16213e] p-8">
+            <h1 className="text-2xl font-bold text-white">Access restricted</h1>
+            <p className="mt-2 text-gray-400">
+              Activity and audit views require ops admin, ops manager, or super admin.
+            </p>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   const client = createAdminClient() as any;
 
   // Recent audit logs from ops actions

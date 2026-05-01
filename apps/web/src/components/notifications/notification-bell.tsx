@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { createBrowserClient } from '@ridendine/db';
+import { createBrowserClient, customerNotificationsChannel } from '@ridendine/db';
 
 interface Notification {
   id: string;
@@ -11,6 +11,36 @@ interface Notification {
   read: boolean;
   created_at: string;
   action_url?: string;
+}
+
+function mapDbNotification(row: {
+  id: string;
+  title: string;
+  body: string;
+  message: string | null;
+  type: string;
+  created_at: string;
+  is_read: boolean;
+  data: unknown;
+}): Notification {
+  const allowed: Notification['type'][] = ['order', 'delivery', 'promo', 'system'];
+  const t = allowed.includes(row.type as Notification['type'])
+    ? (row.type as Notification['type'])
+    : 'system';
+  let action_url: string | undefined;
+  if (row.data && typeof row.data === 'object' && row.data !== null && 'action_url' in row.data) {
+    const u = (row.data as { action_url?: unknown }).action_url;
+    if (typeof u === 'string') action_url = u;
+  }
+  return {
+    id: row.id,
+    title: row.title,
+    message: row.message ?? row.body,
+    type: t,
+    read: row.is_read,
+    created_at: row.created_at,
+    action_url,
+  };
 }
 
 export function NotificationBell() {
@@ -29,52 +59,76 @@ export function NotificationBell() {
     }
 
     const db = supabase;
+    let cancelled = false;
+    let channel: ReturnType<typeof db.channel> | null = null;
 
-    async function fetchNotifications() {
-      const { data: { user } } = await db.auth.getUser();
-      if (!user) {
+    async function setup() {
+      const {
+        data: { user },
+      } = await db.auth.getUser();
+      if (!user || cancelled) {
         setLoading(false);
         return;
       }
 
-      const { data } = await (db as any)
+      const dbg = db as any;
+      const { data } = await dbg
         .from('notifications')
-        .select('*')
+        .select('id, title, body, message, type, user_id, created_at, is_read, data')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (data) {
-        setNotifications(data as Notification[]);
+      if (!cancelled && data) {
+        setNotifications(data.map(mapDbNotification));
       }
-      setLoading(false);
+      if (!cancelled) setLoading(false);
+
+      if (cancelled) return;
+
+      const filter = `user_id=eq.${user.id}`;
+      channel = db
+        .channel(customerNotificationsChannel(user.id))
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter,
+          },
+          (payload) => {
+            const row = payload.new as {
+              id: string;
+              title: string;
+              body: string;
+              message: string | null;
+              type: string;
+              created_at: string;
+              is_read: boolean;
+              data: unknown;
+              user_id?: string;
+            };
+            if (row.user_id && row.user_id !== user.id) return;
+            const mapped = mapDbNotification(row);
+            setNotifications((prev) => [mapped, ...prev]);
+
+            if (Notification.permission === 'granted') {
+              new Notification(mapped.title, {
+                body: mapped.message,
+                icon: '/icons/icon-192.png',
+              });
+            }
+          }
+        )
+        .subscribe();
     }
 
-    fetchNotifications();
-
-    // Subscribe to new notifications
-    const channel = db
-      .channel('user-notifications')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications' },
-        (payload) => {
-          const newNotification = payload.new as Notification;
-          setNotifications((prev) => [newNotification, ...prev]);
-
-          // Show browser notification if permitted
-          if (Notification.permission === 'granted') {
-            new Notification(newNotification.title, {
-              body: newNotification.message,
-              icon: '/icons/icon-192.png',
-            });
-          }
-        }
-      )
-      .subscribe();
+    void setup();
 
     return () => {
-      db.removeChannel(channel);
+      cancelled = true;
+      if (channel) db.removeChannel(channel);
     };
   }, [supabase]);
 
@@ -92,10 +146,7 @@ export function NotificationBell() {
 
   const markAsRead = async (notificationId: string) => {
     if (!supabase) return;
-    await (supabase as any)
-      .from('notifications')
-      .update({ read: true })
-      .eq('id', notificationId);
+    await (supabase as any).from('notifications').update({ is_read: true }).eq('id', notificationId);
 
     setNotifications((prev) =>
       prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
@@ -104,14 +155,16 @@ export function NotificationBell() {
 
   const markAllAsRead = async () => {
     if (!supabase) return;
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return;
 
     await (supabase as any)
       .from('notifications')
-      .update({ read: true })
+      .update({ is_read: true })
       .eq('user_id', user.id)
-      .eq('read', false);
+      .eq('is_read', false);
 
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
@@ -209,19 +262,11 @@ export function NotificationBell() {
                 >
                   <span className="text-2xl">{getIcon(notification.type)}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">
-                      {notification.title}
-                    </p>
-                    <p className="text-sm text-gray-600 line-clamp-2">
-                      {notification.message}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {formatTime(notification.created_at)}
-                    </p>
+                    <p className="font-medium text-gray-900 truncate">{notification.title}</p>
+                    <p className="text-sm text-gray-600 line-clamp-2">{notification.message}</p>
+                    <p className="text-xs text-gray-400 mt-1">{formatTime(notification.created_at)}</p>
                   </div>
-                  {!notification.read && (
-                    <div className="h-2 w-2 rounded-full bg-[#E85D26]" />
-                  )}
+                  {!notification.read && <div className="h-2 w-2 rounded-full bg-[#E85D26]" />}
                 </div>
               ))
             )}

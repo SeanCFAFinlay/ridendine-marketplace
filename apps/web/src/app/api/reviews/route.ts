@@ -7,7 +7,7 @@
 import type { NextRequest } from 'next/server';
 import { createAdminClient, createServerClient } from '@ridendine/db';
 import { cookies } from 'next/headers';
-import { checkRateLimit, getClientIp, rateLimitResponse } from '@ridendine/utils';
+import { checkRateLimit, getClientIp, isUuid, rateLimitResponse } from '@ridendine/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,8 +29,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { orderId, rating, comment } = body;
 
-    if (!orderId || !rating || rating < 1 || rating > 5) {
+    if (!orderId || typeof orderId !== 'string' || !rating || rating < 1 || rating > 5) {
       return Response.json({ error: 'orderId and rating (1-5) are required' }, { status: 400 });
+    }
+    if (!isUuid(orderId)) {
+      return Response.json({ error: 'Invalid orderId' }, { status: 400 });
     }
 
     const adminClient = createAdminClient() as any;
@@ -81,6 +84,9 @@ export async function GET(request: NextRequest) {
 
   if (!storefrontId) {
     return Response.json({ error: 'storefrontId required' }, { status: 400 });
+  }
+  if (!isUuid(storefrontId)) {
+    return Response.json({ error: 'Invalid storefrontId' }, { status: 400 });
   }
 
   const adminClient = createAdminClient() as any;

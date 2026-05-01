@@ -47,8 +47,7 @@ export async function POST(request: Request) {
     const address = await createAddress(supabase, {
       customer_id: customer.id,
       label: validated.label,
-      address_line1: validated.addressLine1,           // Fixed: was street_address
-      address_line2: validated.addressLine2 || null,   // Fixed: was missing
+      street_address: validated.addressLine1,
       city: validated.city,
       state: validated.state,
       postal_code: validated.postalCode,
@@ -92,16 +91,26 @@ export async function PATCH(request: Request) {
     const supabase = createServerClient(cookieStore);
 
     const customer = await getCurrentCustomer(supabase);
+    const { data: existingAddress } = await supabase
+      .from('customer_addresses')
+      .select('id')
+      .eq('id', addressId)
+      .eq('customer_id', customer.id)
+      .maybeSingle();
+
+    if (!existingAddress) {
+      return NextResponse.json(
+        { error: 'Address not found' },
+        { status: 404 }
+      );
+    }
 
     const updates: any = {};
     if (validated.label !== undefined) {
       updates.label = validated.label;
     }
     if (validated.addressLine1 !== undefined) {
-      updates.address_line1 = validated.addressLine1;  // Fixed: was street_address
-    }
-    if (validated.addressLine2 !== undefined) {
-      updates.address_line2 = validated.addressLine2;  // Fixed: was missing
+      updates.street_address = validated.addressLine1;
     }
     if (validated.city !== undefined) {
       updates.city = validated.city;
@@ -159,7 +168,20 @@ export async function DELETE(request: Request) {
     const cookieStore = await cookies();
     const supabase = createServerClient(cookieStore);
 
-    await getCurrentCustomer(supabase);
+    const customer = await getCurrentCustomer(supabase);
+    const { data: existingAddress } = await supabase
+      .from('customer_addresses')
+      .select('id')
+      .eq('id', addressId)
+      .eq('customer_id', customer.id)
+      .maybeSingle();
+
+    if (!existingAddress) {
+      return NextResponse.json(
+        { error: 'Address not found' },
+        { status: 404 }
+      );
+    }
 
     await deleteAddress(supabase, addressId);
 

@@ -1,0 +1,1 @@
+{"nodes": [{"id": "no_misused_new_d", "label": "no-misused-new.d.ts", "file_type": "code", "source_file": "node_modules\\@typescript-eslint\\eslint-plugin\\dist\\rules\\no-misused-new.d.ts", "source_location": "L1"}], "edges": []}

@@ -6,9 +6,12 @@
 import type { NextRequest } from 'next/server';
 import { createAdminClient, type SupabaseClient } from '@ridendine/db';
 import {
+  finalizeOpsActor,
   getEngine,
   getOpsActorContext,
   errorResponse,
+  guardPlatformApi,
+  hasPlatformApiCapability,
   successResponse,
 } from '@/lib/engine';
 import type { EngineOrderStatus, OrderCancelReason } from '@ridendine/types';
@@ -26,9 +29,8 @@ export async function GET(
   const { id: orderId } = await params;
 
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'ops_orders_read'));
+  if (opsActor instanceof Response) return opsActor;
 
   const engine = getEngine();
   const adminClient = createAdminClient() as unknown as SupabaseClient;
@@ -64,8 +66,10 @@ export async function GET(
     return errorResponse('NOT_FOUND', 'Order not found', 404);
   }
 
-  // Get order timeline from audit
-  const timeline = await engine.audit.getAuditTrail('order', orderId);
+  // Audit timeline — ops_admin / ops_manager / super_admin (platform-api-guards)
+  const timeline = hasPlatformApiCapability(opsActor, 'audit_timeline_read')
+    ? await engine.audit.getAuditTrail('order', orderId)
+    : [];
 
   // Get any linked exceptions (cast to any for new table)
   const { data: exceptions } = await adminClient
@@ -75,7 +79,7 @@ export async function GET(
     .order('created_at', { ascending: false });
 
   // Get allowed actions
-  const allowedActions = await engine.orders.getAllowedActions(orderId, actor.role);
+  const allowedActions = await engine.orders.getAllowedActions(orderId, opsActor.role);
 
   // Get financials
   const financials = await engine.commerce.getOrderFinancials(orderId);
@@ -100,9 +104,8 @@ export async function PATCH(
   const { id: orderId } = await params;
 
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'ops_orders_write'));
+  if (opsActor instanceof Response) return opsActor;
 
   const body = await request.json();
   const { action, ...actionParams } = body;
@@ -114,7 +117,7 @@ export async function PATCH(
       const result = await engine.orders.acceptOrder(
         orderId,
         actionParams.estimatedPrepMinutes || 20,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -127,7 +130,7 @@ export async function PATCH(
         orderId,
         actionParams.reason,
         actionParams.notes,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -136,7 +139,7 @@ export async function PATCH(
     }
 
     case 'start_preparing': {
-      const result = await engine.orders.startPreparing(orderId, actor);
+      const result = await engine.orders.startPreparing(orderId, opsActor);
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
       }
@@ -144,7 +147,7 @@ export async function PATCH(
     }
 
     case 'mark_ready': {
-      const result = await engine.platform.markOrderReady(orderId, actor);
+      const result = await engine.platform.markOrderReady(orderId, opsActor);
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
       }
@@ -156,7 +159,7 @@ export async function PATCH(
         orderId,
         actionParams.reason as OrderCancelReason,
         actionParams.notes,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -165,7 +168,7 @@ export async function PATCH(
     }
 
     case 'complete': {
-      const result = await engine.orders.completeOrder(orderId, actor);
+      const result = await engine.orders.completeOrder(orderId, opsActor);
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
       }
@@ -173,16 +176,14 @@ export async function PATCH(
     }
 
     case 'override': {
-      // Only managers can override
-      if (!['ops_manager', 'super_admin'].includes(actor.role)) {
-        return errorResponse('FORBIDDEN', 'Only managers can perform overrides', 403);
-      }
+      const deniedOverride = guardPlatformApi(opsActor, 'order_override');
+      if (deniedOverride) return deniedOverride;
 
       const result = await engine.orders.opsOverride(
         orderId,
         actionParams.targetStatus as EngineOrderStatus,
         actionParams.reason,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);

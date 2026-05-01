@@ -1,0 +1,1 @@
+{"nodes": [{"id": "get_app_route_from_entrypoint_d", "label": "get-app-route-from-entrypoint.d.ts", "file_type": "code", "source_file": "packages\\engine\\node_modules\\next\\dist\\server\\get-app-route-from-entrypoint.d.ts", "source_location": "L1"}], "edges": []}

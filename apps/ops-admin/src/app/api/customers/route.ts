@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, listOpsCustomers, type SupabaseClient } from '@ridendine/db';
 import { paginationSchema } from '@ridendine/validation';
-import { getOpsActorContext, errorResponse, hasRequiredRole } from '@/lib/engine';
+import { getOpsActorContext, errorResponse, guardPlatformApi } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
     const actor = await getOpsActorContext();
-    if (!actor) {
-      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
-    }
+    const denied = guardPlatformApi(actor, 'ops_entity_read');
+    if (denied) return denied;
 
     const { searchParams } = new URL(request.url);
     const { page, limit } = paginationSchema.parse({
@@ -37,12 +36,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const actor = await getOpsActorContext();
-    if (!actor) {
-      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
-    }
-    if (!hasRequiredRole(actor, ['ops_manager', 'super_admin'])) {
-      return errorResponse('FORBIDDEN', 'Customer records must be created through the customer ordering flow.', 403);
-    }
+    const denied = guardPlatformApi(actor, 'customers_write');
+    if (denied) return denied;
 
     void request;
     return errorResponse(

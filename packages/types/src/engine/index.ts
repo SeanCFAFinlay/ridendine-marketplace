@@ -9,8 +9,11 @@ export const ActorRole = {
   CHEF_MANAGER: 'chef_manager',
   DRIVER: 'driver',
   OPS_AGENT: 'ops_agent',
+  OPS_ADMIN: 'ops_admin',
   OPS_MANAGER: 'ops_manager',
   FINANCE_ADMIN: 'finance_admin',
+  FINANCE_MANAGER: 'finance_manager',
+  SUPPORT_AGENT: 'support_agent',
   SUPER_ADMIN: 'super_admin',
   SYSTEM: 'system', // For automated actions
 } as const;

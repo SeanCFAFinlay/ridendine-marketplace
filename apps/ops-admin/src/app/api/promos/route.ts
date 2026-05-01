@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
-import { getOpsActorContext, hasRequiredRole } from '@/lib/engine';
+import { getOpsActorContext, guardPlatformApi } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const actor = await getOpsActorContext();
-  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = guardPlatformApi(actor, 'promos');
+  if (denied) return denied;
 
   const client = createAdminClient() as any;
   const { data, error } = await client
@@ -20,9 +21,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor || !hasRequiredRole(actor, ['ops_manager', 'finance_admin', 'super_admin'])) {
-    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-  }
+  const denied = guardPlatformApi(actor, 'promos');
+  if (denied) return denied;
 
   const body = await request.json();
   const { code, discountType, discountValue, minOrderAmount, usageLimit, startsAt, expiresAt } = body;
@@ -54,9 +54,8 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor || !hasRequiredRole(actor, ['ops_manager', 'finance_admin', 'super_admin'])) {
-    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-  }
+  const denied = guardPlatformApi(actor, 'promos');
+  if (denied) return denied;
 
   const body = await request.json();
   const { id, is_active } = body;

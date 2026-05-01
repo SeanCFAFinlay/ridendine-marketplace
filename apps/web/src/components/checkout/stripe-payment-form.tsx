@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { Button } from '@ridendine/ui';
+import { orderConfirmationPath } from '@/lib/customer-ordering';
 
 interface StripePaymentFormProps {
   orderId: string;
@@ -27,7 +28,7 @@ export function StripePaymentForm({ orderId, onSuccess, onError }: StripePayment
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/order-confirmation/${orderId}`,
+        return_url: `${window.location.origin}${orderConfirmationPath(orderId)}`,
       },
     });
 
