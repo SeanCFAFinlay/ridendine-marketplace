@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Badge, Card } from '@ridendine/ui';
 import { createAdminClient, getOpsSupportQueue, type SupabaseClient } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { getEngine } from '@/lib/engine';
+import { getEngine, getOpsActorContext, hasPlatformApiCapability } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +21,22 @@ export default async function SupportPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const actor = await getOpsActorContext();
+  if (!actor || !hasPlatformApiCapability(actor, 'support_queue')) {
+    return (
+      <DashboardLayout>
+        <div className="mx-auto max-w-2xl">
+          <Card className="border-gray-800 bg-[#16213e] p-8">
+            <h1 className="text-xl font-semibold text-white">Support access required</h1>
+            <p className="mt-2 text-gray-400">
+              Sign in with a platform role that includes the support queue capability.
+            </p>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   const params = await searchParams;
   const search = getSearchParam(params.search).toLowerCase();
   const statusFilter = getSearchParam(params.status, 'all');
@@ -28,7 +44,9 @@ export default async function SupportPage({
 
   const adminClient = createAdminClient() as unknown as SupabaseClient;
   const [queue, exceptionQueue, sla] = await Promise.all([
-    getOpsSupportQueue(adminClient),
+    getOpsSupportQueue(adminClient, {
+      supportAgentUserId: actor.role === 'support_agent' ? actor.userId : undefined,
+    }),
     getEngine().support.getExceptionQueue(),
     getEngine().support.getSLAStatus(),
   ]);
@@ -38,7 +56,7 @@ export default async function SupportPage({
       return false;
     }
     if (!search) return true;
-    return [ticket.subject, ticket.description, ticket.category ?? '', ticket.priority]
+    return [ticket.subject, ticket.description, ticket.priority, ticket.order_id ?? '']
       .join(' ')
       .toLowerCase()
       .includes(search);

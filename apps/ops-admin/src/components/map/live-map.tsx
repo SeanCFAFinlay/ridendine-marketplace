@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { createBrowserClient } from '@ridendine/db';
+import { createBrowserClient, opsLiveMapChannel } from '@ridendine/db';
 import { DEFAULT_SERVICE_REGION_CENTER, DEFAULT_MAP_ZOOM } from '@ridendine/engine';
 
 type DriverMapRow = {
@@ -82,6 +82,8 @@ export default function LiveMap() {
 
   const [drivers, setDrivers] = useState<DriverMarkerData[]>([]);
   const [deliveries, setDeliveries] = useState<DeliveryMarkerData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'online' | 'busy' | 'offline'>(
     'all'
   );
@@ -109,9 +111,11 @@ export default function LiveMap() {
     const client = db;
 
     async function fetchData() {
-      const { data: driverData } = await client
-        .from('drivers')
-        .select(`
+      try {
+        setLoadError(null);
+        const { data: driverData } = await client
+          .from('drivers')
+          .select(`
           id,
           first_name,
           last_name,
@@ -121,28 +125,28 @@ export default function LiveMap() {
             last_location_lng
           )
         `)
-        .eq('status', 'approved');
+          .eq('status', 'approved');
 
-      if (driverData) {
-        const mappedDrivers = (driverData as unknown as DriverMapRow[]).map(
-          (driver) => {
-            const presence = normalizePresence(driver.driver_presence);
-            return {
-              id: driver.id,
-              first_name: driver.first_name,
-              last_name: driver.last_name,
-              status: presence?.status || 'offline',
-              current_lat: presence?.last_location_lat ?? null,
-              current_lng: presence?.last_location_lng ?? null,
-            };
-          }
-        );
-        setDrivers(mappedDrivers);
-      }
+        if (driverData) {
+          const mappedDrivers = (driverData as unknown as DriverMapRow[]).map(
+            (driver) => {
+              const presence = normalizePresence(driver.driver_presence);
+              return {
+                id: driver.id,
+                first_name: driver.first_name,
+                last_name: driver.last_name,
+                status: presence?.status || 'offline',
+                current_lat: presence?.last_location_lat ?? null,
+                current_lng: presence?.last_location_lng ?? null,
+              };
+            }
+          );
+          setDrivers(mappedDrivers);
+        }
 
-      const { data: deliveryData } = await client
-        .from('deliveries')
-        .select(`
+        const { data: deliveryData } = await client
+          .from('deliveries')
+          .select(`
           id,
           pickup_lat,
           pickup_lng,
@@ -152,35 +156,40 @@ export default function LiveMap() {
           driver_id,
           orders (order_number)
         `)
-        .in('status', [
+          .in('status', [
           'assigned',
           'accepted',
           'en_route_to_pickup',
           'picked_up',
           'en_route_to_dropoff',
-        ]);
+          ]);
 
-      if (deliveryData) {
-        const mappedDeliveries = (deliveryData as unknown as DeliveryMapRow[]).map(
-          (delivery) => ({
-            id: delivery.id,
-            order_number: normalizeOrder(delivery.orders)?.order_number || 'Unknown',
-            pickup_lat: delivery.pickup_lat,
-            pickup_lng: delivery.pickup_lng,
-            dropoff_lat: delivery.dropoff_lat,
-            dropoff_lng: delivery.dropoff_lng,
-            status: delivery.status,
-            driver_id: delivery.driver_id,
-          })
-        );
-        setDeliveries(mappedDeliveries);
+        if (deliveryData) {
+          const mappedDeliveries = (deliveryData as unknown as DeliveryMapRow[]).map(
+            (delivery) => ({
+              id: delivery.id,
+              order_number: normalizeOrder(delivery.orders)?.order_number || 'Unknown',
+              pickup_lat: delivery.pickup_lat,
+              pickup_lng: delivery.pickup_lng,
+              dropoff_lat: delivery.dropoff_lat,
+              dropoff_lng: delivery.dropoff_lng,
+              status: delivery.status,
+              driver_id: delivery.driver_id,
+            })
+          );
+          setDeliveries(mappedDeliveries);
+        }
+      } catch {
+        setLoadError('Unable to load live map data right now.');
+      } finally {
+        setLoading(false);
       }
     }
 
     void fetchData();
 
     const channel = client
-      .channel('live-map')
+      .channel(opsLiveMapChannel())
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'driver_presence' },
@@ -384,6 +393,15 @@ export default function LiveMap() {
       </div>
 
       <div ref={containerRef} className="flex-1" style={{ minHeight: '400px' }} />
+      {(loading || loadError || (drivers.length === 0 && deliveries.length === 0)) && (
+        <div className="border-t border-gray-800 bg-[#16213e] px-4 py-3 text-sm">
+          {loading && <p className="text-gray-400">Loading live map data...</p>}
+          {loadError && <p className="text-red-300">{loadError}</p>}
+          {!loading && !loadError && drivers.length === 0 && deliveries.length === 0 && (
+            <p className="text-gray-400">No live driver or delivery locations are currently available.</p>
+          )}
+        </div>
+      )}
 
       <div className="border-t border-gray-800 bg-[#16213e] p-4">
         <div className="grid grid-cols-3 gap-4 text-center">

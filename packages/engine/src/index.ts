@@ -20,11 +20,15 @@ export * from './orchestrators/payout-engine';
 // Domain orchestrators (facades)
 export * from './orchestrators/order.orchestrator';
 export * from './orchestrators/kitchen.engine';
+export * from './orchestrators/kitchen-availability';
 export * from './orchestrators/dispatch.engine';
 export * from './orchestrators/commerce.engine';
 export * from './orchestrators/support.engine';
 export * from './orchestrators/platform.engine';
 export * from './orchestrators/ops.engine';
+
+// Risk (IRR-022) — deterministic pre-payment / pre-mutation checks; wire at API in Phase 6+
+export * from './orchestrators/risk.engine';
 
 // Analytics services
 export * from './services/ops-analytics.service';
@@ -36,6 +40,19 @@ export * from './services/customers.service';
 export * from './services/permissions.service';
 export * from './services/storage.service';
 export * from './services/dispatch.service';
+
+// Stripe (IRR-007 / IRR-018) — server-only secret; safe to import from route handlers
+export {
+  getStripeClient,
+  assertStripeConfigured,
+  STRIPE_API_VERSION,
+} from './services/stripe.service';
+
+export {
+  claimStripeWebhookEventForProcessing,
+  finalizeStripeWebhookSuccess,
+  finalizeStripeWebhookFailure,
+} from './services/stripe-webhook-idempotency';
 
 // Constants
 export * from './constants';

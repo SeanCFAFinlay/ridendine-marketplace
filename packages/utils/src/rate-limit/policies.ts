@@ -1,0 +1,86 @@
+import type { RateLimitPolicy } from './types';
+
+export const RATE_LIMIT_POLICIES = {
+  auth: {
+    name: 'auth',
+    maxRequests: 5,
+    windowSeconds: 60,
+    keyStrategy: 'ip',
+    failBehavior: 'fail_closed',
+    risk: 'high',
+  },
+  checkout: {
+    name: 'checkout',
+    maxRequests: 3,
+    windowSeconds: 60,
+    keyStrategy: 'composite',
+    failBehavior: 'fail_closed',
+    risk: 'high',
+  },
+  webhookStripe: {
+    name: 'webhook_stripe',
+    maxRequests: 200,
+    windowSeconds: 60,
+    keyStrategy: 'composite',
+    failBehavior: 'fail_open',
+    risk: 'medium',
+  },
+  customerWrite: {
+    name: 'customer_write',
+    maxRequests: 30,
+    windowSeconds: 60,
+    keyStrategy: 'user_id',
+    failBehavior: 'fail_closed',
+    risk: 'high',
+  },
+  chefWrite: {
+    name: 'chef_write',
+    maxRequests: 30,
+    windowSeconds: 60,
+    keyStrategy: 'user_id',
+    failBehavior: 'fail_closed',
+    risk: 'high',
+  },
+  supportWrite: {
+    name: 'support_write',
+    maxRequests: 10,
+    windowSeconds: 60,
+    keyStrategy: 'ip',
+    failBehavior: 'fail_closed',
+    risk: 'high',
+  },
+  upload: {
+    name: 'upload',
+    maxRequests: 10,
+    windowSeconds: 60,
+    keyStrategy: 'ip',
+    failBehavior: 'fail_closed',
+    risk: 'high',
+  },
+  driverLocation: {
+    name: 'driver_location',
+    maxRequests: 24,
+    windowSeconds: 60,
+    keyStrategy: 'driver_id',
+    failBehavior: 'fail_open',
+    risk: 'medium',
+  },
+  opsAdminMutation: {
+    name: 'ops_admin_mutation',
+    maxRequests: 20,
+    windowSeconds: 60,
+    keyStrategy: 'user_id',
+    failBehavior: 'fail_closed',
+    risk: 'high',
+  },
+  publicRead: {
+    name: 'public_read',
+    maxRequests: 120,
+    windowSeconds: 60,
+    keyStrategy: 'ip',
+    failBehavior: 'fail_open',
+    risk: 'low',
+  },
+} as const satisfies Record<string, RateLimitPolicy>;
+
+export type RateLimitPolicyName = keyof typeof RATE_LIMIT_POLICIES;

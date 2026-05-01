@@ -32,6 +32,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
   const [photo, setPhoto] = useState<string | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -101,6 +102,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
   const handleAction = async () => {
     const action = getNextAction();
     if (!action) return;
+    setErrorMessage(null);
 
     // If starting navigation, open maps first
     if (action.nextStatus === 'en_route_to_pickup') {
@@ -117,14 +119,17 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update delivery status');
+        const json = await response.json();
+        throw new Error(json.error || 'Failed to update delivery status');
       }
 
       setStatus(action.nextStatus);
       router.refresh();
     } catch (error) {
       console.error('Error updating delivery:', error);
-      alert('Failed to update delivery status');
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Failed to update delivery status'
+      );
     }
   };
 
@@ -229,6 +234,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
 
   const handleComplete = async () => {
     setIsUploading(true);
+    setErrorMessage(null);
 
     try {
       const response = await fetch(`/api/deliveries/${delivery.id}`, {
@@ -243,14 +249,17 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
       });
 
       if (!response.ok) {
-        throw new Error('Failed to complete delivery');
+        const json = await response.json();
+        throw new Error(json.error || 'Failed to complete delivery');
       }
 
       router.push('/');
       router.refresh();
     } catch (error) {
       console.error('Error completing delivery:', error);
-      alert('Failed to complete delivery');
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Failed to complete delivery'
+      );
     } finally {
       setIsUploading(false);
     }
@@ -261,6 +270,13 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] pb-24">
+      {errorMessage && (
+        <div className="p-4 pb-0">
+          <Card className="border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {errorMessage}
+          </Card>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-brand-600 p-6 text-white">
         <div className="flex items-center justify-between">

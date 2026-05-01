@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@ridendine/db';
-import { type AppRole, isPlatformRole } from '@ridendine/types';
+import { type AppRole, isPlatformRole, normalizePlatformRole } from '@ridendine/types';
 
 // Re-export AppRole as UserRole for backwards compatibility
 export type UserRole = AppRole;
@@ -48,7 +48,8 @@ export async function getUserRoles(
       .eq('is_active', true)
       .single();
     if (platformUser && platformUser.role) {
-      roles.push(platformUser.role as AppRole);
+      const normalized = normalizePlatformRole(platformUser.role as string);
+      if (normalized) roles.push(normalized);
     }
   } catch {
     // not an admin

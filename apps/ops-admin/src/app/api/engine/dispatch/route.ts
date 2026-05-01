@@ -9,6 +9,8 @@ import {
   getEngine,
   getOpsActorContext,
   errorResponse,
+  finalizeOpsActor,
+  guardPlatformApi,
   successResponse,
 } from '@/lib/engine';
 
@@ -18,9 +20,8 @@ import {
  */
 export async function GET() {
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
+  const denied = guardPlatformApi(actor, 'dispatch_read');
+  if (denied) return denied;
 
   const engine = getEngine();
   const board = await engine.ops.getDispatchCommandCenter();
@@ -34,9 +35,8 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'dispatch_write'));
+  if (opsActor instanceof Response) return opsActor;
 
   const body = await request.json();
   const parsed = deliveryInterventionActionSchema.safeParse(body);
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       const result = await engine.dispatch.manualAssign(
         actionInput.deliveryId,
         actionInput.driverId,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       const result = await engine.dispatch.reassignDelivery(
         actionInput.deliveryId,
         actionInput.reason,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     case 'retry_assignment': {
       const result = await engine.dispatch.findAndAssignDriver(
         actionInput.deliveryId,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       const result = await engine.ops.escalateDeliveryException(
         actionInput.deliveryId,
         actionInput.reason,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       const result = await engine.ops.cancelDelivery(
         actionInput.deliveryId,
         actionInput.reason,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     case 'acknowledge_issue': {
       const result = await engine.ops.acknowledgeException(
         actionInput.exceptionId,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       const result = await engine.ops.addDeliveryOpsNote(
         actionInput.deliveryId,
         actionInput.note,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);

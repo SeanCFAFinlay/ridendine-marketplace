@@ -117,7 +117,12 @@ export default async function StorefrontPage() {
           <p className="mt-1 text-gray-500">Customize how customers see your kitchen</p>
         </div>
 
-        <StorefrontForm storefront={storefront} />
+        <StorefrontForm
+          storefront={{
+            ...storefront,
+            cuisine_types: storefront.cuisine_types ?? [],
+          }}
+        />
       </div>
     );
   } catch (error) {

@@ -78,6 +78,9 @@ const mockSupabase = {
 
 jest.mock('@ridendine/db', () => ({
   createBrowserClient: jest.fn(() => mockSupabase),
+  /** Match `packages/db` realtime helpers used by LiveOrderTracker */
+  deliveryTrackingChannelLegacy: (deliveryId: string) => `tracking:${deliveryId}`,
+  entityDeliveryChannel: (deliveryId: string) => `entity:delivery:${deliveryId}`,
 }));
 
 // Mock @ridendine/ui
@@ -235,7 +238,7 @@ describe('LiveOrderTracker', () => {
   it('polls for status every 30 seconds as fallback', async () => {
     const mockFetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ data: { status: 'in_transit' } }),
+      json: async () => ({ data: { order: { status: 'in_transit' } } }),
     });
     global.fetch = mockFetch;
 
@@ -247,6 +250,10 @@ describe('LiveOrderTracker', () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(`/api/orders/${defaultProps.orderId}`);
+    });
+    await waitFor(() => {
+      const heading = screen.getByRole('heading', { level: 2 });
+      expect(heading.textContent).toBe('On the Way');
     });
 
     // Cleanup

@@ -6,6 +6,11 @@
 import type { NextRequest } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import {
+  evaluateRateLimit,
+  RATE_LIMIT_POLICIES,
+  rateLimitPolicyResponse,
+} from '@ridendine/utils';
+import {
   getEngine,
   getChefActorContext,
   verifyChefOwnsOrder,
@@ -44,7 +49,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
           id, first_name, last_name, phone, email
         ),
         delivery_address:customer_addresses (
-          address_line1, address_line2, city, state, postal_code, lat, lng,
+          street_address, city, state, postal_code, lat, lng,
           delivery_instructions
         ),
         items:order_items (
@@ -85,6 +90,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (!chefContext) {
       return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
     }
+
+    const limit = await evaluateRateLimit({
+      request,
+      policy: RATE_LIMIT_POLICIES.chefWrite,
+      namespace: 'chef-orders-patch',
+      userId: chefContext.actor.userId,
+      routeKey: 'PATCH:/api/orders/[id]',
+    });
+    if (!limit.allowed) return rateLimitPolicyResponse(limit);
 
     // Verify chef owns this order
     const ownsOrder = await verifyChefOwnsOrder(chefContext.storefrontId, orderId);

@@ -136,6 +136,10 @@ CREATE POLICY "Ops can read all driver locations" ON driver_locations
   );
 
 -- Notifications: users can read/update their own
+-- (00002 may already define an update policy with the same name — drop if present.)
+DROP POLICY IF EXISTS "Users can read own notifications" ON notifications;
+DROP POLICY IF EXISTS "Users can update own notifications" ON notifications;
+
 CREATE POLICY "Users can read own notifications" ON notifications
   FOR SELECT TO authenticated USING (user_id = auth.uid());
 

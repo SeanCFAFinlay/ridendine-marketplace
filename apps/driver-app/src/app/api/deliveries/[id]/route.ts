@@ -50,7 +50,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           special_instructions,
           customer:customers (
             first_name,
-            last_name,
             phone
           ),
           storefront:chef_storefronts (
@@ -111,7 +110,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       activeAttempt,
     });
   } catch (error) {
-    console.error('Error fetching delivery:', error);
+    console.error('Error fetching delivery:', error instanceof Error ? error.message : 'unknown');
     return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }
@@ -202,7 +201,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     return errorResponse('INVALID_ACTION', `Unknown action: ${action || 'none'}`);
   } catch (error) {
-    console.error('Error updating delivery:', error);
+    console.error('Error updating delivery:', error instanceof Error ? error.message : 'unknown');
     return errorResponse('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }

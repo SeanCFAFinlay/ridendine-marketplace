@@ -1,17 +1,8 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@ridendine/db';
-import Stripe from 'stripe';
+import { getStripeClient } from '@ridendine/engine';
 import { getEngine } from '@/lib/engine';
-
-function getStripe() {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY not configured');
-  }
-  return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2026-02-25.clover',
-  });
-}
 
 export async function POST(request: Request) {
   try {
@@ -90,7 +81,7 @@ export async function POST(request: Request) {
 
     // Create Stripe transfer
     try {
-      const stripe = getStripe();
+      const stripe = getStripeClient();
       const transfer = await stripe.transfers.create({
         amount: Math.round(amount * 100), // Convert to cents
         currency: 'cad',

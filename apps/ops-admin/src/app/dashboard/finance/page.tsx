@@ -12,14 +12,17 @@ function formatCurrency(amount: number): string {
 
 export default async function FinancePage() {
   const actor = await getOpsActorContext();
-  if (!actor || !hasRequiredRole(actor, ['ops_manager', 'finance_admin', 'super_admin'])) {
+  if (
+    !actor ||
+    !hasRequiredRole(actor, ['ops_manager', 'finance_admin', 'finance_manager', 'super_admin'])
+  ) {
     return (
       <DashboardLayout>
         <div className="mx-auto max-w-4xl">
           <Card className="border-gray-800 bg-[#16213e] p-8">
             <h1 className="text-2xl font-bold text-white">Finance Access Required</h1>
             <p className="mt-2 text-gray-400">
-              Finance workflows are restricted to ops managers, finance admins, and super admins.
+              Finance workflows are restricted to ops managers, finance roles, and super admins.
             </p>
           </Card>
         </div>
@@ -88,6 +91,7 @@ export default async function FinancePage() {
           <div className="flex gap-2">
             <a href="/api/export?type=orders" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export Orders CSV</a>
             <a href="/api/export?type=ledger" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export Ledger CSV</a>
+            <a href="/api/export?type=stripe_events" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export Stripe Webhook CSV</a>
           </div>
         </div>
 

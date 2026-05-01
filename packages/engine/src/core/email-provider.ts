@@ -16,6 +16,8 @@ const EMAIL_SUBJECTS: Partial<Record<NotificationType, string>> = {
   order_ready: 'Your Order is Ready for Pickup',
   order_picked_up: 'Your Order is On Its Way',
   order_delivered: 'Your Order Has Been Delivered!',
+  order_cancelled: 'Your Order Was Cancelled',
+  refund_processed: 'Your Refund Has Been Processed',
   delivery_offer: 'New Delivery Available',
   chef_approved: 'Welcome to RideNDine!',
   driver_approved: 'Welcome to RideNDine!',

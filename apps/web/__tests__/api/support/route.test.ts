@@ -2,39 +2,51 @@
  * @jest-environment node
  */
 
-// Mock @ridendine/db before imports
 const mockCreateSupportTicket = jest.fn();
 const mockCreateAdminClient = jest.fn();
 const mockGetUser = jest.fn();
+const mockGetCustomerByUserId = jest.fn();
+const mockEvaluateRateLimit = jest.fn();
+
+const mockSessionClient = {
+  auth: { getUser: mockGetUser },
+};
 
 jest.mock('@ridendine/db', () => ({
   createAdminClient: mockCreateAdminClient,
-  createServerClient: jest.fn(),
+  createServerClient: jest.fn(() => mockSessionClient),
   createSupportTicket: mockCreateSupportTicket,
+  getCustomerByUserId: mockGetCustomerByUserId,
 }));
 
 jest.mock('next/headers', () => ({
   cookies: jest.fn(() => ({ getAll: jest.fn(() => []) })),
 }));
 
+jest.mock('@ridendine/utils', () => ({
+  RATE_LIMIT_POLICIES: { supportWrite: { name: 'support_write' } },
+  evaluateRateLimit: (...args: unknown[]) => mockEvaluateRateLimit(...args),
+  rateLimitPolicyResponse: () =>
+    Response.json({ success: false, code: 'RATE_LIMITED' }, { status: 429 }),
+}));
+
 import { NextRequest } from 'next/server';
 
-// We dynamically import after mocks are set up
 async function importRoute() {
   jest.resetModules();
 
   jest.mock('@ridendine/db', () => ({
     createAdminClient: mockCreateAdminClient,
-    createServerClient: jest.fn(),
+    createServerClient: jest.fn(() => mockSessionClient),
     createSupportTicket: mockCreateSupportTicket,
+    getCustomerByUserId: mockGetCustomerByUserId,
   }));
 
   jest.mock('next/headers', () => ({
     cookies: jest.fn(() => ({ getAll: jest.fn(() => []) })),
   }));
 
-  const mod = await import('../../../src/app/api/support/route');
-  return mod;
+  return import('../../../src/app/api/support/route');
 }
 
 function makeRequest(body: Record<string, unknown>): NextRequest {
@@ -56,17 +68,21 @@ const validBody = {
 describe('POST /api/support', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockEvaluateRateLimit.mockResolvedValue({
+      allowed: true,
+      remaining: 9,
+      policy: 'support_write',
+    });
 
-    const fakeAdminClient = {
-      auth: { getUser: mockGetUser },
-    };
-    mockCreateAdminClient.mockReturnValue(fakeAdminClient);
+    mockCreateAdminClient.mockReturnValue({});
     mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+    mockGetCustomerByUserId.mockResolvedValue(null);
     mockCreateSupportTicket.mockResolvedValue({
       id: 'ticket-uuid-123',
-      user_id: '',
+      customer_id: null,
       subject: 'My order is late',
-      description: 'From: Jane Doe <jane@example.com>\n\nMy order has been delayed and I need help.',
+      description:
+        'From: Jane Doe <jane@example.com>\n\nMy order has been delayed and I need help.',
       status: 'open',
       priority: 'medium',
       category: 'order',
@@ -94,7 +110,10 @@ describe('POST /api/support', () => {
     await POST(makeRequest(validBody));
 
     expect(mockCreateSupportTicket).toHaveBeenCalledTimes(1);
-    const [, ticket] = mockCreateSupportTicket.mock.calls[0];
+    const [, ticket] = mockCreateSupportTicket.mock.calls[0] as [
+      unknown,
+      Record<string, unknown>,
+    ];
     expect(ticket.subject).toBe('My order is late');
     expect(ticket.description).toContain('Jane Doe');
     expect(ticket.description).toContain('jane@example.com');
@@ -103,34 +122,42 @@ describe('POST /api/support', () => {
     expect(ticket.priority).toBe('medium');
   });
 
-  it('calls createAdminClient (not server client) for unauthenticated access', async () => {
+  it('calls createAdminClient for ticket insert', async () => {
     const { POST } = await importRoute();
     await POST(makeRequest(validBody));
 
     expect(mockCreateAdminClient).toHaveBeenCalled();
   });
 
-  it('sets user_id when user is authenticated', async () => {
+  it('sets customer_id when user is authenticated and profile exists', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: { id: 'user-abc' } },
       error: null,
     });
+    mockGetCustomerByUserId.mockResolvedValue({ id: 'cust-xyz' });
 
     const { POST } = await importRoute();
     await POST(makeRequest(validBody));
 
-    const [, ticket] = mockCreateSupportTicket.mock.calls[0];
-    expect(ticket.user_id).toBe('user-abc');
+    const [, ticket] = mockCreateSupportTicket.mock.calls[0] as [
+      unknown,
+      Record<string, unknown>,
+    ];
+    expect(ticket.customer_id).toBe('cust-xyz');
+    expect(mockGetCustomerByUserId).toHaveBeenCalled();
   });
 
-  it('sets user_id to empty string when user is not authenticated', async () => {
+  it('sets customer_id to null when user is not authenticated', async () => {
     mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
 
     const { POST } = await importRoute();
     await POST(makeRequest(validBody));
 
-    const [, ticket] = mockCreateSupportTicket.mock.calls[0];
-    expect(ticket.user_id).toBe('');
+    const [, ticket] = mockCreateSupportTicket.mock.calls[0] as [
+      unknown,
+      Record<string, unknown>,
+    ];
+    expect(ticket.customer_id).toBeNull();
   });
 
   it('returns 400 on invalid request (missing subject)', async () => {
@@ -150,9 +177,7 @@ describe('POST /api/support', () => {
 
     expect(res.status).toBe(400);
     expect(json.details).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ field: 'email' }),
-      ])
+      expect.arrayContaining([expect.objectContaining({ field: 'email' })])
     );
   });
 

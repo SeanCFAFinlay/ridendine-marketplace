@@ -37,11 +37,14 @@ const NAV_ITEMS = [
 export default function DriverDashboard({ driver, activeDeliveries }: DriverDashboardProps) {
   const [isOnline, setIsOnline] = useState(false);
   const [isTogglingStatus, setIsTogglingStatus] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [presenceLoading, setPresenceLoading] = useState(true);
 
   const currentDelivery = activeDeliveries[0];
 
   const toggleOnlineStatus = async () => {
     setIsTogglingStatus(true);
+    setStatusError(null);
     try {
       const newStatus = isOnline ? 'offline' : 'online';
       const response = await fetch('/api/driver/presence', {
@@ -50,34 +53,55 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
         body: JSON.stringify({ status: newStatus }),
       });
 
-      if (!response.ok) throw new Error('Failed to update status');
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new Error(json.error || 'Failed to update status');
+      }
       setIsOnline(!isOnline);
     } catch (error) {
-      console.error('Error toggling status:', error);
+      console.error('Error toggling status:', error instanceof Error ? error.message : 'unknown');
+      setStatusError('Unable to update your online status right now. Please try again.');
     } finally {
       setIsTogglingStatus(false);
     }
   };
 
-  const [todayStats, setTodayStats] = useState({ deliveries: 0, earnings: 0, hours: 0 });
+  const [todayStats, setTodayStats] = useState<{ deliveries: number; earnings: number; hours: number | null }>({
+    deliveries: 0,
+    earnings: 0,
+    hours: null,
+  });
 
   useEffect(() => {
-    async function fetchTodayStats() {
+    async function hydrateDashboard() {
       try {
-        const response = await fetch('/api/earnings');
-        if (response.ok) {
-          const data = await response.json();
+        const [presenceResponse, earningsResponse] = await Promise.all([
+          fetch('/api/driver/presence'),
+          fetch('/api/earnings'),
+        ]);
+
+        if (presenceResponse.ok) {
+          const presenceJson = await presenceResponse.json();
+          const status = presenceJson.data?.presence?.status;
+          setIsOnline(status === 'online' || status === 'busy');
+        }
+
+        if (earningsResponse.ok) {
+          const json = await earningsResponse.json();
+          const payload = json.success === true && json.data != null ? json.data : json;
           setTodayStats({
-            deliveries: data.today?.count ?? 0,
-            earnings: data.today?.earnings ?? 0,
-            hours: 0,
+            deliveries: payload.today?.count ?? 0,
+            earnings: payload.today?.earnings ?? 0,
+            hours: null,
           });
         }
       } catch {
         // Keep defaults on error
+      } finally {
+        setPresenceLoading(false);
       }
     }
-    fetchTodayStats();
+    hydrateDashboard();
   }, []);
 
   return (
@@ -113,6 +137,14 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
         </div>
       </div>
 
+      {statusError && (
+        <div className="px-4 pt-4">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {statusError}
+          </div>
+        </div>
+      )}
+
       {/* Online/Offline Toggle */}
       <div
         className={`px-5 py-5 transition-colors duration-300 ${
@@ -131,7 +163,7 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
                 }`}
               />
               <p className="text-2xl font-bold tracking-tight">
-                {isOnline ? 'Online' : 'Offline'}
+                {presenceLoading ? 'Loading...' : isOnline ? 'Online' : 'Offline'}
               </p>
             </div>
           </div>
@@ -165,7 +197,9 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
               <p className="mt-1 text-xs font-medium text-gray-500">Earnings</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-gray-900">{todayStats.hours.toFixed(1)}</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {todayStats.hours === null ? '—' : todayStats.hours.toFixed(1)}
+              </p>
               <p className="mt-1 text-xs font-medium text-gray-500">Hours</p>
             </div>
           </div>

@@ -419,7 +419,11 @@ export class CommerceLedgerEngine {
     actor: ActorContext
   ): Promise<OperationResult<RefundCase>> {
     // Only ops/finance can approve
-    if (!['ops_agent', 'ops_manager', 'finance_admin', 'super_admin'].includes(actor.role)) {
+    if (
+      !['ops_agent', 'ops_admin', 'ops_manager', 'finance_admin', 'finance_manager', 'super_admin'].includes(
+        actor.role
+      )
+    ) {
       return {
         success: false,
         error: { code: 'FORBIDDEN', message: 'Not authorized to approve refunds' },
@@ -479,7 +483,11 @@ export class CommerceLedgerEngine {
     stripeRefundId: string,
     actor: ActorContext
   ): Promise<OperationResult<RefundCase>> {
-    if (!['ops_manager', 'finance_admin', 'super_admin', 'system'].includes(actor.role)) {
+    if (
+      !['ops_admin', 'ops_manager', 'finance_admin', 'finance_manager', 'super_admin', 'system'].includes(
+        actor.role
+      )
+    ) {
       return {
         success: false,
         error: { code: 'FORBIDDEN', message: 'Not authorized to process refunds' },
@@ -585,7 +593,11 @@ export class CommerceLedgerEngine {
     reason: string,
     actor: ActorContext
   ): Promise<OperationResult<RefundCase>> {
-    if (!['ops_agent', 'ops_manager', 'finance_admin', 'super_admin'].includes(actor.role)) {
+    if (
+      !['ops_agent', 'ops_admin', 'ops_manager', 'finance_admin', 'finance_manager', 'super_admin'].includes(
+        actor.role
+      )
+    ) {
       return {
         success: false,
         error: { code: 'FORBIDDEN', message: 'Not authorized to deny refunds' },
@@ -647,7 +659,7 @@ export class CommerceLedgerEngine {
     reason: string,
     actor: ActorContext
   ): Promise<OperationResult<PayoutAdjustment>> {
-    if (!['ops_manager', 'finance_admin', 'super_admin'].includes(actor.role)) {
+    if (!['ops_admin', 'ops_manager', 'finance_admin', 'finance_manager', 'super_admin'].includes(actor.role)) {
       return {
         success: false,
         error: { code: 'FORBIDDEN', message: 'Not authorized to create payout holds' },
@@ -715,7 +727,7 @@ export class CommerceLedgerEngine {
     adjustmentId: string,
     actor: ActorContext
   ): Promise<OperationResult<PayoutAdjustment>> {
-    if (!['ops_manager', 'finance_admin', 'super_admin'].includes(actor.role)) {
+    if (!['ops_admin', 'ops_manager', 'finance_admin', 'finance_manager', 'super_admin'].includes(actor.role)) {
       return {
         success: false,
         error: { code: 'FORBIDDEN', message: 'Not authorized to release holds' },

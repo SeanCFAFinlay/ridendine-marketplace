@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
-import { getOpsActorContext, hasRequiredRole } from '@/lib/engine';
+import { getOpsActorContext, guardPlatformApi } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const actor = await getOpsActorContext();
-  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = guardPlatformApi(actor, 'team_list');
+  if (denied) return denied;
 
   const client = createAdminClient() as any;
   const { data, error } = await client
@@ -20,16 +21,24 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor || !hasRequiredRole(actor, ['super_admin'])) {
-    return NextResponse.json({ error: 'Only super admins can manage team' }, { status: 403 });
-  }
+  const denied = guardPlatformApi(actor, 'team_manage');
+  if (denied) return denied;
 
   const { email, name, role, password } = await request.json();
   if (!email || !name || !role || !password) {
     return NextResponse.json({ error: 'email, name, role, and password required' }, { status: 400 });
   }
 
-  const validRoles = ['ops_agent', 'ops_manager', 'finance_admin', 'super_admin', 'support'];
+  const validRoles = [
+    'ops_admin',
+    'ops_agent',
+    'ops_manager',
+    'finance_admin',
+    'finance_manager',
+    'super_admin',
+    'support',
+    'support_agent',
+  ];
   if (!validRoles.includes(role)) {
     return NextResponse.json({ error: `Invalid role. Use: ${validRoles.join(', ')}` }, { status: 400 });
   }
@@ -64,9 +73,8 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor || !hasRequiredRole(actor, ['super_admin'])) {
-    return NextResponse.json({ error: 'Only super admins can manage team' }, { status: 403 });
-  }
+  const denied = guardPlatformApi(actor, 'team_manage');
+  if (denied) return denied;
 
   const { id, role, is_active } = await request.json();
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });

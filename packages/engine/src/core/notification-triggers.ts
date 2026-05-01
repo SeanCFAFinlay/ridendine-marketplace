@@ -39,6 +39,8 @@ export interface DriverAssignedInput {
   orderId: string;
   customerId: string;
   driverName: string;
+  /** When omitted, resolved from `orders.order_number` by `orderId`. */
+  orderNumber?: string;
 }
 
 export interface CancelledInput extends OrderEventInput {
@@ -76,12 +78,15 @@ export class NotificationTriggers {
       ]);
 
       if (customerId) {
-        await this.sender.send(
-          'order_placed' as NotificationType,
-          customerId,
-          { orderNumber: input.orderNumber, customerName: input.customerName },
-          { order_id: input.orderId },
-        );
+        const customerUserId = await this.resolveCustomerUserId(customerId);
+        if (customerUserId) {
+          await this.sender.send(
+            'order_placed' as NotificationType,
+            customerUserId,
+            { orderNumber: input.orderNumber, customerName: input.customerName },
+            { order_id: input.orderId },
+          );
+        }
       }
 
       if (chefUserId) {
@@ -99,9 +104,11 @@ export class NotificationTriggers {
 
   async onChefAccepted(input: OrderEventInput): Promise<void> {
     try {
+      const userId = await this.resolveCustomerUserId(input.customerId);
+      if (!userId) return;
       await this.sender.send(
         'order_accepted' as NotificationType,
-        input.customerId,
+        userId,
         { orderNumber: input.orderNumber },
         { order_id: input.orderId },
       );
@@ -112,9 +119,11 @@ export class NotificationTriggers {
 
   async onChefRejected(input: RejectedInput): Promise<void> {
     try {
+      const userId = await this.resolveCustomerUserId(input.customerId);
+      if (!userId) return;
       await this.sender.send(
         'order_rejected' as NotificationType,
-        input.customerId,
+        userId,
         { orderNumber: input.orderNumber, reason: input.reason },
         { order_id: input.orderId },
       );
@@ -125,9 +134,11 @@ export class NotificationTriggers {
 
   async onOrderReady(input: OrderEventInput): Promise<void> {
     try {
+      const userId = await this.resolveCustomerUserId(input.customerId);
+      if (!userId) return;
       await this.sender.send(
         'order_ready' as NotificationType,
-        input.customerId,
+        userId,
         { orderNumber: input.orderNumber },
         { order_id: input.orderId },
       );
@@ -157,10 +168,16 @@ export class NotificationTriggers {
 
   async onDriverAssigned(input: DriverAssignedInput): Promise<void> {
     try {
+      const userId = await this.resolveCustomerUserId(input.customerId);
+      if (!userId) return;
+      let orderNumber = input.orderNumber;
+      if (!orderNumber) {
+        orderNumber = (await this.fetchOrderNumber(input.orderId)) ?? input.orderId;
+      }
       await this.sender.send(
         'order_picked_up' as NotificationType,
-        input.customerId,
-        { driverName: input.driverName },
+        userId,
+        { orderNumber, driverName: input.driverName },
         { order_id: input.orderId },
       );
     } catch (err) {
@@ -170,9 +187,11 @@ export class NotificationTriggers {
 
   async onOrderDelivered(input: OrderEventInput): Promise<void> {
     try {
+      const userId = await this.resolveCustomerUserId(input.customerId);
+      if (!userId) return;
       await this.sender.send(
         'order_delivered' as NotificationType,
-        input.customerId,
+        userId,
         { orderNumber: input.orderNumber },
         { order_id: input.orderId },
       );
@@ -183,13 +202,14 @@ export class NotificationTriggers {
 
   async onOrderCancelled(input: CancelledInput): Promise<void> {
     try {
-      await (this.client as any).from('notifications').insert({
-        user_id: input.customerId,
-        type: 'order_cancelled',
-        title: 'Order Cancelled',
-        body: `Your order #${input.orderNumber} has been cancelled. Reason: ${input.reason}`,
-        data: { order_id: input.orderId },
-      });
+      const userId = await this.resolveCustomerUserId(input.customerId);
+      if (!userId) return;
+      await this.sender.send(
+        'order_cancelled' as NotificationType,
+        userId,
+        { orderNumber: input.orderNumber, reason: input.reason },
+        { order_id: input.orderId },
+      );
     } catch (err) {
       logError('onOrderCancelled', err);
     }
@@ -197,19 +217,30 @@ export class NotificationTriggers {
 
   async onRefundProcessed(input: RefundInput): Promise<void> {
     try {
-      await (this.client as any).from('notifications').insert({
-        user_id: input.customerId,
-        type: 'refund_processed',
-        title: 'Refund Processed',
-        body: `Your refund of $${input.amount.toFixed(2)} for order #${input.orderNumber} has been processed.`,
-        data: { order_id: input.orderId, amount: input.amount },
-      });
+      const userId = await this.resolveCustomerUserId(input.customerId);
+      if (!userId) return;
+      await this.sender.send(
+        'refund_processed' as NotificationType,
+        userId,
+        { orderNumber: input.orderNumber, amount: input.amount },
+        { order_id: input.orderId },
+      );
     } catch (err) {
       logError('onRefundProcessed', err);
     }
   }
 
   // ---- Private lookups ----
+
+  /** `orders.customer_id` / trigger inputs use `customers.id`; `notifications.user_id` is `auth.users.id`. */
+  private async resolveCustomerUserId(customerProfileId: string): Promise<string | null> {
+    const { data } = await (this.client as any)
+      .from('customers')
+      .select('user_id')
+      .eq('id', customerProfileId)
+      .single();
+    return data?.user_id ?? null;
+  }
 
   private async fetchOrderCustomerId(orderId: string): Promise<string | null> {
     const { data } = await (this.client as any)
@@ -218,6 +249,15 @@ export class NotificationTriggers {
       .eq('id', orderId)
       .single();
     return data?.customer_id ?? null;
+  }
+
+  private async fetchOrderNumber(orderId: string): Promise<string | null> {
+    const { data } = await (this.client as any)
+      .from('orders')
+      .select('order_number')
+      .eq('id', orderId)
+      .single();
+    return data?.order_number ?? null;
   }
 
   private async fetchChefUserId(storefrontId: string): Promise<string | null> {

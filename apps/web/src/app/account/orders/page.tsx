@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuthContext } from '@ridendine/auth';
-import { createBrowserClient } from '@ridendine/db';
 import { Header } from '@/components/layout/header';
+import { orderConfirmationPath } from '@/lib/customer-ordering';
 import { Card, Badge, Button, NoOrdersEmpty, Spinner } from '@ridendine/ui';
 
 interface Order {
@@ -13,21 +13,17 @@ interface Order {
   status: string;
   created_at: string;
   total: number;
-  storefront_id: string;
-  chef_storefronts?: {
+  storefront?: {
     name: string;
     slug: string;
   };
-}
-
-interface CustomerProfileRow {
-  id: string;
 }
 
 export default function OrdersPage() {
   const { user, loading: authLoading } = useAuthContext();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchOrders() {
@@ -36,48 +32,18 @@ export default function OrdersPage() {
         return;
       }
 
-      const supabase = createBrowserClient();
-      if (!supabase) return;
-
       try {
-        // Get customer profile
-        const { data: customer } = await supabase
-          .from('customers')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-
-        const typedCustomer = customer as CustomerProfileRow | null;
-
-        if (!typedCustomer) {
-          setLoading(false);
+        const response = await fetch('/api/orders');
+        const json = await response.json();
+        if (!response.ok || !json.success) {
+          setError(json.error || 'Unable to load orders');
           return;
         }
-
-        // Get orders with storefront info
-        const { data: ordersData } = await supabase
-          .from('orders')
-          .select(`
-            id,
-            order_number,
-            status,
-            created_at,
-            total,
-            storefront_id,
-            chef_storefronts (
-              name,
-              slug
-            )
-          `)
-          .eq('customer_id', typedCustomer.id)
-          .order('created_at', { ascending: false })
-          .limit(20);
-
-        if (ordersData) {
-          setOrders(ordersData as Order[]);
-        }
+        const rows = (json.data?.orders || []) as Order[];
+        setOrders(rows);
       } catch (error) {
-        console.error('Failed to fetch orders:', error);
+        console.error('Failed to fetch orders:', error instanceof Error ? error.message : 'unknown');
+        setError('Unable to load orders right now');
       } finally {
         setLoading(false);
       }
@@ -135,7 +101,11 @@ export default function OrdersPage() {
           </Link>
         </div>
 
-        {orders.length === 0 ? (
+        {error ? (
+          <Card className="mt-8 p-6">
+            <p className="text-sm text-red-600">{error}</p>
+          </Card>
+        ) : orders.length === 0 ? (
           <Card className="mt-8">
             <NoOrdersEmpty />
           </Card>
@@ -156,12 +126,12 @@ export default function OrdersPage() {
                     <p className="mt-1 text-sm text-gray-500">
                       {formatDate(order.created_at)}
                     </p>
-                    {order.chef_storefronts && (
+                    {order.storefront && (
                       <Link
-                        href={`/chefs/${order.chef_storefronts.slug}`}
+                        href={`/chefs/${order.storefront.slug}`}
                         className="mt-1 text-sm text-brand-600 hover:text-brand-700"
                       >
-                        {order.chef_storefronts.name}
+                        {order.storefront.name}
                       </Link>
                     )}
                   </div>
@@ -169,7 +139,7 @@ export default function OrdersPage() {
                     <span className="font-semibold text-gray-900">
                       ${Number(order.total).toFixed(2)}
                     </span>
-                    <Link href={`/order-confirmation/${order.id}`}>
+                    <Link href={orderConfirmationPath(order.id)}>
                       <Button variant="outline" size="sm">
                         View Details
                       </Button>

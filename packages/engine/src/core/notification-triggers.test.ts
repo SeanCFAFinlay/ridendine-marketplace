@@ -23,7 +23,7 @@ function createMockClient(overrides?: {
 }) {
   const orderData = overrides?.orderData !== undefined
     ? overrides.orderData
-    : { customer_id: 'cust-1' };
+    : { customer_id: 'cust-1', order_number: 'RD-001' };
   const storefrontData = overrides?.storefrontData !== undefined
     ? overrides.storefrontData
     : { chef_profiles: { user_id: 'chef-user-1' } };
@@ -35,6 +35,13 @@ function createMockClient(overrides?: {
   const insertMock = vi.fn().mockResolvedValue({ error: insertError });
 
   const fromMock = vi.fn((table: string) => {
+    if (table === 'customers') {
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { user_id: 'user-auth-1' }, error: null }),
+      };
+    }
     if (table === 'orders') {
       return {
         select: vi.fn().mockReturnThis(),
@@ -100,7 +107,7 @@ describe('NotificationTriggers', () => {
 
     expect(sender.send).toHaveBeenCalledWith(
       'order_placed',
-      'cust-1',
+      'user-auth-1',
       expect.objectContaining({ orderNumber: 'RD-001' }),
       expect.anything(),
     );
@@ -154,7 +161,7 @@ describe('NotificationTriggers', () => {
 
     expect(sender.send).toHaveBeenCalledWith(
       'order_accepted',
-      'cust-1',
+      'user-auth-1',
       expect.objectContaining({ orderNumber: 'RD-001' }),
       expect.anything(),
     );
@@ -176,7 +183,7 @@ describe('NotificationTriggers', () => {
 
     expect(sender.send).toHaveBeenCalledWith(
       'order_rejected',
-      'cust-1',
+      'user-auth-1',
       expect.objectContaining({ orderNumber: 'RD-001' }),
       expect.anything(),
     );
@@ -197,7 +204,7 @@ describe('NotificationTriggers', () => {
 
     expect(sender.send).toHaveBeenCalledWith(
       'order_ready',
-      'cust-1',
+      'user-auth-1',
       expect.objectContaining({ orderNumber: 'RD-001' }),
       expect.anything(),
     );
@@ -255,8 +262,8 @@ describe('NotificationTriggers', () => {
 
     expect(sender.send).toHaveBeenCalledWith(
       'order_picked_up',
-      'cust-1',
-      expect.objectContaining({ driverName: 'Bob' }),
+      'user-auth-1',
+      expect.objectContaining({ driverName: 'Bob', orderNumber: 'RD-001' }),
       expect.anything(),
     );
   });
@@ -276,7 +283,7 @@ describe('NotificationTriggers', () => {
 
     expect(sender.send).toHaveBeenCalledWith(
       'order_delivered',
-      'cust-1',
+      'user-auth-1',
       expect.objectContaining({ orderNumber: 'RD-001' }),
       expect.anything(),
     );
@@ -284,7 +291,7 @@ describe('NotificationTriggers', () => {
 
   // ---- onOrderCancelled ----
 
-  it('onOrderCancelled inserts a notification directly to DB', async () => {
+  it('onOrderCancelled sends order_cancelled via NotificationSender', async () => {
     const client = createMockClient();
     const sender = createMockSender();
     const triggers = new NotificationTriggers(client as any, sender);
@@ -296,18 +303,21 @@ describe('NotificationTriggers', () => {
       reason: 'Chef unavailable',
     });
 
-    expect(client._insertMock).toHaveBeenCalledWith(
+    expect(sender.send).toHaveBeenCalledWith(
+      'order_cancelled',
+      'user-auth-1',
       expect.objectContaining({
-        user_id: 'cust-1',
-        type: 'order_cancelled',
-        data: expect.objectContaining({ order_id: 'ord-1' }),
+        orderNumber: 'RD-001',
+        reason: 'Chef unavailable',
       }),
+      expect.objectContaining({ order_id: 'ord-1' }),
     );
   });
 
-  it('onOrderCancelled does not throw on DB insert error', async () => {
-    const client = createMockClient({ insertError: 'DB error' });
+  it('onOrderCancelled does not throw when sender.send rejects', async () => {
+    const client = createMockClient();
     const sender = createMockSender();
+    (sender.send as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('send failed'));
     const triggers = new NotificationTriggers(client as any, sender);
 
     await expect(
@@ -322,7 +332,7 @@ describe('NotificationTriggers', () => {
 
   // ---- onRefundProcessed ----
 
-  it('onRefundProcessed inserts a refund_processed notification to DB', async () => {
+  it('onRefundProcessed sends refund_processed via NotificationSender', async () => {
     const client = createMockClient();
     const sender = createMockSender();
     const triggers = new NotificationTriggers(client as any, sender);
@@ -334,12 +344,14 @@ describe('NotificationTriggers', () => {
       amount: 19.99,
     });
 
-    expect(client._insertMock).toHaveBeenCalledWith(
+    expect(sender.send).toHaveBeenCalledWith(
+      'refund_processed',
+      'user-auth-1',
       expect.objectContaining({
-        user_id: 'cust-1',
-        type: 'refund_processed',
-        data: expect.objectContaining({ order_id: 'ord-1' }),
+        orderNumber: 'RD-001',
+        amount: 19.99,
       }),
+      expect.objectContaining({ order_id: 'ord-1' }),
     );
   });
 

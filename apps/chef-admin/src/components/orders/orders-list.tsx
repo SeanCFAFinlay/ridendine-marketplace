@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, Badge, Button } from '@ridendine/ui';
-import { createBrowserClient } from '@ridendine/db';
+import { chefStorefrontOrdersChannel, createBrowserClient, parseOrdersRealtimeRow } from '@ridendine/db';
 
 interface Order {
   id: string;
@@ -20,8 +20,7 @@ interface Order {
   };
   address?: {
     id: string;
-    address_line1: string;
-    address_line2?: string | null;
+    street_address: string;
     city: string;
     state?: string;
     postal_code?: string;
@@ -30,6 +29,7 @@ interface Order {
 
 interface OrdersListProps {
   initialOrders: Order[];
+  storefrontId: string;
 }
 
 const ACCEPT_TIMEOUT_MS = 8 * 60 * 1000; // 8 minutes
@@ -73,7 +73,7 @@ function CountdownTimer({ createdAt, onExpire }: { createdAt: string; onExpire: 
   );
 }
 
-export function OrdersList({ initialOrders }: OrdersListProps) {
+export function OrdersList({ initialOrders, storefrontId }: OrdersListProps) {
   const [filter, setFilter] = useState<string>('all');
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [loading, setLoading] = useState(false);
@@ -82,22 +82,27 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
 
   const supabase = useMemo(() => createBrowserClient(), []);
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time updates (scoped to this storefront — RLS + client filter)
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase || !storefrontId) return;
 
     const db = supabase;
+    const filter = `storefront_id=eq.${storefrontId}`;
     const channel = db
-      .channel('chef-orders')
+      .channel(chefStorefrontOrdersChannel(storefrontId))
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders' },
+        { event: '*', schema: 'public', table: 'orders', filter },
         (payload) => {
           if (payload.eventType === 'INSERT') {
+            const row = parseOrdersRealtimeRow(payload.new);
+            if (!row || row.storefront_id !== storefrontId) return;
             const newOrder = payload.new as Order;
             setOrders((prev) => [newOrder, ...prev]);
             setPlaySound(true);
           } else if (payload.eventType === 'UPDATE') {
+            const row = parseOrdersRealtimeRow(payload.new);
+            if (!row || row.storefront_id !== storefrontId) return;
             const updatedOrder = payload.new as Order;
             setOrders((prev) =>
               prev.map((o) => (o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o))
@@ -110,7 +115,7 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
     return () => {
       db.removeChannel(channel);
     };
-  }, [supabase]);
+  }, [supabase, storefrontId]);
 
   // Play notification sound for new orders
   useEffect(() => {
@@ -136,14 +141,18 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
   }, [initialOrders]);
 
   const handleOrderExpire = useCallback(async (orderId: string) => {
-    // Auto-reject expired orders
+    // Auto-reject timed-out orders using the protected API action contract.
     await fetch(`/api/orders/${orderId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'expired' }),
+      body: JSON.stringify({
+        action: 'reject',
+        reason: 'other',
+        notes: 'Auto-rejected after acceptance timeout',
+      }),
     });
     setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: 'expired' } : o))
+      prev.map((o) => (o.id === orderId ? { ...o, status: 'rejected' } : o))
     );
   }, []);
 
@@ -151,7 +160,10 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
     ? orders
     : orders.filter(o => o.status === filter);
 
-  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+  const updateOrderStatus = async (
+    orderId: string,
+    payload: { action?: string; status?: string; reason?: string; notes?: string }
+  ) => {
     setLoading(true);
     setError(null);
 
@@ -159,7 +171,7 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
       const response = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -167,8 +179,24 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
         throw new Error(data.error || 'Failed to update order');
       }
 
-      const { order: updatedOrder } = await response.json();
-      setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
+      const json = await response.json();
+      const updatedOrder =
+        json.data?.order ??
+        json.data?.updatedOrder ??
+        json.order ??
+        json.updatedOrder ??
+        null;
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId
+            ? updatedOrder
+              ? { ...o, ...updatedOrder }
+              : payload.status
+                ? { ...o, status: payload.status }
+                : o
+            : o
+        )
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -177,19 +205,30 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
   };
 
   const handleAccept = async (orderId: string) => {
-    await updateOrderStatus(orderId, 'accepted');
+    await updateOrderStatus(orderId, { action: 'accept', status: 'accepted' });
   };
 
   const handlePreparing = async (orderId: string) => {
-    await updateOrderStatus(orderId, 'preparing');
+    await updateOrderStatus(orderId, {
+      action: 'start_preparing',
+      status: 'preparing',
+    });
   };
 
   const handleReady = async (orderId: string) => {
-    await updateOrderStatus(orderId, 'ready_for_pickup');
+    await updateOrderStatus(orderId, {
+      action: 'mark_ready',
+      status: 'ready_for_pickup',
+    });
   };
 
   const handleReject = async (orderId: string) => {
-    await updateOrderStatus(orderId, 'rejected');
+    await updateOrderStatus(orderId, {
+      action: 'reject',
+      status: 'rejected',
+      reason: 'other',
+      notes: 'Rejected by chef',
+    });
   };
 
   return (
@@ -256,7 +295,7 @@ export function OrdersList({ initialOrders }: OrdersListProps) {
                   )}
                   {order.address && (
                     <p className="text-sm text-gray-500">
-                      {order.address.address_line1}, {order.address.city}
+                      {order.address.street_address}, {order.address.city}
                     </p>
                   )}
                   {order.special_instructions && (

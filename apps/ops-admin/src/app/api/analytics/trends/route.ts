@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
-import { getOpsActorContext } from '@/lib/engine';
+import { getOpsActorContext, guardPlatformApi } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,7 +82,8 @@ function buildSummary(orders: any[], trend: Array<{ revenue: number; orders: num
 
 export async function GET(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = guardPlatformApi(actor, 'analytics_read');
+  if (denied) return denied;
 
   const { searchParams } = new URL(request.url);
   const days = parseInt(searchParams.get('days') ?? '30');

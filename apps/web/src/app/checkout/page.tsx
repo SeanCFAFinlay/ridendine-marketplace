@@ -8,6 +8,7 @@ import { Elements } from '@stripe/react-stripe-js';
 import { Header } from '@/components/layout/header';
 import { Button, Card, Input } from '@ridendine/ui';
 import { StripePaymentForm } from '@/components/checkout/stripe-payment-form';
+import { orderConfirmationPath } from '@/lib/customer-ordering';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -55,6 +56,25 @@ interface OrderBreakdown {
   discount: number;
 }
 
+function mapCheckoutError(code?: string, fallback?: string): string {
+  switch (code) {
+    case 'VALIDATION_ERROR':
+      return fallback || 'Your cart or checkout details are invalid. Please review and try again.';
+    case 'RISK_BLOCKED':
+      return fallback || 'This order was blocked by risk checks. Please contact support if needed.';
+    case 'PAYMENT_CONFIG_ERROR':
+      return 'Payment is temporarily unavailable. Please try again shortly.';
+    case 'PAYMENT_FAILED':
+      return fallback || 'Payment failed. Please try a different card.';
+    case 'IDEMPOTENCY_CONFLICT':
+      return 'Duplicate checkout detected. Please wait and refresh your order status.';
+    case 'INTERNAL_ERROR':
+      return 'Something went wrong while creating checkout. Please try again.';
+    default:
+      return fallback || 'Failed to create checkout';
+  }
+}
+
 const TIP_OPTIONS = [
   { label: 'No tip', value: 0 },
   { label: '10%', percent: 10 },
@@ -91,6 +111,10 @@ function CheckoutContent() {
       try {
         const cartRes = await fetch(`/api/cart?storefrontId=${storefrontId}`);
         const cartData = await cartRes.json();
+        if (cartRes.status === 401) {
+          router.push('/auth/login');
+          return;
+        }
 
         if (cartData.success && cartData.data) {
           const items = (cartData.data.cart_items || []).map((item: CartApiItem) => ({
@@ -109,6 +133,10 @@ function CheckoutContent() {
 
         const addressRes = await fetch('/api/addresses');
         const addressData = await addressRes.json();
+        if (addressRes.status === 401) {
+          router.push('/auth/login');
+          return;
+        }
 
         if (addressData.success && addressData.data) {
           setAddresses(addressData.data);
@@ -130,11 +158,17 @@ function CheckoutContent() {
     loadData();
   }, [storefrontId]);
 
-  const subtotal = cart?.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) ?? 0;
+  /** Cart line total in dollars (matches cart API `unit_price` × qty). */
+  const cartSubtotal =
+    cart?.items.reduce((sum, item) => sum + item.price * item.quantity, 0) ?? 0;
 
-  const calculateTip = () => {
-    if (customTip) {
-      return Math.round(parseFloat(customTip) * 100) || 0;
+  /** Driver tip in dollars for `POST /api/checkout` (engine expects currency units, not cents). */
+  const tipDollars = (): number => {
+    const raw = customTip.trim();
+    if (raw) {
+      const n = parseFloat(raw);
+      if (!Number.isFinite(n) || n < 0) return 0;
+      return Math.round(n * 100) / 100;
     }
     return tip;
   };
@@ -156,7 +190,7 @@ function CheckoutContent() {
           storefrontId,
           deliveryAddressId: selectedAddress,
           specialInstructions: deliveryInstructions,
-          tip: calculateTip(),
+          tip: tipDollars(),
           promoCode: promoCode || null,
         }),
       });
@@ -169,7 +203,7 @@ function CheckoutContent() {
         setBreakdown(result.data.breakdown);
         setCheckoutStep('payment');
       } else {
-        setError(result.error || 'Failed to create checkout');
+        setError(mapCheckoutError(result.code, result.error));
       }
     } catch (err) {
       console.error('Checkout error:', err);
@@ -181,7 +215,7 @@ function CheckoutContent() {
 
   const handlePaymentSuccess = () => {
     if (orderId) {
-      router.push(`/order-confirmation/${orderId}`);
+      router.push(orderConfirmationPath(orderId));
     }
   };
 
@@ -213,17 +247,16 @@ function CheckoutContent() {
     );
   }
 
-  const displayBreakdown = breakdown || {
-    subtotal,
-    deliveryFee: 5.00,
-    serviceFee: Math.round(subtotal * 0.08 * 100) / 100,
-    tax: Math.round((subtotal + Math.round(subtotal * 0.08 * 100) / 100) * 0.13 * 100) / 100,
-    tip: calculateTip(),
-    discount: 0,
-  };
-
-  const total = displayBreakdown.subtotal + displayBreakdown.deliveryFee +
-    displayBreakdown.serviceFee + displayBreakdown.tax + displayBreakdown.tip - displayBreakdown.discount;
+  /** Authoritative fees/tax/total only after `POST /api/checkout` (engine + Stripe). */
+  const hasApiBreakdown = breakdown !== null;
+  const paymentTotal = breakdown
+    ? breakdown.subtotal +
+      breakdown.deliveryFee +
+      breakdown.serviceFee +
+      breakdown.tax +
+      breakdown.tip -
+      breakdown.discount
+    : null;
 
   return (
     <main className="container py-8">
@@ -285,9 +318,10 @@ function CheckoutContent() {
                 <div className="mt-4 grid grid-cols-4 gap-3">
                   {TIP_OPTIONS.map((option) => {
                     const tipValue = option.percent
-                      ? Math.round(subtotal * (option.percent / 100))
+                      ? Math.round(cartSubtotal * (option.percent / 100) * 100) / 100
                       : (option.value ?? 0);
-                    const isSelected = !customTip && tip === tipValue;
+                    const isSelected =
+                      !customTip && Math.abs(tip - tipValue) < 0.0001;
 
                     return (
                       <button
@@ -337,7 +371,9 @@ function CheckoutContent() {
                     placeholder="Enter promo code"
                     className="flex-1"
                   />
-                  <Button variant="secondary">Apply</Button>
+                  <Button variant="secondary" type="button" disabled>
+                    Applied at payment step
+                  </Button>
                 </div>
               </Card>
 
@@ -405,40 +441,80 @@ function CheckoutContent() {
           <Card className="sticky top-24">
             <h2 className="font-semibold text-gray-900">Payment Summary</h2>
             <div className="mt-4 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="text-gray-900">${Number(displayBreakdown.subtotal).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Delivery fee</span>
-                <span className="text-gray-900">${Number(displayBreakdown.deliveryFee).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Service fee (8%)</span>
-                <span className="text-gray-900">${Number(displayBreakdown.serviceFee).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">HST (13%)</span>
-                <span className="text-gray-900">${Number(displayBreakdown.tax).toFixed(2)}</span>
-              </div>
-              {displayBreakdown.tip > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tip</span>
-                  <span className="text-gray-900">${Number(displayBreakdown.tip).toFixed(2)}</span>
-                </div>
+              {checkoutStep === 'details' && !hasApiBreakdown ? (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotal (cart)</span>
+                    <span className="text-gray-900">
+                      ${Number(cartSubtotal).toFixed(2)}
+                    </span>
+                  </div>
+                  {tipDollars() > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Tip (your selection)</span>
+                      <span className="text-gray-900">
+                        ${Number(tipDollars()).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  <p className="pt-2 text-xs leading-relaxed text-gray-500">
+                    Delivery, service fees, tax, and your order total are set by
+                    the server when you continue to payment — not shown here as
+                    estimates.
+                  </p>
+                </>
+              ) : breakdown ? (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="text-gray-900">
+                      ${Number(breakdown.subtotal).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Delivery fee</span>
+                    <span className="text-gray-900">
+                      ${Number(breakdown.deliveryFee).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Service fee</span>
+                    <span className="text-gray-900">
+                      ${Number(breakdown.serviceFee).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Tax</span>
+                    <span className="text-gray-900">
+                      ${Number(breakdown.tax).toFixed(2)}
+                    </span>
+                  </div>
+                  {breakdown.tip > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Tip</span>
+                      <span className="text-gray-900">
+                        ${Number(breakdown.tip).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {breakdown.discount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Discount</span>
+                      <span>-${Number(breakdown.discount).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-gray-200 pt-2">
+                    <div className="flex justify-between font-semibold text-lg">
+                      <span>Total</span>
+                      <span className="text-[#E85D26]">
+                        ${Number(paymentTotal).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-gray-500">Preparing payment summary…</p>
               )}
-              {displayBreakdown.discount > 0 && (
-                <div className="flex justify-between text-sm text-green-600">
-                  <span>Discount</span>
-                  <span>-${Number(displayBreakdown.discount).toFixed(2)}</span>
-                </div>
-              )}
-              <div className="border-t border-gray-200 pt-2">
-                <div className="flex justify-between font-semibold text-lg">
-                  <span>Total</span>
-                  <span className="text-[#E85D26]">${Number(total).toFixed(2)}</span>
-                </div>
-              </div>
             </div>
 
             {error && (

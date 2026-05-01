@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { createBrowserClient } from '@ridendine/db';
+import { opsAlertsChannel } from '@ridendine/db';
 
 interface AlertItem {
   id: string;
@@ -11,6 +12,17 @@ interface AlertItem {
   severity: 'info' | 'warning' | 'error' | 'critical';
   link: string;
   time: string;
+}
+
+/** Matches `.select(...)` on `system_alerts` below (browser client row typing is loose). */
+interface SystemAlertRow {
+  id: string;
+  alert_type: string;
+  title: string;
+  severity: string;
+  entity_type: string;
+  entity_id: string;
+  created_at: string;
 }
 
 function playAlertBeep(severity: string) {
@@ -83,14 +95,15 @@ export function OpsAlerts() {
     const fetchAlerts = async () => {
       if (!supabase) return;
       try {
-        const { data: sysAlerts } = await (supabase as any)
+        const { data: sysAlerts } = await supabase
           .from('system_alerts')
           .select('id, alert_type, title, severity, entity_type, entity_id, created_at')
           .eq('acknowledged', false)
           .order('created_at', { ascending: false })
           .limit(20);
 
-        const items: AlertItem[] = (sysAlerts || []).map((a: any) => ({
+        const rows = (sysAlerts ?? []) as SystemAlertRow[];
+        const items: AlertItem[] = rows.map((a) => ({
           id: a.id,
           type: a.alert_type,
           title: a.title,
@@ -115,14 +128,16 @@ export function OpsAlerts() {
 
   useEffect(() => {
     if (!supabase) return;
-    const channel = (supabase as any)
-      .channel('ops-alerts')
+    const channel = supabase
+      .channel(opsAlertsChannel())
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'system_alerts' }, () => {
         setUnseenCount(prev => prev + 1);
         playAlertBeep('error');
       })
       .subscribe();
-    return () => { (supabase as any).removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [supabase]);
 
   const handleOpen = () => {

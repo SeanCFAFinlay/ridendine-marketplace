@@ -112,6 +112,11 @@ export const RATE_LIMITS = {
   upload: { maxRequests: 10, windowSeconds: 60 },
   /** Webhook: 100 per 60 seconds (Stripe sends bursts) */
   webhook: { maxRequests: 100, windowSeconds: 60 },
+  /**
+   * Driver GPS pings: bounded burst per authenticated driver per minute.
+   * Per serverless instance only — see `checkRateLimit` module doc.
+   */
+  driverLocation: { maxRequests: 24, windowSeconds: 60 },
 } as const;
 
 /**

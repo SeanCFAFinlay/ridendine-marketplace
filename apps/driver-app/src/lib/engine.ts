@@ -10,13 +10,23 @@ import { cookies } from 'next/headers';
 // Re-export shared helpers
 export { getAdminEngine as getEngine, errorResponse, successResponse } from '@ridendine/engine';
 
+export type GetDriverActorOptions = {
+  /**
+   * When true (default), only `approved` drivers receive a context (dispatch + location APIs).
+   * When false, any existing driver row is returned (e.g. profile PATCH while pending).
+   */
+  requireApproved?: boolean;
+};
+
 /**
  * Get actor context for current driver user
  */
-export async function getDriverActorContext(): Promise<{
+export async function getDriverActorContext(options?: GetDriverActorOptions): Promise<{
   actor: ActorContext;
   driverId: string;
 } | null> {
+  const requireApproved = options?.requireApproved !== false;
+
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
@@ -37,7 +47,7 @@ export async function getDriverActorContext(): Promise<{
     return null;
   }
 
-  if (driver.status !== 'approved') {
+  if (requireApproved && driver.status !== 'approved') {
     return null;
   }
 

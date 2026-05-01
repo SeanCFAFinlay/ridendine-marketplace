@@ -9,6 +9,10 @@ let adminClient: ReturnType<typeof createClient<Database>> | null = null;
  * NEVER expose this client to the browser.
  */
 export function createAdminClient() {
+  if (typeof window !== 'undefined') {
+    throw new Error('createAdminClient() must only run on the server');
+  }
+
   if (adminClient) {
     return adminClient;
   }

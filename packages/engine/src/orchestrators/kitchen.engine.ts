@@ -7,6 +7,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ActorContext, OperationResult, DomainEventType } from '@ridendine/types';
 import { DomainEventEmitter } from '../core/event-emitter';
 import { AuditLogger } from '../core/audit-logger';
+import {
+  evaluateWeeklyAvailability,
+  type CheckoutReadinessResult,
+} from './kitchen-availability';
 
 interface KitchenQueueEntry {
   id: string;
@@ -622,11 +626,129 @@ export class KitchenEngine {
   }
 
   /**
+   * Customer checkout / cart guard — storefront, chef approval, weekly hours, menu items.
+   * Phase 7 (IRR-032): blocks closed/inactive/paused kitchens and unavailable items.
+   */
+  async validateCustomerCheckoutReadiness(
+    storefrontId: string,
+    menuItemIds: string[],
+    options?: { now?: Date }
+  ): Promise<CheckoutReadinessResult> {
+    const now = options?.now ?? new Date();
+    const uniqueIds = [...new Set(menuItemIds.filter(Boolean))];
+
+    const { data: storefront, error: sfErr } = await this.client
+      .from('chef_storefronts')
+      .select('id, chef_id, is_active, is_paused')
+      .eq('id', storefrontId)
+      .single();
+
+    if (sfErr || !storefront) {
+      return {
+        ok: false,
+        code: 'STOREFRONT_NOT_FOUND',
+        message: 'Storefront not found.',
+      };
+    }
+
+    if (!storefront.is_active) {
+      return {
+        ok: false,
+        code: 'STOREFRONT_NOT_ACTIVE',
+        message: 'This storefront is not accepting orders.',
+      };
+    }
+
+    if (storefront.is_paused) {
+      return {
+        ok: false,
+        code: 'STOREFRONT_PAUSED',
+        message: 'This kitchen is paused. Please try again later.',
+      };
+    }
+
+    const { data: chef } = await this.client
+      .from('chef_profiles')
+      .select('id, status')
+      .eq('id', storefront.chef_id)
+      .single();
+
+    if (!chef || chef.status !== 'approved') {
+      return {
+        ok: false,
+        code: 'CHEF_NOT_APPROVED',
+        message: 'This chef is not available for orders yet.',
+      };
+    }
+
+    const { data: availRows } = await this.client
+      .from('chef_availability')
+      .select('day_of_week, start_time, end_time, is_available')
+      .eq('storefront_id', storefrontId);
+
+    const sched = evaluateWeeklyAvailability(now, availRows ?? []);
+    if (!sched.allowed) {
+      return {
+        ok: false,
+        code: 'OUTSIDE_AVAILABILITY_HOURS',
+        message: 'This kitchen is closed right now.',
+      };
+    }
+
+    if (uniqueIds.length === 0) {
+      return { ok: true };
+    }
+
+    const { data: items, error: itemsErr } = await this.client
+      .from('menu_items')
+      .select(
+        `
+        id,
+        storefront_id,
+        is_available,
+        is_sold_out,
+        menu_categories ( is_active )
+      `
+      )
+      .eq('storefront_id', storefrontId)
+      .in('id', uniqueIds);
+
+    if (itemsErr || !items || items.length !== uniqueIds.length) {
+      return {
+        ok: false,
+        code: 'MENU_ITEM_UNAVAILABLE',
+        message: 'One or more items are not available from this kitchen.',
+      };
+    }
+
+    for (const row of items) {
+      const rawCat = row.menu_categories as
+        | { is_active: boolean }
+        | { is_active: boolean }[]
+        | null;
+      const cat = Array.isArray(rawCat) ? rawCat[0] : rawCat;
+      if (
+        !row.is_available ||
+        row.is_sold_out === true ||
+        !cat?.is_active
+      ) {
+        return {
+          ok: false,
+          code: 'MENU_ITEM_UNAVAILABLE',
+          message: 'One or more items are unavailable or sold out.',
+        };
+      }
+    }
+
+    return { ok: true };
+  }
+
+  /**
    * Verify actor can manage storefront
    */
   private async canManageStorefront(storefrontId: string, actor: ActorContext): Promise<boolean> {
     // Ops can manage any storefront
-    if (['ops_agent', 'ops_manager', 'super_admin'].includes(actor.role)) {
+    if (['ops_agent', 'ops_admin', 'ops_manager', 'super_admin'].includes(actor.role)) {
       return true;
     }
 

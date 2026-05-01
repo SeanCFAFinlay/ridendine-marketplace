@@ -1,34 +1,40 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
 import { createAdminClient, getOrderById, type SupabaseClient } from '@ridendine/db';
-import { getOpsActorContext, hasRequiredRole, errorResponse, getEngine } from '@/lib/engine';
+import { getStripeClient } from '@ridendine/engine';
+import {
+  evaluateRateLimit,
+  RATE_LIMIT_POLICIES,
+  rateLimitPolicyResponse,
+} from '@ridendine/utils';
+import {
+  finalizeOpsActor,
+  getOpsActorContext,
+  getEngine,
+  guardPlatformApi,
+} from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
-
-function getStripe() {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY not configured');
-  }
-  return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2026-02-25.clover',
-  });
-}
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Verify ops user is authenticated with proper role
     const actor = await getOpsActorContext();
-    if (!actor) {
-      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
-    }
+    const opsActor = finalizeOpsActor(
+      actor,
+      guardPlatformApi(actor, 'finance_refunds_sensitive')
+    );
+    if (opsActor instanceof Response) return opsActor;
 
-    // Only ops_manager, finance_admin, or super_admin can process refunds
-    if (!hasRequiredRole(actor, ['ops_manager', 'finance_admin', 'super_admin'])) {
-      return errorResponse('FORBIDDEN', 'Insufficient permissions to process refunds', 403);
-    }
+    const limit = await evaluateRateLimit({
+      request,
+      policy: RATE_LIMIT_POLICIES.opsAdminMutation,
+      namespace: 'ops-order-refund-post',
+      userId: opsActor.userId,
+      routeKey: 'POST:/api/orders/[id]/refund',
+    });
+    if (!limit.allowed) return rateLimitPolicyResponse(limit);
 
     const { id } = await params;
     const body = await request.json();
@@ -69,7 +75,7 @@ export async function POST(
       );
     }
 
-    const stripe = getStripe();
+    const stripe = getStripeClient();
 
     const refund = await stripe.refunds.create({
       payment_intent: order.payment_intent_id,
@@ -89,8 +95,8 @@ export async function POST(
     const engine = getEngine();
     const result = await engine.masterOrder.refundOrder({
       orderId: order.id,
-      actorId: actor.userId,
-      actorRole: actor.role as string,
+      actorId: opsActor.userId,
+      actorRole: opsActor.role as string,
       reason: reason || 'Refund processed',
     });
 

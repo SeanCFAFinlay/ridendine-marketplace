@@ -9,9 +9,19 @@ import {
   getOpsActorContext,
   errorResponse,
   successResponse,
-  hasRequiredRole,
+  finalizeOpsActor,
+  guardPlatformApi,
 } from '@/lib/engine';
 import type { RefundReason } from '@ridendine/types';
+
+/** Real Stripe refund IDs (live or test) use this prefix; never accept synthetic `mock_*` IDs (Phase 13). */
+function isValidStripeRefundId(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  const id = value.trim();
+  if (id.length < 10 || id.length > 255) return false;
+  if (id.startsWith('mock_')) return false;
+  return /^re_[A-Za-z0-9]+$/.test(id);
+}
 
 /**
  * GET /api/engine/refunds
@@ -19,9 +29,8 @@ import type { RefundReason } from '@ridendine/types';
  */
 export async function GET() {
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
+  const denied = guardPlatformApi(actor, 'finance_refunds_read');
+  if (denied) return denied;
 
   const engine = getEngine();
   const pendingRefunds = await engine.commerce.getPendingRefunds();
@@ -35,10 +44,6 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
-
   const body = await request.json();
   const { action, ...actionParams } = body;
 
@@ -46,12 +51,18 @@ export async function POST(request: NextRequest) {
 
   switch (action) {
     case 'request': {
+      const opsActor = finalizeOpsActor(
+        actor,
+        guardPlatformApi(actor, 'finance_refunds_request')
+      );
+      if (opsActor instanceof Response) return opsActor;
+
       const result = await engine.commerce.requestRefund(
         actionParams.orderId,
         actionParams.amountCents,
         actionParams.reason as RefundReason,
         actionParams.notes,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -60,14 +71,16 @@ export async function POST(request: NextRequest) {
     }
 
     case 'approve': {
-      if (!hasRequiredRole(actor, ['ops_agent', 'ops_manager', 'finance_admin', 'super_admin'])) {
-        return errorResponse('FORBIDDEN', 'Not authorized to approve refunds', 403);
-      }
+      const opsActor = finalizeOpsActor(
+        actor,
+        guardPlatformApi(actor, 'finance_refunds_sensitive')
+      );
+      if (opsActor instanceof Response) return opsActor;
 
       const result = await engine.commerce.approveRefund(
         actionParams.refundCaseId,
         actionParams.approvedAmountCents,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -76,14 +89,16 @@ export async function POST(request: NextRequest) {
     }
 
     case 'deny': {
-      if (!hasRequiredRole(actor, ['ops_agent', 'ops_manager', 'finance_admin', 'super_admin'])) {
-        return errorResponse('FORBIDDEN', 'Not authorized to deny refunds', 403);
-      }
+      const opsActor = finalizeOpsActor(
+        actor,
+        guardPlatformApi(actor, 'finance_refunds_sensitive')
+      );
+      if (opsActor instanceof Response) return opsActor;
 
       const result = await engine.commerce.denyRefund(
         actionParams.refundCaseId,
         actionParams.reason,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -92,16 +107,24 @@ export async function POST(request: NextRequest) {
     }
 
     case 'process': {
-      if (!hasRequiredRole(actor, ['ops_manager', 'finance_admin', 'super_admin'])) {
-        return errorResponse('FORBIDDEN', 'Not authorized to process refunds', 403);
+      const opsActor = finalizeOpsActor(
+        actor,
+        guardPlatformApi(actor, 'finance_refunds_sensitive')
+      );
+      if (opsActor instanceof Response) return opsActor;
+
+      if (!isValidStripeRefundId(actionParams.stripeRefundId)) {
+        return errorResponse(
+          'STRIPE_REFUND_ID_REQUIRED',
+          'process requires a real Stripe refund id (re_...) from your Stripe API after the refund is created; synthetic ids are not allowed.',
+          400
+        );
       }
 
-      // In production, this would call Stripe to process the refund
-      // and then record the stripe refund ID
       const result = await engine.commerce.processRefund(
         actionParams.refundCaseId,
-        actionParams.stripeRefundId || `mock_refund_${Date.now()}`, // Mock for now
-        actor
+        actionParams.stripeRefundId,
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);

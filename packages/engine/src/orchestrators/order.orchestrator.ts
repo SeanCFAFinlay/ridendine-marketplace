@@ -601,24 +601,6 @@ export class OrderOrchestrator {
     // Complete chef response SLA
     await this.slaManager.completeTimer('order', orderId, 'chef_response' as SLAType);
 
-    // Notify customer that order was accepted
-    if (this.notificationSender) {
-      try {
-        const { data: customer } = await this.client
-          .from('customers')
-          .select('user_id')
-          .eq('id', order.customer_id)
-          .single();
-        if (customer?.user_id) {
-          await this.notificationSender.send('order_accepted', customer.user_id, {
-            orderNumber: order.order_number,
-          });
-        }
-      } catch {
-        // Non-fatal: notification is best-effort
-      }
-    }
-
     // Add to kitchen queue
     const { data: queuePosition } = await this.client
       .from('kitchen_queue_entries')
@@ -1327,24 +1309,6 @@ export class OrderOrchestrator {
       };
     }
 
-    // Notify customer that order was delivered
-    if (this.notificationSender) {
-      try {
-        const { data: customer } = await this.client
-          .from('customers')
-          .select('user_id')
-          .eq('id', order.customer_id)
-          .single();
-        if (customer?.user_id) {
-          await this.notificationSender.send('order_delivered', customer.user_id, {
-            orderNumber: order.order_number,
-          });
-        }
-      } catch {
-        // Non-fatal: notification is best-effort
-      }
-    }
-
     // Create ledger entries for payouts
     const platformFee = Math.round(order.subtotal * (PLATFORM_FEE_PERCENT / 100) * 100);
     const chefPayable = Math.round((order.subtotal - platformFee / 100) * 100);
@@ -1458,7 +1422,7 @@ export class OrderOrchestrator {
     actor: ActorContext
   ): Promise<OperationResult<OrderData>> {
     // Only ops managers and super admins can override
-    if (!['ops_manager', 'super_admin'].includes(actor.role)) {
+    if (!['ops_admin', 'ops_manager', 'super_admin'].includes(actor.role)) {
       return {
         success: false,
         error: { code: 'FORBIDDEN', message: 'Only ops managers can perform overrides' },

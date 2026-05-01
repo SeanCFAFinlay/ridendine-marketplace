@@ -11,6 +11,11 @@ import {
   errorResponse,
   successResponse,
 } from '@/lib/engine';
+import {
+  evaluateRateLimit,
+  RATE_LIMIT_POLICIES,
+  rateLimitPolicyResponse,
+} from '@ridendine/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -171,6 +176,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (!customerContext) {
       return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
     }
+
+    const limit = await evaluateRateLimit({
+      request,
+      policy: RATE_LIMIT_POLICIES.customerWrite,
+      namespace: 'web-orders-patch',
+      userId: customerContext.actor.userId,
+      routeKey: 'PATCH:/api/orders/[id]',
+    });
+    if (!limit.allowed) return rateLimitPolicyResponse(limit);
 
     const adminClient = createAdminClient();
 

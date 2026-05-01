@@ -3,17 +3,22 @@
 // ==========================================
 
 import type { SupabaseClient } from '@ridendine/db';
+import { AppRole, normalizePlatformRole } from '@ridendine/types';
 
-// User roles
-export type UserRole = 'customer' | 'chef' | 'driver' | 'ops_admin' | 'super_admin';
+export type UserRole = (typeof AppRole)[keyof typeof AppRole];
 
-// Role hierarchy (higher index = more permissions)
+// Role hierarchy (higher index = more permissions) — used for highestRole display only
 const ROLE_HIERARCHY: UserRole[] = [
-  'customer',
-  'chef',
-  'driver',
-  'ops_admin',
-  'super_admin',
+  AppRole.CUSTOMER,
+  AppRole.SUPPORT_AGENT,
+  AppRole.CHEF,
+  AppRole.DRIVER,
+  AppRole.OPS_AGENT,
+  AppRole.FINANCE_ADMIN,
+  AppRole.FINANCE_MANAGER,
+  AppRole.OPS_ADMIN,
+  AppRole.OPS_MANAGER,
+  AppRole.SUPER_ADMIN,
 ];
 
 export interface UserRoles {
@@ -22,6 +27,8 @@ export interface UserRoles {
   isDriver: boolean;
   isOpsAdmin: boolean;
   isSuperAdmin: boolean;
+  isSupportAgent: boolean;
+  isFinanceRole: boolean;
   roles: UserRole[];
   highestRole: UserRole | null;
 }
@@ -33,7 +40,6 @@ export async function getUserRoles(
 ): Promise<UserRoles> {
   const roles: UserRole[] = [];
 
-  // Check all role tables in parallel
   const [customerResult, chefResult, driverResult, platformResult] =
     await Promise.all([
       client.from('customers').select('id').eq('user_id', userId).single(),
@@ -55,24 +61,25 @@ export async function getUserRoles(
         .single(),
     ]);
 
-  // Add roles based on results
   if (customerResult.data) {
-    roles.push('customer');
+    roles.push(AppRole.CUSTOMER);
   }
 
   if (chefResult.data?.status === 'approved') {
-    roles.push('chef');
+    roles.push(AppRole.CHEF);
   }
 
   if (driverResult.data?.status === 'approved') {
-    roles.push('driver');
+    roles.push(AppRole.DRIVER);
   }
 
   if (platformResult.data?.role) {
-    roles.push(platformResult.data.role as UserRole);
+    const normalized = normalizePlatformRole(platformResult.data.role as string);
+    if (normalized) {
+      roles.push(normalized);
+    }
   }
 
-  // Determine highest role
   let highestRole: UserRole | null = null;
   for (const role of ROLE_HIERARCHY.slice().reverse()) {
     if (roles.includes(role)) {
@@ -82,62 +89,75 @@ export async function getUserRoles(
   }
 
   return {
-    isCustomer: roles.includes('customer'),
-    isChef: roles.includes('chef'),
-    isDriver: roles.includes('driver'),
-    isOpsAdmin: roles.includes('ops_admin'),
-    isSuperAdmin: roles.includes('super_admin'),
+    isCustomer: roles.includes(AppRole.CUSTOMER),
+    isChef: roles.includes(AppRole.CHEF),
+    isDriver: roles.includes(AppRole.DRIVER),
+    isOpsAdmin: roles.includes(AppRole.OPS_ADMIN),
+    isSuperAdmin: roles.includes(AppRole.SUPER_ADMIN),
+    isSupportAgent: roles.includes(AppRole.SUPPORT_AGENT),
+    isFinanceRole:
+      roles.includes(AppRole.FINANCE_ADMIN) ||
+      roles.includes(AppRole.FINANCE_MANAGER) ||
+      roles.includes(AppRole.SUPER_ADMIN),
     roles,
     highestRole,
   };
 }
 
-// Check if user has specific role
 export function hasRole(userRoles: UserRoles, role: UserRole): boolean {
   return userRoles.roles.includes(role);
 }
 
-// Check if user has any of the specified roles
-export function hasAnyRole(userRoles: UserRoles, roles: UserRole[]): boolean {
-  return roles.some((role) => userRoles.roles.includes(role));
+export function hasAnyRole(userRoles: UserRoles, checkRoles: UserRole[]): boolean {
+  return checkRoles.some((role) => userRoles.roles.includes(role));
 }
 
-// Check if user is any type of admin
+const OPS_STAFF_ROLES = new Set<UserRole>([
+  AppRole.OPS_ADMIN,
+  AppRole.OPS_AGENT,
+  AppRole.OPS_MANAGER,
+  AppRole.FINANCE_ADMIN,
+  AppRole.FINANCE_MANAGER,
+  AppRole.SUPER_ADMIN,
+  AppRole.SUPPORT_AGENT,
+] as UserRole[]);
+
 export function isAdmin(userRoles: UserRoles): boolean {
-  return userRoles.isOpsAdmin || userRoles.isSuperAdmin;
+  return userRoles.roles.some((r) => OPS_STAFF_ROLES.has(r));
 }
 
-// Check if user can access admin dashboard
 export function canAccessAdminDashboard(userRoles: UserRoles): boolean {
   return isAdmin(userRoles);
 }
 
-// Check if user can manage orders
 export function canManageOrders(userRoles: UserRoles): boolean {
   return isAdmin(userRoles) || userRoles.isChef;
 }
 
-// Check if user can manage chefs
+const GOVERN_CHEF_ROLES = new Set<UserRole>(
+  [AppRole.OPS_ADMIN, AppRole.OPS_MANAGER, AppRole.SUPER_ADMIN] as UserRole[]
+);
+
 export function canManageChefs(userRoles: UserRoles): boolean {
-  return isAdmin(userRoles);
+  return userRoles.roles.some((r) => GOVERN_CHEF_ROLES.has(r));
 }
 
-// Check if user can manage drivers
 export function canManageDrivers(userRoles: UserRoles): boolean {
-  return isAdmin(userRoles);
+  return canManageChefs(userRoles);
 }
 
-// Check if user can view financials
 export function canViewFinancials(userRoles: UserRoles): boolean {
-  return userRoles.isSuperAdmin;
+  return userRoles.isFinanceRole;
 }
 
-// Check if user can process refunds
+const FINANCE_REFUND_ROLES = new Set<UserRole>(
+  [AppRole.FINANCE_ADMIN, AppRole.FINANCE_MANAGER, AppRole.SUPER_ADMIN] as UserRole[]
+);
+
 export function canProcessRefunds(userRoles: UserRoles): boolean {
-  return isAdmin(userRoles);
+  return userRoles.roles.some((r) => FINANCE_REFUND_ROLES.has(r));
 }
 
-// Check if user has permission for specific action
 export type Permission =
   | 'view_orders'
   | 'manage_orders'
@@ -152,10 +172,10 @@ export type Permission =
   | 'manage_platform';
 
 const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
-  customer: ['view_orders'],
-  chef: ['view_orders', 'manage_orders'],
-  driver: ['view_orders'],
-  ops_admin: [
+  [AppRole.CUSTOMER]: ['view_orders'],
+  [AppRole.CHEF]: ['view_orders', 'manage_orders'],
+  [AppRole.DRIVER]: ['view_orders'],
+  [AppRole.OPS_AGENT]: [
     'view_orders',
     'manage_orders',
     'view_chefs',
@@ -164,9 +184,42 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'manage_drivers',
     'view_customers',
     'manage_customers',
-    'process_refunds',
   ],
-  super_admin: [
+  [AppRole.OPS_ADMIN]: [
+    'view_orders',
+    'manage_orders',
+    'view_chefs',
+    'manage_chefs',
+    'view_drivers',
+    'manage_drivers',
+    'view_customers',
+    'manage_customers',
+  ],
+  [AppRole.OPS_MANAGER]: [
+    'view_orders',
+    'manage_orders',
+    'view_chefs',
+    'manage_chefs',
+    'view_drivers',
+    'manage_drivers',
+    'view_customers',
+    'manage_customers',
+  ],
+  [AppRole.FINANCE_ADMIN]: [
+    'view_orders',
+    'view_financials',
+    'process_refunds',
+    'view_customers',
+  ],
+  [AppRole.FINANCE_MANAGER]: [
+    'view_orders',
+    'view_financials',
+    'process_refunds',
+    'view_customers',
+  ],
+  [AppRole.SUPPORT_AGENT]: ['view_orders', 'view_customers', 'view_chefs', 'view_drivers'],
+  [AppRole.SUPPORT]: ['view_orders', 'view_customers', 'view_chefs', 'view_drivers'],
+  [AppRole.SUPER_ADMIN]: [
     'view_orders',
     'manage_orders',
     'view_chefs',
@@ -181,16 +234,10 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ],
 };
 
-export function hasPermission(
-  userRoles: UserRoles,
-  permission: Permission
-): boolean {
-  return userRoles.roles.some((role) =>
-    ROLE_PERMISSIONS[role]?.includes(permission)
-  );
+export function hasPermission(userRoles: UserRoles, permission: Permission): boolean {
+  return userRoles.roles.some((role) => ROLE_PERMISSIONS[role]?.includes(permission));
 }
 
-// Create or update platform user
 export async function upsertPlatformUser(
   client: SupabaseClient,
   userId: string,

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@ridendine/ui';
 import { createBrowserClient } from '@ridendine/db';
+import { opsOrdersChannel, parseOrdersRealtimeRow } from '@ridendine/db';
 
 interface RealtimeOrder {
   id: string;
@@ -14,8 +15,6 @@ interface RealtimeOrder {
 
 export function RealTimeStats() {
   const [recentOrders, setRecentOrders] = useState<RealtimeOrder[]>([]);
-  const [ordersPerMinute, setOrdersPerMinute] = useState(0);
-  const [currentRevenue, setCurrentRevenue] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
 
   const supabase = useMemo(() => createBrowserClient(), []);
@@ -26,7 +25,6 @@ export function RealTimeStats() {
     }
 
     const db = supabase;
-    setIsConnected(true);
 
     // Fetch initial data
     async function fetchInitial() {
@@ -40,43 +38,52 @@ export function RealTimeStats() {
         .limit(10);
 
       if (data) {
-        setRecentOrders(data as RealtimeOrder[]);
-        setCurrentRevenue((data as RealtimeOrder[]).reduce((sum, o) => sum + o.total, 0));
-        setOrdersPerMinute(data.length / 5);
+        const parsed = (data as RealtimeOrder[])
+          .map((row) => parseOrdersRealtimeRow(row))
+          .filter((o): o is NonNullable<typeof o> => o !== null);
+        setRecentOrders(parsed);
       }
     }
 
-    fetchInitial();
+    void fetchInitial();
 
     // Subscribe to new orders
     const channel = db
-      .channel('realtime-orders')
+      .channel(opsOrdersChannel())
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
-          const newOrder = payload.new as RealtimeOrder;
+          const newOrder = parseOrdersRealtimeRow(payload.new);
+          if (!newOrder) return;
           setRecentOrders((prev) => [newOrder, ...prev.slice(0, 9)]);
-          setCurrentRevenue((prev) => prev + newOrder.total);
-          setOrdersPerMinute((prev) => prev + 0.2);
         }
       )
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'orders' },
         (payload) => {
-          const updatedOrder = payload.new as RealtimeOrder;
+          const updatedOrder = parseOrdersRealtimeRow(payload.new);
+          if (!updatedOrder) return;
           setRecentOrders((prev) =>
             prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o))
           );
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') setIsConnected(true);
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          setIsConnected(false);
+        }
+      });
 
     return () => {
       db.removeChannel(channel);
     };
   }, [supabase]);
+
+  const currentRevenue = recentOrders.reduce((sum, o) => sum + o.total, 0);
+  const ordersPerMinute = recentOrders.length / 5;
 
   const getStatusColor = (status: string) => {
     switch (status) {

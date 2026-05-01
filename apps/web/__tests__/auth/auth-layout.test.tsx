@@ -25,14 +25,14 @@ describe('AuthLayout', () => {
     expect(screen.getByText('Test Content')).toBeInTheDocument();
   });
 
-  it('renders Ridendine logo link', () => {
+  it('renders brand logo link to home', () => {
     render(
       <AuthLayout title="Test">
         <div>Content</div>
       </AuthLayout>
     );
 
-    const logo = screen.getByText('Ridendine');
+    const logo = screen.getByAltText('RideNDine');
     expect(logo).toBeInTheDocument();
     expect(logo.closest('a')).toHaveAttribute('href', '/');
   });

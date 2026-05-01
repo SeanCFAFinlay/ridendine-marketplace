@@ -1,5 +1,41 @@
 # ORDER FLOW WORKFLOW
 
+## Canonical engine vs this document (IRR-017)
+
+**Source of truth (code):**
+
+- **Order states** — `@ridendine/types` **`EngineOrderStatus`** and transition map in `packages/engine/src/orchestrators/order-state-machine.ts` (`ORDER_TRANSITION_MAP`, `isValidOrderTransition`).
+- **Delivery states** — **`EngineDeliveryStatus`** and `DELIVERY_TRANSITION_MAP` in the same file.
+- **Who mutates** — **`MasterOrderEngine`** (orders + `order_status_history`), **`DeliveryEngine`** (deliveries). APIs should call these (or facades such as `order.orchestrator`), not invent transitions in UI.
+
+**Legacy / DB-facing labels:** `ENGINE_TO_LEGACY_ORDER_STATUS` and `ENGINE_TO_LEGACY_DELIVERY_STATUS` map engine values to older `orders.status` / delivery row enums used by some queries and UIs. When a label in the tables below differs from an `EngineOrderStatus` value, the **engine value** wins for new code.
+
+| Engine order (`EngineOrderStatus`) | Typical user-facing meaning | Legacy `orders.status` (approx.) |
+|------------------------------------|-----------------------------|----------------------------------|
+| `draft`, `checkout_pending`, `payment_*` | Cart / payment in progress | often `pending` |
+| `pending` | Awaiting chef accept | `pending` |
+| `accepted` → `preparing` → `ready` | Kitchen pipeline | `accepted` / `preparing` / `ready_for_pickup` |
+| `dispatch_pending`, `driver_offered`, `driver_assigned` | Ops / dispatch | `ready_for_pickup` (collapsed) |
+| `driver_en_route_pickup`, `picked_up` | Driver to chef / collected | `picked_up` |
+| `driver_en_route_dropoff`, `driver_en_route_customer` | En route to customer | `in_transit` |
+| `delivered` → `completed` | Handoff complete | `delivered` / `completed` |
+| `cancelled`, `failed`, `exception`, `refund_*` | Terminal / exceptional | see state machine |
+
+| Engine delivery (`EngineDeliveryStatus`) | Legacy / doc alias |
+|------------------------------------------|---------------------|
+| `unassigned`, `offered` | “pending” / offered pool |
+| `accepted` | “assigned” (driver assigned) |
+| `en_route_to_pickup` | Same string as older `en_route_to_pickup` |
+| `arrived_at_pickup` | Arrived at chef |
+| `picked_up` | Collected order |
+| `en_route_to_customer` | Doc may say “en route to dropoff” — same leg |
+| `arrived_at_customer` | Doc may say “arrived at dropoff” |
+| `delivered`, `failed`, `cancelled` | Terminals |
+
+**Events / audit:** On each successful engine transition, persist **`order_status_history`** (and delivery analogs) and emit **`domain_events`** per `MasterOrderEngine` / `DeliveryEngine` implementation; ops overrides must go through audited paths (see `docs/BUSINESS_ENGINE_FOUNDATION.md`). **Realtime channel naming + payload rules:** [`docs/REALTIME_EVENT_SYSTEM.md`](REALTIME_EVENT_SYSTEM.md).
+
+---
+
 ## Customer Journey
 
 ```
@@ -15,10 +51,12 @@ When an order is created, it triggers notifications to:
 - **CHEF ADMIN** (chef.ridendine.ca) - Receives order
 - **CUSTOMER** (ridendine.ca) - Confirmation
 
-## Order Status Flow
+## Order Status Flow (simplified narrative)
+
+The diagram below is a **storyline** for stakeholders. Implementations must use **`EngineOrderStatus`** and the state machine (see top of this file). Chef “ACCEPTED” = engine `accepted`; driver “ASSIGNED” spans engine `driver_assigned` / delivery `accepted`; “EN ROUTE TO CUSTOMER” aligns with `driver_en_route_dropoff` or `driver_en_route_customer`.
 
 ```
-PENDING
+PENDING (chef acceptance)
     │
     ▼
 ACCEPTED (Chef accepts)
@@ -32,13 +70,10 @@ READY (Ready for pickup)
     ├──> OPS ADMIN assigns driver
     │
     ▼
-ASSIGNED (Driver assigned)
+DISPATCH / DRIVER ASSIGNED
     │
     ▼
-ACCEPTED (Driver accepts)
-    │
-    ▼
-EN ROUTE TO PICKUP (GPS Tracking Active)
+DRIVER EN ROUTE TO PICKUP
     │
     ▼
 PICKED UP (Photo Proof)
@@ -55,27 +90,27 @@ COMPLETED
 
 ## Post-Delivery Actions
 
-- **Customer** → Can leave review
+- **Customer** → Can leave review (confirmation URL: [`docs/CUSTOMER_ORDERING_FLOW.md`](CUSTOMER_ORDERING_FLOW.md))
 - **Chef** → Receives payment
 - **Driver** → Receives earnings
 - **Ops** → Updates analytics
 
 ## Status Descriptions
 
-| Status | Description |
-|--------|-------------|
-| `pending` | Order placed, waiting for chef acceptance |
-| `accepted` | Chef has accepted the order |
-| `preparing` | Chef is cooking the order |
-| `ready` | Order ready for pickup |
-| `assigned` | Driver has been assigned |
-| `en_route_to_pickup` | Driver heading to chef location |
-| `picked_up` | Driver has collected the order |
-| `en_route_to_dropoff` | Driver heading to customer |
-| `delivered` | Order delivered to customer |
-| `completed` | Order fully completed |
-| `cancelled` | Order was cancelled |
-| `failed` | Order failed (payment or other issue) |
+| Legacy / DB-style label | `EngineOrderStatus` (when different) | Description |
+|-------------------------|--------------------------------------|-------------|
+| `pending` | `pending` (after payment) or earlier `checkout_pending` / `payment_*` | Waiting chef acceptance or pre-kitchen |
+| `accepted` | `accepted` | Chef accepted |
+| `preparing` | `preparing` | Chef cooking |
+| `ready` / `ready_for_pickup` | `ready` | Ready for driver |
+| `assigned` (story) | `driver_assigned` + delivery `accepted` | Driver assigned |
+| `en_route_to_pickup` | `driver_en_route_pickup` | To chef |
+| `picked_up` | `picked_up` | Collected |
+| `en_route_to_dropoff` / `in_transit` | `driver_en_route_dropoff` or `driver_en_route_customer` | To customer |
+| `delivered` | `delivered` | Arrived |
+| `completed` | `completed` | Closed |
+| `cancelled` | `cancelled` | Cancelled |
+| `failed` | `failed` or `payment_failed` | Failed |
 
 ## App Responsibilities
 

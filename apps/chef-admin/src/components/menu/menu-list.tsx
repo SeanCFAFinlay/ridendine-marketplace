@@ -103,11 +103,13 @@ export function MenuList({ categories: initialCategories }: MenuListProps) {
         </div>
       )}
 
-      <div className="mt-6 flex gap-2 flex-wrap">
-        <Button variant="outline" onClick={() => setShowCategoryModal(true)}>
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Button variant="outline" className="min-h-10" onClick={() => setShowCategoryModal(true)}>
           Add Category
         </Button>
-        <Button onClick={() => setShowItemModal(true)}>Add Item</Button>
+        <Button className="min-h-10" onClick={() => setShowItemModal(true)}>
+          Add Item
+        </Button>
       </div>
 
       <div className="mt-6 space-y-6">
@@ -120,17 +122,18 @@ export function MenuList({ categories: initialCategories }: MenuListProps) {
         ) : (
           categories.map((category) => (
             <Card key={category.id}>
-              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                <div>
+              <div className="flex flex-col gap-3 border-b border-gray-100 pb-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                   <h2 className="font-semibold text-gray-900">{category.name}</h2>
                   {category.description && (
                     <p className="mt-0.5 text-sm text-gray-500">{category.description}</p>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex shrink-0 gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
+                    className="min-h-10"
                     onClick={() => {
                       setSelectedCategoryId(category.id);
                       setShowItemModal(true);
@@ -150,9 +153,9 @@ export function MenuList({ categories: initialCategories }: MenuListProps) {
                   category.items.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between rounded-lg border border-gray-100 p-3"
+                      className="flex flex-col gap-3 rounded-lg border border-gray-100 p-3 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
                         <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
                           {item.image_url ? (
                             <img
@@ -183,11 +186,12 @@ export function MenuList({ categories: initialCategories }: MenuListProps) {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 flex-wrap justify-end">
+                      <div className="flex flex-wrap items-center gap-2 sm:justify-end sm:gap-3">
                         <button
+                          type="button"
                           onClick={() => toggleAvailability(item.id, item.is_available)}
                           disabled={loading}
-                          className="focus:outline-none"
+                          className="min-h-10 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E85D26]"
                         >
                           <Badge variant={item.is_available ? 'success' : 'default'}>
                             {item.is_available ? 'Available' : 'Unavailable'}
@@ -196,6 +200,7 @@ export function MenuList({ categories: initialCategories }: MenuListProps) {
                         <Button
                           variant="outline"
                           size="sm"
+                          className="min-h-10"
                           onClick={() => {
                             setEditingItem(item);
                             setShowItemModal(true);
@@ -207,6 +212,7 @@ export function MenuList({ categories: initialCategories }: MenuListProps) {
                         <Button
                           variant="destructive"
                           size="sm"
+                          className="min-h-10"
                           onClick={() => deleteItem(item.id)}
                           disabled={loading}
                         >

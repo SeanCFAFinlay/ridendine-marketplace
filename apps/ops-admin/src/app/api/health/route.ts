@@ -1,13 +1,30 @@
-import { apiSuccess } from '@ridendine/utils';
+import { createAdminClient, type SupabaseClient } from '@ridendine/db';
+import {
+  apiSuccess,
+  getRateLimitProviderStatus,
+  operationalHealthPayload,
+} from '@ridendine/utils';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  return apiSuccess({
-    status: 'ok',
-    app: 'ops-admin',
-    version: '0.1.0',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
+  const adminClient = createAdminClient() as unknown as SupabaseClient;
+  const rateLimitStatus = getRateLimitProviderStatus();
+  const dbProbe = await adminClient.from('orders').select('id').limit(1);
+  const envReady = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  const payload = operationalHealthPayload({
+    service: 'ops-admin',
+    dbReady: !dbProbe.error,
+    envReady,
+    stripeReady: null,
+    rateLimitReady: rateLimitStatus.ready,
+    rateLimitProvider: rateLimitStatus.provider,
+    rateLimitReason: rateLimitStatus.reason,
   });
+
+  return apiSuccess(payload, payload.readiness === 'not_ready' ? 503 : 200);
 }

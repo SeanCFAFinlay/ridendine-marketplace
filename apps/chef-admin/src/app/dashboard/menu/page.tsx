@@ -46,11 +46,13 @@ export default async function MenuPage() {
   const menuCategories = await getMenuData(storefront.id);
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="min-w-0 max-w-full">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900">Menu</h1>
-          <p className="mt-1 text-gray-500">Manage your menu categories and items</p>
+          <p className="mt-1 text-sm text-gray-500 sm:text-base">
+            Manage your menu categories and items
+          </p>
         </div>
       </div>
 

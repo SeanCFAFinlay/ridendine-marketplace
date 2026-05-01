@@ -4,8 +4,15 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button, Input, Textarea, Card } from '@ridendine/ui';
 import { Header } from '@/components/layout/header';
+import {
+  getChefPortalLoginUrl,
+  getChefPortalSignupUrl,
+} from '@/lib/customer-ordering';
 
 export default function ChefSignupPage() {
+  const chefPortalSignup = getChefPortalSignupUrl();
+  const chefPortalLogin = getChefPortalLoginUrl();
+
   const [formData, setFormData] = useState({
     businessName: '',
     cuisineType: '',
@@ -87,6 +94,39 @@ export default function ChefSignupPage() {
               below to start your journey.
             </p>
           </div>
+
+          {chefPortalSignup ? (
+            <Card padding="md" className="mb-8 border border-[#E8E8E8] bg-white">
+              <p className="text-[15px] font-semibold text-[#2D3436]">
+                Ready to create your kitchen account?
+              </p>
+              <p className="mt-2 text-[14px] leading-relaxed text-[#5F6368]">
+                Approved vendors manage menus and orders in the chef portal.
+                Use the same email you plan to use on Ridendine.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <a
+                  href={chefPortalSignup}
+                  className="inline-flex items-center justify-center rounded-md bg-[#FF6B6B] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#FF5252]"
+                >
+                  Open chef portal signup
+                </a>
+                {chefPortalLogin ? (
+                  <a
+                    href={chefPortalLogin}
+                    className="inline-flex items-center justify-center rounded-md border border-[#E8E8E8] bg-white px-6 py-3 text-sm font-medium text-[#2D3436] transition-colors hover:bg-[#FAFAFA]"
+                  >
+                    Chef login
+                  </a>
+                ) : null}
+              </div>
+            </Card>
+          ) : (
+            <p className="mb-8 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900">
+              Set <code className="rounded bg-white px-1">NEXT_PUBLIC_CHEF_ADMIN_URL</code> in
+              environment so the chef portal signup link is available.
+            </p>
+          )}
 
           <Card padding="lg">
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -186,12 +226,21 @@ export default function ChefSignupPage() {
 
           <p className="mt-6 text-center text-[15px] text-[#5F6368]">
             Already have an account?{' '}
-            <Link
-              href="/auth/login"
-              className="font-medium text-[#FF6B6B] hover:text-[#FF5252]"
-            >
-              Sign in here
-            </Link>
+            {chefPortalLogin ? (
+              <a
+                href={chefPortalLogin}
+                className="font-medium text-[#FF6B6B] hover:text-[#FF5252]"
+              >
+                Chef portal login
+              </a>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="font-medium text-[#FF6B6B] hover:text-[#FF5252]"
+              >
+                Customer sign in
+              </Link>
+            )}
           </p>
         </div>
       </main>

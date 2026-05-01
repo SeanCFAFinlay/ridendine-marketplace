@@ -43,7 +43,7 @@ async function getOrdersWithCustomers(storefrontId: string) {
   const { data: addresses }: any = addressIds.length > 0
     ? await supabase
         .from('customer_addresses')
-        .select('id, address_line1, address_line2, city, state, postal_code')
+        .select('id, street_address, city, state, postal_code')
         .in('id', addressIds)
     : { data: [] };
 
@@ -76,7 +76,7 @@ export default async function OrdersPage() {
         </div>
       </div>
 
-      <OrdersList initialOrders={orders} />
+      <OrdersList initialOrders={orders} storefrontId={storefront.id} />
     </div>
   );
 }

@@ -1,18 +1,25 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, getOpsSupportQueue, createSupportTicket, type SupabaseClient } from '@ridendine/db';
-import { getOpsActorContext, errorResponse } from '@/lib/engine';
+import {
+  getOpsActorContext,
+  errorResponse,
+  guardPlatformApi,
+  finalizeOpsActor,
+} from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
     const actor = await getOpsActorContext();
-    if (!actor) {
-      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
-    }
+    const denied = guardPlatformApi(actor, 'support_queue');
+    const auth = finalizeOpsActor(actor, denied);
+    if (auth instanceof Response) return auth;
 
     const supabase = createAdminClient() as unknown as SupabaseClient;
-    const queue = await getOpsSupportQueue(supabase);
+    const queue = await getOpsSupportQueue(supabase, {
+      supportAgentUserId: auth.role === 'support_agent' ? auth.userId : undefined,
+    });
     return NextResponse.json({ data: queue });
   } catch {
     return NextResponse.json(
@@ -25,9 +32,9 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const actor = await getOpsActorContext();
-    if (!actor) {
-      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
-    }
+    const denied = guardPlatformApi(actor, 'support_queue');
+    const auth = finalizeOpsActor(actor, denied);
+    if (auth instanceof Response) return auth;
 
     const body = await request.json();
     const supabase = createAdminClient() as unknown as SupabaseClient;

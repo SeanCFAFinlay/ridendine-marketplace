@@ -24,7 +24,11 @@ import type { SupportExceptionEngine } from './support.engine';
 import type { CommerceLedgerEngine } from './commerce.engine';
 
 function assertOpsRole(actor: ActorContext): OperationResult | null {
-  if (!['ops_agent', 'ops_manager', 'finance_admin', 'super_admin'].includes(actor.role)) {
+  if (
+    !['ops_agent', 'ops_admin', 'ops_manager', 'finance_admin', 'finance_manager', 'super_admin'].includes(
+      actor.role
+    )
+  ) {
     return {
       success: false,
       error: { code: 'FORBIDDEN', message: 'Ops access required' },
@@ -75,7 +79,7 @@ export class OpsControlEngine {
     input: Omit<PlatformRuleSet, 'id' | 'updatedAt'> & { id?: string },
     actor: ActorContext
   ): Promise<OperationResult<PlatformRuleSet>> {
-    if (!['ops_manager', 'super_admin'].includes(actor.role)) {
+    if (!['ops_admin', 'ops_manager', 'super_admin'].includes(actor.role)) {
       return {
         success: false,
         error: { code: 'FORBIDDEN', message: 'Only ops managers can update platform rules' },
@@ -295,7 +299,7 @@ export class OpsControlEngine {
     actor: ActorContext,
     dateRange: { start: string; end: string }
   ): Promise<OperationResult<FinanceOperationsReadModel>> {
-    if (!['ops_manager', 'finance_admin', 'super_admin'].includes(actor.role)) {
+    if (!['ops_admin', 'ops_manager', 'finance_admin', 'finance_manager', 'super_admin'].includes(actor.role)) {
       return {
         success: false,
         error: { code: 'FORBIDDEN', message: 'Finance access required' },

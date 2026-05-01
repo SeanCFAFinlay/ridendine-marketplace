@@ -58,6 +58,12 @@ export const checkoutSchema = z.object({
   tip: z.number().min(0).optional().default(0),
   promoCode: z.string().optional(),
   specialInstructions: z.string().optional(),
+  // Optional client-calculated totals for tamper detection only.
+  clientSubtotal: z.number().min(0).optional(),
+  clientDeliveryFee: z.number().min(0).optional(),
+  clientServiceFee: z.number().min(0).optional(),
+  clientTax: z.number().min(0).optional(),
+  clientTotal: z.number().min(0).optional(),
 });
 
 // Type exports

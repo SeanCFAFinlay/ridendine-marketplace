@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getEngine, getOpsActorContext, errorResponse, hasRequiredRole } from '@/lib/engine';
+import {
+  finalizeOpsActor,
+  getEngine,
+  getOpsActorContext,
+  errorResponse,
+  guardPlatformApi,
+} from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,12 +15,8 @@ export async function PATCH(
 ) {
   try {
     const actor = await getOpsActorContext();
-    if (!actor) {
-      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
-    }
-    if (!hasRequiredRole(actor, ['ops_manager', 'super_admin'])) {
-      return errorResponse('FORBIDDEN', 'Only ops managers and super admins can govern driver status.', 403);
-    }
+    const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'drivers_governance'));
+    if (opsActor instanceof Response) return opsActor;
 
     const { id } = await params;
     const body = await request.json();
@@ -24,7 +26,7 @@ export async function PATCH(
       const result = await engine.platform.updateDriverGovernance(
         id,
         body.status,
-        actor,
+        opsActor,
         body.reason
       );
 

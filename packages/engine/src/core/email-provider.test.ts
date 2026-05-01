@@ -127,7 +127,8 @@ describe('createResendProvider', () => {
 
       const types = [
         'order_placed', 'order_accepted', 'order_rejected', 'order_ready',
-        'order_picked_up', 'order_delivered', 'delivery_offer',
+        'order_picked_up', 'order_delivered', 'order_cancelled', 'refund_processed',
+        'delivery_offer',
         'chef_approved', 'driver_approved', 'review_received',
       ] as const;
 

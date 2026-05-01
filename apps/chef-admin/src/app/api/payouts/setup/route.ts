@@ -1,16 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@ridendine/db';
-import Stripe from 'stripe';
-
-function getStripe() {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY not configured');
-  }
-  return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2026-02-25.clover',
-  });
-}
+import { getStripeClient } from '@ridendine/engine';
 
 export async function POST() {
   try {
@@ -42,7 +33,7 @@ export async function POST() {
 
     let accountId: string;
 
-    const stripe = getStripe();
+    const stripe = getStripeClient();
 
     if (existingAccount?.stripe_account_id) {
       accountId = existingAccount.stripe_account_id;

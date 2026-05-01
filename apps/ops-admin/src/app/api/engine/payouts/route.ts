@@ -1,12 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
-import { getOpsActorContext, hasRequiredRole } from '@/lib/engine';
-import Stripe from 'stripe';
-
-function getStripe() {
-  if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not configured');
-  return new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-12-18.acacia' as any });
-}
+import { getStripeClient } from '@ridendine/engine';
+import { finalizeOpsActor, getOpsActorContext, guardPlatformApi } from '@/lib/engine';
 
 function buildChefTotals(chefPayables: any[]) {
   const totals = new Map<string, number>();
@@ -27,9 +23,8 @@ function buildPaidTotals(paidPayouts: any[]) {
 
 export async function GET() {
   const actor = await getOpsActorContext();
-  if (!actor || !hasRequiredRole(actor, ['ops_manager', 'finance_admin', 'super_admin'])) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-  }
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'finance_payouts'));
+  if (opsActor instanceof Response) return opsActor;
 
   const client = createAdminClient() as any;
 
@@ -84,9 +79,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor || !hasRequiredRole(actor, ['ops_manager', 'finance_admin', 'super_admin'])) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-  }
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'finance_payouts'));
+  if (opsActor instanceof Response) return opsActor;
 
   const { chefId, amountCents, stripeAccountId } = await request.json();
 
@@ -95,12 +89,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const stripe = getStripe();
+    const stripe = getStripeClient();
     const transfer = await stripe.transfers.create({
       amount: amountCents,
       currency: 'cad',
       destination: stripeAccountId,
-      metadata: { chef_id: chefId, initiated_by: actor.userId },
+      metadata: { chef_id: chefId, initiated_by: opsActor.userId },
     });
 
     const client = createAdminClient() as any;

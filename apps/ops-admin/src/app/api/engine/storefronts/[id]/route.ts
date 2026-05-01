@@ -6,9 +6,11 @@
 import type { NextRequest } from 'next/server';
 import { createAdminClient, updateStorefront, type SupabaseClient } from '@ridendine/db';
 import {
+  finalizeOpsActor,
   getEngine,
   getOpsActorContext,
   errorResponse,
+  guardPlatformApi,
   successResponse,
 } from '@/lib/engine';
 
@@ -25,9 +27,8 @@ export async function GET(
   const { id: storefrontId } = await params;
 
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'storefront_ops'));
+  if (opsActor instanceof Response) return opsActor;
 
   const adminClient = createAdminClient() as unknown as SupabaseClient;
   const engine = getEngine();
@@ -88,9 +89,8 @@ export async function PATCH(
   const { id: storefrontId } = await params;
 
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'storefront_ops'));
+  if (opsActor instanceof Response) return opsActor;
 
   const body = await request.json();
   const { action, ...actionParams } = body;
@@ -101,7 +101,7 @@ export async function PATCH(
     case 'publish': {
       const result = await engine.platform.publishStorefront(
         storefrontId,
-        actor,
+        opsActor,
         actionParams.reason
       );
       if (!result.success) {
@@ -113,7 +113,7 @@ export async function PATCH(
     case 'unpublish': {
       const result = await engine.platform.unpublishStorefront(
         storefrontId,
-        actor,
+        opsActor,
         actionParams.reason
       );
       if (!result.success) {
@@ -126,7 +126,7 @@ export async function PATCH(
       const result = await engine.kitchen.pauseStorefront(
         storefrontId,
         actionParams.reason,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -135,7 +135,7 @@ export async function PATCH(
     }
 
     case 'unpause': {
-      const result = await engine.kitchen.unpauseStorefront(storefrontId, actor);
+      const result = await engine.kitchen.unpauseStorefront(storefrontId, opsActor);
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
       }
@@ -154,7 +154,7 @@ export async function PATCH(
       const result = await engine.kitchen.reorderQueue(
         storefrontId,
         actionParams.orderIds,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);

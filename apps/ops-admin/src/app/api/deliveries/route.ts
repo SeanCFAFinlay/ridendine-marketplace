@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, listOpsDeliveries, type SupabaseClient } from '@ridendine/db';
-import { getOpsActorContext, errorResponse } from '@/lib/engine';
+import { getOpsActorContext, errorResponse, guardPlatformApi } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    // Verify ops user is authenticated
     const actor = await getOpsActorContext();
-    if (!actor) {
-      return errorResponse('UNAUTHORIZED', 'Authentication required', 401);
-    }
+    const denied = guardPlatformApi(actor, 'deliveries_read');
+    if (denied) return denied;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');

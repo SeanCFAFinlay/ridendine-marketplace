@@ -50,6 +50,7 @@ async function getDashboardStats() {
     let pendingApprovals = 0;
     let totalDrivers = 0;
     let onlineDrivers = 0;
+    let avgDeliveryTime: number | null = null;
 
     try {
       const deliveriesResult = await (supabase as any).from('deliveries').select('*', { count: 'exact', head: true }).in('status', [
@@ -72,6 +73,31 @@ async function getDashboardStats() {
       const onlineResult = await (supabase as any).from('driver_presence').select('*', { count: 'exact', head: true }).eq('status', 'online');
       onlineDrivers = onlineResult.count ?? 0;
     } catch { /* non-critical */ }
+
+    try {
+      const completedDeliveriesResult = await (supabase as any)
+        .from('deliveries')
+        .select('created_at, actual_dropoff_at')
+        .not('actual_dropoff_at', 'is', null)
+        .gte('created_at', monthAgo.toISOString())
+        .limit(500);
+      const rows = (completedDeliveriesResult.data ??
+        []) as Array<{ created_at: string; actual_dropoff_at: string | null }>;
+      const durations = rows
+        .map((row) => {
+          if (!row.actual_dropoff_at) return null;
+          const minutes =
+            (new Date(row.actual_dropoff_at).getTime() - new Date(row.created_at).getTime()) /
+            60000;
+          return Number.isFinite(minutes) && minutes > 0 ? minutes : null;
+        })
+        .filter((v): v is number => v !== null);
+      if (durations.length > 0) {
+        avgDeliveryTime = durations.reduce((sum, v) => sum + v, 0) / durations.length;
+      }
+    } catch {
+      avgDeliveryTime = null;
+    }
 
     const todayRevenue = (todayRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
     const yesterdayRevenue = (yesterdayRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
@@ -98,7 +124,7 @@ async function getDashboardStats() {
       onlineDrivers,
       activeChefs: chefsResult.count ?? 0,
       totalCustomers: customersResult.count ?? 0,
-      avgDeliveryTime: 25,
+      avgDeliveryTime,
       platformFee: monthRevenue * 0.15,
     };
   } catch (error) {
@@ -107,7 +133,7 @@ async function getDashboardStats() {
       totalOrders: 0, todayOrders: 0, activeDeliveries: 0, pendingApprovals: 0,
       todayRevenue: 0, monthRevenue: 0, revenueGrowth: 0, orderGrowth: 0,
       totalDrivers: 0, onlineDrivers: 0, activeChefs: 0, totalCustomers: 0,
-      avgDeliveryTime: 0, platformFee: 0,
+      avgDeliveryTime: null, platformFee: 0,
     };
   }
 }
@@ -164,7 +190,11 @@ export default async function DashboardPage() {
     { label: 'Platform Earnings (15%)', value: `$${stats.platformFee.toFixed(2)}` },
     { label: 'Active Chefs', value: stats.activeChefs.toString() },
     { label: 'Total Customers', value: stats.totalCustomers.toLocaleString() },
-    { label: 'Avg Delivery Time', value: `${stats.avgDeliveryTime} min` },
+    {
+      label: 'Avg Delivery Time',
+      value:
+        stats.avgDeliveryTime === null ? 'N/A' : `${Math.round(stats.avgDeliveryTime)} min`,
+    },
     { label: 'Pending Approvals', value: stats.pendingApprovals.toString() },
   ];
 

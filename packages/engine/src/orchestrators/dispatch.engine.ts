@@ -799,7 +799,7 @@ export class DispatchEngine {
     actor: ActorContext
   ): Promise<OperationResult<DeliveryData>> {
     // Only ops can manually assign
-    if (!['ops_agent', 'ops_manager', 'super_admin'].includes(actor.role)) {
+    if (!['ops_agent', 'ops_admin', 'ops_manager', 'super_admin'].includes(actor.role)) {
       return {
         success: false,
         error: { code: 'FORBIDDEN', message: 'Only ops can manually assign drivers' },
@@ -909,7 +909,7 @@ export class DispatchEngine {
     reason: string,
     actor: ActorContext
   ): Promise<OperationResult> {
-    if (!['ops_agent', 'ops_manager', 'super_admin'].includes(actor.role)) {
+    if (!['ops_agent', 'ops_admin', 'ops_manager', 'super_admin'].includes(actor.role)) {
       return {
         success: false,
         error: { code: 'FORBIDDEN', message: 'Only ops can reassign deliveries' },

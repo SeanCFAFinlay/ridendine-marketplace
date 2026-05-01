@@ -7,7 +7,11 @@ import {
   createDriver,
   type SupabaseClient,
 } from '@ridendine/db';
-import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitResponse } from '@ridendine/utils';
+import {
+  evaluateRateLimit,
+  RATE_LIMIT_POLICIES,
+  rateLimitPolicyResponse,
+} from '@ridendine/utils';
 
 function validateDriverSignupBody(body: Record<string, unknown>) {
   const { firstName, lastName, email, phone, password } = body;
@@ -27,9 +31,13 @@ async function createDriverPresence(adminClient: SupabaseClient, driverId: strin
 }
 
 export async function POST(request: Request) {
-  const ip = getClientIp(request);
-  const limit = checkRateLimit(ip, RATE_LIMITS.auth, 'driver-signup');
-  if (!limit.allowed) return rateLimitResponse(limit.retryAfter!);
+  const limit = await evaluateRateLimit({
+    request,
+    policy: RATE_LIMIT_POLICIES.auth,
+    namespace: 'driver-auth-signup',
+    routeKey: 'POST:/api/auth/signup',
+  });
+  if (!limit.allowed) return rateLimitPolicyResponse(limit);
 
   try {
     const body = await request.json();

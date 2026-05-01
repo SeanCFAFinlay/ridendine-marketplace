@@ -64,7 +64,13 @@ export default function OrdersPage() {
     try {
       const response = await fetch('/api/orders');
       const result = await response.json();
-      setOrders(result.data || []);
+      const payload = result?.data;
+      const items = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.items)
+          ? payload.items
+          : [];
+      setOrders(items);
     } catch (error) {
       console.error('Failed to fetch orders:', error);
     } finally {

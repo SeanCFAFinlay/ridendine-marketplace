@@ -7,7 +7,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import { getChefBasicContext } from '@/lib/engine';
-import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitResponse } from '@ridendine/utils';
+import {
+  canonicalImageExtensionForMime,
+  evaluateRateLimit,
+  RATE_LIMIT_POLICIES,
+  rateLimitPolicyResponse,
+  redactSensitiveForLog,
+} from '@ridendine/utils';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -63,9 +69,13 @@ async function uploadToStorage(
 }
 
 export async function POST(request: NextRequest) {
-  const ip = getClientIp(request);
-  const limit = checkRateLimit(ip, RATE_LIMITS.upload, 'upload');
-  if (!limit.allowed) return rateLimitResponse(limit.retryAfter!);
+  const limit = await evaluateRateLimit({
+    request,
+    policy: RATE_LIMIT_POLICIES.upload,
+    namespace: 'chef-upload',
+    routeKey: 'POST:/api/upload',
+  });
+  if (!limit.allowed) return rateLimitPolicyResponse(limit);
 
   const context = await getChefBasicContext();
   if (!context) {
@@ -102,8 +112,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const ext = canonicalImageExtensionForMime(file.type);
+    if (!ext) {
+      return NextResponse.json(
+        { error: 'Invalid file type. Use JPEG, PNG, WebP, or GIF' },
+        { status: 400 }
+      );
+    }
+
     const client = createAdminClient();
-    const ext = file.name.split('.').pop() || 'jpg';
     const fileName = `${context.chefId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const buffer = new Uint8Array(await file.arrayBuffer());
 
@@ -123,10 +140,10 @@ export async function POST(request: NextRequest) {
       path: result.path,
     });
   } catch (error) {
-    console.error('Upload error:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Upload failed' },
-      { status: 500 }
+    console.error(
+      'Upload error:',
+      redactSensitiveForLog(error instanceof Error ? error.message : String(error))
     );
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }

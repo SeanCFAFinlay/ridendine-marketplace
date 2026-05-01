@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
-import { getOpsActorContext, hasRequiredRole } from '@/lib/engine';
+import { finalizeOpsActor, getOpsActorContext, guardPlatformApi } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor || !hasRequiredRole(actor, ['ops_manager', 'super_admin'])) {
-    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-  }
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'announcements'));
+  if (opsActor instanceof Response) return opsActor;
 
   const { audience, title, body } = await request.json();
 
@@ -50,7 +49,7 @@ export async function POST(request: NextRequest) {
       title,
       body,
       message: body,
-      data: { audience, sentBy: actor.userId, sentAt: new Date().toISOString() },
+      data: { audience, sentBy: opsActor.userId, sentAt: new Date().toISOString() },
     }));
 
     for (let i = 0; i < notifications.length; i += 100) {

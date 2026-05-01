@@ -8,6 +8,8 @@ import {
   getEngine,
   getOpsActorContext,
   errorResponse,
+  finalizeOpsActor,
+  guardPlatformApi,
   successResponse,
 } from '@/lib/engine';
 import type { ExceptionStatus, ExceptionSeverity, ExceptionType } from '@ridendine/types';
@@ -18,9 +20,8 @@ import type { ExceptionStatus, ExceptionSeverity, ExceptionType } from '@ridendi
  */
 export async function GET(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
+  const denied = guardPlatformApi(actor, 'exceptions_read');
+  if (denied) return denied;
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status')?.split(',') as ExceptionStatus[] | undefined;
@@ -53,9 +54,8 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
-  }
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'exceptions_write'));
+  if (opsActor instanceof Response) return opsActor;
 
   const body = await request.json();
   const { action, ...actionParams } = body;
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
           recommendedActions: actionParams.recommendedActions,
           slaMinutes: actionParams.slaMinutes,
         },
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
         actionParams.ticketId,
         actionParams.exceptionType,
         actionParams.severity,
-        actor
+        opsActor
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);

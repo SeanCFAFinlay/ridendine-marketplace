@@ -4,30 +4,14 @@
 // FND-014 fix: automated expired offer processing
 // ==========================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import { createCentralEngine } from '@ridendine/engine';
-
-function validateProcessorToken(request: NextRequest): boolean {
-  // Support both Vercel Cron (Authorization: Bearer <CRON_SECRET>) and
-  // external cron (x-processor-token header)
-  const vercelSecret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get('authorization');
-  if (vercelSecret && authHeader === `Bearer ${vercelSecret}`) {
-    return true;
-  }
-
-  const token = request.headers.get('x-processor-token');
-  const expected = process.env.ENGINE_PROCESSOR_TOKEN;
-  if (!expected && !vercelSecret) {
-    console.error('Neither ENGINE_PROCESSOR_TOKEN nor CRON_SECRET configured');
-    return false;
-  }
-  return !!expected && token === expected;
-}
+import { validateEngineProcessorHeaders } from '@ridendine/utils';
 
 export async function POST(request: NextRequest) {
-  if (!validateProcessorToken(request)) {
+  if (!validateEngineProcessorHeaders(request.headers)) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized' },
       { status: 401 }
@@ -66,7 +50,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  if (!validateProcessorToken(request)) {
+  if (!validateEngineProcessorHeaders(request.headers)) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized' },
       { status: 401 }
