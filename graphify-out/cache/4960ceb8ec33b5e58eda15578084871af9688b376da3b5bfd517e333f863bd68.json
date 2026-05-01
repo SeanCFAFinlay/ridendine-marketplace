@@ -1,1 +1,0 @@
-{"nodes": [{"id": "ajv", "label": "ajv.js", "file_type": "code", "source_file": "node_modules\\@eslint\\eslintrc\\lib\\shared\\ajv.js", "source_location": "L1"}], "edges": [{"source": "ajv", "target": "ajv", "relation": "imports_from", "confidence": "EXTRACTED", "source_file": "node_modules\\@eslint\\eslintrc\\lib\\shared\\ajv.js", "source_location": "L10", "weight": 1.0}]}
