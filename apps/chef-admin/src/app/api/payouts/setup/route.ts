@@ -71,11 +71,24 @@ export async function POST() {
         });
     }
 
-    // Create account link for onboarding
+    const chefPublicBase =
+      process.env.NEXT_PUBLIC_CHEF_ADMIN_URL?.replace(/\/$/, '') ||
+      process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '');
+    if (!chefPublicBase) {
+      return NextResponse.json(
+        {
+          error:
+            'Server misconfiguration: set NEXT_PUBLIC_CHEF_ADMIN_URL (recommended) or NEXT_PUBLIC_APP_URL for Stripe Connect redirects',
+        },
+        { status: 500 }
+      );
+    }
+
+    // Create account link for onboarding (must land on chef-admin origin, not customer web)
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/payouts?refresh=true`,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/payouts?success=true`,
+      refresh_url: `${chefPublicBase}/dashboard/payouts?refresh=true`,
+      return_url: `${chefPublicBase}/dashboard/payouts?success=true`,
       type: 'account_onboarding',
     });
 
