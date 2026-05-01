@@ -28,4 +28,14 @@ describe('chef-admin smoke wiring', () => {
     expect(dashboardMenu.length).toBeGreaterThan(100);
     expect(dashboardAvailability.length).toBeGreaterThan(100);
   });
+
+  it('orders list uses protected action payloads and empty state', () => {
+    const src = read('components/orders/orders-list.tsx');
+    expect(src).toContain("action: 'accept'");
+    expect(src).toContain("action: 'start_preparing'");
+    expect(src).toContain("action: 'mark_ready'");
+    expect(src).toContain("action: 'reject'");
+    expect(src).toContain('No ');
+    expect(src).toContain('orders');
+  });
 });

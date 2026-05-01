@@ -1,126 +1,107 @@
 # Deployment runbook — Ridendine
 
-**Scope:** Procedures and checks only. This document does **not** perform deploys or migrations.
+Scope: staging and production deploy procedures with evidence gates.
 
-Cross-references: [`docs/ENVIRONMENT_VARIABLES.md`](ENVIRONMENT_VARIABLES.md), [`docs/QA_TESTING_PLAN.md`](QA_TESTING_PLAN.md), [`docs/BACKUP_AND_ROLLBACK.md`](BACKUP_AND_ROLLBACK.md), [`docs/HEALTHCHECKS_AND_MONITORING.md`](HEALTHCHECKS_AND_MONITORING.md).
+Related:
+- `docs/ENVIRONMENT_VARIABLES.md`
+- `docs/BACKUP_AND_ROLLBACK.md`
+- `docs/HEALTHCHECKS_AND_MONITORING.md`
+- `docs/LOAD_TESTING_PLAN.md`
 
----
+## 1. Staging deployment sequence (required)
 
-## 1. What gets deployed
+1. Confirm branch and commit in `docs/RELEASE_BASELINE.md`.
+2. Confirm all required env vars are present in staging projects.
+3. Run migration phase in staging (see section 2).
+4. Deploy all four apps to Vercel Preview/Staging targets.
+5. Run verification command set (section 3).
+6. Run health/readiness checks (section 4).
+7. Run browser smoke checks (section 5).
+8. Validate Stripe test-mode webhook flow (section 6).
+9. Execute staged load test + sign-off (section 7).
+10. Record results in Phase G reports before any production promotion decision.
 
-| Surface | App package | Typical host | Local port |
-|---------|-------------|--------------|------------|
-| Customer marketplace | `@ridendine/web` | Vercel project | 3000 |
-| Chef dashboard | `@ridendine/chef-admin` | Vercel project | 3001 |
-| Ops admin | `@ridendine/ops-admin` | Vercel project | 3002 |
-| Driver PWA | `@ridendine/driver-app` | Vercel project | 3003 |
-| Database | Supabase Postgres | Supabase project | — |
+## 2. Migration order (staging first, then production by change control)
 
-Monorepo root: `pnpm-workspace.yaml` includes `apps/*` and `packages/*`. Builds are orchestrated by **Turborepo** (`turbo.json`).
+Precondition: backup strategy confirmed per `docs/BACKUP_AND_ROLLBACK.md`.
 
----
+Required migration for current release gates:
+- `supabase/migrations/00018_phase_c_checkout_idempotency.sql`
 
-## 2. Local pre-checks (before any deploy)
+Recommended order:
+1. Apply earlier unapplied security migrations (including Phase B hardening) if target env is behind.
+2. Apply `00018_phase_c_checkout_idempotency.sql`.
+3. Validate schema and idempotency table behavior.
+4. Set `CHECKOUT_IDEMPOTENCY_MIGRATION_APPLIED=true` only after validation.
 
-1. `pnpm install --frozen-lockfile`  
-2. `pnpm verify:prod-data-hygiene` (CI parity)  
-3. `pnpm typecheck`  
-4. `pnpm lint`  
-5. `pnpm test` (or package-scoped tests per [`docs/QA_TESTING_PLAN.md`](QA_TESTING_PLAN.md))  
-6. Confirm branch matches release policy (e.g. `main` / `master` only for production).  
-7. Confirm **no** production database seed or reset in pipelines ([`docs/PRODUCTION_DATA_INTEGRITY.md`](PRODUCTION_DATA_INTEGRITY.md) if present).
+Example command (operator-run, not automated here):
+- `supabase db push`
 
----
+## 3. Required verification commands
 
-## 3. CI requirements
+Run in repository root:
 
-GitHub Actions: `.github/workflows/ci.yml` — install, hygiene, typecheck, lint, package tests, build. **Merge only when CI is green** unless an explicit waiver is recorded.
+1. `pnpm typecheck`
+2. `pnpm lint`
+3. `pnpm test`
+4. `pnpm build`
+5. `pnpm test:smoke`
+6. `pnpm test:load:dry-run`
 
----
+All must pass before advancing staging readiness status.
 
-## 4. Build commands
+## 4. Healthcheck validation
 
-| Goal | Command |
-|------|---------|
-| All apps (Turbo) | `pnpm build` |
-| Single app | `pnpm turbo build --filter=@ridendine/web` (substitute app name) |
+Validate each app:
+- `GET /api/health` for `web`, `chef-admin`, `ops-admin`, `driver-app`
 
-**Vercel + pnpm monorepo:** Configure each Vercel project with:
+Expectations:
+- `ready` or explicitly understood `degraded` with documented reason.
+- No secrets in response payload.
+- If rate-limit provider missing in production-like env, readiness should not be treated as launch-ready.
 
-- **Root directory:** repository root **or** app directory per [Vercel monorepo docs](https://vercel.com/docs/monorepos).  
-- **Install:** `pnpm install --frozen-lockfile` (often from root).  
-- **Build:** If root is repo root, use e.g. `pnpm turbo build --filter=@ridendine/web` instead of plain `pnpm build` when only one app should build for that project.
+## 5. Vercel preview validation
 
-Repo `apps/*/vercel.json` may list generic `buildCommand`; **override in the Vercel UI** if it does not match your root layout.
+For each app preview deployment:
+- confirm app boots and protected route redirects still work;
+- confirm cross-app URLs resolve (`web` to chef/ops/driver links where applicable);
+- confirm build output and route health endpoint are reachable;
+- confirm no production Stripe live secrets are used in preview.
 
----
+## 6. Stripe test-mode webhook validation (staging)
 
-## 5. Supabase migration procedure (staging / production)
+1. Configure staging webhook endpoint:
+   - `https://<staging-web-domain>/api/webhooks/stripe`
+2. Use Stripe test mode and test signing secret only.
+3. Replay representative events (`payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`).
+4. Confirm:
+   - signature validation behavior,
+   - idempotent replay behavior,
+   - safe status handling in logs and order state.
 
-**Preconditions:** Migrations live in `supabase/migrations/`. No migration commands are executed from this doc in automation.
+## 7. Staging load evidence validation
 
-1. **Backup:** See [`docs/BACKUP_AND_ROLLBACK.md`](BACKUP_AND_ROLLBACK.md).  
-2. **Staging first:** Apply migrations to a staging Supabase project; run app smoke tests.  
-3. **CLI (example):** With CLI linked to the target project: `supabase db push` (or your org’s approved equivalent). **Do not** run against production without change control.  
-4. **Regenerate types (optional but recommended):** `pnpm db:generate` when `DATABASE_URL` / Docker setup is available.  
-5. **Verify:** RLS, critical paths (checkout, webhooks, ops processors).
+Use `docs/LOAD_TESTING_PLAN.md` and run:
+- `pnpm test:load:staging`
 
----
+Then complete:
+- `AUDIT_AND_PLANNING/PRE_LAUNCH_REPAIR_EXECUTION_01/LOAD_TEST_STAGING_REPORT_TEMPLATE.md`
 
-## 6. Vercel deployment procedure
+Release cannot be marked production-candidate without signed staging load evidence.
 
-1. Set **all** environment variables per [`docs/ENVIRONMENT_VARIABLES.md`](ENVIRONMENT_VARIABLES.md) for each Vercel project.  
-2. Promote **Preview** → **Production** only after staging sign-off.  
-3. Confirm **four** app URLs match `NEXT_PUBLIC_*` cross-links.  
-4. After web deploy, re-verify **Stripe webhook** URL (see below).
+## 8. Production promotion gate (must all be true)
 
----
+- remote CI/checks green;
+- Vercel previews validated;
+- distributed rate-limit provider configured in production;
+- staging migration `00018` applied and validated;
+- Stripe test-mode webhook validation complete in staging;
+- staged load report signed off;
+- latest local verification command set passing.
 
-## 7. Stripe webhook setup
+If any item is missing, do not label production-ready.
 
-1. Stripe Dashboard → Developers → Webhooks → Add endpoint.  
-2. URL: `https://<your-production-web-domain>/api/webhooks/stripe`  
-3. Events: at minimum those handled in `apps/web/src/app/api/webhooks/stripe/route.ts` (e.g. `payment_intent.*`, `charge.refunded` per current code).  
-4. Copy **signing secret** → `STRIPE_WEBHOOK_SECRET` on the **web** Vercel project only.  
-5. Replay / idempotency: engine claim path — manual replay with Stripe CLI on staging is documented in payment/engine docs.
+## 9. Rollback reference
 
----
-
-## 8. Smoke test sequence (post-deploy)
-
-Follow **§5** in [`docs/QA_TESTING_PLAN.md`](QA_TESTING_PLAN.md) on **staging first**, then production with read-only checks where possible.
-
-Add:
-
-- Hit each app `GET /api/health` — see [`docs/HEALTHCHECKS_AND_MONITORING.md`](HEALTHCHECKS_AND_MONITORING.md).  
-- One authenticated flow per role (customer, chef, driver, ops).
-
----
-
-## 9. Rollback sequence
-
-High level: [`docs/BACKUP_AND_ROLLBACK.md`](BACKUP_AND_ROLLBACK.md).
-
-**Vercel:** Redeploy previous production deployment from the Vercel deployment list.
-
-**Database:** Prefer **forward-fix** migration; PITR or restore only per org policy (Supabase dashboard).
-
-**Stripe:** Webhook configuration versioned in Stripe; rollback of **processed money** is not reversible via deploy — use Stripe Dashboard and support process.
-
----
-
-## 10. No production seed
-
-Never run `supabase db seed` or synthetic reset scripts against **production**. CI enforces hygiene where configured (`pnpm verify:prod-data-hygiene`).
-
----
-
-## 11. Emergency contacts (placeholders)
-
-| Role | Contact | Notes |
-|------|---------|-------|
-| On-call engineering | _TBD_ | Pager / Slack |
-| Supabase / billing admin | _TBD_ | Project owner |
-| Stripe account owner | _TBD_ | Live mode access |
-
-Update this table before first production launch (Phase 18 launch checklist).
+Use `docs/BACKUP_AND_ROLLBACK.md` for rollback decisions and sequencing.
+Do not perform ad-hoc destructive DB rollback without approved recovery path.

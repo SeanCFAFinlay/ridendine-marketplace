@@ -16,9 +16,11 @@ import {
 import { getEngine, getSystemActor } from '@/lib/engine';
 import {
   evaluateRateLimit,
+  getCorrelationId,
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
   redactSensitiveForLog,
+  withCorrelationId,
 } from '@ridendine/utils';
 
 function getWebhookSecret() {
@@ -43,14 +45,18 @@ function safeWebhookLog(err: unknown): string {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  const correlationId = getCorrelationId(request);
   const body = await request.text();
   const headersList = await headers();
   const signature = headersList.get('stripe-signature');
 
   if (!signature) {
-    return NextResponse.json(
-      { code: 'WEBHOOK_SIGNATURE_INVALID', error: 'Missing signature' },
-      { status: 400 }
+    return withCorrelationId(
+      NextResponse.json(
+        { code: 'WEBHOOK_SIGNATURE_INVALID', error: 'Missing signature' },
+        { status: 400 }
+      ),
+      correlationId
     );
   }
 
@@ -62,9 +68,12 @@ export async function POST(request: Request): Promise<Response> {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err) {
     console.error('Webhook signature verification failed:', safeWebhookLog(err));
-    return NextResponse.json(
-      { code: 'WEBHOOK_SIGNATURE_INVALID', error: 'Invalid signature' },
-      { status: 400 }
+    return withCorrelationId(
+      NextResponse.json(
+        { code: 'WEBHOOK_SIGNATURE_INVALID', error: 'Invalid signature' },
+        { status: 400 }
+      ),
+      correlationId
     );
   }
 
@@ -76,7 +85,7 @@ export async function POST(request: Request): Promise<Response> {
     routeKey: 'POST:/api/webhooks/stripe',
   });
   if (!webhookLimit.allowed) {
-    return rateLimitPolicyResponse(webhookLimit);
+    return withCorrelationId(rateLimitPolicyResponse(webhookLimit), correlationId);
   }
 
   const admin = createAdminClient();
@@ -100,18 +109,24 @@ export async function POST(request: Request): Promise<Response> {
     });
   } catch (e) {
     console.error('Stripe idempotency claim failed:', safeWebhookLog(e));
-    return NextResponse.json(
-      { code: 'IDEMPOTENCY_CONFLICT', error: 'Idempotency claim failed' },
-      { status: 409 }
+    return withCorrelationId(
+      NextResponse.json(
+        { code: 'IDEMPOTENCY_CONFLICT', error: 'Idempotency claim failed' },
+        { status: 409 }
+      ),
+      correlationId
     );
   }
 
   if (claim.action !== 'proceed') {
-    return NextResponse.json({
-      received: true,
-      idempotentReplay: true,
-      reason: claim.action,
-    });
+    return withCorrelationId(
+      NextResponse.json({
+        received: true,
+        idempotentReplay: true,
+        reason: claim.action,
+      }),
+      correlationId
+    );
   }
 
   try {
@@ -228,7 +243,7 @@ export async function POST(request: Request): Promise<Response> {
         await finalizeStripeWebhookSuccess(admin, event.id, relatedOrderId);
     }
 
-    return NextResponse.json({ received: true });
+    return withCorrelationId(NextResponse.json({ received: true }), correlationId);
   } catch (error) {
     const redacted = safeWebhookLog(error);
     console.error('Webhook processing error:', redacted);
@@ -246,9 +261,12 @@ export async function POST(request: Request): Promise<Response> {
       },
     });
 
-    return NextResponse.json(
-      { code: 'INTERNAL_ERROR', error: 'Webhook processing failed' },
-      { status: 500 }
+    return withCorrelationId(
+      NextResponse.json(
+        { code: 'INTERNAL_ERROR', error: 'Webhook processing failed' },
+        { status: 500 }
+      ),
+      correlationId
     );
   }
 }

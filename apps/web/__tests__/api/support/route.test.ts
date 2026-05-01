@@ -6,6 +6,7 @@ const mockCreateSupportTicket = jest.fn();
 const mockCreateAdminClient = jest.fn();
 const mockGetUser = jest.fn();
 const mockGetCustomerByUserId = jest.fn();
+const mockEvaluateRateLimit = jest.fn();
 
 const mockSessionClient = {
   auth: { getUser: mockGetUser },
@@ -20,6 +21,13 @@ jest.mock('@ridendine/db', () => ({
 
 jest.mock('next/headers', () => ({
   cookies: jest.fn(() => ({ getAll: jest.fn(() => []) })),
+}));
+
+jest.mock('@ridendine/utils', () => ({
+  RATE_LIMIT_POLICIES: { supportWrite: { name: 'support_write' } },
+  evaluateRateLimit: (...args: unknown[]) => mockEvaluateRateLimit(...args),
+  rateLimitPolicyResponse: () =>
+    Response.json({ success: false, code: 'RATE_LIMITED' }, { status: 429 }),
 }));
 
 import { NextRequest } from 'next/server';
@@ -60,6 +68,11 @@ const validBody = {
 describe('POST /api/support', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockEvaluateRateLimit.mockResolvedValue({
+      allowed: true,
+      remaining: 9,
+      policy: 'support_write',
+    });
 
     mockCreateAdminClient.mockReturnValue({});
     mockGetUser.mockResolvedValue({ data: { user: null }, error: null });

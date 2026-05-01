@@ -10,6 +10,18 @@ import {
 } from '@ridendine/engine';
 import { getEngine } from '@/lib/engine';
 
+const mockEvaluateRateLimit = jest.fn();
+
+jest.mock('@ridendine/utils', () => ({
+  RATE_LIMIT_POLICIES: { webhookStripe: { name: 'webhook_stripe' } },
+  evaluateRateLimit: (...args: unknown[]) => mockEvaluateRateLimit(...args),
+  rateLimitPolicyResponse: () =>
+    Response.json({ success: false, code: 'RATE_LIMITED' }, { status: 429 }),
+  redactSensitiveForLog: (value: string) => value,
+  getCorrelationId: () => 'test-correlation-id',
+  withCorrelationId: (response: Response) => response,
+}));
+
 jest.mock('next/headers', () => ({
   headers: jest.fn(),
 }));
@@ -34,6 +46,11 @@ describe('POST /api/webhooks/stripe', () => {
   beforeEach(() => {
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_secret';
     jest.clearAllMocks();
+    mockEvaluateRateLimit.mockResolvedValue({
+      allowed: true,
+      remaining: 100,
+      policy: 'webhook_stripe',
+    });
     jest.mocked(getEngine).mockReturnValue({
       orders: { submitToKitchen: jest.fn().mockResolvedValue({ success: true }) },
       platform: {

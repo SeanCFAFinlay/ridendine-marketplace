@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { createServerClient } from '@ridendine/db';
 import { Button, Card } from '@ridendine/ui';
 import { Header } from '@/components/layout/header';
@@ -42,6 +43,12 @@ export default async function OrderConfirmationPage({ params }: Props) {
   const { id } = await params;
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    redirect('/auth/login');
+  }
 
   const { data: order, error } = await supabase
     .from('orders')
@@ -105,7 +112,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
               <p className="text-sm text-gray-600">
                 Thank you for your order. Total:{' '}
                 <span className="font-semibold text-[#E85D26]">
-                  ${(typedOrder.total / 100).toFixed(2)}
+                  ${Number(typedOrder.total).toFixed(2)}
                 </span>
               </p>
               <p className="mt-1 text-xs text-gray-400">

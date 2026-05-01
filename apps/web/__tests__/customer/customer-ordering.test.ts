@@ -66,4 +66,22 @@ describe('customer-ordering helpers (Phase 6)', () => {
     expect(src).not.toContain('deliveryFee: 5.00');
     expect(src).not.toContain('0.13 * 100');
   });
+
+  it('checkout page maps normalized API checkout error codes', () => {
+    const checkoutPath = join(__dirname, '../../src/app/checkout/page.tsx');
+    const src = readFileSync(checkoutPath, 'utf8');
+    expect(src).toContain("case 'VALIDATION_ERROR'");
+    expect(src).toContain("case 'RISK_BLOCKED'");
+    expect(src).toContain("case 'PAYMENT_CONFIG_ERROR'");
+    expect(src).toContain("case 'PAYMENT_FAILED'");
+    expect(src).toContain("case 'IDEMPOTENCY_CONFLICT'");
+    expect(src).toContain("case 'INTERNAL_ERROR'");
+  });
+
+  it('checkout page keeps server-authoritative total messaging', () => {
+    const checkoutPath = join(__dirname, '../../src/app/checkout/page.tsx');
+    const src = readFileSync(checkoutPath, 'utf8');
+    expect(src).toContain('set by');
+    expect(src).toContain('server when you continue to payment');
+  });
 });

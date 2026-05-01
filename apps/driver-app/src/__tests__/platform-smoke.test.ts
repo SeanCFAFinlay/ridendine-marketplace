@@ -28,4 +28,18 @@ describe('driver-app smoke wiring', () => {
     expect(historyPage.length).toBeGreaterThan(100);
     expect(earningsPage.length).toBeGreaterThan(100);
   });
+
+  it('dashboard hydrates presence from API and avoids fake hours', () => {
+    const src = read('app/components/DriverDashboard.tsx');
+    expect(src).toContain("fetch('/api/driver/presence')");
+    expect(src).toContain('todayStats.hours === null');
+    expect(src).toContain('Unable to update your online status right now');
+  });
+
+  it('delivery detail surfaces safe error messaging for action failures', () => {
+    const src = read('app/delivery/[id]/components/DeliveryDetail.tsx');
+    expect(src).toContain('setErrorMessage');
+    expect(src).toContain('Failed to update delivery status');
+    expect(src).toContain('Failed to complete delivery');
+  });
 });

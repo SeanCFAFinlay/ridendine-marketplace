@@ -181,7 +181,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       request,
       policy: RATE_LIMIT_POLICIES.customerWrite,
       namespace: 'web-orders-patch',
-      userId: customerContext.userId,
+      userId: customerContext.actor.userId,
       routeKey: 'PATCH:/api/orders/[id]',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);

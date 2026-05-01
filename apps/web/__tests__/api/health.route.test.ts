@@ -34,7 +34,7 @@ describe('GET /api/health', () => {
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
 
-    const { GET } = await import('../../../src/app/api/health/route');
+    const { GET } = await import('../../src/app/api/health/route');
     const response = await GET();
     const payload = await response.json();
     const payloadString = JSON.stringify(payload);

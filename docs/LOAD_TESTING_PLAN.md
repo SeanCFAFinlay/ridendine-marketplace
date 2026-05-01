@@ -1,99 +1,74 @@
 # Load testing plan (IRR-024)
 
-**Status:** Planning document only — no load tests are executed from the repo in Phase 17. Execute in **staging** with approval and isolated data.
+Current status: tooling and template are in place; staged evidence sign-off is still required for release elevation.
 
-Related: [`docs/QA_TESTING_PLAN.md`](QA_TESTING_PLAN.md), [`docs/SECURITY_HARDENING.md`](SECURITY_HARDENING.md) (rate limits), [`docs/API_FOUNDATION.md`](API_FOUNDATION.md).
+## 1. Commands
 
----
+- Dry run (configuration validation only):
+  - `pnpm test:load:dry-run`
+- Local smoke (default base URL):
+  - `pnpm test:load`
+- Staging execution:
+  - `pnpm test:load:staging`
 
-## 1. Objectives
+`pnpm test:load:staging` requires `LOAD_BASE_URL` and staging auth/test data setup as applicable.
 
-- Validate **capacity headroom** for peak checkout and dashboard usage.  
-- Observe **rate limiting** (429) and error rates under sustained load.  
-- **Not** a substitute for security testing or contract tests.
+## 2. Target endpoints/scenarios
 
----
+Current script-backed scenarios:
+- Health endpoint latency/error behavior.
+- Support-write endpoint under load including 429 observation.
 
-## 2. What to load test
+Additional launch-critical scenarios (operator-run):
+- Checkout API under authenticated staging sessions.
+- Driver location update route under realistic update cadence.
 
-| Scenario | Target | Notes |
-|----------|--------|-------|
-| Customer checkout API | `POST /api/checkout` (staging) | Use Stripe **test** keys; do not hit live network card flows at extreme concurrency without Stripe guidance. |
-| Web browse + cart | Read-heavy routes | Lower risk; still respect robots/terms. |
-| Ops dashboard reads | Authenticated API routes | Use a **dedicated** staging service account; rotate credentials after test. |
-| Driver location updates | `POST` driver location API | Expect **429** when exceeding per-instance limits (IRR-019). |
+## 3. Throughput/concurrency targets
 
----
+Minimum staging run settings must be explicitly recorded in report:
+- total iterations,
+- concurrency level,
+- request rate (effective RPS),
+- scenario duration.
 
-## 3. What **not** to load test
+Target bands (owner-adjustable by environment capacity):
+- baseline concurrency: 10–25
+- elevated concurrency: 25–50
+- stress burst: >50 (only with explicit approval)
 
-- **Production** without explicit approval and safeguards.  
-- **Stripe webhooks** at abusive rates (use Stripe’s replay tools for correctness, not DDoS).  
-- **Password / auth** endpoints with credential stuffing patterns (illegal / unethical).  
-- **Third-party** geocoding or maps APIs without quota checks.
+## 4. Required metrics in report
 
----
+- `p50`, `p95`, `p99` latency
+- total request count
+- success count/failure count
+- error-rate percentage
+- 429 rate-limited count
 
-## 4. Suggested tools (pick one)
+## 5. Threshold expectations (staging gate)
 
-| Tool | Notes |
-|------|------|
-| **k6** | Scriptable, good for HTTP APIs and thresholds. |
-| **Artillery** | YAML scenarios; common for serverless. |
-| **Vegeta** | Simple HTTP hammer for quick spikes. |
+- 5xx error rate should remain below agreed launch threshold (default guidance: `< 0.1%` excluding intentional failure tests).
+- p95/p99 latency must remain within owner-approved service targets.
+- 429 behavior must align with configured policy expectations (not random/unbounded failures).
 
-Repo includes a built-in Node load smoke script:
+## 6. Rate-limit behavior expectations
 
-- `pnpm test:load:dry-run` (config validation)
-- `pnpm test:load` (local smoke)
-- `pnpm test:load:staging` (run against `LOAD_BASE_URL`)
+- In distributed-configured environments, limits should behave consistently across instances.
+- In environments without distributed provider, readiness is degraded and high-risk policies may fail-closed.
+- Any observed mismatch must be recorded as blocking or conditional in release baseline.
 
----
+## 7. Sign-off artifact
 
-## 5. Scenarios (outline)
-
-### A. Customer checkout (staging)
-
-1. Authenticate or use test tokens per staging policy.  
-2. Ramp VUs over 5–15 minutes.  
-3. Measure p95/p99 latency, 5xx rate, **429** on rate-limited routes.
-
-### B. Admin dashboard
-
-1. Ops session with read-only capable role.  
-2. Hit list endpoints used by main dashboard (orders, alerts).  
-3. Watch **DB pool** / Supabase metrics in dashboard.
-
-### C. Driver location
-
-1. Authenticated driver session.  
-2. Steady `POST` interval; confirm **429** + `Retry-After` when limits hit.
-
----
-
-## 6. Rate-limit expectations
-
-- In-memory token buckets are **per serverless instance** — distributed limits may differ in production with many instances.  
-- Document observed 429 behavior in staging before setting SLOs.
-
----
-
-## 7. Pass / fail thresholds (placeholders)
-
-| Metric | Staging gate (TBD) |
-|--------|---------------------|
-| p95 API latency (checkout) | _e.g. < 2s_ |
-| Error rate (5xx) | _e.g. < 0.1%_ excluding known rate limits |
-| Success checkout completion | _Define per test script_ |
-
-Fill after first staging run; attach report to release record.
-
----
-
-## 8. Deliverable for IRR-024 closure
-
-IRR-024 is **documentation-complete** when this file exists; **execution-complete** requires at least one **signed-off staging report** attached to Phase 18 or release tracking.
-
-Staging report template:
-
+Use:
 - `AUDIT_AND_PLANNING/PRE_LAUNCH_REPAIR_EXECUTION_01/LOAD_TEST_STAGING_REPORT_TEMPLATE.md`
+
+Sign-off required fields:
+- environment/date/build
+- command(s) and parameters
+- metric table
+- pass/fail against thresholds
+- owner approval
+
+## 8. Release rule
+
+Do not classify production readiness without a signed staged load evidence report.
+IRR-024 remains conditional until staged evidence is executed and approved.

@@ -15,8 +15,6 @@ interface RealtimeOrder {
 
 export function RealTimeStats() {
   const [recentOrders, setRecentOrders] = useState<RealtimeOrder[]>([]);
-  const [ordersPerMinute, setOrdersPerMinute] = useState(0);
-  const [currentRevenue, setCurrentRevenue] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
 
   const supabase = useMemo(() => createBrowserClient(), []);
@@ -44,8 +42,6 @@ export function RealTimeStats() {
           .map((row) => parseOrdersRealtimeRow(row))
           .filter((o): o is NonNullable<typeof o> => o !== null);
         setRecentOrders(parsed);
-        setCurrentRevenue(parsed.reduce((sum, o) => sum + o.total, 0));
-        setOrdersPerMinute(parsed.length / 5);
       }
     }
 
@@ -61,8 +57,6 @@ export function RealTimeStats() {
           const newOrder = parseOrdersRealtimeRow(payload.new);
           if (!newOrder) return;
           setRecentOrders((prev) => [newOrder, ...prev.slice(0, 9)]);
-          setCurrentRevenue((prev) => prev + newOrder.total);
-          setOrdersPerMinute((prev) => prev + 0.2);
         }
       )
       .on(
@@ -87,6 +81,9 @@ export function RealTimeStats() {
       db.removeChannel(channel);
     };
   }, [supabase]);
+
+  const currentRevenue = recentOrders.reduce((sum, o) => sum + o.total, 0);
+  const ordersPerMinute = recentOrders.length / 5;
 
   const getStatusColor = (status: string) => {
     switch (status) {

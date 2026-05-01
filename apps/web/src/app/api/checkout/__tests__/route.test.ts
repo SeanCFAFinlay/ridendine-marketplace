@@ -15,7 +15,7 @@ const mockAuthorizePayment = jest.fn();
 const mockCancelOrder = jest.fn();
 const mockAuditLog = jest.fn();
 const mockGetCustomerActorContext = jest.fn();
-const mockCheckRateLimit = jest.fn();
+const mockEvaluateRateLimit = jest.fn();
 
 jest.mock('@ridendine/db', () => ({
   createAdminClient: () => mockCreateAdminClient(),
@@ -50,10 +50,10 @@ jest.mock('@/lib/engine', () => ({
 }));
 
 jest.mock('@ridendine/utils', () => ({
-  getClientIp: () => '127.0.0.1',
-  RATE_LIMITS: { checkout: {} },
-  checkRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
-  rateLimitResponse: () => Response.json({ success: false, code: 'RATE_LIMITED' }, { status: 429 }),
+  RATE_LIMIT_POLICIES: { checkout: { name: 'checkout' } },
+  evaluateRateLimit: (...args: unknown[]) => mockEvaluateRateLimit(...args),
+  rateLimitPolicyResponse: () =>
+    Response.json({ success: false, code: 'RATE_LIMITED' }, { status: 429 }),
 }));
 
 type IdemRecord = {
@@ -180,7 +180,7 @@ function buildRequest(body: Record<string, unknown>, idempotencyKey?: string) {
 describe('POST /api/checkout Phase C hardening', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockCheckRateLimit.mockReturnValue({ allowed: true });
+    mockEvaluateRateLimit.mockResolvedValue({ allowed: true, remaining: 2, policy: 'checkout' });
     mockGetCustomerActorContext.mockResolvedValue({
       customerId: 'cust-1',
       actor: { userId: 'user-1', role: 'customer', entityId: 'cust-1' },

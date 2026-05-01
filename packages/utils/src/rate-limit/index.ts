@@ -7,6 +7,8 @@ import type {
   RateLimitStore,
   RateLimitStoreStatus,
 } from './types';
+export * from './policies';
+export * from './types';
 
 const memoryStore = new MemoryRateLimitStore();
 

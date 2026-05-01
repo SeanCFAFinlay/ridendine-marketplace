@@ -88,22 +88,32 @@ function useRealtimeTracking(
 }
 
 function usePollStatus(orderId: string, onStatus: (status: string) => void) {
+  const [pollWarning, setPollWarning] = useState<string | null>(null);
+
   useEffect(() => {
     const poll = async () => {
       try {
         const res = await fetch(`/api/orders/${orderId}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.data?.status) onStatus(data.data.status);
+          const status = data.data?.order?.status ?? data.data?.status;
+          if (status) {
+            onStatus(status);
+            setPollWarning(null);
+          }
+        } else if (res.status >= 500) {
+          setPollWarning('Live status updates are delayed. Showing last known state.');
         }
       } catch {
-        // Silent fallback
+        setPollWarning('Live status updates are delayed. Showing last known state.');
       }
     };
 
     const interval = setInterval(poll, 30000);
     return () => clearInterval(interval);
   }, [orderId, onStatus]);
+
+  return pollWarning;
 }
 
 function StepIndicator({ currentIndex }: { currentIndex: number }) {
@@ -205,7 +215,7 @@ export function LiveOrderTracker({
   const handleStatus = useMemo(() => (s: string) => setStatus(s), []);
 
   useRealtimeTracking(deliveryId, handleLocation, handleStatus);
-  usePollStatus(orderId, handleStatus);
+  const pollWarning = usePollStatus(orderId, handleStatus);
 
   const currentStepIndex = getStatusIndex(status);
   const isDelivered = status === 'delivered' || status === 'completed';
@@ -213,6 +223,11 @@ export function LiveOrderTracker({
 
   return (
     <div className="space-y-6">
+      {pollWarning && (
+        <Card className="border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm text-amber-800">{pollWarning}</p>
+        </Card>
+      )}
       <Card className="overflow-hidden">
         <div className="bg-gradient-to-r from-[#1a7a6e] to-[#22a196] p-6 text-white">
           <p className="text-sm font-medium opacity-80">Order #{orderNumber}</p>

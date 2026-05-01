@@ -59,3 +59,5 @@ supabase/.temp/
 .env*.local
 
 graphify-out/cache/
+
+.claude/settings.local.json

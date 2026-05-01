@@ -56,6 +56,25 @@ interface OrderBreakdown {
   discount: number;
 }
 
+function mapCheckoutError(code?: string, fallback?: string): string {
+  switch (code) {
+    case 'VALIDATION_ERROR':
+      return fallback || 'Your cart or checkout details are invalid. Please review and try again.';
+    case 'RISK_BLOCKED':
+      return fallback || 'This order was blocked by risk checks. Please contact support if needed.';
+    case 'PAYMENT_CONFIG_ERROR':
+      return 'Payment is temporarily unavailable. Please try again shortly.';
+    case 'PAYMENT_FAILED':
+      return fallback || 'Payment failed. Please try a different card.';
+    case 'IDEMPOTENCY_CONFLICT':
+      return 'Duplicate checkout detected. Please wait and refresh your order status.';
+    case 'INTERNAL_ERROR':
+      return 'Something went wrong while creating checkout. Please try again.';
+    default:
+      return fallback || 'Failed to create checkout';
+  }
+}
+
 const TIP_OPTIONS = [
   { label: 'No tip', value: 0 },
   { label: '10%', percent: 10 },
@@ -92,6 +111,10 @@ function CheckoutContent() {
       try {
         const cartRes = await fetch(`/api/cart?storefrontId=${storefrontId}`);
         const cartData = await cartRes.json();
+        if (cartRes.status === 401) {
+          router.push('/auth/login');
+          return;
+        }
 
         if (cartData.success && cartData.data) {
           const items = (cartData.data.cart_items || []).map((item: CartApiItem) => ({
@@ -110,6 +133,10 @@ function CheckoutContent() {
 
         const addressRes = await fetch('/api/addresses');
         const addressData = await addressRes.json();
+        if (addressRes.status === 401) {
+          router.push('/auth/login');
+          return;
+        }
 
         if (addressData.success && addressData.data) {
           setAddresses(addressData.data);
@@ -176,7 +203,7 @@ function CheckoutContent() {
         setBreakdown(result.data.breakdown);
         setCheckoutStep('payment');
       } else {
-        setError(result.error || 'Failed to create checkout');
+        setError(mapCheckoutError(result.code, result.error));
       }
     } catch (err) {
       console.error('Checkout error:', err);
@@ -344,7 +371,9 @@ function CheckoutContent() {
                     placeholder="Enter promo code"
                     className="flex-1"
                   />
-                  <Button variant="secondary">Apply</Button>
+                  <Button variant="secondary" type="button" disabled>
+                    Applied at payment step
+                  </Button>
                 </div>
               </Card>
 

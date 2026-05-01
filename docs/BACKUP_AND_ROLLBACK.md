@@ -1,85 +1,111 @@
 # Backup and rollback
 
-Companion: [`docs/RUNBOOK_DEPLOY.md`](RUNBOOK_DEPLOY.md), [`docs/RELEASE_BASELINE.md`](RELEASE_BASELINE.md).
+Companion documents:
+- `docs/RUNBOOK_DEPLOY.md`
+- `docs/RELEASE_BASELINE.md`
 
-This document defines **approach and responsibilities**. Numbers (RPO/RTO) are **placeholders** until leadership fills them in.
+This runbook is release-oriented and explicitly covers rollback for Phase A-F changes.
 
----
+## 1. Core backup policy
 
-## 1. Supabase backup approach
+- Before production migration or release promotion:
+  - confirm Supabase backup/PITR capability,
+  - confirm operator access to restore path,
+  - confirm rollback owner and approval chain.
+- Use migration history in `supabase/migrations/` as schema source of truth.
+- Do not run unreviewed ad-hoc SQL in production.
 
-| Method | Use case | Notes |
-|--------|-----------|-------|
-| **Supabase automated backups** | Hosted project default | Depends on plan; confirm in Supabase Dashboard → Database → Backups. |
-| **Point-in-time recovery (PITR)** | Paid tier / add-on | Use for logical corruption or bad migration **if** enabled for the project. |
-| **Logical dump** | Schema + data export | `supabase db dump` or `pg_dump` with credentials from a secure bastion. Store artifacts in **private** storage only. |
-| **Migration history** | Reproducible schema | `supabase/migrations/` in git is the **source of truth** for schema evolution, not a substitute for data backup. |
+## 2. Rollback by change area
 
-**Rule:** Before **any** production migration, confirm a **recoverable** backup exists (automated backup window + optional manual dump).
+### 2.1 Checkout idempotency migration (`00018`)
 
----
+- Risk: checkout flow disruption if schema mismatch.
+- Preferred rollback:
+  1. pause promotion and route new traffic to last known-good deploy;
+  2. apply forward-fix migration if possible;
+  3. if not recoverable quickly, execute DB restore/PITR per approved ops process.
+- Notes:
+  - do not mark migration applied flags true after rollback;
+  - reconcile idempotency ledger behavior post-recovery.
 
-## 2. Migration rollback rules
+### 2.2 RLS/security migration (Phase B hardening)
 
-| Situation | Preferred action |
-|-----------|------------------|
-| Migration applied, app incompatible | **Forward fix:** new migration + deploy compatible code. |
-| Catastrophic migration | Restore from **PITR** or latest **backup** per Supabase runbook; coordinate with Supabase support if needed. |
-| `down` migration scripts | Not assumed in this repo — avoid relying on automatic down unless every migration is paired and tested. |
+- Risk: over-restrictive or permissive access behavior.
+- Preferred rollback:
+  - forward-fix policy migration with explicit tests;
+  - DB restore only for catastrophic break.
+- Mandatory validation after rollback/fix:
+  - cross-tenant denial checks,
+  - support ticket visibility checks,
+  - platform role guard checks.
 
-**Never** “fix” production by running ad-hoc SQL without a reviewed migration file and peer review.
+### 2.3 Rate-limit provider config (Phase E)
 
----
+- Risk: production-like readiness degraded or fail-closed on high-risk routes when provider is missing.
+- Rollback approach:
+  - revert env config to last known-good configuration set;
+  - if provider outage occurs, document degraded mode and apply emergency traffic controls;
+  - avoid code rollback unless config rollback fails.
 
-## 3. Vercel rollback
+### 2.4 Stripe/payment/webhook hardening (Phase A/C)
 
-1. Open Vercel project → **Deployments**.  
-2. Find last known-good production deployment.  
-3. **Promote to Production** (or “Redeploy” that artifact).  
-4. Verify health endpoints and one critical user journey.
+- Risk: key mode mismatch, webhook validation issues, idempotency processing interruptions.
+- Rollback approach:
+  - revert Vercel deploy to last known-good artifact;
+  - verify Stripe secret key mode for environment (`test` vs `live`);
+  - rotate/reapply webhook secret if endpoint mismatch.
+- Constraint:
+  - money movement is not rolled back by code deploy; reconcile in Stripe/finance process.
 
-Rollback **does not** roll back database state unless you execute a separate DB procedure.
+### 2.5 UI wiring changes (Phase F)
 
----
+- Risk: user flow regressions on customer/chef/ops/driver surfaces.
+- Rollback approach:
+  - Vercel rollback to previous deployment;
+  - verify route/API contracts and smoke tests after rollback.
 
-## 4. Stripe rollback limitations
+### 2.6 CI/Playwright changes (Phase D+)
 
-- **Charges / refunds** are governed by Stripe; redeploying the app does not undo money movement.  
-- **Webhook secrets** and endpoint URLs can be reverted in the Stripe Dashboard independently of Vercel.  
-- **Idempotent replay:** engine webhook path is designed for safe replay; still avoid duplicate business actions outside that path.
+- Risk: blocked PR merges due to gate instability.
+- Rollback approach:
+  - revert workflow/config commit in branch, keep security checks intact;
+  - do not disable critical quality gates without owner approval.
 
----
+### 2.7 Staging deploy rollback
 
-## 5. Data recovery steps (outline)
+- If staging validation fails:
+  - stop promotion,
+  - rollback app deploy first,
+  - rollback DB only if required and approved,
+  - rerun staging verification set before resuming.
 
-1. **Stop writes** (maintenance mode / feature flag — product decision).  
-2. **Assess** last good backup timestamp vs. acceptable data loss (RPO).  
-3. **Restore** Supabase from backup or PITR to a **new** branch/instance if your process requires validation before cutover.  
-4. **Repoint** app `DATABASE_URL` / Supabase project only per runbook (usually not applicable for hosted Supabase single project — follow Supabase docs).  
-5. **Replay** or reconcile Stripe vs. internal ledger with finance.
+## 3. Vercel rollback quick steps
 
----
+1. Open project deployments.
+2. Identify last known-good deployment.
+3. Promote/redeploy previous artifact.
+4. Re-run:
+   - health endpoint checks,
+   - smoke tests,
+   - critical payment/checkout sanity checks.
 
-## 6. RPO / RTO placeholders
+## 4. RPO/RTO and contacts
 
-| Metric | Definition | Target (fill in) |
-|--------|------------|-------------------|
-| **RPO** | Max acceptable **data** loss window | _e.g. 1 hour_ — **TBD** |
-| **RTO** | Max acceptable **downtime** to restore service | _e.g. 4 hours_ — **TBD** |
+These values are required for launch but not provided in-repo yet.
 
----
+| Item | Status |
+|---|---|
+| RPO target | **OWNER REQUIRED** |
+| RTO target | **OWNER REQUIRED** |
+| Engineering on-call contact | **OWNER REQUIRED** |
+| Supabase recovery owner | **OWNER REQUIRED** |
+| Stripe/finance incident owner | **OWNER REQUIRED** |
+| Customer communications owner | **OWNER REQUIRED** |
 
-## 7. Emergency contacts (placeholders)
+## 5. Tabletop recommendation
 
-| Function | Contact |
-|----------|---------|
-| Engineering on-call | _TBD_ |
-| Supabase project owner | _TBD_ |
-| Finance / Stripe | _TBD_ |
-| Legal / customer comms | _TBD_ |
-
----
-
-## 8. Tabletop exercise (recommended)
-
-Before production launch, walk through: *backup exists → migration fails → rollback Vercel → DB restore decision* with the team and record decisions in Phase 18 launch materials.
+Run a tabletop before production cut:
+- migration fails in staging,
+- rollback app deploy,
+- decide forward-fix vs PITR,
+- reconcile payment/event state.

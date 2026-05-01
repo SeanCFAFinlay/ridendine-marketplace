@@ -17,5 +17,5 @@ export * from './analytics';
 export * from './redact-sensitive';
 export * from './processor-auth';
 export * from './image-upload';
-export * from './rate-limit';
+export * from './rate-limit/index';
 export * from './correlation-id';
