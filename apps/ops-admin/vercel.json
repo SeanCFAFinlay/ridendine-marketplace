@@ -11,6 +11,18 @@
     {
       "path": "/api/engine/processors/expired-offers",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/payouts-chef-preview",
+      "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/cron/payouts-driver-preview",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/reconciliation-daily",
+      "schedule": "30 5 * * *"
     }
   ]
 }

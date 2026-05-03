@@ -41,6 +41,10 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
   useLocationTracker({
     driverId: delivery.driver_id || '',
     isOnline: true,
+    deliveryId:
+      status === 'picked_up' || status === 'en_route_to_dropoff' || status === 'arrived_at_dropoff'
+        ? delivery.id
+        : null,
     updateInterval: 15000,
   });
 

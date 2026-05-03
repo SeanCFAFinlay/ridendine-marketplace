@@ -17,12 +17,18 @@ interface DeliveryRow {
   pickup_address: string;
   dropoff_address: string;
   estimated_dropoff_at: string | null;
+  eta_pickup_at: string | null;
+  eta_dropoff_at: string | null;
+  route_progress_pct: number | null;
+  route_to_dropoff_seconds: number | null;
+  route_to_dropoff_polyline: string | null;
 }
 
 interface OrderWithDetails {
   id: string;
   order_number: string;
   status: string;
+  public_stage?: string;
   total: number;
   estimated_ready_at: string | null;
   chef_storefronts: {
@@ -63,7 +69,12 @@ export default async function OrderConfirmationPage({ params }: Props) {
         status,
         pickup_address,
         dropoff_address,
-        estimated_dropoff_at
+        estimated_dropoff_at,
+        eta_pickup_at,
+        eta_dropoff_at,
+        route_progress_pct,
+        route_to_dropoff_seconds,
+        route_to_dropoff_polyline
       )
     `)
     .eq('id', id)
@@ -126,15 +137,29 @@ export default async function OrderConfirmationPage({ params }: Props) {
             orderId={typedOrder.id}
             orderNumber={typedOrder.order_number}
             initialStatus={typedOrder.status}
+            initialPublicStage={typedOrder.public_stage ?? 'placed'}
             deliveryId={delivery?.id ?? null}
             pickupAddress={delivery?.pickup_address ?? storefrontName}
             dropoffAddress={delivery?.dropoff_address ?? ''}
             estimatedDeliveryMinutes={estimatedDeliveryMinutes}
             storefrontName={storefrontName}
+            initialEtaPickupAt={delivery?.eta_pickup_at ?? null}
+            initialEtaDropoffAt={delivery?.eta_dropoff_at ?? null}
+            initialProgressPct={
+              delivery?.route_progress_pct != null ? Number(delivery.route_progress_pct) : null
+            }
+            initialRemainingSeconds={
+              typeof delivery?.route_to_dropoff_seconds === 'number'
+                ? delivery.route_to_dropoff_seconds
+                : null
+            }
+            initialRoutePolyline={delivery?.route_to_dropoff_polyline ?? null}
           />
 
           {/* Review form for delivered/completed orders */}
-          {(typedOrder.status === 'delivered' || typedOrder.status === 'completed') && (
+          {(typedOrder.public_stage === 'delivered' ||
+            typedOrder.status === 'delivered' ||
+            typedOrder.status === 'completed') && (
             <div className="mt-6">
               <ReviewForm orderId={typedOrder.id} />
             </div>

@@ -61,6 +61,19 @@ export async function POST(request: NextRequest) {
       return successResponse(result.data);
     }
 
+    case 'force_assign': {
+      const result = await engine.dispatch.forceAssign(
+        actionInput.deliveryId,
+        actionInput.driverId,
+        opsActor,
+        actionInput.reason
+      );
+      if (!result.success) {
+        return errorResponse(result.error!.code, result.error!.message);
+      }
+      return successResponse(result.data);
+    }
+
     case 'reassign': {
       const result = await engine.dispatch.reassignDelivery(
         actionInput.deliveryId,

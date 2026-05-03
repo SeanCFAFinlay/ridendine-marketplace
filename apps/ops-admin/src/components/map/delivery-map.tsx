@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { DEFAULT_SERVICE_REGION_CENTER } from '@ridendine/engine';
+import { decodePolyline } from '@ridendine/routing';
 
 // Dynamically import Leaflet components to avoid SSR issues
 const MapContainer = dynamic(
@@ -25,6 +26,10 @@ const Polyline = dynamic(
   () => import('react-leaflet').then((mod) => mod.Polyline),
   { ssr: false }
 );
+const CircleMarker = dynamic(
+  () => import('react-leaflet').then((mod) => mod.CircleMarker),
+  { ssr: false }
+);
 
 interface Delivery {
   id: string;
@@ -37,15 +42,33 @@ interface Delivery {
   dropoff_lng: number | null;
   dropoff_address: string;
   driver_name?: string;
+  /** Encoded route leg (OSRM / Mapbox polyline) when computed on assign. */
+  route_polyline?: string | null;
 }
+
+export type OpsDriverPin = {
+  id: string;
+  lat: number;
+  lng: number;
+  label: string;
+};
 
 interface DeliveryMapProps {
   deliveries: Delivery[];
   className?: string;
+  /** Internal ops-only: live driver coordinates. */
+  driverPins?: OpsDriverPin[];
+  highlightedDeliveryId?: string | null;
+  onDeliveryClick?: (deliveryId: string) => void;
 }
 
-
-export function DeliveryMap({ deliveries, className }: DeliveryMapProps) {
+export function DeliveryMap({
+  deliveries,
+  className,
+  driverPins = [],
+  highlightedDeliveryId = null,
+  onDeliveryClick,
+}: DeliveryMapProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [L, setL] = useState<typeof import('leaflet') | null>(null);
 
@@ -129,9 +152,36 @@ export function DeliveryMap({ deliveries, className }: DeliveryMapProps) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {driverPins.map((pin) => (
+          <CircleMarker
+            key={`drv-${pin.id}`}
+            center={[pin.lat, pin.lng]}
+            radius={9}
+            pathOptions={{
+              color: '#0ea5e9',
+              fillColor: '#38bdf8',
+              fillOpacity: 0.95,
+              weight: 2,
+            }}
+          >
+            <Popup>
+              <div className="text-sm">
+                <strong>Driver</strong>
+                <br />
+                {pin.label}
+              </div>
+            </Popup>
+          </CircleMarker>
+        ))}
         {deliveries.map((delivery) => {
           const hasPickup = delivery.pickup_lat && delivery.pickup_lng;
           const hasDropoff = delivery.dropoff_lat && delivery.dropoff_lng;
+          const routePts: [number, number][] = delivery.route_polyline
+            ? decodePolyline(delivery.route_polyline).map((p) => [p.lat, p.lng])
+            : [];
+          const isHi = highlightedDeliveryId === delivery.id;
+          const lineWeight = isHi ? 6 : 4;
+          const lineOpacity = isHi ? 1 : 0.85;
 
           return (
             <div key={delivery.id}>
@@ -139,6 +189,16 @@ export function DeliveryMap({ deliveries, className }: DeliveryMapProps) {
                 <Marker
                   position={[delivery.pickup_lat!, delivery.pickup_lng!]}
                   icon={pickupIcon}
+                  eventHandlers={
+                    onDeliveryClick
+                      ? {
+                          click: (e) => {
+                            e.originalEvent?.stopPropagation?.();
+                            onDeliveryClick(delivery.id);
+                          },
+                        }
+                      : undefined
+                  }
                 >
                   <Popup>
                     <div className="text-sm">
@@ -159,6 +219,16 @@ export function DeliveryMap({ deliveries, className }: DeliveryMapProps) {
                 <Marker
                   position={[delivery.dropoff_lat!, delivery.dropoff_lng!]}
                   icon={dropoffIcon}
+                  eventHandlers={
+                    onDeliveryClick
+                      ? {
+                          click: (e) => {
+                            e.originalEvent?.stopPropagation?.();
+                            onDeliveryClick(delivery.id);
+                          },
+                        }
+                      : undefined
+                  }
                 >
                   <Popup>
                     <div className="text-sm">
@@ -175,17 +245,47 @@ export function DeliveryMap({ deliveries, className }: DeliveryMapProps) {
                   </Popup>
                 </Marker>
               )}
-              {hasPickup && hasDropoff && (
+              {routePts.length > 1 ? (
                 <Polyline
-                  positions={[
-                    [delivery.pickup_lat!, delivery.pickup_lng!],
-                    [delivery.dropoff_lat!, delivery.dropoff_lng!],
-                  ]}
+                  positions={routePts}
                   color={getStatusColor(delivery.status)}
-                  weight={3}
-                  opacity={0.7}
-                  dashArray="10, 10"
+                  weight={lineWeight}
+                  opacity={lineOpacity}
+                  eventHandlers={
+                    onDeliveryClick
+                      ? {
+                          click: (e) => {
+                            e.originalEvent?.stopPropagation?.();
+                            onDeliveryClick(delivery.id);
+                          },
+                        }
+                      : undefined
+                  }
                 />
+              ) : (
+                hasPickup &&
+                hasDropoff && (
+                  <Polyline
+                    positions={[
+                      [delivery.pickup_lat!, delivery.pickup_lng!],
+                      [delivery.dropoff_lat!, delivery.dropoff_lng!],
+                    ]}
+                    color={getStatusColor(delivery.status)}
+                    weight={isHi ? 5 : 3}
+                    opacity={isHi ? 0.95 : 0.7}
+                    dashArray="10, 10"
+                    eventHandlers={
+                      onDeliveryClick
+                        ? {
+                            click: (e) => {
+                              e.originalEvent?.stopPropagation?.();
+                              onDeliveryClick(delivery.id);
+                            },
+                          }
+                        : undefined
+                    }
+                  />
+                )
               )}
             </div>
           );

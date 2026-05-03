@@ -12,6 +12,7 @@ import {
   claimStripeWebhookEventForProcessing,
   finalizeStripeWebhookSuccess,
   finalizeStripeWebhookFailure,
+  handleStripeFinanceWebhook,
 } from '@ridendine/engine';
 import { getEngine, getSystemActor } from '@/lib/engine';
 import {
@@ -93,10 +94,27 @@ export async function POST(request: Request): Promise<Response> {
   const systemActor = getSystemActor();
 
   let relatedOrderId: string | null = null;
+  let relatedPaymentId: string | null = null;
+  let stripeAmountCents: number | null = null;
+
   if (event.type.startsWith('payment_intent.')) {
-    relatedOrderId = orderIdFromPaymentIntent(
-      event.data.object as Stripe.PaymentIntent
-    );
+    const pi = event.data.object as Stripe.PaymentIntent;
+    relatedOrderId = orderIdFromPaymentIntent(pi);
+    relatedPaymentId = pi.id;
+    stripeAmountCents = pi.amount_received ?? pi.amount;
+  } else if (event.type === 'charge.refunded') {
+    const ch = event.data.object as Stripe.Charge;
+    relatedPaymentId =
+      typeof ch.payment_intent === 'string' ? ch.payment_intent : ch.payment_intent?.id ?? null;
+    stripeAmountCents = ch.amount_refunded;
+  } else if (event.type === 'transfer.created') {
+    const tr = event.data.object as Stripe.Transfer;
+    relatedPaymentId = tr.id;
+    stripeAmountCents = tr.amount;
+  } else if (event.type === 'payout.paid' || event.type === 'payout.failed') {
+    const po = event.data.object as Stripe.Payout;
+    relatedPaymentId = po.id;
+    stripeAmountCents = po.amount;
   }
 
   let claim;
@@ -106,6 +124,8 @@ export async function POST(request: Request): Promise<Response> {
       eventType: event.type,
       livemode: event.livemode,
       relatedOrderId,
+      relatedPaymentId,
+      stripeAmountCents,
     });
   } catch (e) {
     console.error('Stripe idempotency claim failed:', safeWebhookLog(e));
@@ -175,6 +195,7 @@ export async function POST(request: Request): Promise<Response> {
 
           await engine.events.flush();
         }
+        await handleStripeFinanceWebhook(admin, engine, event, systemActor);
         await finalizeStripeWebhookSuccess(admin, event.id, orderId);
         break;
       }
@@ -203,6 +224,7 @@ export async function POST(request: Request): Promise<Response> {
             );
           }
         }
+        await handleStripeFinanceWebhook(admin, engine, event, systemActor);
         await finalizeStripeWebhookSuccess(admin, event.id, orderId);
         break;
       }
@@ -234,9 +256,17 @@ export async function POST(request: Request): Promise<Response> {
             );
           }
         }
+        await handleStripeFinanceWebhook(admin, engine, event, systemActor);
         await finalizeStripeWebhookSuccess(admin, event.id, null);
         break;
       }
+
+      case 'transfer.created':
+      case 'payout.paid':
+      case 'payout.failed':
+        await handleStripeFinanceWebhook(admin, engine, event, systemActor);
+        await finalizeStripeWebhookSuccess(admin, event.id, relatedOrderId);
+        break;
 
       default:
         console.log(`[stripe-webhook] unhandled event type (recorded): ${event.type}`);

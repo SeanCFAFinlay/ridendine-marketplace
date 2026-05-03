@@ -1,5 +1,5 @@
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr';
-import type { Database } from '../generated/database.types';
+import type { Database } from '../database.merged';
 
 type CookieStore = {
   get: (name: string) => { value: string } | undefined;

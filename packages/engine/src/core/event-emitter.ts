@@ -9,6 +9,69 @@ import type {
   DomainEventType,
   ActorContext,
 } from '@ridendine/types';
+import {
+  sanitizePublicOrderBroadcastPayload,
+  stripSensitiveCoordinateKeys,
+} from './public-broadcast-sanitizer';
+
+const BROADCAST_SUBSCRIBE_MS = 8000;
+
+async function sendBroadcastOnce(
+  client: SupabaseClient,
+  channelName: string,
+  event: string,
+  payload: Record<string, unknown>
+): Promise<void> {
+  const channel = client.channel(channelName, {
+    config: { broadcast: { ack: false } },
+  });
+  await new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      try {
+        client.removeChannel(channel);
+      } catch {
+        /* ignore */
+      }
+      reject(new Error(`Realtime broadcast subscribe timed out (${channelName})`));
+    }, BROADCAST_SUBSCRIBE_MS);
+
+    channel.subscribe((status, err) => {
+      if (status === 'SUBSCRIBED') {
+        clearTimeout(timer);
+        channel
+          .send({
+            type: 'broadcast',
+            event,
+            payload,
+          })
+          .then(() => {
+            try {
+              client.removeChannel(channel);
+            } catch {
+              /* ignore */
+            }
+            resolve();
+          })
+          .catch((e) => {
+            try {
+              client.removeChannel(channel);
+            } catch {
+              /* ignore */
+            }
+            reject(e);
+          });
+      } else if (status === 'TIMED_OUT' || status === 'CHANNEL_ERROR') {
+        clearTimeout(timer);
+        try {
+          client.removeChannel(channel);
+        } catch {
+          /* ignore */
+        }
+        reject(err ?? new Error(String(status)));
+      }
+    });
+  });
+}
 
 export class DomainEventEmitter {
   private client: SupabaseClient;
@@ -29,6 +92,39 @@ export class DomainEventEmitter {
 
   clearCorrelation(): void {
     this._correlationId = null;
+  }
+
+  /**
+   * Customer-safe broadcast on `order:{orderId}` with event `order_update`.
+   * Payload is whitelist-only; coordinate / location keys are never forwarded.
+   */
+  async broadcastPublic(orderId: string, payload: Record<string, unknown>): Promise<void> {
+    const sanitized = sanitizePublicOrderBroadcastPayload(payload);
+    try {
+      await sendBroadcastOnce(this.client, `order:${orderId}`, 'order_update', sanitized);
+    } catch (error) {
+      console.error('[broadcastPublic] failed:', error);
+    }
+  }
+
+  /**
+   * Driver offer stream (Phase 3). Strips coordinate-like keys from payloads.
+   * Use event `offer` for new offers and `offer_expired` when an attempt times out.
+   */
+  async broadcastDriverOffer(
+    driverId: string,
+    attempt: unknown,
+    event: 'offer' | 'offer_expired' | 'offer_update' = 'offer'
+  ): Promise<void> {
+    const base =
+      attempt && typeof attempt === 'object' && !Array.isArray(attempt)
+        ? stripSensitiveCoordinateKeys(attempt as Record<string, unknown>)
+        : {};
+    try {
+      await sendBroadcastOnce(this.client, `driver:${driverId}:offers`, event, base);
+    } catch (error) {
+      console.error('[broadcastDriverOffer] failed:', error);
+    }
   }
 
   /**

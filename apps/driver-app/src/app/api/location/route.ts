@@ -23,6 +23,17 @@ export const dynamic = 'force-dynamic';
 
 const RATE_STORE = 'driver-location-post';
 
+const ACTIVE_DELIVERY = new Set([
+  'assigned',
+  'en_route_to_pickup',
+  'arrived_at_pickup',
+  'picked_up',
+  'en_route_to_dropoff',
+  'arrived_at_dropoff',
+]);
+
+const CUSTOMER_LEG = new Set(['picked_up', 'en_route_to_dropoff', 'arrived_at_dropoff']);
+
 function rateLimitedResponse(retryAfter: number) {
   return new Response(
     JSON.stringify({
@@ -106,6 +117,19 @@ export async function POST(request: NextRequest) {
     }
 
     const adminClient = createAdminClient();
+
+    if (deliveryId) {
+      const { data: dCheck, error: dErr } = await adminClient
+        .from('deliveries')
+        .select('id, driver_id')
+        .eq('id', deliveryId)
+        .maybeSingle();
+
+      if (dErr || !dCheck || dCheck.driver_id !== driverId) {
+        return errorResponse('FORBIDDEN', 'Delivery is not assigned to this driver', 403);
+      }
+    }
+
     const engine = getEngine();
 
     const locationTimestamp = new Date().toISOString();
@@ -141,21 +165,12 @@ export async function POST(request: NextRequest) {
     if (deliveryId) {
       const { data: delivery } = await adminClient
         .from('deliveries')
-        .select('driver_id, status')
+        .select('id, driver_id, status, order_id')
         .eq('id', deliveryId)
         .single();
 
       if (delivery && delivery.driver_id === driverId) {
-        const activeStatuses = [
-          'assigned',
-          'en_route_to_pickup',
-          'arrived_at_pickup',
-          'picked_up',
-          'en_route_to_dropoff',
-          'arrived_at_dropoff',
-        ];
-
-        if (activeStatuses.includes(delivery.status)) {
+        if (ACTIVE_DELIVERY.has(delivery.status)) {
           await adminClient.from('delivery_tracking_events').insert({
             delivery_id: deliveryId,
             driver_id: driverId,
@@ -164,29 +179,43 @@ export async function POST(request: NextRequest) {
             accuracy: accuracy ?? null,
             recorded_at: locationTimestamp,
           });
+        }
 
-          engine.events.emit(
-            'driver_location_updated',
-            'delivery',
-            deliveryId,
-            {
-              lat,
-              lng,
-              heading,
-              speed,
-              deliveryStatus: delivery.status,
-            },
-            driverContext.actor
-          );
-          await engine.events.flush();
+        if (delivery.order_id && CUSTOMER_LEG.has(delivery.status)) {
+          const refreshed = await engine.eta.refreshFromDriverPing(deliveryId, { lat, lng });
+
+          const { data: snapRaw } = await adminClient
+            .from('deliveries')
+            .select('eta_pickup_at, route_to_dropoff_polyline')
+            .eq('id', deliveryId)
+            .maybeSingle();
+
+          const { data: ordRaw } = await adminClient
+            .from('orders')
+            .select('public_stage')
+            .eq('id', delivery.order_id)
+            .maybeSingle();
+
+          const snap = snapRaw as {
+            eta_pickup_at?: string | null;
+            route_to_dropoff_polyline?: string | null;
+          } | null;
+          const ord = ordRaw as { public_stage?: string } | null;
+
+          await engine.events.broadcastPublic(delivery.order_id as string, {
+            public_stage: ord?.public_stage ?? 'on_the_way',
+            eta_pickup_at: snap?.eta_pickup_at ?? null,
+            eta_dropoff_at: refreshed.etaDropoffAt.toISOString(),
+            route_progress_pct: refreshed.progressPct,
+            route_remaining_seconds: refreshed.remainingSeconds,
+            route_to_dropoff_polyline: snap?.route_to_dropoff_polyline ?? null,
+          });
         }
       }
     }
 
     return successResponse({
-      lat,
-      lng,
-      timestamp: locationTimestamp,
+      recordedAt: locationTimestamp,
     });
   } catch (error) {
     console.error('Error updating location:', error instanceof Error ? error.message : 'unknown');

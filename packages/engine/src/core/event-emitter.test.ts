@@ -11,8 +11,19 @@ import type { DomainEventType, ActorContext } from '@ridendine/types';
 // Minimal Supabase client mock
 function makeMockClient() {
   const insertMock = vi.fn().mockResolvedValue({ error: null });
-  const channelMock = {
-    send: vi.fn().mockResolvedValue({}),
+  const makeChannel = () => {
+    const ch: {
+      send: ReturnType<typeof vi.fn>;
+      subscribe: ReturnType<typeof vi.fn>;
+    } = {
+      send: vi.fn().mockResolvedValue({}),
+      subscribe: vi.fn(),
+    };
+    ch.subscribe.mockImplementation((cb: (status: string) => void) => {
+      queueMicrotask(() => cb('SUBSCRIBED'));
+      return ch;
+    });
+    return ch;
   };
 
   return {
@@ -20,7 +31,8 @@ function makeMockClient() {
       insert: insertMock,
       update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
     })),
-    channel: vi.fn(() => channelMock),
+    channel: vi.fn(() => makeChannel()),
+    removeChannel: vi.fn(),
     _insertMock: insertMock,
   };
 }

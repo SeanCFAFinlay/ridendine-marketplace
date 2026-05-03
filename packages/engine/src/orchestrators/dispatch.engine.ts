@@ -4,6 +4,7 @@
 // ==========================================
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { EtaService } from '@ridendine/routing';
 import { getPlatformSettings } from '@ridendine/db';
 import type {
   ActorContext,
@@ -55,6 +56,18 @@ interface EligibleDriver {
   recent_declines: number;
   recent_expiries: number;
   fairness_score: number;
+  /** Presence ping (for ranking metadata only; never broadcast to drivers). */
+  last_ping_at?: string | null;
+  current_lat?: number | null;
+  current_lng?: number | null;
+}
+
+/** Structured ETA ranking output (internal + ops read models). */
+export interface DispatchRankedCandidate {
+  driverId: string;
+  seconds: number;
+  lastPingAt: string | null;
+  activeLoad: number;
 }
 
 export function calculateDriverAssignmentScore(driver: EligibleDriver): number {
@@ -81,17 +94,91 @@ export class DispatchEngine {
   private eventEmitter: DomainEventEmitter;
   private auditLogger: AuditLogger;
   private slaManager: SLAManager;
+  private eta?: EtaService;
 
   constructor(
     client: SupabaseClient,
     eventEmitter: DomainEventEmitter,
     auditLogger: AuditLogger,
-    slaManager: SLAManager
+    slaManager: SLAManager,
+    etaService?: EtaService
   ) {
     this.client = client;
     this.eventEmitter = eventEmitter;
     this.auditLogger = auditLogger;
     this.slaManager = slaManager;
+    this.eta = etaService;
+  }
+
+  private async runEtaBestEffort(fn: (eta: EtaService) => Promise<void>): Promise<void> {
+    if (!this.eta) return;
+    try {
+      await fn(this.eta);
+    } catch {
+      /* optional routing */
+    }
+  }
+
+  /**
+   * Per-area dispatch tuning from `service_areas` (defaults from platform when null).
+   */
+  private async loadDispatchTuning(serviceAreaId?: string | null): Promise<{
+    offerTtlSeconds: number | null;
+    maxOfferAttempts: number | null;
+  } | null> {
+    let q = this.client
+      .from('service_areas')
+      .select('offer_ttl_seconds, max_offer_attempts')
+      .eq('is_active', true);
+    if (serviceAreaId) {
+      q = q.eq('id', serviceAreaId);
+    }
+    const { data: rows, error } = await q.limit(1);
+    if (error || !rows?.length) {
+      return null;
+    }
+    const row = rows[0] as {
+      offer_ttl_seconds: number | null;
+      max_offer_attempts: number | null;
+    };
+    return {
+      offerTtlSeconds: row.offer_ttl_seconds,
+      maxOfferAttempts: row.max_offer_attempts,
+    };
+  }
+
+  private async rankCandidates(
+    deliveryId: string,
+    eligibleDrivers: EligibleDriver[]
+  ): Promise<DispatchRankedCandidate[]> {
+    const withPoints = eligibleDrivers.filter(
+      (d) => d.current_lat != null && d.current_lng != null && Number.isFinite(d.current_lat) && Number.isFinite(d.current_lng)
+    );
+    const secondsByDriver = new Map<string, number>();
+
+    if (this.eta && withPoints.length > 0) {
+      const ranked = await this.eta.rankDrivers(
+        deliveryId,
+        withPoints.map((d) => ({
+          driverId: d.id,
+          point: { lat: d.current_lat as number, lng: d.current_lng as number },
+        }))
+      );
+      for (const r of ranked) {
+        secondsByDriver.set(r.driverId, r.seconds);
+      }
+    }
+
+    const structured: DispatchRankedCandidate[] = eligibleDrivers.map((d) => ({
+      driverId: d.id,
+      seconds: secondsByDriver.has(d.id)
+        ? (secondsByDriver.get(d.id) as number)
+        : Math.max(0, Math.round((d.estimated_minutes ?? 0) * 60)),
+      lastPingAt: d.last_ping_at ?? null,
+      activeLoad: d.active_workload,
+    }));
+    structured.sort((a, b) => a.seconds - b.seconds);
+    return structured;
   }
 
   /**
@@ -246,13 +333,62 @@ export class DispatchEngine {
   }
 
   /**
-   * Find eligible drivers and create assignment offer
+   * Legacy entry point — delegates to {@link offerToNextDriver}.
    */
   async findAndAssignDriver(
     deliveryId: string,
     actor: ActorContext
   ): Promise<OperationResult<AssignmentAttempt>> {
-    // Get delivery
+    return this.offerToNextDriver(deliveryId, actor);
+  }
+
+  /**
+   * When an order is ready for pickup, ensure the delivery chain offers to the next ranked driver.
+   */
+  async onOrderReadyForPickup(
+    orderId: string,
+    actor: ActorContext
+  ): Promise<OperationResult<AssignmentAttempt | null>> {
+    const { data: delivery, error } = await this.client
+      .from('deliveries')
+      .select('id, status, driver_id')
+      .eq('order_id', orderId)
+      .maybeSingle();
+
+    if (error || !delivery) {
+      return {
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'No delivery found for this order' },
+      };
+    }
+
+    if (delivery.driver_id || delivery.status !== 'pending') {
+      return { success: true, data: null };
+    }
+
+    const nowIso = new Date().toISOString();
+    const { data: livePending } = await this.client
+      .from('assignment_attempts')
+      .select('id')
+      .eq('delivery_id', delivery.id)
+      .eq('response', 'pending')
+      .gt('expires_at', nowIso)
+      .maybeSingle();
+
+    if (livePending) {
+      return { success: true, data: null };
+    }
+
+    return this.offerToNextDriver(delivery.id, actor);
+  }
+
+  /**
+   * Rank drivers, create `assignment_attempts` row (pending), and broadcast a sanitized offer (no coordinates).
+   */
+  async offerToNextDriver(
+    deliveryId: string,
+    actor: ActorContext
+  ): Promise<OperationResult<AssignmentAttempt>> {
     const { data: delivery, error: deliveryError } = await this.client
       .from('deliveries')
       .select('*')
@@ -266,10 +402,24 @@ export class DispatchEngine {
       };
     }
 
-    // Check if max attempts reached
-    const settings = await this.getDispatchSettings();
+    const nowIso = new Date().toISOString();
+    const { data: livePending } = await this.client
+      .from('assignment_attempts')
+      .select('id')
+      .eq('delivery_id', deliveryId)
+      .eq('response', 'pending')
+      .gt('expires_at', nowIso)
+      .maybeSingle();
+
+    if (livePending) {
+      return {
+        success: false,
+        error: { code: 'PENDING_OFFER', message: 'A pending offer already exists for this delivery' },
+      };
+    }
+
+    const settings = await this.getDispatchSettings(null);
     if (delivery.assignment_attempts_count >= settings.maxAssignmentAttempts) {
-      // Escalate to ops
       await this.escalateToOps(deliveryId, 'max_attempts_reached', actor);
       return {
         success: false,
@@ -277,7 +427,6 @@ export class DispatchEngine {
       };
     }
 
-    // Find eligible drivers
     const eligibleDrivers = await this.findEligibleDrivers(
       delivery.pickup_lat,
       delivery.pickup_lng,
@@ -285,7 +434,6 @@ export class DispatchEngine {
     );
 
     if (eligibleDrivers.length === 0) {
-      // No drivers available
       if (delivery.assignment_attempts_count >= 2) {
         await this.escalateToOps(deliveryId, 'no_drivers_available', actor);
       }
@@ -295,7 +443,6 @@ export class DispatchEngine {
       };
     }
 
-    // Get drivers who already declined
     const { data: previousAttempts } = await this.client
       .from('assignment_attempts')
       .select('driver_id')
@@ -304,10 +451,7 @@ export class DispatchEngine {
 
     const declinedDriverIds = previousAttempts?.map((a) => a.driver_id) || [];
 
-    // Filter out drivers who already declined
-    const availableDrivers = eligibleDrivers.filter(
-      (d) => !declinedDriverIds.includes(d.id)
-    );
+    const availableDrivers = eligibleDrivers.filter((d) => !declinedDriverIds.includes(d.id));
 
     if (availableDrivers.length === 0) {
       await this.escalateToOps(deliveryId, 'all_drivers_declined', actor);
@@ -317,8 +461,14 @@ export class DispatchEngine {
       };
     }
 
-    // Select best driver (closest with good rating)
-    const selectedDriver = this.selectBestDriver(availableDrivers);
+    const ranked = await this.rankCandidates(deliveryId, availableDrivers);
+    const driverById = new Map(availableDrivers.map((d) => [d.id, d]));
+    const orderedDrivers = ranked
+      .map((r) => driverById.get(r.driverId))
+      .filter((d): d is EligibleDriver => Boolean(d));
+
+    const selectedDriver =
+      orderedDrivers[0] ?? this.selectBestDriver(availableDrivers);
     if (!selectedDriver) {
       await this.escalateToOps(deliveryId, 'no_driver_selected', actor);
       return {
@@ -327,7 +477,12 @@ export class DispatchEngine {
       };
     }
 
-    // Create assignment attempt
+    const rankRow = ranked.find((r) => r.driverId === selectedDriver.id);
+    const etaMinutes =
+      rankRow && Number.isFinite(rankRow.seconds) && rankRow.seconds < Number.MAX_SAFE_INTEGER / 2
+        ? Math.max(1, Math.ceil(rankRow.seconds / 60))
+        : selectedDriver.estimated_minutes;
+
     const now = new Date();
     const expiresAt = new Date(now.getTime() + settings.offerTimeoutSeconds * 1000);
 
@@ -341,19 +496,18 @@ export class DispatchEngine {
         expires_at: expiresAt.toISOString(),
         response: 'pending',
         distance_meters: Math.round(selectedDriver.distance_km * 1000),
-        estimated_minutes: selectedDriver.estimated_minutes,
+        estimated_minutes: etaMinutes,
       })
       .select()
       .single();
 
-    if (attemptError) {
+    if (attemptError || !attempt) {
       return {
         success: false,
-        error: { code: 'CREATE_FAILED', message: attemptError.message },
+        error: { code: 'CREATE_FAILED', message: attemptError?.message || 'Failed to create attempt' },
       };
     }
 
-    // Update delivery
     await this.client
       .from('deliveries')
       .update({
@@ -363,7 +517,6 @@ export class DispatchEngine {
       })
       .eq('id', deliveryId);
 
-    // Create notification for driver
     await this.client.from('notifications').insert({
       user_id: selectedDriver.user_id,
       type: 'delivery_offer',
@@ -378,7 +531,6 @@ export class DispatchEngine {
       },
     });
 
-    // Emit event
     this.eventEmitter.emit(
       'driver.offer.created' as DomainEventType,
       'assignment_attempt',
@@ -386,6 +538,32 @@ export class DispatchEngine {
       { deliveryId, driverId: selectedDriver.id, expiresAt: expiresAt.toISOString() },
       actor
     );
+
+    const broadcastPayload: Record<string, unknown> = {
+      attemptId: attempt.id,
+      deliveryId,
+      expiresAt: expiresAt.toISOString(),
+      pickupAddress: delivery.pickup_address,
+      dropoffAddress: delivery.dropoff_address,
+      estimatedDistanceKm: delivery.estimated_distance_km ?? null,
+      estimatedPayout: delivery.driver_payout,
+      estimatedMinutes: etaMinutes,
+    };
+
+    await this.eventEmitter.broadcastDriverOffer(selectedDriver.id, broadcastPayload, 'offer');
+
+    await this.auditLogger.log({
+      action: 'create',
+      entityType: 'assignment_attempt',
+      entityId: attempt.id,
+      actor,
+      afterState: {
+        deliveryId,
+        driverId: selectedDriver.id,
+        expiresAt: expiresAt.toISOString(),
+      },
+      metadata: { dispatchOffer: true },
+    });
 
     await this.eventEmitter.flush();
 
@@ -553,6 +731,8 @@ export class DispatchEngine {
 
     await this.eventEmitter.flush();
 
+    await this.runEtaBestEffort((eta) => eta.computeFullOnAssign(attempt.delivery_id));
+
     return { success: true, data: delivery as DeliveryData };
   }
 
@@ -563,7 +743,7 @@ export class DispatchEngine {
     attemptId: string,
     reason: string,
     actor: ActorContext
-  ): Promise<OperationResult> {
+  ): Promise<OperationResult<void>> {
     const { data: attempt, error: attemptError } = await this.client
       .from('assignment_attempts')
       .select('*')
@@ -623,13 +803,48 @@ export class DispatchEngine {
 
     await this.eventEmitter.flush();
 
-    // Try to assign to next driver
-    await this.findAndAssignDriver(attempt.delivery_id, {
+    await this.offerToNextDriver(attempt.delivery_id, {
       userId: 'system',
       role: 'system',
     });
 
     return { success: true };
+  }
+
+  /**
+   * Driver (or tests) respond to an offer; validates `driverId` owns the attempt when acting as driver.
+   */
+  async respondToOffer(
+    attemptId: string,
+    response: 'accept' | 'decline',
+    driverId: string,
+    actor: ActorContext,
+    declineReason?: string
+  ): Promise<OperationResult<DeliveryData | void>> {
+    const { data: attempt, error } = await this.client
+      .from('assignment_attempts')
+      .select('driver_id')
+      .eq('id', attemptId)
+      .single();
+
+    if (error || !attempt) {
+      return {
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Assignment attempt not found' },
+      };
+    }
+
+    if (attempt.driver_id !== driverId) {
+      return {
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'This offer is not for this driver' },
+      };
+    }
+
+    if (response === 'accept') {
+      return this.acceptOffer(attemptId, actor);
+    }
+    return this.declineOffer(attemptId, declineReason || 'driver_declined', actor);
   }
 
   /**
@@ -733,6 +948,10 @@ export class DispatchEngine {
       };
     }
 
+    if (status === 'picked_up') {
+      await this.runEtaBestEffort((eta) => eta.computeDropLegOnPickup(deliveryId));
+    }
+
     // Map delivery status to order engine status
     const orderStatusMap: Record<string, string> = {
       en_route_to_pickup: 'driver_en_route_pickup',
@@ -796,7 +1015,8 @@ export class DispatchEngine {
   async manualAssign(
     deliveryId: string,
     driverId: string,
-    actor: ActorContext
+    actor: ActorContext,
+    assignmentReason = 'Manual assignment by ops'
   ): Promise<OperationResult<DeliveryData>> {
     // Only ops can manually assign
     if (!['ops_agent', 'ops_admin', 'ops_manager', 'super_admin'].includes(actor.role)) {
@@ -876,7 +1096,6 @@ export class DispatchEngine {
       .eq('delivery_id', deliveryId)
       .eq('response', 'pending');
 
-    // Log override
     await this.auditLogger.logOverride({
       action: 'manual_driver_assignment',
       entityType: 'delivery',
@@ -884,7 +1103,7 @@ export class DispatchEngine {
       actor,
       beforeState: { driver_id: delivery.driver_id, status: delivery.status },
       afterState: { driver_id: driverId, status: 'assigned' },
-      reason: 'Manual assignment by ops',
+      reason: assignmentReason,
     });
 
     // Emit event
@@ -898,7 +1117,21 @@ export class DispatchEngine {
 
     await this.eventEmitter.flush();
 
+    await this.runEtaBestEffort((eta) => eta.computeFullOnAssign(deliveryId));
+
     return { success: true, data: updated as DeliveryData };
+  }
+
+  /**
+   * Ops override: assign driver with explicit reason (same safeguards as {@link manualAssign}).
+   */
+  async forceAssign(
+    deliveryId: string,
+    driverId: string,
+    actor: ActorContext,
+    reason: string
+  ): Promise<OperationResult<DeliveryData>> {
+    return this.manualAssign(deliveryId, driverId, actor, reason || 'Ops force assign');
   }
 
   /**
@@ -1034,10 +1267,9 @@ export class DispatchEngine {
   async processExpiredOffers(actor: ActorContext): Promise<number> {
     const now = new Date().toISOString();
 
-    // Find expired pending offers
     const { data: expired } = await this.client
       .from('assignment_attempts')
-      .select('id, delivery_id')
+      .select('id')
       .eq('response', 'pending')
       .lt('expires_at', now);
 
@@ -1045,28 +1277,67 @@ export class DispatchEngine {
       return 0;
     }
 
-    // Update each expired offer
-    for (const attempt of expired) {
-      await this.client
-        .from('assignment_attempts')
-        .update({ response: 'expired' })
-        .eq('id', attempt.id);
+    for (const row of expired) {
+      await this.expireAttempt(row.id, actor);
+    }
 
-      this.eventEmitter.emit(
-        'driver.offer.expired' as DomainEventType,
-        'assignment_attempt',
-        attempt.id,
-        { deliveryId: attempt.delivery_id },
-        actor
-      );
+    return expired.length;
+  }
 
-      // Try to reassign
-      await this.findAndAssignDriver(attempt.delivery_id, actor);
+  /**
+   * Mark a single attempt expired, notify the driver, then offer to the next driver or escalate.
+   */
+  async expireAttempt(attemptId: string, actor: ActorContext): Promise<OperationResult<void>> {
+    const now = new Date().toISOString();
+
+    const { data: updatedRows, error: updErr } = await this.client
+      .from('assignment_attempts')
+      .update({ response: 'expired', responded_at: now })
+      .eq('id', attemptId)
+      .eq('response', 'pending')
+      .lte('expires_at', now)
+      .select('id, delivery_id, driver_id')
+      .maybeSingle();
+
+    if (updErr) {
+      return { success: false, error: { code: 'UPDATE_FAILED', message: updErr.message } };
+    }
+
+    if (!updatedRows) {
+      return { success: true };
+    }
+
+    await this.eventEmitter.broadcastDriverOffer(
+      updatedRows.driver_id as string,
+      { attemptId, deliveryId: updatedRows.delivery_id, reason: 'expired' },
+      'offer_expired'
+    );
+
+    this.eventEmitter.emit(
+      'driver.offer.expired' as DomainEventType,
+      'assignment_attempt',
+      attemptId,
+      { deliveryId: updatedRows.delivery_id },
+      actor
+    );
+
+    const { data: delivery } = await this.client
+      .from('deliveries')
+      .select('assignment_attempts_count')
+      .eq('id', updatedRows.delivery_id as string)
+      .single();
+
+    const settings = await this.getDispatchSettings(null);
+    const attempts = delivery?.assignment_attempts_count ?? 0;
+
+    if (attempts >= settings.maxAssignmentAttempts) {
+      await this.escalateToOps(updatedRows.delivery_id as string, 'max_attempts_reached', actor);
+    } else {
+      await this.offerToNextDriver(updatedRows.delivery_id as string, actor);
     }
 
     await this.eventEmitter.flush();
-
-    return expired.length;
+    return { success: true };
   }
 
   /**
@@ -1092,7 +1363,8 @@ export class DispatchEngine {
         driver_presence!inner (
           status,
           current_lat,
-          current_lng
+          current_lng,
+          updated_at
         )
       `)
       .eq('status', 'approved')
@@ -1155,6 +1427,7 @@ export class DispatchEngine {
         status: string;
         current_lat: number | null;
         current_lng: number | null;
+        updated_at?: string | null;
       };
       if (!presence) continue;
 
@@ -1187,6 +1460,9 @@ export class DispatchEngine {
         recent_declines: recentDeclines.get(driver.id) ?? 0,
         recent_expiries: recentExpiries.get(driver.id) ?? 0,
         fairness_score: 1 / (workload + 1),
+        last_ping_at: presence.updated_at ?? null,
+        current_lat: presence.current_lat,
+        current_lng: presence.current_lng,
       });
     }
 
@@ -1244,13 +1520,9 @@ export class DispatchEngine {
   }
 
   /**
-   * Escalate delivery to ops
+   * Escalate delivery to ops (audited: `order_exceptions`, `delivery_events`, `system_alerts`).
    */
-  private async escalateToOps(
-    deliveryId: string,
-    reason: string,
-    actor: ActorContext
-  ): Promise<void> {
+  async escalateToOps(deliveryId: string, reason: string, actor: ActorContext): Promise<void> {
     const now = new Date().toISOString();
 
     await this.client
@@ -1262,27 +1534,45 @@ export class DispatchEngine {
       })
       .eq('id', deliveryId);
 
-    // Get delivery for exception
     const { data: delivery } = await this.client
       .from('deliveries')
-      .select('order_id')
+      .select('order_id, assignment_attempts_count')
       .eq('id', deliveryId)
       .single();
 
-    // Create exception
+    const dispatchReasons = new Set([
+      'max_attempts_reached',
+      'max_assignment_attempts_exhausted',
+      'no_drivers_available',
+      'all_drivers_declined',
+      'no_driver_selected',
+    ]);
+    const exceptionType = dispatchReasons.has(reason) ? 'ops_dispatch_required' : 'assignment_timeout';
+
     await this.client.from('order_exceptions').insert({
-      exception_type: reason === 'no_drivers_available' ? 'no_driver_available' : 'assignment_timeout',
+      exception_type: exceptionType,
       severity: 'high',
       status: 'open',
       order_id: delivery?.order_id,
       delivery_id: deliveryId,
       title: 'Delivery Assignment Failed',
-      description: `Failed to assign driver. Reason: ${reason}`,
+      description: `Failed to assign driver. Reason: ${reason}. Attempts: ${delivery?.assignment_attempts_count ?? 0}`,
       recommended_actions: ['Manual assignment required', 'Contact nearby drivers', 'Consider order cancellation'],
-      sla_deadline: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 min deadline
+      sla_deadline: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
     });
 
-    // Create system alert
+    await this.client.from('delivery_events').insert({
+      delivery_id: deliveryId,
+      event_type: 'ops_dispatch_required',
+      event_data: {
+        reason,
+        attempts: delivery?.assignment_attempts_count ?? 0,
+        timestamp: now,
+      },
+      actor_type: actor.role === 'system' ? 'system' : 'ops',
+      actor_id: actor.userId !== 'system' ? actor.userId : undefined,
+    });
+
     await this.client.from('system_alerts').insert({
       alert_type: 'dispatch_escalation',
       severity: 'error',
@@ -1290,6 +1580,14 @@ export class DispatchEngine {
       message: `Delivery ${deliveryId} requires manual assignment. Reason: ${reason}`,
       entity_type: 'delivery',
       entity_id: deliveryId,
+    });
+
+    await this.auditLogger.log({
+      action: 'status_change',
+      entityType: 'delivery',
+      entityId: deliveryId,
+      actor,
+      afterState: { escalated_to_ops: true, reason, attempts: delivery?.assignment_attempts_count ?? 0 },
     });
 
     this.eventEmitter.emit(
@@ -1327,16 +1625,23 @@ export class DispatchEngine {
     return deg * (Math.PI / 180);
   }
 
-  private async getDispatchSettings(): Promise<{
+  private async getDispatchSettings(serviceAreaId?: string | null): Promise<{
     dispatchRadiusKm: number;
     offerTimeoutSeconds: number;
     maxAssignmentAttempts: number;
   }> {
     const settings = await getPlatformSettings(this.client as unknown as any);
+    const tuning = await this.loadDispatchTuning(serviceAreaId);
     return {
       dispatchRadiusKm: settings.dispatchRadiusKm,
-      offerTimeoutSeconds: settings.offerTimeoutSeconds,
-      maxAssignmentAttempts: settings.maxAssignmentAttempts,
+      offerTimeoutSeconds:
+        tuning?.offerTtlSeconds != null && tuning.offerTtlSeconds > 0
+          ? tuning.offerTtlSeconds
+          : settings.offerTimeoutSeconds,
+      maxAssignmentAttempts:
+        tuning?.maxOfferAttempts != null && tuning.maxOfferAttempts > 0
+          ? tuning.maxOfferAttempts
+          : settings.maxAssignmentAttempts,
     };
   }
 }
@@ -1348,7 +1653,8 @@ export function createDispatchEngine(
   client: SupabaseClient,
   eventEmitter: DomainEventEmitter,
   auditLogger: AuditLogger,
-  slaManager: SLAManager
+  slaManager: SLAManager,
+  etaService?: EtaService
 ): DispatchEngine {
-  return new DispatchEngine(client, eventEmitter, auditLogger, slaManager);
+  return new DispatchEngine(client, eventEmitter, auditLogger, slaManager, etaService);
 }

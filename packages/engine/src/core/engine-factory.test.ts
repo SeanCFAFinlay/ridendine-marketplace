@@ -40,6 +40,10 @@ vi.mock('./email-provider', () => ({
   })),
 }));
 
+vi.mock('../services/eta.service', () => ({
+  createEtaService: vi.fn(() => ({ __eta: true })),
+}));
+
 vi.mock('../orchestrators/order.orchestrator', () => ({
   createOrderOrchestrator: vi.fn(() => ({})),
 }));
@@ -86,6 +90,7 @@ describe('createCentralEngine', () => {
     expect(engine).toHaveProperty('audit');
     expect(engine).toHaveProperty('sla');
     expect(engine).toHaveProperty('notifications');
+    expect(engine).toHaveProperty('eta');
 
     // Domain orchestrators
     expect(engine).toHaveProperty('orders');
@@ -95,6 +100,10 @@ describe('createCentralEngine', () => {
     expect(engine).toHaveProperty('support');
     expect(engine).toHaveProperty('platform');
     expect(engine).toHaveProperty('ops');
+
+    expect(engine).toHaveProperty('ledger');
+    expect(engine).toHaveProperty('payoutAutomation');
+    expect(engine).toHaveProperty('reconciliation');
   });
 
   it('passes paymentAdapter to createOrderOrchestrator', async () => {
@@ -106,9 +115,9 @@ describe('createCentralEngine', () => {
 
     createCentralEngine(mockClient, mockAdapter);
 
-    // Last argument to createOrderOrchestrator should be the payment adapter
     const callArgs = (createOrderOrchestrator as any).mock.calls[0];
-    expect(callArgs[callArgs.length - 1]).toBe(mockAdapter);
+    expect(callArgs[5]).toBe(mockAdapter);
+    expect(callArgs[6]).toBeDefined();
   });
 
   it('calls createOrderOrchestrator without adapter when none provided', async () => {
@@ -118,9 +127,9 @@ describe('createCentralEngine', () => {
     createCentralEngine({} as any);
 
     expect(createOrderOrchestrator).toHaveBeenCalledTimes(1);
-    // Last arg should be undefined
     const callArgs = (createOrderOrchestrator as any).mock.calls[0];
-    expect(callArgs[callArgs.length - 1]).toBeUndefined();
+    expect(callArgs[5]).toBeUndefined();
+    expect(callArgs[6]).toBeDefined();
   });
 
   it('registers email provider on the notification sender', async () => {

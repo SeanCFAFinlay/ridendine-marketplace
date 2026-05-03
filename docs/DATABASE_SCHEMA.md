@@ -4,7 +4,7 @@
 
 | Layer | Canonical location |
 |-------|---------------------|
-| **Database schema** | `supabase/migrations/` (`00001` through `00016` in this repository). |
+| **Database schema** | `supabase/migrations/` (`00001` through `00019` in this repository; **Phase 0** = `00019_business_engine.sql`). |
 | **Machine types** | `packages/db/src/generated/database.types.ts` — regenerate with `pnpm --filter @ridendine/db run db:generate`. The script tries **`supabase gen types --local`** (needs Docker + `supabase start`), then **`--db-url`** using **`DATABASE_URL`** from `.env.local` or `.env` (Postgres URI from Dashboard → Database). It **never truncates** the types file on failure. Passwords with special characters: the script retries with an encoded `postgresql://postgres:…` password segment. |
 | **This document** | High-level entity map and relationships; update when migrations add or rename tables/columns **verified** against SQL migrations and regenerated types. |
 | **Migration rationale** | [`docs/DATABASE_MIGRATION_NOTES.md`](DATABASE_MIGRATION_NOTES.md) — why each phase migration exists, rollback notes, follow-ups. |
@@ -49,7 +49,7 @@
 
 | Table | Description |
 |-------|-------------|
-| `orders` | Main order record (totals, status, payment) |
+| `orders` | Main order record (totals, **`status`** legacy, **`engine_status`** canonical engine, **`public_stage`** customer-safe projection — see `00019`) |
 | `order_items` | Items in order with prices |
 | `order_item_modifiers` | Selected options per item |
 | `order_status_history` | Status change audit trail (`previous_status`, `new_status`, `status` — see `00010`) |
@@ -62,7 +62,7 @@
 
 | Table | Description |
 |-------|-------------|
-| `drivers` | Driver profiles and status |
+| `drivers` | Driver profiles and status (**`instant_payouts_enabled`** in `00019`) |
 | `driver_documents` | License, insurance, vehicle docs |
 | `driver_vehicles` | Vehicle info (type, plates, color) |
 | `driver_shifts` | Work sessions with earnings |
@@ -75,7 +75,7 @@
 
 | Table | Description |
 |-------|-------------|
-| `deliveries` | Delivery record (pickup/dropoff, photos) |
+| `deliveries` | Delivery record (pickup/dropoff, photos; **routing/ETA cache columns** in `00019`: polylines, leg meters/seconds, `eta_*`, `route_progress_pct`, `routing_*`) |
 | `delivery_assignments` | Driver assignment offers |
 | `delivery_events` | Delivery audit log |
 | `delivery_tracking_events` | GPS breadcrumbs during delivery |
@@ -102,7 +102,7 @@ Defined primarily in `supabase/migrations/00007_central_engine_tables.sql` (plus
 | `order_exceptions` | Order incidents / SLA / escalation |
 | `sla_timers` | SLA timers (`sla_type`, `deadline_at`, `status`) |
 | `kitchen_queue_entries` | Per-storefront kitchen queue |
-| `ledger_entries` | Financial ledger lines |
+| `ledger_entries` | Financial ledger lines (**`idempotency_key`** + partial unique index in `00019`) |
 | `assignment_attempts` | Driver assignment attempts |
 | `ops_override_logs` | Admin override records |
 | `refund_cases` | Refund case workflow |
@@ -121,6 +121,10 @@ Defined primarily in `supabase/migrations/00007_central_engine_tables.sql` (plus
 | `chef_payouts` | `00004_additions.sql` | Chef payout records (detail alongside `payout_runs`) |
 | `analytics_events` | `00013_analytics_events.sql` | Analytics / product events |
 | `stripe_events_processed` | `00016_phase3_stripe_idempotency_order_events_promo.sql` | Stripe webhook idempotency ledger (`stripe_event_id` unique; no raw payload storage) |
+| `platform_accounts` | `00019_business_engine.sql` | Materialized balances (`chef_payable`, `driver_payable`, `platform_revenue`) updated from `ledger_entries` |
+| `stripe_reconciliation` | `00019_business_engine.sql` | Links `stripe_events_processed` to `ledger_entries` for finance reconciliation |
+| `service_areas` | `00019_business_engine.sql` | Marketplace geofences + optional per-area dispatch tuning (`offer_ttl_seconds`, `max_offer_attempts`, etc.) |
+| `instant_payout_requests` | `00019_business_engine.sql` | Driver instant payout request queue (Stripe wiring Phase 5) |
 
 The historical title “36 tables” referred to the **original core domain** sketch. The live schema includes the **additional** engine, analytics, platform, and payment-support tables above; use migrations and regenerated types for an authoritative inventory.
 

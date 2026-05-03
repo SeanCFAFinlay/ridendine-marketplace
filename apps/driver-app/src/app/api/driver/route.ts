@@ -42,7 +42,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { first_name, last_name, phone, profile_image_url } = body;
+    const { first_name, last_name, phone, profile_image_url, instant_payouts_enabled } = body;
 
     const updates: Partial<Driver> = {};
     if (first_name !== undefined) updates.first_name = first_name;
@@ -51,10 +51,17 @@ export async function PATCH(request: NextRequest) {
     if (profile_image_url !== undefined) updates.profile_image_url = profile_image_url;
 
     const adminClient = createAdminClient();
+    const patch = {
+      ...updates,
+      ...(instant_payouts_enabled !== undefined
+        ? { instant_payouts_enabled: Boolean(instant_payouts_enabled) }
+        : {}),
+    };
+
     const updatedDriver = await updateDriver(
       adminClient as unknown as SupabaseClient,
       driverContext.driverId,
-      updates
+      patch as Parameters<typeof updateDriver>[2]
     );
 
     return successResponse({ driver: updatedDriver });

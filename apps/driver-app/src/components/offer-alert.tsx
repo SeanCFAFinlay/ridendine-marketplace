@@ -2,18 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@ridendine/ui';
-
-interface RawOffer {
-  id: string;
-  expires_at: string;
-  delivery: {
-    id: string;
-    pickup_address: string;
-    dropoff_address: string;
-    estimated_distance_km: number | null;
-    driver_payout: number | string;
-  } | null;
-}
+import { createBrowserClient } from '@ridendine/db';
 
 interface DeliveryOffer {
   id: string;
@@ -26,19 +15,30 @@ interface DeliveryOffer {
 }
 
 interface OfferAlertProps {
+  driverId: string;
   isOnline: boolean;
 }
 
-function mapRawOffer(raw: RawOffer): DeliveryOffer | null {
-  if (!raw.delivery) return null;
+function mapBroadcastToOffer(payload: Record<string, unknown>): DeliveryOffer | null {
+  const attemptId = typeof payload.attemptId === 'string' ? payload.attemptId : null;
+  const deliveryId = typeof payload.deliveryId === 'string' ? payload.deliveryId : null;
+  const expiresAt = typeof payload.expiresAt === 'string' ? payload.expiresAt : null;
+  if (!attemptId || !deliveryId || !expiresAt) return null;
+  const pickupAddress = typeof payload.pickupAddress === 'string' ? payload.pickupAddress : '';
+  const dropoffAddress = typeof payload.dropoffAddress === 'string' ? payload.dropoffAddress : '';
+  const distanceKm =
+    typeof payload.estimatedDistanceKm === 'number' && Number.isFinite(payload.estimatedDistanceKm)
+      ? payload.estimatedDistanceKm
+      : 0;
+  const estimatedPayout = Number(payload.estimatedPayout ?? 0);
   return {
-    id: raw.id,
-    deliveryId: raw.delivery.id,
-    pickupAddress: raw.delivery.pickup_address,
-    dropoffAddress: raw.delivery.dropoff_address,
-    distanceKm: raw.delivery.estimated_distance_km ?? 0,
-    estimatedPayout: Number(raw.delivery.driver_payout),
-    expiresAt: raw.expires_at,
+    id: attemptId,
+    deliveryId,
+    pickupAddress,
+    dropoffAddress,
+    distanceKm,
+    estimatedPayout,
+    expiresAt,
   };
 }
 
@@ -135,45 +135,49 @@ function OfferStats({
   );
 }
 
-export function OfferAlert({ isOnline }: OfferAlertProps) {
+export function OfferAlert({ driverId, isOnline }: OfferAlertProps) {
   const [offer, setOffer] = useState<DeliveryOffer | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [responding, setResponding] = useState(false);
   const hasPlayedSound = useRef(false);
 
-  // Poll for offers every 5 seconds when online
   useEffect(() => {
-    if (!isOnline) return;
+    if (!isOnline || !driverId) return;
 
-    const poll = async () => {
-      try {
-        const res = await fetch('/api/offers');
-        if (!res.ok) return;
-        const data = await res.json();
+    const supabase = createBrowserClient();
+    if (!supabase) return;
 
-        if (data.offers && data.offers.length > 0) {
-          const raw: RawOffer = data.offers[0];
-          const mapped = mapRawOffer(raw);
-          if (!mapped) return;
+    const channelName = `driver:${driverId}:offers`;
+    const channel = supabase.channel(channelName, {
+      config: { broadcast: { self: true } },
+    });
 
-          if (!offer || offer.id !== mapped.id) {
-            setOffer(mapped);
-            hasPlayedSound.current = false;
-          }
-        } else if (offer && !responding) {
-          setOffer(null);
-        }
-      } catch {
-        // Silent poll failure
-      }
+    channel
+      .on('broadcast', { event: 'offer' }, ({ payload }) => {
+        const p = payload as Record<string, unknown>;
+        const mapped = mapBroadcastToOffer(p);
+        if (!mapped) return;
+        setOffer((prev) => {
+          if (prev?.id === mapped.id) return prev;
+          hasPlayedSound.current = false;
+          return mapped;
+        });
+      })
+      .on('broadcast', { event: 'offer_expired' }, ({ payload }) => {
+        const p = payload as Record<string, unknown>;
+        const id = typeof p.attemptId === 'string' ? p.attemptId : null;
+        setOffer((prev) => {
+          if (!prev || !id || prev.id !== id) return prev;
+          return null;
+        });
+      })
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
     };
+  }, [isOnline, driverId]);
 
-    poll();
-    const interval = setInterval(poll, 5000);
-    return () => clearInterval(interval);
-  }, [isOnline, offer, responding]);
-
-  // Countdown timer and sound trigger
   useEffect(() => {
     if (!offer) return;
 
@@ -207,6 +211,7 @@ export function OfferAlert({ isOnline }: OfferAlertProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           attemptId: offer.id,
+          driverId,
           action,
           ...(action === 'decline' ? { reason: 'driver_declined' } : {}),
         }),
@@ -218,7 +223,9 @@ export function OfferAlert({ isOnline }: OfferAlertProps) {
     } catch (error) {
       console.error('Failed to respond to offer:', error);
     } finally {
-      setOffer(null);
+      if (action === 'decline') {
+        setOffer(null);
+      }
       setResponding(false);
     }
   };
@@ -233,15 +240,9 @@ export function OfferAlert({ isOnline }: OfferAlertProps) {
           <CountdownBadge secondsLeft={secondsLeft} />
         </div>
 
-        <RouteDisplay
-          pickupAddress={offer.pickupAddress}
-          dropoffAddress={offer.dropoffAddress}
-        />
+        <RouteDisplay pickupAddress={offer.pickupAddress} dropoffAddress={offer.dropoffAddress} />
 
-        <OfferStats
-          distanceKm={offer.distanceKm}
-          estimatedPayout={offer.estimatedPayout}
-        />
+        <OfferStats distanceKm={offer.distanceKm} estimatedPayout={offer.estimatedPayout} />
 
         <div className="mt-5 flex gap-3">
           <Button

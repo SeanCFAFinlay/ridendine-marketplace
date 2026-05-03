@@ -54,6 +54,33 @@ export {
   finalizeStripeWebhookFailure,
 } from './services/stripe-webhook-idempotency';
 
+export {
+  handleStripeFinanceWebhook,
+  financeWebhookSystemActor,
+  type FinanceWebhookEngineSlice,
+} from './services/stripe-webhook-finance';
+
+export { createEtaService } from './services/eta.service';
+export type { EtaService } from '@ridendine/routing';
+
+export {
+  LedgerService,
+  createLedgerService,
+  makeLedgerIdempotencyKey,
+  type LedgerInsertRow,
+} from './services/ledger.service';
+export {
+  PayoutService,
+  createPayoutService,
+  type PayoutPreviewLine,
+  type PayoutServiceDeps,
+} from './services/payout.service';
+export {
+  ReconciliationService,
+  createReconciliationService,
+  type ReconciliationRunSummary,
+} from './services/reconciliation.service';
+
 // Constants
 export * from './constants';
 

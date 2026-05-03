@@ -1,11 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { Card, Badge } from '@ridendine/ui';
+import { useState } from 'react';
+import { Card, Badge, Button } from '@ridendine/ui';
 import type { Delivery } from '@ridendine/db';
 
 interface EarningsViewProps {
   deliveries: Delivery[];
+  /** Ledger-derived driver_payable balance (cents). */
+  availableBalanceCents?: number;
+  instantPayoutsEnabled?: boolean;
 }
 
 function getWeeklyEarnings(deliveries: Delivery[]) {
@@ -45,13 +49,60 @@ function getTodayDeliveries(deliveries: Delivery[]) {
   });
 }
 
-export default function EarningsView({ deliveries }: EarningsViewProps) {
+function instantFeeCents(amountCents: number): number {
+  return Math.round((amountCents * 150) / 10_000);
+}
+
+export default function EarningsView({
+  deliveries,
+  availableBalanceCents = 0,
+  instantPayoutsEnabled = false,
+}: EarningsViewProps) {
   const weeklyEarnings = getWeeklyEarnings(deliveries);
   const todayDeliveries = getTodayDeliveries(deliveries);
 
   const totalWeek = weeklyEarnings.reduce((sum, d) => sum + d.amount, 0);
   const totalDeliveries = weeklyEarnings.reduce((sum, d) => sum + d.deliveries, 0);
   const maxAmount = Math.max(...weeklyEarnings.map((d) => d.amount), 1);
+
+  const [amountStr, setAmountStr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [instantMsg, setInstantMsg] = useState<string | null>(null);
+
+  async function requestInstant() {
+    const cents = Math.round(parseFloat(amountStr) * 100);
+    if (!Number.isFinite(cents) || cents <= 0) {
+      setInstantMsg('Enter a valid dollar amount.');
+      return;
+    }
+    if (cents > availableBalanceCents) {
+      setInstantMsg('Amount exceeds available balance.');
+      return;
+    }
+    setBusy(true);
+    setInstantMsg(null);
+    try {
+      const res = await fetch('/api/payouts/instant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amountCents: cents }),
+      });
+      const body = (await res.json()) as { success?: boolean; error?: { message?: string } };
+      if (!res.ok || !body.success) {
+        setInstantMsg(body.error?.message ?? 'Request failed');
+        return;
+      }
+      setInstantMsg('Request submitted. Ops will execute the Stripe payout; 1.5% fee applies.');
+      setAmountStr('');
+    } catch {
+      setInstantMsg('Network error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const previewCents = Math.round(parseFloat(amountStr || '0') * 100);
+  const previewFee = Number.isFinite(previewCents) && previewCents > 0 ? instantFeeCents(previewCents) : 0;
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] pb-20">
@@ -145,7 +196,7 @@ export default function EarningsView({ deliveries }: EarningsViewProps) {
               <p className="text-[32px] font-bold leading-tight text-[#1a1a1a]">
                 ${totalWeek.toFixed(2)}
               </p>
-              <p className="mt-1 text-[14px] text-[#6b7280]">Processing Monday</p>
+              <p className="mt-1 text-[14px] text-[#6b7280]">Scheduled payouts (see Settings)</p>
             </div>
             <Badge variant="info" className="bg-[#eff6ff] text-[#1e40af]">
               Weekly
@@ -153,6 +204,69 @@ export default function EarningsView({ deliveries }: EarningsViewProps) {
           </div>
         </Card>
       </div>
+
+      <div className="p-4 pt-0">
+        <Card className="border-0 shadow-sm">
+          <h2 className="text-[17px] font-semibold text-[#1a1a1a]">Available balance</h2>
+          <p className="mt-1 text-[28px] font-bold text-[#15803d]">
+            ${(availableBalanceCents / 100).toFixed(2)}
+          </p>
+          <p className="mt-2 text-[13px] leading-relaxed text-[#6b7280]">
+            From your driver payable ledger account (same source ops uses for payouts).
+          </p>
+        </Card>
+      </div>
+
+      {instantPayoutsEnabled ? (
+        <div className="p-4 pt-0">
+          <Card className="border-0 shadow-sm">
+            <h2 className="text-[17px] font-semibold text-[#1a1a1a]">Instant payout</h2>
+            <p className="mt-2 text-[13px] leading-relaxed text-[#6b7280]">
+              Fee is <span className="font-semibold text-[#1a1a1a]">1.5%</span> of the amount you request, taken from
+              your balance before transfer. You submit a request here; finance executes it in ops-admin.
+            </p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+              <label className="flex-1 text-[13px] text-[#374151]">
+                Amount (USD)
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={amountStr}
+                  onChange={(e) => setAmountStr(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-[#e5e7eb] px-3 py-2 text-[15px]"
+                  placeholder="0.00"
+                />
+              </label>
+              <Button type="button" disabled={busy} onClick={() => void requestInstant()}>
+                {busy ? 'Submitting…' : 'Request instant payout'}
+              </Button>
+            </div>
+            {previewCents > 0 ? (
+              <p className="mt-3 text-[13px] text-[#6b7280]">
+                Estimated fee: <span className="font-semibold text-[#1a1a1a]">${(previewFee / 100).toFixed(2)}</span>{' '}
+                (1.5%)
+              </p>
+            ) : null}
+            {instantMsg ? <p className="mt-3 text-[13px] text-[#b45309]">{instantMsg}</p> : null}
+            <Link href="/settings" className="mt-4 inline-block text-[14px] font-medium text-brand-600">
+              Payout settings
+            </Link>
+          </Card>
+        </div>
+      ) : (
+        <div className="p-4 pt-0">
+          <Card className="border-0 shadow-sm">
+            <p className="text-[14px] text-[#6b7280]">
+              Enable instant payouts in{' '}
+              <Link href="/settings" className="font-medium text-brand-600">
+                Settings
+              </Link>{' '}
+              to request on-demand transfers (1.5% fee).
+            </p>
+          </Card>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 border-t border-[#e5e7eb] bg-white">

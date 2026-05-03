@@ -30,6 +30,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@ridendine/routing": "workspace:*",
     "@ridendine/db": "workspace:*",
     "@ridendine/notifications": "workspace:*",
     "@ridendine/types": "workspace:*",

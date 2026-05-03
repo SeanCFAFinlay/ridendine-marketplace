@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Card } from '@ridendine/ui';
-import { createBrowserClient, deliveryTrackingChannelLegacy, entityDeliveryChannel } from '@ridendine/db';
+import { useOrderStream } from '@/lib/orders/use-order-stream';
 
 const OrderTrackingMap = dynamic(
   () => import('./order-tracking-map'),
@@ -13,114 +13,88 @@ const OrderTrackingMap = dynamic(
 export interface LiveOrderTrackerProps {
   orderId: string;
   orderNumber: string;
+  /** Legacy `orders.status` — fallback only */
   initialStatus: string;
+  initialPublicStage?: string | null;
   deliveryId: string | null;
   pickupAddress: string;
   dropoffAddress: string;
   estimatedDeliveryMinutes: number | null;
   storefrontName: string;
+  initialEtaPickupAt?: string | null;
+  initialEtaDropoffAt?: string | null;
+  initialProgressPct?: number | null;
+  initialRemainingSeconds?: number | null;
+  initialRoutePolyline?: string | null;
 }
 
-const STATUS_STEPS = [
-  { key: 'pending', label: 'Confirmed' },
-  { key: 'accepted', label: 'Preparing' },
-  { key: 'ready_for_pickup', label: 'Ready' },
-  { key: 'picked_up', label: 'Picked Up' },
-  { key: 'in_transit', label: 'On the Way' },
+const PUBLIC_STEPS = [
+  { key: 'placed', label: 'Order placed' },
+  { key: 'cooking', label: 'Preparing' },
+  { key: 'on_the_way', label: 'On the way' },
   { key: 'delivered', label: 'Delivered' },
-];
+] as const;
 
-const STATUS_MAP: Record<string, string> = {
-  pending: 'pending',
-  accepted: 'accepted',
-  preparing: 'accepted',
-  ready_for_pickup: 'ready_for_pickup',
-  ready: 'ready_for_pickup',
-  picked_up: 'picked_up',
-  in_transit: 'in_transit',
-  driver_en_route_dropoff: 'in_transit',
+const LEGACY_TO_PUBLIC: Record<string, string> = {
+  pending: 'placed',
+  checkout_pending: 'placed',
+  payment_authorized: 'placed',
+  accepted: 'cooking',
+  preparing: 'cooking',
+  ready_for_pickup: 'cooking',
+  ready: 'cooking',
+  dispatch_pending: 'cooking',
+  picked_up: 'on_the_way',
+  in_transit: 'on_the_way',
+  driver_en_route_dropoff: 'on_the_way',
+  driver_en_route_customer: 'on_the_way',
   delivered: 'delivered',
   completed: 'delivered',
+  cancelled: 'cancelled',
+  failed: 'cancelled',
+  refunded: 'refunded',
 };
 
-function getStatusIndex(status: string): number {
-  const mapped = STATUS_MAP[status] ?? status;
-  const idx = STATUS_STEPS.findIndex((s) => s.key === mapped);
+function resolvePublicStage(
+  stage: string | null,
+  legacyStatus: string | null,
+  initialPublicStage: string | null | undefined,
+  initialStatus: string
+): string {
+  if (stage) return stage;
+  if (initialPublicStage) return initialPublicStage;
+  if (legacyStatus && LEGACY_TO_PUBLIC[legacyStatus]) {
+    return LEGACY_TO_PUBLIC[legacyStatus]!;
+  }
+  return LEGACY_TO_PUBLIC[initialStatus] ?? 'placed';
+}
+
+function publicStageIndex(publicStage: string): number {
+  if (publicStage === 'cancelled' || publicStage === 'refunded') return -1;
+  const idx = PUBLIC_STEPS.findIndex((s) => s.key === publicStage);
   return idx >= 0 ? idx : 0;
 }
 
-function useRealtimeTracking(
-  deliveryId: string | null,
-  onLocation: (lat: number, lng: number) => void,
-  onStatus: (status: string) => void
-) {
-  const supabase = useMemo(() => createBrowserClient(), []);
+function StepIndicator({ currentIndex, terminal }: { currentIndex: number; terminal: string | null }) {
+  if (terminal === 'cancelled') {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-lg font-semibold text-gray-800">This order was cancelled.</p>
+      </div>
+    );
+  }
+  if (terminal === 'refunded') {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-lg font-semibold text-gray-800">Refund in progress or completed.</p>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    if (!deliveryId || !supabase) return;
-
-    const trackingChannel = supabase
-      .channel(deliveryTrackingChannelLegacy(deliveryId))
-      .on('broadcast', { event: 'driver_location_updated' }, (payload: { payload?: { lat?: number; lng?: number } }) => {
-        const data = payload.payload;
-        if (data?.lat && data?.lng) onLocation(data.lat, data.lng);
-      })
-      .on('broadcast', { event: 'delivery_status_updated' }, (payload: { payload?: { status?: string } }) => {
-        const data = payload.payload;
-        if (data?.status) onStatus(data.status);
-      })
-      .subscribe();
-
-    const entityChannel = supabase
-      .channel(entityDeliveryChannel(deliveryId))
-      .on('broadcast', { event: 'broadcast' }, (payload: { payload?: { lat?: number; lng?: number; status?: string } }) => {
-        const data = payload.payload;
-        if (data?.lat && data?.lng) onLocation(data.lat, data.lng);
-        if (data?.status) onStatus(data.status);
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(trackingChannel);
-      supabase.removeChannel(entityChannel);
-    };
-  }, [deliveryId, supabase, onLocation, onStatus]);
-}
-
-function usePollStatus(orderId: string, onStatus: (status: string) => void) {
-  const [pollWarning, setPollWarning] = useState<string | null>(null);
-
-  useEffect(() => {
-    const poll = async () => {
-      try {
-        const res = await fetch(`/api/orders/${orderId}`);
-        if (res.ok) {
-          const data = await res.json();
-          const status = data.data?.order?.status ?? data.data?.status;
-          if (status) {
-            onStatus(status);
-            setPollWarning(null);
-          }
-        } else if (res.status >= 500) {
-          setPollWarning('Live status updates are delayed. Showing last known state.');
-        }
-      } catch {
-        setPollWarning('Live status updates are delayed. Showing last known state.');
-      }
-    };
-
-    const interval = setInterval(poll, 30000);
-    return () => clearInterval(interval);
-  }, [orderId, onStatus]);
-
-  return pollWarning;
-}
-
-function StepIndicator({ currentIndex }: { currentIndex: number }) {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between">
-        {STATUS_STEPS.map((step, i) => (
+        {PUBLIC_STEPS.map((step, i) => (
           <div key={step.key} className="flex items-center">
             <div
               className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-colors ${
@@ -133,14 +107,14 @@ function StepIndicator({ currentIndex }: { currentIndex: number }) {
             >
               {i < currentIndex ? '✓' : i + 1}
             </div>
-            {i < STATUS_STEPS.length - 1 && (
+            {i < PUBLIC_STEPS.length - 1 && (
               <div className={`h-0.5 w-4 sm:w-8 ${i < currentIndex ? 'bg-green-500' : 'bg-gray-200'}`} />
             )}
           </div>
         ))}
       </div>
-      <div className="mt-2 flex justify-between">
-        {STATUS_STEPS.map((step, i) => (
+      <div className="mt-2 flex justify-between gap-1">
+        {PUBLIC_STEPS.map((step, i) => (
           <span
             key={step.key}
             className={`text-[10px] sm:text-xs ${i <= currentIndex ? 'text-gray-900 font-medium' : 'text-gray-400'}`}
@@ -158,12 +132,26 @@ function DeliveryDetails({
   dropoffAddress,
   estimatedDeliveryMinutes,
   isDelivered,
+  etaPickupAt,
+  etaDropoffAt,
+  remainingSeconds,
 }: {
   pickupAddress: string;
   dropoffAddress: string;
   estimatedDeliveryMinutes: number | null;
   isDelivered: boolean;
+  etaPickupAt: string | null;
+  etaDropoffAt: string | null;
+  remainingSeconds: number | null;
 }) {
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+      month: 'short',
+      day: 'numeric',
+    });
+
   return (
     <Card className="p-6">
       <h3 className="font-semibold text-gray-900">Delivery Details</h3>
@@ -184,7 +172,24 @@ function DeliveryDetails({
           </div>
         </div>
       </div>
-      {estimatedDeliveryMinutes && !isDelivered && (
+      {(etaPickupAt || etaDropoffAt) && !isDelivered && (
+        <div className="mt-4 space-y-1 rounded-lg bg-orange-50 p-3 text-sm text-orange-900">
+          {etaPickupAt && (
+            <p>
+              Pickup ETA: <strong>{fmt(etaPickupAt)}</strong>
+            </p>
+          )}
+          {etaDropoffAt && (
+            <p>
+              Delivery ETA: <strong>{fmt(etaDropoffAt)}</strong>
+            </p>
+          )}
+          {remainingSeconds != null && remainingSeconds > 0 && (
+            <p className="text-xs opacity-90">About {Math.round(remainingSeconds / 60)} min remaining (estimate)</p>
+          )}
+        </div>
+      )}
+      {estimatedDeliveryMinutes && !isDelivered && !etaDropoffAt && (
         <div className="mt-4 rounded-lg bg-orange-50 p-3">
           <p className="text-sm text-orange-800">
             Estimated delivery in <strong>{estimatedDeliveryMinutes} minutes</strong>
@@ -199,44 +204,78 @@ export function LiveOrderTracker({
   orderId,
   orderNumber,
   initialStatus,
+  initialPublicStage,
   deliveryId,
   pickupAddress,
   dropoffAddress,
   estimatedDeliveryMinutes,
   storefrontName,
+  initialEtaPickupAt,
+  initialEtaDropoffAt,
+  initialProgressPct,
+  initialRemainingSeconds,
+  initialRoutePolyline,
 }: LiveOrderTrackerProps) {
-  const [status, setStatus] = useState(initialStatus);
-  const [driverLocation, setDriverLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const {
+    stage,
+    etaPickupAt,
+    etaDropoffAt,
+    progressPct,
+    remainingSeconds,
+    routePolyline,
+    legacyStatus,
+    isLive,
+    error,
+  } = useOrderStream({
+    orderId,
+    initialPublicStage: initialPublicStage ?? null,
+    initialEtaPickupAt: initialEtaPickupAt ?? null,
+    initialEtaDropoffAt: initialEtaDropoffAt ?? null,
+    initialProgressPct: initialProgressPct ?? null,
+    initialRemainingSeconds: initialRemainingSeconds ?? null,
+    initialRoutePolyline: initialRoutePolyline ?? null,
+    initialLegacyStatus: initialStatus,
+  });
 
-  const handleLocation = useMemo(
-    () => (lat: number, lng: number) => setDriverLocation({ lat, lng }),
-    []
+  const publicStage = useMemo(
+    () => resolvePublicStage(stage, legacyStatus, initialPublicStage, initialStatus),
+    [stage, legacyStatus, initialPublicStage, initialStatus]
   );
-  const handleStatus = useMemo(() => (s: string) => setStatus(s), []);
 
-  useRealtimeTracking(deliveryId, handleLocation, handleStatus);
-  const pollWarning = usePollStatus(orderId, handleStatus);
+  const terminal =
+    publicStage === 'cancelled' || publicStage === 'refunded' ? publicStage : null;
+  const currentStepIndex = terminal ? -1 : publicStageIndex(publicStage);
+  const isDelivered = publicStage === 'delivered';
+  const onTheWay = publicStage === 'on_the_way';
+  const showMap = Boolean(deliveryId) && onTheWay && !isDelivered;
 
-  const currentStepIndex = getStatusIndex(status);
-  const isDelivered = status === 'delivered' || status === 'completed';
-  const showMap = Boolean(deliveryId) && !isDelivered && currentStepIndex >= 3;
+  const heading = terminal
+    ? terminal === 'cancelled'
+      ? 'Cancelled'
+      : 'Refunded'
+    : PUBLIC_STEPS[Math.max(0, currentStepIndex)]?.label ?? 'Processing';
 
   return (
     <div className="space-y-6">
-      {pollWarning && (
+      {error && (
         <Card className="border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm text-amber-800">{pollWarning}</p>
+          <p className="text-sm text-amber-800">{error}</p>
+        </Card>
+      )}
+      {!isLive && !error && (
+        <Card className="border-gray-200 bg-gray-50 p-3">
+          <p className="text-xs text-gray-600">Connecting to live updates…</p>
         </Card>
       )}
       <Card className="overflow-hidden">
         <div className="bg-gradient-to-r from-[#1a7a6e] to-[#22a196] p-6 text-white">
           <p className="text-sm font-medium opacity-80">Order #{orderNumber}</p>
           <h2 className="mt-1 text-2xl font-bold">
-            {isDelivered ? 'Delivered!' : STATUS_STEPS[currentStepIndex]?.label ?? 'Processing'}
+            {isDelivered ? 'Delivered!' : heading}
           </h2>
           <p className="mt-1 text-sm opacity-80">From {storefrontName}</p>
         </div>
-        <StepIndicator currentIndex={currentStepIndex} />
+        <StepIndicator currentIndex={currentStepIndex} terminal={terminal} />
       </Card>
 
       {showMap && (
@@ -247,11 +286,24 @@ export function LiveOrderTracker({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
               </span>
-              <h3 className="font-semibold text-gray-900">Live Tracking</h3>
+              <h3 className="font-semibold text-gray-900">Order progress</h3>
             </div>
+            {progressPct != null && (
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                <div
+                  className="h-full rounded-full bg-[#E85D26] transition-all duration-500"
+                  style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }}
+                />
+              </div>
+            )}
           </div>
-          <div className="h-64">
-            <OrderTrackingMap driverLocation={driverLocation} dropoffAddress={dropoffAddress} />
+          <div className="h-64 px-2 pb-4">
+            <OrderTrackingMap
+              polyline={routePolyline}
+              progressPct={progressPct}
+              etaDropoffAt={etaDropoffAt}
+              dropoffAddress={dropoffAddress}
+            />
           </div>
         </Card>
       )}
@@ -261,6 +313,9 @@ export function LiveOrderTracker({
         dropoffAddress={dropoffAddress}
         estimatedDeliveryMinutes={estimatedDeliveryMinutes}
         isDelivered={isDelivered}
+        etaPickupAt={etaPickupAt}
+        etaDropoffAt={etaDropoffAt}
+        remainingSeconds={remainingSeconds}
       />
     </div>
   );

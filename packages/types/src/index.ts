@@ -13,6 +13,9 @@ export * from './domains/platform';
 // Re-export enums
 export * from './enums';
 
+// Customer-safe order projection (Phase 0 business engine)
+export * from './public-order-stage';
+
 // Re-export unified role definitions
 export * from './roles';
 

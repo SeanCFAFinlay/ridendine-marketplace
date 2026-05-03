@@ -136,6 +136,11 @@ function buildDispatchItem(
     status: delivery.status,
     pickupAddress: delivery.pickup_address,
     dropoffAddress: delivery.dropoff_address,
+    pickupLat: delivery.pickup_lat ?? null,
+    pickupLng: delivery.pickup_lng ?? null,
+    dropoffLat: delivery.dropoff_lat ?? null,
+    dropoffLng: delivery.dropoff_lng ?? null,
+    routeToDropoffPolyline: delivery.route_to_dropoff_polyline ?? null,
     pickupArea: extractAreaFromAddress(delivery.pickup_address),
     customerName:
       [delivery.order?.customer?.first_name, delivery.order?.customer?.last_name]

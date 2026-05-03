@@ -3,11 +3,8 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { RealTimeStats } from '@/components/dashboard/real-time-stats';
-import { RevenueChart } from '@/components/dashboard/revenue-chart';
-import { OrdersHeatmap } from '@/components/dashboard/orders-heatmap';
-import { AlertsPanel } from '@/components/dashboard/alerts-panel';
 import { getEngine } from '@/lib/engine';
+import { LiveBoard } from './_components/live-board';
 
 export const dynamic = 'force-dynamic';
 
@@ -185,19 +182,6 @@ export default async function DashboardPage() {
     },
   ];
 
-  const secondaryStats = [
-    { label: 'Monthly Revenue', value: `$${stats.monthRevenue.toFixed(2)}` },
-    { label: 'Platform Earnings (15%)', value: `$${stats.platformFee.toFixed(2)}` },
-    { label: 'Active Chefs', value: stats.activeChefs.toString() },
-    { label: 'Total Customers', value: stats.totalCustomers.toLocaleString() },
-    {
-      label: 'Avg Delivery Time',
-      value:
-        stats.avgDeliveryTime === null ? 'N/A' : `${Math.round(stats.avgDeliveryTime)} min`,
-    },
-    { label: 'Pending Approvals', value: stats.pendingApprovals.toString() },
-  ];
-
   const quickActions = [
     { href: '/dashboard/chefs/approvals', label: 'Chef Approvals', count: stats.pendingApprovals, urgent: stats.pendingApprovals > 0 },
     { href: '/dashboard/map', label: 'Live Map', count: stats.activeDeliveries },
@@ -207,7 +191,6 @@ export default async function DashboardPage() {
     { href: '/dashboard/support', label: 'Support', count: engineData?.supportBacklog ?? 0 },
   ];
 
-  // Engine-backed operational queue links
   const opsQueues = [
     {
       href: '/dashboard/deliveries?queue=pending',
@@ -242,11 +225,10 @@ export default async function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Operations Command Center</h1>
-            <p className="mt-1 text-gray-400">Real-time platform monitoring &amp; engine control</p>
+            <p className="mt-1 text-gray-400">Live board · KPIs · engine pressure</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="flex h-3 w-3 relative">
@@ -257,7 +239,6 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Primary KPI Stats */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {primaryStats.map((stat) => (
             <Card key={stat.label} className="border-gray-800 bg-[#16213e] p-6">
@@ -273,7 +254,6 @@ export default async function DashboardPage() {
           ))}
         </div>
 
-        {/* Engine Status Bar */}
         {engineData && (
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
@@ -303,23 +283,8 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* Real-time updates and alerts */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <RealTimeStats />
-          </div>
-          <div>
-            <AlertsPanel pendingApprovals={stats.pendingApprovals} />
-          </div>
-        </div>
+        <LiveBoard />
 
-        {/* Charts */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <RevenueChart />
-          <OrdersHeatmap />
-        </div>
-
-        {/* Operational Queues (engine-backed) */}
         {engineData && (
           <>
             <h2 className="text-lg font-semibold text-white pt-2">Operational Queues</h2>
@@ -352,20 +317,6 @@ export default async function DashboardPage() {
           </>
         )}
 
-        {/* Platform Overview */}
-        <Card className="border-gray-800 bg-[#16213e] p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Platform Overview</h3>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-            {secondaryStats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-2xl font-bold text-white">{stat.value}</p>
-                <p className="text-xs text-gray-400 mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Quick Actions */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {quickActions.map((action) => (
             <Link key={action.href} href={action.href}>

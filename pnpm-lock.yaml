@@ -221,6 +221,9 @@ importers:
       '@ridendine/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@ridendine/routing':
+        specifier: workspace:*
+        version: link:../../packages/routing
       '@ridendine/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -312,6 +315,9 @@ importers:
       '@ridendine/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@ridendine/routing':
+        specifier: workspace:*
+        version: link:../../packages/routing
       '@ridendine/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -474,6 +480,9 @@ importers:
       '@ridendine/notifications':
         specifier: workspace:*
         version: link:../notifications
+      '@ridendine/routing':
+        specifier: workspace:*
+        version: link:../routing
       '@ridendine/types':
         specifier: workspace:*
         version: link:../types
@@ -513,11 +522,27 @@ importers:
         specifier: ^5.6.0
         version: 5.9.3
 
+  packages/routing:
+    dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.45.0
+        version: 2.99.3
+    devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.37)(jsdom@20.0.3)(terser@5.46.2)
+
   packages/types:
     devDependencies:
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.37)(jsdom@20.0.3)(terser@5.46.2)
 
   packages/ui:
     dependencies:

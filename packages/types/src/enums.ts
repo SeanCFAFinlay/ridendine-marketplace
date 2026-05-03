@@ -187,3 +187,14 @@ export const NotificationType = {
 } as const;
 
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType];
+
+/** instant_payout_requests.status (Phase 0 schema; Phase 5 executes payouts) */
+export const InstantPayoutStatus = {
+  PENDING: 'pending',
+  EXECUTING: 'executing',
+  EXECUTED: 'executed',
+  FAILED: 'failed',
+  CANCELLED: 'cancelled',
+} as const;
+
+export type InstantPayoutStatus = (typeof InstantPayoutStatus)[keyof typeof InstantPayoutStatus];

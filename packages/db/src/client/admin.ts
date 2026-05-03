@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '../generated/database.types';
+import type { Database } from '../database.merged';
 
 let adminClient: ReturnType<typeof createClient<Database>> | null = null;
 

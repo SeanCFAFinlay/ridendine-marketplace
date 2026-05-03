@@ -1,55 +1,52 @@
 'use client';
 
-import { useEffect, useRef, useCallback, useMemo } from 'react';
-import { createBrowserClient } from '@ridendine/db';
+import { useEffect, useRef, useCallback } from 'react';
 
 interface UseLocationTrackerProps {
   driverId: string | null;
   isOnline: boolean;
-  updateInterval?: number; // milliseconds
+  /** When set (active delivery to customer), included in POST for ETA + customer broadcast */
+  deliveryId?: string | null;
+  updateInterval?: number;
+}
+
+async function postLocation(
+  lat: number,
+  lng: number,
+  deliveryId: string | null | undefined
+): Promise<void> {
+  await fetch('/api/location', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      lat,
+      lng,
+      ...(deliveryId ? { deliveryId } : {}),
+    }),
+  });
 }
 
 export function useLocationTracker({
   driverId,
   isOnline,
+  deliveryId = null,
   updateInterval = 15000,
 }: UseLocationTrackerProps) {
   const watchIdRef = useRef<number | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastLocationRef = useRef<{ lat: number; lng: number } | null>(null);
+  const deliveryIdRef = useRef(deliveryId);
+  deliveryIdRef.current = deliveryId;
 
-  const supabase = useMemo(() => createBrowserClient(), []);
-
-  const updateLocation = useCallback(
-    async (lat: number, lng: number) => {
-      if (!driverId || !supabase) return;
-
-      try {
-        // Update driver_presence table
-        await (supabase as any)
-          .from('driver_presence')
-          .upsert({
-            driver_id: driverId,
-            current_lat: lat,
-            current_lng: lng,
-            last_location_update: new Date().toISOString(),
-          });
-
-        // Also insert into driver_locations for history
-        await (supabase as any).from('driver_locations').insert({
-          driver_id: driverId,
-          lat,
-          lng,
-          recorded_at: new Date().toISOString(),
-        });
-
-        lastLocationRef.current = { lat, lng };
-      } catch (error) {
-        console.error('Failed to update location:', error);
-      }
-    },
-    [driverId, supabase]
-  );
+  const updateLocation = useCallback(async (lat: number, lng: number) => {
+    if (!driverId) return;
+    try {
+      await postLocation(lat, lng, deliveryIdRef.current);
+    } catch (error) {
+      console.error('Failed to update location:', error);
+    }
+  }, [driverId]);
 
   const startTracking = useCallback(() => {
     if (!('geolocation' in navigator)) {
@@ -57,7 +54,6 @@ export function useLocationTracker({
       return;
     }
 
-    // Clear any existing watchers
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current);
     }
@@ -65,7 +61,6 @@ export function useLocationTracker({
       clearInterval(intervalRef.current);
     }
 
-    // Watch position continuously
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -81,18 +76,16 @@ export function useLocationTracker({
       }
     );
 
-    // Update server at regular intervals
     intervalRef.current = setInterval(() => {
       if (lastLocationRef.current) {
-        updateLocation(lastLocationRef.current.lat, lastLocationRef.current.lng);
+        void updateLocation(lastLocationRef.current.lat, lastLocationRef.current.lng);
       }
     }, updateInterval);
 
-    // Get initial position
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        updateLocation(latitude, longitude);
+        void updateLocation(latitude, longitude);
       },
       (error) => {
         console.error('Initial position error:', error);
