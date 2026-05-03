@@ -59,6 +59,48 @@ Existing entries already covered: `node_modules/`, `.next/`, `dist/`, `build/`, 
 
 ---
 
-## Steps 4–8 — (filled after staging / commit / push)
+## Step 4 — Staged paths
 
-_(Commit hash, push result, final `git status`, and any second report commit documented below.)_
+Staged per instructions: **`.gitignore`**, **`AUDIT_AND_PLANNING/`**, **`docs/`**, **`packages/`**, **`apps/`**, **`supabase/`**, **`package.json`**, **`pnpm-lock.yaml`**, **`pnpm-workspace.yaml`**, **`turbo.json`**. Root **`vercel.json`** / **`tsconfig.json`** — not present at repo root (skipped).
+
+## Step 5 — Staged review
+
+- **`git diff --cached --stat`:** 143 files, +11260 / −778 lines (before commit).
+- **Staged secret heuristics:** no long `sk_live_*`, no long JWT-like blobs, no inline `SUPABASE_SERVICE_ROLE_KEY=…` assignments beyond docs/CI placeholders.
+
+## Step 6 — Commit
+
+| Field | Value |
+|--------|--------|
+| **Hash** | `d8f9891` |
+| **Message** | `Complete Ridendine business engine phases 0-6` |
+
+## Step 7 — Push
+
+| Field | Value |
+|--------|--------|
+| **Remote** | `origin` → `https://github.com/SeanCFAFinlay/ridendine-marketplace.git` |
+| **Branch** | `ridendine-prelaunch-repair-checkpoint` |
+| **Result** | **Success** — `9bc08d7..d8f9891` pushed; upstream tracking set to `origin/ridendine-prelaunch-repair-checkpoint`. |
+
+## Step 8 — Final verification (post-push)
+
+```text
+git status --short   → clean (no output)
+git log --oneline -5 → d8f9891 (merge base below)
+git remote -v        → origin correct
+```
+
+### Blocked files
+
+**None** (no `GIT_PUSH_BLOCKED`).
+
+### Remaining local changes
+
+**None** after push (working tree clean).
+
+---
+
+## Second commit (report completion)
+
+This section was appended after the main push; a follow-up commit records the completed Steps 4–8 narrative.
