@@ -297,6 +297,9 @@ export const LedgerEntryType = {
   // Tax
   TAX_COLLECTED: 'tax_collected',
   TAX_REMITTED: 'tax_remitted',
+
+  /** Instant payout fee (driver); Phase 5 Stripe Instant Payouts */
+  INSTANT_PAYOUT_FEE: 'instant_payout_fee',
 } as const;
 
 export type LedgerEntryType = (typeof LedgerEntryType)[keyof typeof LedgerEntryType];
@@ -559,6 +562,12 @@ export interface DispatchQueueItem {
   status: string;
   pickupAddress: string;
   dropoffAddress: string;
+  /** Ops map / polyline (internal ops only; not customer tracking). */
+  pickupLat?: number | null;
+  pickupLng?: number | null;
+  dropoffLat?: number | null;
+  dropoffLng?: number | null;
+  routeToDropoffPolyline?: string | null;
   pickupArea: string;
   customerName: string;
   storefrontName: string;

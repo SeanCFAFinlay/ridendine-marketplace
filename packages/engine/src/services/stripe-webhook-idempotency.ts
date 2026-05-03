@@ -17,6 +17,10 @@ export async function claimStripeWebhookEventForProcessing(
     eventType: string;
     livemode: boolean;
     relatedOrderId?: string | null;
+    /** e.g. PaymentIntent id for reconciliation / ledger stripe_id joins */
+    relatedPaymentId?: string | null;
+    /** Major amount for the Stripe object (e.g. PI amount_received), cents */
+    stripeAmountCents?: number | null;
   }
 ): Promise<StripeWebhookClaimResult> {
   const { data: existing } = await client
@@ -44,6 +48,8 @@ export async function claimStripeWebhookEventForProcessing(
         event_type: params.eventType,
         livemode: params.livemode,
         related_order_id: params.relatedOrderId ?? null,
+        related_payment_id: params.relatedPaymentId ?? null,
+        stripe_amount_cents: params.stripeAmountCents ?? null,
       })
       .eq('stripe_event_id', params.stripeEventId);
     return { action: 'proceed', rowId: existing.id };
@@ -56,6 +62,8 @@ export async function claimStripeWebhookEventForProcessing(
       event_type: params.eventType,
       livemode: params.livemode,
       related_order_id: params.relatedOrderId ?? null,
+      related_payment_id: params.relatedPaymentId ?? null,
+      stripe_amount_cents: params.stripeAmountCents ?? null,
       processing_status: 'processing',
     })
     .select('id')

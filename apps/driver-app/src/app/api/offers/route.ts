@@ -81,17 +81,26 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { action, attemptId, reason } = body;
+    const { action, attemptId, reason, driverId } = body;
 
     if (!attemptId) {
       return errorResponse('MISSING_ATTEMPT', 'Attempt ID is required');
     }
 
     const engine = getEngine();
-    const { actor } = driverContext;
+    const { actor, driverId: sessionDriverId } = driverContext;
+    const resolvedDriverId = typeof driverId === 'string' ? driverId : sessionDriverId;
+    if (resolvedDriverId !== sessionDriverId) {
+      return errorResponse('FORBIDDEN', 'Driver mismatch');
+    }
 
     if (action === 'accept') {
-      const result = await engine.dispatch.acceptOffer(attemptId, actor);
+      const result = await engine.dispatch.respondToOffer(
+        attemptId,
+        'accept',
+        resolvedDriverId,
+        actor
+      );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);
       }
@@ -99,10 +108,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'decline') {
-      const result = await engine.dispatch.declineOffer(
+      const result = await engine.dispatch.respondToOffer(
         attemptId,
-        reason || 'Driver declined',
-        actor
+        'decline',
+        resolvedDriverId,
+        actor,
+        reason || 'Driver declined'
       );
       if (!result.success) {
         return errorResponse(result.error!.code, result.error!.message);

@@ -4,6 +4,7 @@
 // ==========================================
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { EtaService } from '@ridendine/routing';
 import type {
   ActorContext,
   OperationResult,
@@ -30,6 +31,7 @@ import {
   PLATFORM_FEE_PERCENT,
   DRIVER_PAYOUT_PERCENT,
 } from '../constants';
+import { createLedgerService } from '../services/ledger.service';
 
 interface OrderData {
   id: string;
@@ -94,6 +96,7 @@ export class OrderOrchestrator {
   private slaManager: SLAManager;
   private notificationSender?: NotificationSender;
   private paymentAdapter?: PaymentAdapter;
+  private eta?: EtaService;
   private rules?: BusinessRulesEngine;
   private notifyTriggers?: NotificationTriggers;
 
@@ -104,6 +107,7 @@ export class OrderOrchestrator {
     slaManager: SLAManager,
     notificationSender?: NotificationSender,
     paymentAdapter?: PaymentAdapter,
+    etaService?: EtaService
   ) {
     this.client = client;
     this.eventEmitter = eventEmitter;
@@ -111,10 +115,21 @@ export class OrderOrchestrator {
     this.slaManager = slaManager;
     this.notificationSender = notificationSender;
     this.paymentAdapter = paymentAdapter;
+    this.eta = etaService;
     // Wire business rules and notification triggers
     this.rules = new BusinessRulesEngine(client);
     if (notificationSender) {
       this.notifyTriggers = new NotificationTriggers(client, notificationSender);
+    }
+  }
+
+  /** Best-effort ETA refresh; never throws to callers. */
+  private async runEtaBestEffort(fn: (eta: EtaService) => Promise<void>): Promise<void> {
+    if (!this.eta) return;
+    try {
+      await fn(this.eta);
+    } catch {
+      /* routing / OSRM optional */
     }
   }
 
@@ -500,6 +515,8 @@ export class OrderOrchestrator {
     });
 
     await this.eventEmitter.flush();
+
+    await this.runEtaBestEffort((eta) => eta.computeInitial(orderId));
 
     return { success: true, data: updated as OrderData };
   }
@@ -1309,61 +1326,51 @@ export class OrderOrchestrator {
       };
     }
 
-    // Create ledger entries for payouts
-    const platformFee = Math.round(order.subtotal * (PLATFORM_FEE_PERCENT / 100) * 100);
-    const chefPayable = Math.round((order.subtotal - platformFee / 100) * 100);
-    const driverPayable = Math.round(order.delivery_fee * (DRIVER_PAYOUT_PERCENT / 100) * 100);
+    const ledger = createLedgerService(this.client);
+    const { data: deliveryRow } = await this.client
+      .from('deliveries')
+      .select('driver_id')
+      .eq('order_id', orderId)
+      .maybeSingle();
+    const driverId = (deliveryRow?.driver_id as string | null) ?? null;
 
-    await this.client.from('ledger_entries').insert([
-      {
-        order_id: orderId,
-        entry_type: 'customer_charge_capture',
-        amount_cents: Math.round(order.total * 100),
-        currency: 'CAD',
-        description: `Payment captured for order ${order.order_number}`,
-        stripe_id: order.payment_intent_id,
-      },
-      {
-        order_id: orderId,
-        entry_type: 'platform_fee',
-        amount_cents: platformFee,
-        currency: 'CAD',
-        description: 'Platform commission',
-      },
-      {
-        order_id: orderId,
-        entry_type: 'chef_payable',
-        amount_cents: chefPayable,
-        currency: 'CAD',
-        description: 'Chef earnings',
-        entity_type: 'storefront',
-        entity_id: order.storefront_id,
-      },
-      {
-        order_id: orderId,
-        entry_type: 'driver_payable',
-        amount_cents: driverPayable,
-        currency: 'CAD',
-        description: 'Driver delivery fee',
-      },
-      {
-        order_id: orderId,
-        entry_type: 'tax_collected',
-        amount_cents: Math.round(order.tax * 100),
-        currency: 'CAD',
-        description: 'HST collected',
-      },
-    ]);
+    const captureResult = await ledger.recordCustomerCapture({
+      orderId,
+      orderNumber: order.order_number,
+      totalCents: Math.round(order.total * 100),
+      taxCents: Math.round(order.tax * 100),
+      currency: 'CAD',
+      stripePaymentIntentId: order.payment_intent_id ?? null,
+    });
+    if (captureResult.errors.length > 0) {
+      console.error('[completeOrder] ledger capture', captureResult.errors);
+    }
+
+    const payResult = await ledger.recordOrderPayment({
+      orderId,
+      storefrontId: order.storefront_id,
+      driverId,
+      subtotalCents: Math.round(order.subtotal * 100),
+      deliveryFeeCents: Math.round(order.delivery_fee * 100),
+      currency: 'CAD',
+    });
+    if (payResult.errors.length > 0) {
+      console.error('[completeOrder] ledger payables', payResult.errors);
+    }
 
     if (order.tip > 0) {
-      await this.client.from('ledger_entries').insert({
-        order_id: orderId,
-        entry_type: 'tip_payable',
-        amount_cents: Math.round(order.tip * 100),
+      const tipRes = await ledger.recordTipPayable({
+        orderId,
+        driverId,
+        tipCents: Math.round(order.tip * 100),
         currency: 'CAD',
-        description: 'Driver tip',
       });
+      if (tipRes.error) console.error('[completeOrder] ledger tip', tipRes.error);
     }
+
+    const platformFee = Math.round(order.subtotal * (PLATFORM_FEE_PERCENT / 100) * 100);
+    const chefPayable = Math.round(order.subtotal * 100) - platformFee;
+    const driverPayable = Math.round(order.delivery_fee * (DRIVER_PAYOUT_PERCENT / 100) * 100);
 
     // Add to order status history
     await this.client.from('order_status_history').insert({
@@ -1568,6 +1575,15 @@ export function createOrderOrchestrator(
   slaManager: SLAManager,
   notificationSender?: NotificationSender,
   paymentAdapter?: PaymentAdapter,
+  etaService?: EtaService
 ): OrderOrchestrator {
-  return new OrderOrchestrator(client, eventEmitter, auditLogger, slaManager, notificationSender, paymentAdapter);
+  return new OrderOrchestrator(
+    client,
+    eventEmitter,
+    auditLogger,
+    slaManager,
+    notificationSender,
+    paymentAdapter,
+    etaService
+  );
 }

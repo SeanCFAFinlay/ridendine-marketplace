@@ -26,6 +26,32 @@ interface RouteParams {
 interface OrderDeliverySummary {
   driver_id: string | null;
   status: string;
+  eta_pickup_at: string | null;
+  eta_dropoff_at: string | null;
+  route_progress_pct: number | null;
+  route_to_dropoff_seconds: number | null;
+  route_to_dropoff_polyline: string | null;
+}
+
+function buildCustomerTrackingSnapshot(
+  publicStage: string | null | undefined,
+  delivery: OrderDeliverySummary | null
+): Record<string, unknown> {
+  const routeSeconds =
+    typeof delivery?.route_to_dropoff_seconds === 'number' &&
+    Number.isFinite(delivery.route_to_dropoff_seconds)
+      ? delivery.route_to_dropoff_seconds
+      : null;
+
+  return {
+    public_stage: publicStage ?? 'placed',
+    eta_pickup_at: delivery?.eta_pickup_at ?? null,
+    eta_dropoff_at: delivery?.eta_dropoff_at ?? null,
+    route_progress_pct:
+      delivery?.route_progress_pct != null ? Number(delivery.route_progress_pct) : null,
+    route_remaining_seconds: routeSeconds,
+    route_to_dropoff_polyline: delivery?.route_to_dropoff_polyline ?? null,
+  };
 }
 
 /**
@@ -86,6 +112,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           actual_pickup_at,
           estimated_dropoff_at,
           actual_dropoff_at,
+          eta_pickup_at,
+          eta_dropoff_at,
+          route_progress_pct,
+          route_to_dropoff_seconds,
+          route_to_dropoff_polyline,
           driver:drivers (
             first_name,
             last_name,
@@ -122,41 +153,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .eq('order_id', orderId)
       .order('created_at', { ascending: true });
 
-    // Get live driver location if delivery is in progress
-    let driverLocation = null;
     const delivery = order.delivery as OrderDeliverySummary | null;
-    if (delivery?.driver_id) {
-      const activeStatuses = [
-        'assigned',
-        'en_route_to_pickup',
-        'arrived_at_pickup',
-        'picked_up',
-        'en_route_to_dropoff',
-        'arrived_at_dropoff',
-      ];
-
-      if (activeStatuses.includes(delivery.status)) {
-        const { data: presence } = await adminClient
-          .from('driver_presence')
-          .select('current_lat, current_lng, last_location_at')
-          .eq('driver_id', delivery.driver_id)
-          .single();
-
-        if (presence?.current_lat && presence?.current_lng) {
-          driverLocation = {
-            lat: presence.current_lat,
-            lng: presence.current_lng,
-            lastUpdated: presence.last_location_at,
-          };
-        }
-      }
-    }
+    const tracking = buildCustomerTrackingSnapshot(
+      order.public_stage as string | undefined,
+      delivery
+    );
 
     return successResponse({
       order,
       timeline: timeline || [],
       allowedActions,
-      driverLocation,
+      tracking,
     });
   } catch (error) {
     console.error('Error fetching order:', error);

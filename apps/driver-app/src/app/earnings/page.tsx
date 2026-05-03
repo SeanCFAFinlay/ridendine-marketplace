@@ -1,5 +1,10 @@
 import { cookies } from 'next/headers';
-import { createServerClient, getDriverByUserId, getDeliveryHistory } from '@ridendine/db';
+import {
+  createServerClient,
+  createAdminClient,
+  getDriverByUserId,
+  getDeliveryHistory,
+} from '@ridendine/db';
 import EarningsView from './components/EarningsView';
 
 export const dynamic = 'force-dynamic';
@@ -36,5 +41,31 @@ export default async function EarningsPage() {
 
   const completedDeliveries = await getDeliveryHistory(supabase as any, driver.id, { limit: 20 });
 
-  return <EarningsView deliveries={completedDeliveries} />;
+  const admin = createAdminClient() as unknown as {
+    from: (rel: string) => {
+      select: (cols: string) => {
+        eq: (c: string, v: string) => {
+          eq: (c2: string, v2: string) => { maybeSingle: () => Promise<{ data: { balance_cents: number } | null }> };
+        };
+      };
+    };
+  };
+  const { data: acct } = await admin
+    .from('platform_accounts')
+    .select('balance_cents')
+    .eq('account_type', 'driver_payable')
+    .eq('owner_id', driver.id)
+    .maybeSingle();
+
+  const instantEnabled = Boolean(
+    (driver as { instant_payouts_enabled?: boolean }).instant_payouts_enabled
+  );
+
+  return (
+    <EarningsView
+      deliveries={completedDeliveries}
+      availableBalanceCents={(acct?.balance_cents as number) ?? 0}
+      instantPayoutsEnabled={instantEnabled}
+    />
+  );
 }

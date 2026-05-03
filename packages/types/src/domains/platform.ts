@@ -2,7 +2,7 @@
 // PLATFORM / OPS DOMAIN TYPES
 // ==========================================
 
-import type { NotificationType } from '../enums';
+import type { InstantPayoutStatus, NotificationType } from '../enums';
 
 export interface PlatformUser {
   id: string;
@@ -101,4 +101,44 @@ export interface ChefApprovalRequest {
     name: string;
     cuisine_types: string[];
   } | null;
+}
+
+/** service_areas row (PostGIS polygon in DB; API may return WKT or GeoJSON) */
+export interface ServiceArea {
+  id: string;
+  name: string;
+  /** Well-known text or serialized geography for clients */
+  polygon_wkt?: string;
+  is_active: boolean;
+  surge_multiplier: number;
+  dispatch_radius_km: string | null;
+  offer_ttl_seconds: number | null;
+  max_offer_attempts: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** instant_payout_requests row */
+export interface InstantPayoutRequest {
+  id: string;
+  driver_id: string;
+  amount_cents: number;
+  fee_cents: number;
+  status: InstantPayoutStatus;
+  stripe_payout_id: string | null;
+  failure_reason: string | null;
+  requested_at: string;
+  executed_at: string | null;
+}
+
+/** platform_accounts materialized balance row */
+export interface PlatformAccount {
+  id: string;
+  account_type: 'chef_payable' | 'driver_payable' | 'platform_revenue';
+  owner_id: string;
+  balance_cents: number;
+  pending_payout_cents: number;
+  lifetime_earned_cents: number;
+  currency: string;
+  updated_at: string;
 }

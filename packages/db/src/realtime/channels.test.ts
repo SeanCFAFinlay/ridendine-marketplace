@@ -5,6 +5,7 @@ import {
   deliveryTrackingChannelLegacy,
   entityDeliveryChannel,
   opsAlertsChannel,
+  opsLiveBoardChannel,
   opsLiveMapChannel,
   opsOrdersChannel,
   orderChannel,
@@ -48,5 +49,9 @@ describe('realtime channel builders', () => {
 
   it('uses dedicated ops map channel', () => {
     expect(opsLiveMapChannel()).toBe('ops:map:presence');
+  });
+
+  it('uses dedicated ops live board channel', () => {
+    expect(opsLiveBoardChannel()).toBe('ops:live');
   });
 });

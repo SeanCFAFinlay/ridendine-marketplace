@@ -20,6 +20,12 @@ import { MasterOrderEngine, createMasterOrderEngine } from '../orchestrators/mas
 import { DeliveryEngine as MasterDeliveryEngine, createDeliveryEngine } from '../orchestrators/delivery-engine';
 import { BusinessRulesEngine, createBusinessRulesEngine } from './business-rules-engine';
 import { PayoutEngine, createPayoutEngine } from '../orchestrators/payout-engine';
+import { createEtaService } from '../services/eta.service';
+import type { EtaService } from '@ridendine/routing';
+import { createLedgerService, type LedgerService } from '../services/ledger.service';
+import { createPayoutService, type PayoutService } from '../services/payout.service';
+import { createReconciliationService, type ReconciliationService } from '../services/reconciliation.service';
+import { getStripeClient } from '../services/stripe.service';
 
 /**
  * Central Engine instance
@@ -31,6 +37,8 @@ export interface CentralEngine {
   audit: AuditLogger;
   sla: SLAManager;
   notifications: NotificationSender;
+  /** Phase 1+ routing / ETA (server-side; use for refreshFromDriverPing, etc.). */
+  eta: EtaService;
 
   // Business rules (validation layer)
   rules: BusinessRulesEngine;
@@ -39,6 +47,12 @@ export interface CentralEngine {
   masterOrder: MasterOrderEngine;
   masterDelivery: MasterDeliveryEngine;
   payouts: PayoutEngine;
+  /** Idempotent ledger writes (Phase 5). */
+  ledger: LedgerService;
+  /** Preview / execute payout runs + instant payouts (Phase 5). */
+  payoutAutomation: PayoutService;
+  /** Stripe ↔ ledger reconciliation (Phase 5). */
+  reconciliation: ReconciliationService;
 
   // Domain orchestrators (facades that delegate to canonical engines)
   orders: OrderOrchestrator;
@@ -74,11 +88,25 @@ export function createCentralEngine(
   const masterOrder = createMasterOrderEngine(client, audit, events);
   const masterDelivery = createDeliveryEngine(client, audit, events, masterOrder);
   const payouts = createPayoutEngine(client, audit, events);
+  const ledger = createLedgerService(client);
+  const payoutAutomation = createPayoutService(client, ledger, {
+    audit,
+    getStripe: () => {
+      try {
+        return getStripeClient();
+      } catch {
+        return null;
+      }
+    },
+  });
+  const reconciliation = createReconciliationService(client);
+
+  const eta = createEtaService(client);
 
   // Create domain orchestrators (facades that delegate to canonical engines)
-  const orders = createOrderOrchestrator(client, events, audit, sla, undefined, paymentAdapter);
+  const orders = createOrderOrchestrator(client, events, audit, sla, undefined, paymentAdapter, eta);
   const kitchen = createKitchenEngine(client, events, audit);
-  const dispatch = createDispatchEngine(client, events, audit, sla);
+  const dispatch = createDispatchEngine(client, events, audit, sla, eta);
   const commerce = createCommerceLedgerEngine(client, events, audit);
   const support = createSupportExceptionEngine(client, events, audit);
   const platform = createPlatformWorkflowEngine(client, events, audit, orders, dispatch, support);
@@ -89,10 +117,14 @@ export function createCentralEngine(
     audit,
     sla,
     notifications,
+    eta,
     rules,
     masterOrder,
     masterDelivery,
     payouts,
+    ledger,
+    payoutAutomation,
+    reconciliation,
     orders,
     kitchen,
     dispatch,

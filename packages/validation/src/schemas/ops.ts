@@ -41,6 +41,12 @@ export const deliveryInterventionActionSchema = z.discriminatedUnion('action', [
     driverId: z.string().uuid(),
   }),
   z.object({
+    action: z.literal('force_assign'),
+    deliveryId: z.string().uuid(),
+    driverId: z.string().uuid(),
+    reason: z.string().min(3).max(500),
+  }),
+  z.object({
     action: z.literal('reassign'),
     deliveryId: z.string().uuid(),
     reason: z.string().min(3).max(500),

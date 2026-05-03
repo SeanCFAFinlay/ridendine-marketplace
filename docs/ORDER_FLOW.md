@@ -10,6 +10,8 @@
 
 **Legacy / DB-facing labels:** `ENGINE_TO_LEGACY_ORDER_STATUS` and `ENGINE_TO_LEGACY_DELIVERY_STATUS` map engine values to older `orders.status` / delivery row enums used by some queries and UIs. When a label in the tables below differs from an `EngineOrderStatus` value, the **engine value** wins for new code.
 
+**Customer-safe projection (Phase 0 — `00019`):** Column **`orders.public_stage`** (`placed` \| `cooking` \| `on_the_way` \| `delivered` \| `cancelled` \| `refunded`) is derived **only** from **`orders.engine_status`** via DB trigger. Use **`@ridendine/types`** → `mapEngineStatusToPublicStage()` and `PublicOrderStage` in app code; keep SQL `orders_public_stage_from_engine()` and the TypeScript mapper **in sync**. Legacy **`orders.status`** remains unchanged by this trigger.
+
 | Engine order (`EngineOrderStatus`) | Typical user-facing meaning | Legacy `orders.status` (approx.) |
 |------------------------------------|-----------------------------|----------------------------------|
 | `draft`, `checkout_pending`, `payment_*` | Cart / payment in progress | often `pending` |
@@ -33,6 +35,47 @@
 | `delivered`, `failed`, `cancelled` | Terminals |
 
 **Events / audit:** On each successful engine transition, persist **`order_status_history`** (and delivery analogs) and emit **`domain_events`** per `MasterOrderEngine` / `DeliveryEngine` implementation; ops overrides must go through audited paths (see `docs/BUSINESS_ENGINE_FOUNDATION.md`). **Realtime channel naming + payload rules:** [`docs/REALTIME_EVENT_SYSTEM.md`](REALTIME_EVENT_SYSTEM.md).
+
+### ETA & routing (Phase 1)
+
+- **`@ridendine/routing`** implements **`EtaService`** against a **`RoutingProvider`**. Default provider is **OSRM** (`router.project-osrm.org`, no key). **Mapbox** matches the same interface but is a **stub** (throws until implemented).
+- After **submit to kitchen**, the engine calls **`computeInitial(orderId)`** to cache **pickup → dropoff** route metrics on the delivery row (`route_to_dropoff_*`, `eta_dropoff_at`, `routing_*`).
+- After **driver assignment** (accept offer or manual assign), **`computeFullOnAssign(deliveryId)`** fills **driver → pickup** and **pickup → dropoff** legs and ETAs.
+- When delivery status becomes **picked up**, **`computeDropLegOnPickup(deliveryId)`** recomputes the **dropoff** leg from the driver’s last known position context (server-side).
+- **`refreshFromDriverPing`** exists for future driver pings; it updates **`route_progress_pct`** and dropoff ETA from the cached dropoff polyline — **Phase 2** may expose **progress %** to customers, not raw coordinates (see [`BUSINESS_ENGINE.md`](BUSINESS_ENGINE.md)).
+
+#### Customer stream (Phase 2)
+
+- **Channel:** `order:{orderId}` — **Event:** `order_update`.
+- **Payload:** only `public_stage`, ETA timestamps, `route_progress_pct`, `route_remaining_seconds`, `route_to_dropoff_polyline` (see sanitizer in engine). **No** `driver_lat` / `chef_lng` / `location` objects.
+- **Driver → customer:** `POST /api/location` with `deliveryId` (on **picked_up** / **en_route_to_dropoff** / **arrived_at_dropoff**) triggers **`refreshFromDriverPing`** then **`broadcastPublic`**.
+- **Web tracker:** `useOrderStream` + `LiveOrderTracker` — map shows **route polyline + progress** only; **no** driver or chef pins.
+
+### Ops live board (Phase 4)
+
+- **Dashboard** (`apps/ops-admin/src/app/dashboard/page.tsx`) renders **`LiveBoard`**, which loads **`GET /api/ops/live-board`** then keeps state fresh via **`ops:live`** Realtime (**`postgres_changes`** on orders, deliveries, driver presence, storefronts). If the channel errors or closes, a **60s** snapshot refetch runs until **`SUBSCRIBED`** again.
+- **Columns:** Orders are grouped by **`public_stage`** (derived in the client with **`mapEngineStatusToPublicStage`** — same mapping as DB). **Delivered** shows **today only** (completed / updated same calendar day). **SLA / delayed / dispatch** badges are **client-computed** from timestamps, **`ready_at`**, prep start, delivery **`estimated_dropoff_at`**, **`escalated_to_ops`**, and **`assignment_attempts_count`** — see **`apps/ops-admin/src/lib/ops-sla.ts`**; they do **not** replace persisted SLA timers or exceptions.
+
+### Dispatch offer chain (Phase 3)
+
+```mermaid
+flowchart TD
+  A[Delivery pending] --> B[offerToNextDriver]
+  B --> C[rankDrivers ETA sort]
+  C --> D[Insert assignment_attempts pending]
+  D --> E[broadcastDriverOffer offer]
+  E --> F{Driver response}
+  F -->|accept| G[Assign + computeFullOnAssign]
+  F -->|decline| B
+  F -->|TTL| H[expireAttempt]
+  H --> I[offer_expired broadcast]
+  I --> J{Attempts max?}
+  J -->|no| B
+  J -->|yes| K[escalateToOps]
+  K --> L[Ops force_assign / manual]
+```
+
+- **Cron:** `POST .../engine/processors/expired-offers` loads expired **`assignment_attempts`** and calls **`expireAttempt`** per row (no polling on the driver UI for offers — **Supabase Realtime broadcast** on `driver:{id}:offers`).
 
 ---
 

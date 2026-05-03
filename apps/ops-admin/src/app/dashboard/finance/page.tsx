@@ -3,6 +3,9 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { getEngine, getOpsActorContext, hasRequiredRole } from '@/lib/engine';
 import { FinanceActions } from './finance-actions';
 import { PayoutActions } from './payout-actions';
+import { FinanceSubnav } from './_components/FinanceSubnav';
+import { FinanceAccessDenied } from './_components/FinanceAccessDenied';
+import { FINANCE_PAGE_ROLES } from './_lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,22 +15,8 @@ function formatCurrency(amount: number): string {
 
 export default async function FinancePage() {
   const actor = await getOpsActorContext();
-  if (
-    !actor ||
-    !hasRequiredRole(actor, ['ops_manager', 'finance_admin', 'finance_manager', 'super_admin'])
-  ) {
-    return (
-      <DashboardLayout>
-        <div className="mx-auto max-w-4xl">
-          <Card className="border-gray-800 bg-[#16213e] p-8">
-            <h1 className="text-2xl font-bold text-white">Finance Access Required</h1>
-            <p className="mt-2 text-gray-400">
-              Finance workflows are restricted to ops managers, finance roles, and super admins.
-            </p>
-          </Card>
-        </div>
-      </DashboardLayout>
-    );
+  if (!actor || !hasRequiredRole(actor, [...FINANCE_PAGE_ROLES])) {
+    return <FinanceAccessDenied />;
   }
 
   const end = new Date();
@@ -81,6 +70,7 @@ export default async function FinancePage() {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-6">
+        <FinanceSubnav />
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Finance Operations</h1>

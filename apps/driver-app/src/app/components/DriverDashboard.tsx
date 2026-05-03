@@ -106,7 +106,7 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] pb-24">
-      <OfferAlert isOnline={isOnline} />
+      <OfferAlert driverId={driver.id} isOnline={isOnline} />
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-5 py-4">
         <div className="flex items-center justify-between">

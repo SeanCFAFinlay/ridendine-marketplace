@@ -23,6 +23,11 @@ export function opsOrdersChannel(): string {
   return 'ops:orders';
 }
 
+/** Ops: unified live board (broadcast patches + postgres_changes on same channel). */
+export function opsLiveBoardChannel(): string {
+  return 'ops:live';
+}
+
 /** Ops: system alerts / SLA inserts. */
 export function opsAlertsChannel(): string {
   return 'ops:alerts';

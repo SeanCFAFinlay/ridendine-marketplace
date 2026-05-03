@@ -14,11 +14,16 @@ export interface RealtimeOrderRow {
   status: string;
   total: number;
   created_at: string;
+  engine_status?: string | null;
   storefront_id?: string;
   customer_id?: string;
   delivery_address_id?: string;
   special_instructions?: string | null;
   updated_at?: string;
+  estimated_ready_at?: string | null;
+  ready_at?: string | null;
+  prep_started_at?: string | null;
+  completed_at?: string | null;
 }
 
 export function parseOrdersRealtimeRow(row: unknown): RealtimeOrderRow | null {
@@ -49,6 +54,21 @@ export function parseOrdersRealtimeRow(row: unknown): RealtimeOrderRow | null {
     out.special_instructions = row.special_instructions as string | null;
   }
   if (typeof row.updated_at === 'string') out.updated_at = row.updated_at;
+  if (row.engine_status === null || typeof row.engine_status === 'string') {
+    out.engine_status = row.engine_status as string | null;
+  }
+  if (row.estimated_ready_at === null || typeof row.estimated_ready_at === 'string') {
+    out.estimated_ready_at = row.estimated_ready_at as string | null;
+  }
+  if (row.ready_at === null || typeof row.ready_at === 'string') {
+    out.ready_at = row.ready_at as string | null;
+  }
+  if (row.prep_started_at === null || typeof row.prep_started_at === 'string') {
+    out.prep_started_at = row.prep_started_at as string | null;
+  }
+  if (row.completed_at === null || typeof row.completed_at === 'string') {
+    out.completed_at = row.completed_at as string | null;
+  }
   return out;
 }
 

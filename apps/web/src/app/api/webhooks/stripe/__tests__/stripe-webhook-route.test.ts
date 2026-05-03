@@ -31,6 +31,7 @@ jest.mock('@ridendine/engine', () => ({
   claimStripeWebhookEventForProcessing: jest.fn(),
   finalizeStripeWebhookSuccess: jest.fn(),
   finalizeStripeWebhookFailure: jest.fn(),
+  handleStripeFinanceWebhook: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('@ridendine/db', () => ({

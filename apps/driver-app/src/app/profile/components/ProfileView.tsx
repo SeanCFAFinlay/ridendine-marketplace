@@ -56,6 +56,16 @@ export default function ProfileView({ driver }: ProfileViewProps) {
         <h1 className="text-[24px] font-bold">Profile</h1>
       </div>
 
+      <div className="p-4">
+        <Link
+          href="/settings"
+          className="mb-4 flex items-center justify-between rounded-lg border border-[#e5e7eb] bg-white px-4 py-3 text-[15px] font-medium text-[#1a1a1a] shadow-sm"
+        >
+          <span>Payout &amp; instant settings</span>
+          <span className="text-brand-600">→</span>
+        </Link>
+      </div>
+
       <div className="p-4 space-y-4">
         <Card className="border-0 shadow-sm">
           <h2 className="text-[17px] font-semibold text-[#1a1a1a] mb-6">Driver Information</h2>
