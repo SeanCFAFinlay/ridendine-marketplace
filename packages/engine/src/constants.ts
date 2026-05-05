@@ -4,6 +4,9 @@
 
 // Fee Configuration (in percentages)
 export const PLATFORM_FEE_PERCENT = 15;
+// NOTE: SERVICE_FEE_PERCENT and HST_RATE are kept as compile-time defaults.
+// At runtime, prefer TaxConfigService.getTaxRates() which reads from platform_settings
+// and falls back to these values if the DB is unavailable.
 export const SERVICE_FEE_PERCENT = 8;
 export const HST_RATE = 13;
 

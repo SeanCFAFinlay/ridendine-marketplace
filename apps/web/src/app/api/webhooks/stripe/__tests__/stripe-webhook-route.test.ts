@@ -248,4 +248,117 @@ describe('POST /api/webhooks/stripe', () => {
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({ received: true });
   });
+
+  it('replay-safety: second call with same event.id short-circuits via claimStripeWebhookEventForProcessing', async () => {
+    const submitToKitchen = jest.fn().mockResolvedValue({ success: true });
+    jest.mocked(getEngine).mockReturnValue({
+      orderCreation: { submitToKitchen },
+      orders: {},
+      platform: {
+        handlePaymentFailure: jest.fn().mockResolvedValue({ success: true }),
+        handleExternalRefund: jest.fn().mockResolvedValue({ success: true }),
+      },
+      events: { emit: jest.fn(), flush: jest.fn().mockResolvedValue(undefined) },
+      audit: { log: jest.fn().mockResolvedValue(undefined) },
+    } as unknown as ReturnType<typeof getEngine>);
+
+    jest.mocked(headers).mockResolvedValue({
+      get: () => 't=1,v1=valid',
+    } as Awaited<ReturnType<typeof headers>>);
+
+    jest.mocked(getStripeClient).mockReturnValue({
+      webhooks: {
+        constructEvent: jest.fn().mockReturnValue({
+          id: 'evt_replay_5',
+          type: 'payment_intent.succeeded',
+          livemode: false,
+          data: {
+            object: {
+              id: 'pi_replay',
+              amount: 1500,
+              metadata: { order_id: 'order-replay', order_number: 'RD-5' },
+            },
+          },
+        }),
+      },
+    } as ReturnType<typeof getStripeClient>);
+
+    // First call: proceed normally
+    jest.mocked(claimStripeWebhookEventForProcessing).mockResolvedValueOnce({
+      action: 'proceed',
+      rowId: 'row-replay',
+    });
+    const first = await POST(
+      new Request('http://localhost/api/webhooks/stripe', { method: 'POST', body: '{}' })
+    );
+    expect(first.status).toBe(200);
+    expect(submitToKitchen).toHaveBeenCalledTimes(1);
+
+    // Reset submit count between calls
+    submitToKitchen.mockClear();
+    jest.mocked(finalizeStripeWebhookSuccess).mockClear();
+
+    // Second call: already processed — short-circuit
+    jest.mocked(claimStripeWebhookEventForProcessing).mockResolvedValueOnce({
+      action: 'skip_already_processed',
+    });
+    const second = await POST(
+      new Request('http://localhost/api/webhooks/stripe', { method: 'POST', body: '{}' })
+    );
+    expect(second.status).toBe(200);
+    const secondBody = await second.json();
+    expect(secondBody).toMatchObject({ received: true, idempotentReplay: true });
+    // Ledger insert (via submitToKitchen) must NOT be called the second time
+    expect(submitToKitchen).not.toHaveBeenCalled();
+    expect(finalizeStripeWebhookSuccess).not.toHaveBeenCalled();
+  });
+
+  it('replay-safety: first-time event proceeds — submitToKitchen and finalizeStripeWebhookSuccess are called', async () => {
+    const submitToKitchen = jest.fn().mockResolvedValue({ success: true });
+    jest.mocked(getEngine).mockReturnValue({
+      orderCreation: { submitToKitchen },
+      orders: {},
+      platform: {
+        handlePaymentFailure: jest.fn().mockResolvedValue({ success: true }),
+        handleExternalRefund: jest.fn().mockResolvedValue({ success: true }),
+      },
+      events: { emit: jest.fn(), flush: jest.fn().mockResolvedValue(undefined) },
+      audit: { log: jest.fn().mockResolvedValue(undefined) },
+    } as unknown as ReturnType<typeof getEngine>);
+
+    jest.mocked(headers).mockResolvedValue({
+      get: () => 't=1,v1=valid',
+    } as Awaited<ReturnType<typeof headers>>);
+
+    jest.mocked(getStripeClient).mockReturnValue({
+      webhooks: {
+        constructEvent: jest.fn().mockReturnValue({
+          id: 'evt_firsttime_6',
+          type: 'payment_intent.succeeded',
+          livemode: false,
+          data: {
+            object: {
+              id: 'pi_firsttime',
+              amount: 2000,
+              metadata: { order_id: 'order-firsttime', order_number: 'RD-6' },
+            },
+          },
+        }),
+      },
+    } as ReturnType<typeof getStripeClient>);
+
+    jest.mocked(claimStripeWebhookEventForProcessing).mockResolvedValueOnce({
+      action: 'proceed',
+      rowId: 'row-firsttime',
+    });
+
+    const res = await POST(
+      new Request('http://localhost/api/webhooks/stripe', { method: 'POST', body: '{}' })
+    );
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ received: true });
+    // First-time event: submitToKitchen and finalize ARE called
+    expect(submitToKitchen).toHaveBeenCalledTimes(1);
+    expect(finalizeStripeWebhookSuccess).toHaveBeenCalledTimes(1);
+  });
 });

@@ -273,6 +273,12 @@ describe('POST /api/checkout Phase C hardening', () => {
   });
 
   it('replays the same idempotency key without creating duplicate order/payment', async () => {
+    const sharedClient = createAdminClientMock();
+    mockCreateAdminClient.mockReturnValue(sharedClient);
+
+    const stripeCreate = jest.fn().mockResolvedValue({ id: 'pi_replay', client_secret: 'cs_replay' });
+    mockGetStripeClient.mockReturnValue({ paymentIntents: { create: stripeCreate } });
+
     const first = await POST(
       buildRequest(
         {
@@ -280,10 +286,12 @@ describe('POST /api/checkout Phase C hardening', () => {
           deliveryAddressId: '22222222-2222-2222-2222-222222222222',
           tip: 1,
         },
-        'idem-key-1'
+        'idem-key-replay'
       )
     );
     expect(first.status).toBe(200);
+    const firstBody = await first.json();
+    expect(firstBody.data.clientSecret).toBe('cs_replay');
 
     const second = await POST(
       buildRequest(
@@ -292,10 +300,57 @@ describe('POST /api/checkout Phase C hardening', () => {
           deliveryAddressId: '22222222-2222-2222-2222-222222222222',
           tip: 1,
         },
-        'idem-key-1'
+        'idem-key-replay'
       )
     );
     expect(second.status).toBe(200);
+    const secondBody = await second.json();
+    // Same payment_intent returned on replay — only one order and one PI created
+    expect(secondBody.data.clientSecret).toBe('cs_replay');
     expect(mockCreateOrder).toHaveBeenCalledTimes(1);
+    expect(stripeCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it('two POSTs with different idempotency keys create two orders and two payment intents', async () => {
+    const stripeCreate = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'pi_first', client_secret: 'cs_first' })
+      .mockResolvedValueOnce({ id: 'pi_second', client_secret: 'cs_second' });
+    mockGetStripeClient.mockReturnValue({ paymentIntents: { create: stripeCreate } });
+
+    const clientA = createAdminClientMock();
+    const clientB = createAdminClientMock();
+    mockCreateAdminClient
+      .mockReturnValueOnce(clientA)
+      .mockReturnValueOnce(clientB);
+
+    const first = await POST(
+      buildRequest(
+        {
+          storefrontId: '11111111-1111-1111-1111-111111111111',
+          deliveryAddressId: '22222222-2222-2222-2222-222222222222',
+          tip: 1,
+        },
+        'idem-key-alpha'
+      )
+    );
+    const second = await POST(
+      buildRequest(
+        {
+          storefrontId: '11111111-1111-1111-1111-111111111111',
+          deliveryAddressId: '22222222-2222-2222-2222-222222222222',
+          tip: 1,
+        },
+        'idem-key-beta'
+      )
+    );
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(mockCreateOrder).toHaveBeenCalledTimes(2);
+    expect(stripeCreate).toHaveBeenCalledTimes(2);
+    const b1 = await first.json();
+    const b2 = await second.json();
+    expect(b1.data.clientSecret).not.toBe(b2.data.clientSecret);
   });
 });

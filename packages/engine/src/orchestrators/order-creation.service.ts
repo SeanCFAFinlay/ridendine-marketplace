@@ -18,6 +18,7 @@ import type { DomainEventEmitter } from '../core/event-emitter';
 import type { AuditLogger } from '../core/audit-logger';
 import type { SLAManager } from '../core/sla-manager';
 import type { MasterOrderEngine } from './master-order-engine';
+import type { TaxConfigService } from '../services/tax-config.service';
 import {
   SERVICE_FEE_PERCENT,
   HST_RATE,
@@ -83,6 +84,7 @@ export class OrderCreationService {
     private readonly sla: SLAManager,
     private readonly masterOrder: MasterOrderEngine,
     private readonly eta?: EtaService,
+    private readonly taxConfig?: TaxConfigService,
   ) {}
 
   /** Best-effort ETA refresh; never throws to callers. */
@@ -163,10 +165,14 @@ export class OrderCreationService {
       });
     }
 
+    // Tax rates from platform_settings (Phase 6) — fall back to constants if no taxConfig wired.
+    const rates = this.taxConfig
+      ? await this.taxConfig.getTaxRates()
+      : { hstRate: HST_RATE, serviceFeePercent: SERVICE_FEE_PERCENT };
     const deliveryFee = BASE_DELIVERY_FEE / 100;
-    const serviceFee = Math.round(subtotal * (SERVICE_FEE_PERCENT / 100) * 100) / 100;
+    const serviceFee = Math.round(subtotal * (rates.serviceFeePercent / 100) * 100) / 100;
     const taxableAmount = subtotal + serviceFee + deliveryFee;
-    const tax = Math.round(taxableAmount * (HST_RATE / 100) * 100) / 100;
+    const tax = Math.round(taxableAmount * (rates.hstRate / 100) * 100) / 100;
     const tip = input.tip || 0;
     const total = subtotal + deliveryFee + serviceFee + tax + tip;
 
@@ -475,6 +481,7 @@ export function createOrderCreationService(
   sla: SLAManager,
   masterOrder: MasterOrderEngine,
   eta?: EtaService,
+  taxConfig?: TaxConfigService,
 ): OrderCreationService {
-  return new OrderCreationService(client, events, audit, sla, masterOrder, eta);
+  return new OrderCreationService(client, events, audit, sla, masterOrder, eta, taxConfig);
 }

@@ -34,6 +34,7 @@ import type { EtaService } from '@ridendine/routing';
 import { createLedgerService, type LedgerService } from '../services/ledger.service';
 import { createPayoutService, type PayoutService } from '../services/payout.service';
 import { createReconciliationService, type ReconciliationService } from '../services/reconciliation.service';
+import { createTaxConfigService, type TaxConfigService } from '../services/tax-config.service';
 import { getStripeClient } from '../services/stripe.service';
 
 /**
@@ -63,6 +64,8 @@ export interface CentralEngine {
   payoutAutomation: PayoutService;
   /** Stripe ↔ ledger reconciliation (Phase 5). */
   reconciliation: ReconciliationService;
+  /** Runtime tax/fee configuration from platform_settings (Phase 6). */
+  taxConfig: TaxConfigService;
 
   // Order creation (Phase 3 extraction — createOrder, authorizePayment, submitToKitchen)
   orderCreation: OrderCreationService;
@@ -123,10 +126,11 @@ export function createCentralEngine(
     },
   });
   const reconciliation = createReconciliationService(client);
+  const taxConfig = createTaxConfigService(client);
 
   const eta = createEtaService(client);
 
-  const orderCreation = createOrderCreationService(client, events, audit, sla, masterOrder, eta);
+  const orderCreation = createOrderCreationService(client, events, audit, sla, masterOrder, eta, taxConfig);
 
   // Phase 2 dispatch split
   const driverMatching = createDriverMatchingService(client, eta);
@@ -169,6 +173,7 @@ export function createCentralEngine(
     ledger,
     payoutAutomation,
     reconciliation,
+    taxConfig,
     orderCreation,
     driverMatching,
     offerManagement,

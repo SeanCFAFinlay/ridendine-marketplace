@@ -103,6 +103,11 @@ export {
   createReconciliationService,
   type ReconciliationRunSummary,
 } from './services/reconciliation.service';
+export {
+  TaxConfigService,
+  createTaxConfigService,
+  type TaxRates,
+} from './services/tax-config.service';
 
 // Constants
 export * from './constants';
