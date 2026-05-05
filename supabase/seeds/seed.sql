@@ -1,6 +1,7 @@
 -- ============================================================
 -- RideNDine Seed Data — Schema-Compliant
--- 3 Chefs | 3 Storefronts | 15 Dishes | 2 Customers | 2 Drivers | 6 Orders
+-- 4 Chefs (3 approved, 1 pending_approval) | 3 Storefronts | 15 Dishes
+-- 2 Customers | 2 Drivers | 6 Orders | Deliveries (incl. 1 unassigned pending)
 -- ============================================================
 
 -- ============================================================
@@ -32,7 +33,11 @@ VALUES
    '{"display_name":"Mike Chen","role":"driver"}', false, 'authenticated'),
   ('77777777-7777-7777-7777-777777777777', 'sarah.driver@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
    '{"provider":"email","providers":["email"],"role":"driver"}',
-   '{"display_name":"Sarah Kim","role":"driver"}', false, 'authenticated')
+   '{"display_name":"Sarah Kim","role":"driver"}', false, 'authenticated'),
+  -- Pending-approval chef — used by ops "approve chef" lifecycle test
+  ('88888888-8888-8888-8888-888888888888', 'pending.chef@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
+   '{"provider":"email","providers":["email"],"role":"chef"}',
+   '{"display_name":"Pending Chef","role":"chef"}', false, 'authenticated')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
@@ -77,7 +82,16 @@ VALUES
    '+1 (905) 555-0303',
    'Osaka-trained home chef bringing Japanese precision to Hamilton kitchens. Tonkotsu ramen, katsu, and gyudon crafted with care.',
    'approved',
-   NOW() - INTERVAL '45 days', NOW())
+   NOW() - INTERVAL '45 days', NOW()),
+  -- Pending-approval chef — required by ops "approve chef" lifecycle Playwright test (Phase 11).
+  -- Deterministic UUID: a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1
+  ('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1',
+   '88888888-8888-8888-8888-888888888888',
+   'Pending Chef',
+   '+1 (905) 555-0404',
+   'A new chef awaiting platform approval.',
+   'pending_approval',
+   NOW() - INTERVAL '1 day', NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
@@ -519,7 +533,19 @@ VALUES
    '789 Concession St, Hamilton, ON L8V 1C9',
    '25 Dundurn St N, Hamilton, ON L8R 3E2',
    2.8, 5.00, 7.50,
-   NOW() - INTERVAL '15 minutes', NOW() - INTERVAL '15 minutes')
+   NOW() - INTERVAL '15 minutes', NOW() - INTERVAL '15 minutes'),
+
+  -- Unassigned pending delivery — required by driver "accept offer" lifecycle Playwright test (Phase 11).
+  -- Deterministic UUID: b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2
+  -- References order 5 (HOÀNG GIA PHỞ, status pending — no driver assigned yet).
+  ('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2',
+   'ord-00005-0000-0000-0000-000000000005',
+   NULL,
+   'pending',
+   '456 Barton St E, Hamilton, ON L8L 2Y5',
+   '10 Main St W, Hamilton, ON L8P 1H1',
+   3.5, 5.00, 8.00,
+   NOW() - INTERVAL '10 minutes', NOW() - INTERVAL '10 minutes')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
