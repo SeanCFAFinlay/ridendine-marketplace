@@ -9,6 +9,7 @@ import {
   rateLimitPolicyResponse,
   redactSensitiveForLog,
 } from '@ridendine/utils';
+import { getCustomerActorContext } from '@ridendine/engine/server';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -63,6 +64,9 @@ async function uploadProfileImage(
 }
 
 export async function POST(request: NextRequest) {
+  const ctx = await getCustomerActorContext();
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const limit = await evaluateRateLimit({
     request,
     policy: RATE_LIMIT_POLICIES.upload,

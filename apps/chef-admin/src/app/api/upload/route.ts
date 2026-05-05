@@ -7,7 +7,7 @@
 import type { NextRequest} from 'next/server';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
-import { getChefBasicContext } from '@/lib/engine';
+import { getChefActorContext } from '@/lib/engine';
 import {
   canonicalImageExtensionForMime,
   evaluateRateLimit,
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
   });
   if (!limit.allowed) return rateLimitPolicyResponse(limit);
 
-  const context = await getChefBasicContext();
+  const context = await getChefActorContext();
   if (!context) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

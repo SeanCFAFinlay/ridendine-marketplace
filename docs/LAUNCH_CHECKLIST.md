@@ -12,7 +12,7 @@
 |---|------|-------|----------------------------|
 | T1 | CI green on release branch (`pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` per [`docs/QA_TESTING_PLAN.md`](QA_TESTING_PLAN.md)) | Eng | |
 | T2 | Staging deploy matches production config class (keys **mode**, not values) | Eng | |
-| T3 | `BYPASS_AUTH` **not** set in production; `NODE_ENV=production` verified | Eng | |
+| T3 | `ALLOW_DEV_AUTOLOGIN` **not** set in production; `NODE_ENV=production` verified | Eng | |
 | T4 | Stripe **live** vs **test** keys match intended environment | Eng + Finance | |
 | T5 | Webhook endpoint URL + `STRIPE_WEBHOOK_SECRET` match **only** prod web URL | Eng | |
 | T6 | Supabase backup / PITR status confirmed for prod project | Ops | |

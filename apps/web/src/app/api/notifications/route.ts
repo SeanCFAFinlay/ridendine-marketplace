@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@ridendine/db';
+import { getCustomerActorContext } from '@ridendine/engine/server';
 
 export async function GET() {
   try {
@@ -33,6 +34,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const ctx = await getCustomerActorContext();
+    if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const cookieStore = await cookies();
     const supabase = createServerClient(cookieStore);
 
@@ -74,6 +78,9 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const ctx = await getCustomerActorContext();
+    if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const cookieStore = await cookies();
     const supabase = createServerClient(cookieStore);
 

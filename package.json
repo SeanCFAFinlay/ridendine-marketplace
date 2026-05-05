@@ -36,7 +36,8 @@
     "ui:registry": "tsx scripts/ui/build-page-registry.ts",
     "ui:screenshots:sync": "tsx scripts/ui/sync-ui-screenshots.ts",
     "ui:docs": "tsx scripts/ui/generate-command-center-docs.ts",
-    "ui:command-center": "pnpm ui:registry && pnpm ui:screenshots:sync && pnpm ui:docs"
+    "ui:command-center": "pnpm ui:registry && pnpm ui:screenshots:sync && pnpm ui:docs",
+    "audit:guards": "node scripts/audit/check-api-route-guards.mjs"
   },
   "dependencies": {
     "@sentry/nextjs": "^9.0.0",

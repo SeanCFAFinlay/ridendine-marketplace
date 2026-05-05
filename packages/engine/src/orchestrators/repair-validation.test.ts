@@ -157,10 +157,10 @@ describe('FND-013: Hamilton coordinates extracted to constants', () => {
 });
 
 // ==========================================
-// FND-019: BYPASS_AUTH production guard
+// FND-019: ALLOW_DEV_AUTOLOGIN (Phase 5 — replaces BYPASS_AUTH)
 // ==========================================
-describe('FND-019: BYPASS_AUTH production guard', () => {
-  it('middleware source contains production crash guard', async () => {
+describe('FND-019: ALLOW_DEV_AUTOLOGIN dev shortcut guard', () => {
+  it('middleware source uses ALLOW_DEV_AUTOLOGIN for dev autologin', async () => {
     const fs = await import('fs');
     const path = await import('path');
     const source = fs.readFileSync(
@@ -168,8 +168,19 @@ describe('FND-019: BYPASS_AUTH production guard', () => {
       'utf-8'
     );
 
-    expect(source).toContain("process.env.NODE_ENV === 'production'");
-    expect(source).toContain('BYPASS_AUTH=true is not allowed in production');
+    expect(source).toContain('ALLOW_DEV_AUTOLOGIN');
+    expect(source).toContain("process.env.NODE_ENV !== 'production'");
+  });
+
+  it('regression: middleware source does not contain BYPASS_AUTH (removed in Phase 5)', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../../auth/src/middleware.ts'),
+      'utf-8'
+    );
+
+    expect(source).not.toContain('BYPASS_AUTH');
   });
 });
 

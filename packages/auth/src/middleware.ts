@@ -81,14 +81,12 @@ export function createAuthMiddleware(config: AuthMiddlewareConfig) {
   return async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Auth bypass — development only. Crashes in production to prevent accidental deployment.
-    if (process.env.BYPASS_AUTH === 'true') {
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error(
-          'FATAL: BYPASS_AUTH=true is not allowed in production. ' +
-          'Remove BYPASS_AUTH from your production environment variables.'
-        );
-      }
+    // Dev autologin — opt-in shortcut for local development only.
+    // Never honored in production regardless of env value.
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      process.env.ALLOW_DEV_AUTOLOGIN === 'true'
+    ) {
       return NextResponse.next();
     }
 

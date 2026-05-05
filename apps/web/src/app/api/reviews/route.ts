@@ -8,11 +8,15 @@ import type { NextRequest } from 'next/server';
 import { createAdminClient, createServerClient } from '@ridendine/db';
 import { cookies } from 'next/headers';
 import { checkRateLimit, getClientIp, isUuid, rateLimitResponse } from '@ridendine/utils';
+import { getCustomerActorContext } from '@ridendine/engine/server';
 
 export const dynamic = 'force-dynamic';
 
 // ── POST /api/reviews ──────────────────────────────────────────────
 export async function POST(request: NextRequest) {
+  const ctx = await getCustomerActorContext();
+  if (!ctx) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
   const ip = getClientIp(request);
   const limit = checkRateLimit(ip, { maxRequests: 5, windowSeconds: 60 }, 'reviews');
   if (!limit.allowed) return rateLimitResponse(limit.retryAfter!);

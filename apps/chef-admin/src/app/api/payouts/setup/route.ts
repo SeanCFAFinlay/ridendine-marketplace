@@ -2,9 +2,13 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@ridendine/db';
 import { getStripeClient } from '@ridendine/engine';
+import { getChefActorContext } from '@/lib/engine';
 
 export async function POST() {
   try {
+    const ctx = await getChefActorContext();
+    if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const cookieStore = await cookies();
     const supabase = createServerClient(cookieStore);
 

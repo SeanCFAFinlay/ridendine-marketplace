@@ -28,3 +28,6 @@ export * from './api';
 // Re-export engine types (central business engine)
 export * from './engine';
 export * from './engine/transitions';
+
+// Re-export platform capability constants
+export * from './capabilities';

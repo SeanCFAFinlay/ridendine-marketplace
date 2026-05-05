@@ -5,6 +5,7 @@
 
 import type { ActorContext } from '@ridendine/types';
 import { ActorRole } from '@ridendine/types';
+import type { PlatformCapability } from '@ridendine/types';
 import { errorResponse } from '../client-helpers';
 
 type AR = (typeof ActorRole)[keyof typeof ActorRole];
@@ -86,44 +87,10 @@ const OPS_AND_FINANCE: readonly AR[] = [
   ActorRole.SUPER_ADMIN,
 ];
 
-export type PlatformApiCapability =
-  | 'platform_settings'
-  | 'finance_refunds_read'
-  | 'finance_refunds_sensitive'
-  | 'finance_refunds_request'
-  | 'finance_payouts'
-  | 'finance_engine'
-  | 'finance_export_ledger'
-  | 'ops_export_operational'
-  | 'ops_orders_read'
-  | 'ops_orders_write'
-  | 'ops_entity_read'
-  | 'order_override'
-  | 'audit_timeline_read'
-  | 'dispatch_read'
-  | 'dispatch_write'
-  | 'exceptions_read'
-  | 'exceptions_write'
-  | 'dashboard_read'
-  | 'dashboard_actions'
-  | 'analytics_read'
-  | 'support_queue'
-  | 'announcements'
-  | 'promos'
-  | 'team_list'
-  | 'team_manage'
-  | 'customers_read'
-  | 'customers_write'
-  | 'chefs_governance'
-  | 'drivers_governance'
-  | 'deliveries_read'
-  | 'deliveries_write'
-  | 'engine_rules'
-  | 'engine_maintenance'
-  | 'storefront_ops'
-  | 'engine_health';
+/** @deprecated Use PlatformCapability from @ridendine/types instead. */
+export type PlatformApiCapability = PlatformCapability;
 
-const CAPABILITY_ROLES: Record<PlatformApiCapability, readonly AR[]> = {
+const CAPABILITY_ROLES: Record<PlatformCapability, readonly AR[]> = {
   platform_settings: SUPER,
   finance_refunds_read: FINANCE,
   finance_refunds_sensitive: FINANCE,
@@ -170,7 +137,7 @@ function hasAnyRole(actor: ActorContext, allowed: readonly AR[]): boolean {
 /** True when actor is authenticated and satisfies the capability (no side effects). */
 export function hasPlatformApiCapability(
   actor: ActorContext | null,
-  capability: PlatformApiCapability
+  capability: PlatformCapability
 ): boolean {
   if (!actor) return false;
   return hasAnyRole(actor, CAPABILITY_ROLES[capability]);
@@ -181,7 +148,7 @@ export function hasPlatformApiCapability(
  */
 export function guardPlatformApi(
   actor: ActorContext | null,
-  capability: PlatformApiCapability
+  capability: PlatformCapability
 ): Response | null {
   if (!actor) {
     return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);

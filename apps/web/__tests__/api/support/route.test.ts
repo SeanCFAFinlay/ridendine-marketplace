@@ -4,23 +4,16 @@
 
 const mockCreateSupportTicket = jest.fn();
 const mockCreateAdminClient = jest.fn();
-const mockGetUser = jest.fn();
-const mockGetCustomerByUserId = jest.fn();
+const mockGetCustomerActorContext = jest.fn();
 const mockEvaluateRateLimit = jest.fn();
-
-const mockSessionClient = {
-  auth: { getUser: mockGetUser },
-};
 
 jest.mock('@ridendine/db', () => ({
   createAdminClient: mockCreateAdminClient,
-  createServerClient: jest.fn(() => mockSessionClient),
   createSupportTicket: mockCreateSupportTicket,
-  getCustomerByUserId: mockGetCustomerByUserId,
 }));
 
-jest.mock('next/headers', () => ({
-  cookies: jest.fn(() => ({ getAll: jest.fn(() => []) })),
+jest.mock('@ridendine/engine/server', () => ({
+  getCustomerActorContext: (...args: unknown[]) => mockGetCustomerActorContext(...args),
 }));
 
 jest.mock('@ridendine/utils', () => ({
@@ -37,13 +30,18 @@ async function importRoute() {
 
   jest.mock('@ridendine/db', () => ({
     createAdminClient: mockCreateAdminClient,
-    createServerClient: jest.fn(() => mockSessionClient),
     createSupportTicket: mockCreateSupportTicket,
-    getCustomerByUserId: mockGetCustomerByUserId,
   }));
 
-  jest.mock('next/headers', () => ({
-    cookies: jest.fn(() => ({ getAll: jest.fn(() => []) })),
+  jest.mock('@ridendine/engine/server', () => ({
+    getCustomerActorContext: (...args: unknown[]) => mockGetCustomerActorContext(...args),
+  }));
+
+  jest.mock('@ridendine/utils', () => ({
+    RATE_LIMIT_POLICIES: { supportWrite: { name: 'support_write' } },
+    evaluateRateLimit: (...args: unknown[]) => mockEvaluateRateLimit(...args),
+    rateLimitPolicyResponse: () =>
+      Response.json({ success: false, code: 'RATE_LIMITED' }, { status: 429 }),
   }));
 
   return import('../../../src/app/api/support/route');
@@ -65,6 +63,22 @@ const validBody = {
   category: 'order' as const,
 };
 
+const mockTicket = {
+  id: 'ticket-uuid-123',
+  customer_id: null,
+  subject: 'My order is late',
+  description:
+    'From: Jane Doe <jane@example.com>\n\nMy order has been delayed and I need help.',
+  status: 'open',
+  priority: 'medium',
+  category: 'order',
+  order_id: null,
+  assigned_to: null,
+  resolved_at: null,
+  created_at: '2026-04-20T00:00:00Z',
+  updated_at: '2026-04-20T00:00:00Z',
+};
+
 describe('POST /api/support', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -74,24 +88,10 @@ describe('POST /api/support', () => {
       policy: 'support_write',
     });
 
+    // Default: unauthenticated
+    mockGetCustomerActorContext.mockResolvedValue(null);
     mockCreateAdminClient.mockReturnValue({});
-    mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
-    mockGetCustomerByUserId.mockResolvedValue(null);
-    mockCreateSupportTicket.mockResolvedValue({
-      id: 'ticket-uuid-123',
-      customer_id: null,
-      subject: 'My order is late',
-      description:
-        'From: Jane Doe <jane@example.com>\n\nMy order has been delayed and I need help.',
-      status: 'open',
-      priority: 'medium',
-      category: 'order',
-      order_id: null,
-      assigned_to: null,
-      resolved_at: null,
-      created_at: '2026-04-20T00:00:00Z',
-      updated_at: '2026-04-20T00:00:00Z',
-    });
+    mockCreateSupportTicket.mockResolvedValue(mockTicket);
   });
 
   it('returns 200 with real ticket ID on valid request', async () => {
@@ -130,11 +130,10 @@ describe('POST /api/support', () => {
   });
 
   it('sets customer_id when user is authenticated and profile exists', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-abc' } },
-      error: null,
+    mockGetCustomerActorContext.mockResolvedValue({
+      actor: { userId: 'user-abc', role: 'customer', entityId: 'cust-xyz' },
+      customerId: 'cust-xyz',
     });
-    mockGetCustomerByUserId.mockResolvedValue({ id: 'cust-xyz' });
 
     const { POST } = await importRoute();
     await POST(makeRequest(validBody));
@@ -144,11 +143,11 @@ describe('POST /api/support', () => {
       Record<string, unknown>,
     ];
     expect(ticket.customer_id).toBe('cust-xyz');
-    expect(mockGetCustomerByUserId).toHaveBeenCalled();
+    expect(mockGetCustomerActorContext).toHaveBeenCalled();
   });
 
   it('sets customer_id to null when user is not authenticated', async () => {
-    mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+    mockGetCustomerActorContext.mockResolvedValue(null);
 
     const { POST } = await importRoute();
     await POST(makeRequest(validBody));
