@@ -26,7 +26,8 @@ const PUBLIC_ALLOWLIST = [
   '/api/health',
   '/api/webhooks/stripe',
   '/api/stripe/webhook',
-  '/api/internal/command-center',
+  // command-center now lives exclusively in apps/ops-admin
+  'apps/ops-admin/src/app/api/internal/command-center',
 ];
 
 let failed = false;

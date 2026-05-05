@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { loadStripe } from '@stripe/stripe-js';
@@ -76,11 +76,13 @@ function mapCheckoutError(code?: string, fallback?: string): string {
 }
 
 const TIP_OPTIONS = [
-  { label: 'No tip', value: 0 },
-  { label: '10%', percent: 10 },
   { label: '15%', percent: 15 },
   { label: '20%', percent: 20 },
+  { label: '25%', percent: 25 },
+  { label: 'Custom', isCustom: true },
 ];
+
+const DEFAULT_TIP_PERCENT = 18;
 
 function CheckoutContent() {
   const router = useRouter();
@@ -92,10 +94,16 @@ function CheckoutContent() {
   const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [tip, setTip] = useState(0);
+  const [tipPercent, setTipPercent] = useState<number | null>(DEFAULT_TIP_PERCENT);
+  const [showCustomTip, setShowCustomTip] = useState(false);
   const [customTip, setCustomTip] = useState('');
   const [promoCode, setPromoCode] = useState('');
+  const [promoStatus, setPromoStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
+  const [promoMessage, setPromoMessage] = useState('');
+  const [promoDiscount, setPromoDiscount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const promoDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Stripe state
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -124,11 +132,16 @@ function CheckoutContent() {
             quantity: item.quantity,
             image_url: item.menu_items?.image_url,
           }));
-          setCart({
+          const loadedCart = {
             id: cartData.data.id,
             storefront_id: cartData.data.storefront_id,
             items,
-          });
+          };
+          setCart(loadedCart);
+          // Set default 18% tip based on subtotal
+          const sub = items.reduce((s: number, i: CartItem) => s + i.price * i.quantity, 0);
+          setTip(Math.round(sub * (DEFAULT_TIP_PERCENT / 100) * 100) / 100);
+          setTipPercent(DEFAULT_TIP_PERCENT);
         }
 
         const addressRes = await fetch('/api/addresses');
@@ -163,15 +176,55 @@ function CheckoutContent() {
     cart?.items.reduce((sum, item) => sum + item.price * item.quantity, 0) ?? 0;
 
   /** Driver tip in dollars for `POST /api/checkout` (engine expects currency units, not cents). */
-  const tipDollars = (): number => {
-    const raw = customTip.trim();
-    if (raw) {
-      const n = parseFloat(raw);
+  const tipDollars = useCallback((): number => {
+    if (showCustomTip && customTip.trim()) {
+      const n = parseFloat(customTip.trim());
       if (!Number.isFinite(n) || n < 0) return 0;
       return Math.round(n * 100) / 100;
     }
+    if (tipPercent !== null) {
+      return Math.round(cartSubtotal * (tipPercent / 100) * 100) / 100;
+    }
     return tip;
-  };
+  }, [showCustomTip, customTip, tipPercent, tip, cartSubtotal]);
+
+  const validatePromo = useCallback(async (code: string) => {
+    if (!code.trim()) {
+      setPromoStatus('idle');
+      setPromoMessage('');
+      setPromoDiscount(0);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `/api/promos/validate?code=${encodeURIComponent(code)}&subtotal=${cartSubtotal}`
+      );
+      const json = await res.json();
+      if (json.success) {
+        setPromoStatus('valid');
+        setPromoMessage(`${json.data.discountType === 'percentage' ? `${json.data.discountValue}% off` : `$${json.data.discountAmount.toFixed(2)} off`} applied`);
+        setPromoDiscount(json.data.discountAmount);
+      } else {
+        setPromoStatus('invalid');
+        setPromoMessage(json.error || 'Invalid promo code');
+        setPromoDiscount(0);
+      }
+    } catch {
+      setPromoStatus('invalid');
+      setPromoMessage('Could not validate promo code');
+      setPromoDiscount(0);
+    }
+  }, [cartSubtotal]);
+
+  const handlePromoChange = useCallback((value: string) => {
+    setPromoCode(value.toUpperCase());
+    setPromoStatus('idle');
+    setPromoMessage('');
+    if (promoDebounceRef.current) clearTimeout(promoDebounceRef.current);
+    promoDebounceRef.current = setTimeout(() => {
+      void validatePromo(value.toUpperCase());
+    }, 300);
+  }, [validatePromo]);
 
   const handleProceedToPayment = async () => {
     if (!selectedAddress) {
@@ -191,7 +244,7 @@ function CheckoutContent() {
           deliveryAddressId: selectedAddress,
           specialInstructions: deliveryInstructions,
           tip: tipDollars(),
-          promoCode: promoCode || null,
+          promoCode: promoStatus === 'valid' ? promoCode : null,
         }),
       });
 
@@ -259,6 +312,7 @@ function CheckoutContent() {
     : null;
 
   return (
+    <>
     <main className="container py-8">
       <h1 className="text-2xl font-bold text-gray-900">Checkout</h1>
 
@@ -315,20 +369,32 @@ function CheckoutContent() {
               {/* Tip */}
               <Card>
                 <h2 className="font-semibold text-gray-900">Add a Tip for Your Driver</h2>
+                <p className="mt-1 text-xs text-gray-500">Default 18% — 100% goes to your driver</p>
                 <div className="mt-4 grid grid-cols-4 gap-3">
                   {TIP_OPTIONS.map((option) => {
-                    const tipValue = option.percent
-                      ? Math.round(cartSubtotal * (option.percent / 100) * 100) / 100
-                      : (option.value ?? 0);
-                    const isSelected =
-                      !customTip && Math.abs(tip - tipValue) < 0.0001;
+                    const isCustomOption = Boolean(option.isCustom);
+                    const pct = 'percent' in option ? option.percent : null;
+                    const tipValue = pct
+                      ? Math.round(cartSubtotal * (pct / 100) * 100) / 100
+                      : 0;
+                    const isSelected = isCustomOption
+                      ? showCustomTip
+                      : !showCustomTip && tipPercent === pct;
 
                     return (
                       <button
                         key={option.label}
+                        type="button"
                         onClick={() => {
-                          setTip(tipValue);
-                          setCustomTip('');
+                          if (isCustomOption) {
+                            setShowCustomTip(true);
+                            setTipPercent(null);
+                          } else {
+                            setShowCustomTip(false);
+                            setTipPercent(pct ?? 0);
+                            setTip(tipValue);
+                            setCustomTip('');
+                          }
                         }}
                         className={`rounded-lg border-2 py-3 text-center transition-colors ${
                           isSelected
@@ -337,43 +403,63 @@ function CheckoutContent() {
                         }`}
                       >
                         <span className="block text-sm">{option.label}</span>
-                        {option.percent && (
+                        {pct && !isCustomOption && (
                           <span className="block text-xs text-gray-500">
-                            ${Number(tipValue).toFixed(2)}
+                            ${tipValue.toFixed(2)}
                           </span>
                         )}
                       </button>
                     );
                   })}
                 </div>
-                <div className="mt-3">
-                  <Input
-                    type="number"
-                    value={customTip}
-                    onChange={(e) => {
-                      setCustomTip(e.target.value);
-                      setTip(0);
-                    }}
-                    placeholder="Custom tip amount"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
+                {showCustomTip && (
+                  <div className="mt-3">
+                    <Input
+                      type="number"
+                      value={customTip}
+                      onChange={(e) => setCustomTip(e.target.value)}
+                      placeholder="Enter custom tip ($)"
+                      min="0"
+                      step="0.01"
+                      autoFocus
+                    />
+                  </div>
+                )}
+                <p className="mt-2 text-sm text-gray-600">
+                  Tip amount:{' '}
+                  <span className="font-semibold text-[#E85D26]">
+                    ${tipDollars().toFixed(2)}
+                  </span>
+                  {!showCustomTip && tipPercent !== null && (
+                    <span className="ml-1 text-xs text-gray-400">({tipPercent}%)</span>
+                  )}
+                </p>
               </Card>
 
               {/* Promo Code */}
               <Card>
                 <h2 className="font-semibold text-gray-900">Promo Code</h2>
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4">
                   <Input
                     value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    onChange={(e) => handlePromoChange(e.target.value)}
                     placeholder="Enter promo code"
-                    className="flex-1"
+                    className={
+                      promoStatus === 'valid'
+                        ? 'border-green-500 focus:ring-green-500'
+                        : promoStatus === 'invalid'
+                          ? 'border-red-400 focus:ring-red-400'
+                          : ''
+                    }
                   />
-                  <Button variant="secondary" type="button" disabled>
-                    Applied at payment step
-                  </Button>
+                  {promoMessage && (
+                    <p className={`mt-1.5 text-sm ${promoStatus === 'valid' ? 'text-green-600' : 'text-red-600'}`}>
+                      {promoStatus === 'valid' && (
+                        <span className="mr-1">✓</span>
+                      )}
+                      {promoMessage}
+                    </p>
+                  )}
                 </div>
               </Card>
 
@@ -440,6 +526,13 @@ function CheckoutContent() {
         <div>
           <Card className="sticky top-24">
             <h2 className="font-semibold text-gray-900">Payment Summary</h2>
+            {/* Estimated delivery time */}
+            <div className="mt-3 flex items-center gap-2 rounded-lg bg-[#fff8f4] px-3 py-2">
+              <svg className="h-4 w-4 flex-shrink-0 text-[#E85D26]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm text-gray-700">Est. delivery: <strong>~30–45 min</strong></span>
+            </div>
             <div className="mt-4 space-y-2">
               {checkoutStep === 'details' && !hasApiBreakdown ? (
                 <>
@@ -457,10 +550,15 @@ function CheckoutContent() {
                       </span>
                     </div>
                   )}
+                  {promoDiscount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Promo ({promoCode})</span>
+                      <span>-${promoDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <p className="pt-2 text-xs leading-relaxed text-gray-500">
-                    Delivery, service fees, tax, and your order total are set by
-                    the server when you continue to payment — not shown here as
-                    estimates.
+                    Delivery, service fees, and tax are set by
+                    the server when you continue to payment — not shown here as estimates.
                   </p>
                 </>
               ) : breakdown ? (
@@ -539,6 +637,29 @@ function CheckoutContent() {
         </div>
       </div>
     </main>
+
+    {/* Sticky mobile Pay bar — visible below md only */}
+    {checkoutStep === 'details' && (
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white p-4 shadow-lg md:hidden">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs text-gray-500">Subtotal</p>
+            <p className="font-semibold text-gray-900">${cartSubtotal.toFixed(2)}</p>
+          </div>
+          <Button
+            onClick={handleProceedToPayment}
+            disabled={creatingPayment || !selectedAddress}
+            className="flex-1 bg-[#E85D26] text-white hover:bg-[#d44e1e]"
+            size="lg"
+          >
+            {creatingPayment ? 'Processing...' : 'Continue to Payment'}
+          </Button>
+        </div>
+      </div>
+    )}
+    {/* Bottom padding for mobile sticky bar */}
+    {checkoutStep === 'details' && <div className="h-24 md:hidden" />}
+    </>
   );
 }
 

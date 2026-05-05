@@ -1,23 +1,41 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { createServerClient, getActiveStorefronts } from '@ridendine/db';
+import { Button } from '@ridendine/ui';
 
-export async function FeaturedChefs() {
+interface FeaturedChefsProps {
+  limit?: number;
+}
+
+export async function FeaturedChefs({ limit = 6 }: FeaturedChefsProps) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
   let chefs: Awaited<ReturnType<typeof getActiveStorefronts>> = [];
 
   try {
-    chefs = await getActiveStorefronts(supabase as any, { limit: 6, featured: true });
+    chefs = await getActiveStorefronts(supabase as any, { limit, featured: true });
   } catch (error) {
     console.error('Failed to fetch featured chefs:', error);
   }
 
   if (chefs.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">No chefs available at the moment. Check back soon!</p>
+      <div className="rounded-2xl border border-dashed border-[#E85D26]/40 bg-[#fff8f4] px-8 py-16 text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#fff0e8]">
+          <svg className="h-8 w-8 text-[#E85D26]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900">Discover Home-Cooked Meals</h3>
+        <p className="mt-2 text-gray-500">
+          Our chefs are getting ready to cook for you. Check back soon for amazing home-cooked meals!
+        </p>
+        <Link href="/chef-signup" className="mt-6 inline-block">
+          <Button className="bg-[#E85D26] text-white hover:bg-[#d44e1e]">
+            Are you a chef? Join us
+          </Button>
+        </Link>
       </div>
     );
   }
