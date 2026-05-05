@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Card, Input, Button, Textarea } from '@ridendine/ui';
+import { Card, Button } from '@ridendine/ui';
 
 interface Storefront {
   id: string;

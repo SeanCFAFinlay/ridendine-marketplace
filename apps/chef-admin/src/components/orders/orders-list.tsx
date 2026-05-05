@@ -128,7 +128,7 @@ export function OrdersList({ initialOrders, storefrontId }: OrdersListProps) {
           // Silent fail if audio file not found or autoplay blocked
           console.debug('Audio notification unavailable');
         });
-      } catch (error) {
+      } catch {
         // Silent fail if Audio API not available
         console.debug('Audio API unavailable');
       }

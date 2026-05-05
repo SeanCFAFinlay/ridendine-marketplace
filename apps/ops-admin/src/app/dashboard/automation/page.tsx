@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Badge, Button } from '@ridendine/ui';
+import { Card, Badge } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
 interface AutomationRule {

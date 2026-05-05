@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Button, Input } from '@ridendine/ui';
+import { Button } from '@ridendine/ui';
 
 export default function DriverLoginPage() {
   const searchParams = useSearchParams();

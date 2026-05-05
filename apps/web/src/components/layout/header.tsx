@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuthContext } from '@ridendine/auth';
-import { Button, Avatar, Badge } from '@ridendine/ui';
+import { Button, Avatar } from '@ridendine/ui';
 import { useCart } from '@/contexts/cart-context';
 import { useState } from 'react';
 

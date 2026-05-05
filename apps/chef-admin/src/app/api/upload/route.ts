@@ -4,7 +4,8 @@
 // Supports: menu item images, profile images, storefront images
 // ==========================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import { getChefBasicContext } from '@/lib/engine';
 import {

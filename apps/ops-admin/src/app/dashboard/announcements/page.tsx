@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, Badge, Button } from '@ridendine/ui';
+import { Card, Button } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
 const AUDIENCES = [

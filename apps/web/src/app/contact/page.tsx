@@ -38,7 +38,7 @@ export default function ContactPage() {
       } else {
         setError('Failed to submit. Please try again.');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to submit. Please try again.');
     } finally {
       setSubmitting(false);
