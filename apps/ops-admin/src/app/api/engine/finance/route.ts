@@ -4,7 +4,7 @@
 // ==========================================
 
 import type { NextRequest } from 'next/server';
-import { financeActionSchema } from '@ridendine/validation';
+import { financeActionSchema, type OpsCommandInput } from '@ridendine/validation';
 import { operationResultResponse, parseJsonBody } from '@/lib/validation';
 import {
   getEngine,
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
   const actionInput = await parseJsonBody(request, financeActionSchema);
   if (actionInput instanceof Response) return actionInput;
   const engine = getEngine();
-  const result = await engine.operations.execute(actionInput, opsActor);
-  return operationResultResponse(result, actionInput.action === 'create_payout_hold' ? 201 : 200);
+  const command = actionInput as OpsCommandInput;
+  const result = await engine.operations.execute(command, opsActor);
+  return operationResultResponse(result, command.action === 'create_payout_hold' ? 201 : 200);
 }

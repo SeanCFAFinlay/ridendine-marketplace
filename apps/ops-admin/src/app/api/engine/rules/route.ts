@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import { finalizeOpsActor, getEngine, getOpsActorContext, guardPlatformApi } from '@/lib/engine';
-import { automationRuleCommandSchema } from '@ridendine/validation';
+import { automationRuleCommandSchema, type OpsCommandInput } from '@ridendine/validation';
 import { operationResultResponse, parseJsonBody } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
@@ -92,6 +92,6 @@ export async function PATCH(request: NextRequest) {
 
   const actionInput = await parseJsonBody(request, automationRuleCommandSchema);
   if (actionInput instanceof Response) return actionInput;
-  const result = await getEngine().operations.execute(actionInput, opsActor);
+  const result = await getEngine().operations.execute(actionInput as OpsCommandInput, opsActor);
   return operationResultResponse(result);
 }

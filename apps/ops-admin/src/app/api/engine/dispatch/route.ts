@@ -4,7 +4,7 @@
 // ==========================================
 
 import type { NextRequest } from 'next/server';
-import { deliveryInterventionActionSchema } from '@ridendine/validation';
+import { deliveryInterventionActionSchema, type OpsCommandInput } from '@ridendine/validation';
 import { operationResultResponse, parseJsonBody } from '@/lib/validation';
 import {
   getEngine,
@@ -41,6 +41,6 @@ export async function POST(request: NextRequest) {
   const actionInput = await parseJsonBody(request, deliveryInterventionActionSchema);
   if (actionInput instanceof Response) return actionInput;
   const engine = getEngine();
-  const result = await engine.operations.execute(actionInput, opsActor);
+  const result = await engine.operations.execute(actionInput as OpsCommandInput, opsActor);
   return operationResultResponse(result);
 }

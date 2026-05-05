@@ -1,11 +1,16 @@
 import type { NextRequest } from 'next/server';
-import type { ZodSchema } from 'zod';
 import { errorResponse, successResponse } from '@/lib/engine';
 import type { OperationResult } from '@ridendine/types';
 
+type ParseSchema<T> = {
+  safeParse: (input: unknown) =>
+    | { success: true; data: T }
+    | { success: false; error: { issues: Array<{ message?: string }> } };
+};
+
 export async function parseJsonBody<T>(
   request: NextRequest,
-  schema: ZodSchema<T>
+  schema: ParseSchema<T>
 ): Promise<T | Response> {
   let body: unknown;
   try {
