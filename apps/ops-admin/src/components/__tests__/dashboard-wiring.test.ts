@@ -21,4 +21,17 @@ describe('ops dashboard wiring (Phase F)', () => {
     expect(src).toContain('Unable to load live map data right now.');
     expect(src).toContain('No live driver or delivery locations are currently available.');
   });
+
+  it('dashboard isolates live board client failures from the whole page', () => {
+    const dashboard = read('app/dashboard/page.tsx');
+    const boundary = read('app/dashboard/_components/live-board-boundary.tsx');
+    expect(dashboard).toContain('<LiveBoardBoundary>');
+    expect(boundary).toContain('Live board unavailable');
+    expect(boundary).toContain('componentDidCatch');
+  });
+
+  it('middleware lets the live-board route return JSON auth responses itself', () => {
+    const src = read('middleware.ts');
+    expect(src).toContain("'/api/ops/live-board'");
+  });
 });

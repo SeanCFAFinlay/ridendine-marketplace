@@ -32,8 +32,6 @@ jest.mock('@ridendine/db', () => ({
       signInWithPassword: mockSignInWithPassword,
       signOut: mockSignOut,
     },
-  })),
-  createAdminClient: jest.fn(() => ({
     from: mockFrom,
   })),
   getDriverByUserId: (...args: unknown[]) => mockGetDriverByUserId(...args),

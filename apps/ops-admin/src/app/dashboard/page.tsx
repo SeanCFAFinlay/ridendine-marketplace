@@ -5,6 +5,7 @@ import { createServerClient } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { getEngine } from '@/lib/engine';
 import { LiveBoard } from './_components/live-board';
+import { LiveBoardBoundary } from './_components/live-board-boundary';
 
 export const dynamic = 'force-dynamic';
 
@@ -283,7 +284,9 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        <LiveBoard />
+        <LiveBoardBoundary>
+          <LiveBoard />
+        </LiveBoardBoundary>
 
         {engineData && (
           <>

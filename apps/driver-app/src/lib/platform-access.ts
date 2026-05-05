@@ -1,10 +1,12 @@
-import { createAdminClient } from '@ridendine/db';
+import type { SupabaseClient } from '@ridendine/db';
 
 const DRIVER_APP_PLATFORM_ROLES = new Set(['super_admin']);
 
-export async function getDriverAppPlatformRole(userId: string): Promise<string | null> {
-  const adminClient = createAdminClient() as any;
-  const { data, error } = await adminClient
+export async function getDriverAppPlatformRole(
+  client: SupabaseClient,
+  userId: string
+): Promise<string | null> {
+  const { data, error } = await client
     .from('platform_users')
     .select('role')
     .eq('user_id', userId)

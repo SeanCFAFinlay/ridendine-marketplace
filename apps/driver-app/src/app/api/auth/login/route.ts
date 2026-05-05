@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
     const [driver, platformRole] = await Promise.all([
       getDriverByUserId(supabase, authData.user.id),
-      getDriverAppPlatformRole(authData.user.id),
+      getDriverAppPlatformRole(supabase, authData.user.id),
     ]);
 
     if (platformRole) {

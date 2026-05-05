@@ -21,7 +21,7 @@ export default async function DriverHomePage() {
   const driver = await getDriverByUserId(supabase as any, user.id);
 
   if (!driver) {
-    const platformRole = await getDriverAppPlatformRole(user.id);
+    const platformRole = await getDriverAppPlatformRole(supabase as any, user.id);
 
     if (platformRole) {
       return (
