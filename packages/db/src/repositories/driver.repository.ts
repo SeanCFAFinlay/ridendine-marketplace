@@ -1,7 +1,8 @@
 import type { SupabaseClient } from '../client/types';
-import type { Tables } from '../generated/database.types';
+import type { Tables, TablesInsert } from '../generated/database.types';
 
 export type Driver = Tables<'drivers'>;
+export type DriverInsert = TablesInsert<'drivers'>;
 export interface OpsDriverListItem extends Driver {
   driver_presence: {
     status: 'offline' | 'online' | 'busy';
@@ -78,7 +79,7 @@ export async function getDriverById(
 
 export async function createDriver(
   client: SupabaseClient,
-  driver: Omit<Driver, 'id' | 'created_at' | 'updated_at'>
+  driver: Omit<DriverInsert, 'id' | 'created_at' | 'updated_at'>
 ): Promise<Driver> {
   const { data, error } = await client
     .from('drivers')

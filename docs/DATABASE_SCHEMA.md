@@ -1,13 +1,13 @@
 # SUPABASE DATABASE SCHEMA (human-readable reference)
 
-## Source of truth (Phase 1)
+## Source of truth (post-Phase 2 rebuild)
 
 | Layer | Canonical location |
 |-------|---------------------|
-| **Database schema** | `supabase/migrations/` (`00001` through `00019` in this repository; **Phase 0** = `00019_business_engine.sql`). |
+| **Database schema** | `supabase/migrations/` (`00001` through `00025` in this repository; **Phase 0** = `00019_business_engine.sql`; **Phase 2 rebuild** = `00024_canonical_consolidation.sql` + `00025_rls_role_alignment.sql`). |
 | **Machine types** | `packages/db/src/generated/database.types.ts` — regenerate with `pnpm --filter @ridendine/db run db:generate`. The script tries **`supabase gen types --local`** (needs Docker + `supabase start`), then **`--db-url`** using **`DATABASE_URL`** from `.env.local` or `.env` (Postgres URI from Dashboard → Database). It **never truncates** the types file on failure. Passwords with special characters: the script retries with an encoded `postgresql://postgres:…` password segment. |
-| **This document** | High-level entity map and relationships; update when migrations add or rename tables/columns **verified** against SQL migrations and regenerated types. |
-| **Migration rationale** | [`docs/DATABASE_MIGRATION_NOTES.md`](DATABASE_MIGRATION_NOTES.md) — why each phase migration exists, rollback notes, follow-ups. |
+| **This document** | High-level entity map and relationships; the **contract** for what the schema should look like after `00024` + `00025` apply. Update when later migrations add or rename tables/columns. |
+| **Migration rationale** | `archive/audits/old-docs/DATABASE_MIGRATION_NOTES.md` (archived in Phase 1; consult only as historical reference). |
 
 **Order status events (IRR-009):** The physical table is **`order_status_history`**. Migration **`00016`** adds read view **`order_status_events`** as `SELECT * FROM order_status_history` (naming alias only; no duplicate storage). Prefer **`order_status_history`** in new SQL and engine queries; use the view where product language or external reports expect “events”.
 
@@ -116,7 +116,7 @@ Defined primarily in `supabase/migrations/00007_central_engine_tables.sql` (plus
 
 | Table | Introduced / evolved in | Purpose |
 |-------|-------------------------|---------|
-| `platform_settings` | `00004_additions.sql`, `00009_ops_admin_control_plane.sql`, `00010_contract_drift_repair.sql` | Platform configuration and feature flags |
+| `platform_settings` | `00004_additions.sql`, `00009_ops_admin_control_plane.sql`, `00010_contract_drift_repair.sql`, `00012_schema_drift_cleanup.sql`, `00024_canonical_consolidation.sql` | Platform configuration. **Canonical shape** is a single wide row (`platform_fee_percent`, `service_fee_percent`, `hst_rate`, `min_order_amount`, … `storefront_pause_on_sla_breach`) — see `packages/db/src/repositories/platform.repository.ts` for the full column list. The `setting_key`/`setting_value`/`description` columns from `00010` are orphan reservations (no application code uses them); they remain in the table for backward compatibility but are documented as deprecated via `COMMENT ON COLUMN` in `00024`. |
 | `push_subscriptions` | `00004_additions.sql` | Push notification subscriptions |
 | `chef_payouts` | `00004_additions.sql` | Chef payout records (detail alongside `payout_runs`) |
 | `analytics_events` | `00013_analytics_events.sql` | Analytics / product events |
@@ -151,11 +151,34 @@ Do **not** drop alias columns in Phase 3; checkout and ops code may still refere
 
 ---
 
-## Known drift (verified Phase 1)
+## RLS helper functions (Phase 2 rebuild — `00025`)
 
-1. **`packages/db/src/generated/database.types.ts`** may **omit** tables that exist in migrations. Example: **`system_alerts`** exists in `00007_central_engine_tables.sql` but was **not** present in the committed generated `Database['public']['Tables']` map at verification time — `apps/ops-admin` references `system_alerts` and strict `pnpm typecheck` may fail until types are regenerated from a database that reflects all migrations.
-2. **Regeneration** (`supabase gen types typescript --local`) requires a working **local** Supabase stack (Docker). If regeneration cannot be run, treat the committed types file as **stale risk** and schedule regeneration when Docker/Supabase local is available. **Warning:** the `db:generate` script redirects stdout to `database.types.ts`; if the CLI fails (e.g. Docker missing), the file can be **truncated** — restore with `git checkout -- packages/db/src/generated/database.types.ts`.
-3. **Phase 3 objects** (`stripe_events_processed`, view `order_status_events`) appear in migration `00016` but may be **absent** from committed `database.types.ts` until regeneration succeeds.
+`00025_rls_role_alignment.sql` introduces three SQL helper functions that RLS policies use to encapsulate role-set checks. Each runs as `SECURITY DEFINER` and is `STABLE`, so a policy can call it without leaking `platform_users` access to non-staff users.
+
+| Function | Returns `true` when the caller's `platform_users.role` is in |
+|----------|--------------------------------------------------------------|
+| `is_platform_staff(uid uuid)` | `ops_admin, ops_agent, ops_manager, super_admin, support_agent, finance_admin, finance_manager` |
+| `is_finance_staff(uid uuid)`  | `finance_admin, finance_manager, super_admin` |
+| `is_support_staff(uid uuid)`  | `support_agent, ops_agent, ops_admin, ops_manager, super_admin` |
+
+All three additionally require `platform_users.is_active = true`; a `NULL` `uid` returns `false`.
+
+`00025` refactors verbose `EXISTS (SELECT 1 FROM platform_users WHERE role IN (...))` patterns introduced in `00011_rls_role_alignment.sql` to call the appropriate helper, and the pgTAP suite at `supabase/tests/rls/role_alignment.sql` enforces correctness on every `supabase db reset`. **Phase 5 (RBAC enforcement)** layers a per-route capability matrix on top of these helpers.
+
+---
+
+## Known drift (post-Phase 2 rebuild)
+
+**Resolved by Phase 2 rebuild (`00024` / `00025`):**
+
+- **FND-002 / FND-003** (schema drift, duplicate table definitions for `platform_settings`, `promo_codes`, `driver_locations`, `chef_payout_accounts`) — `00012_schema_drift_cleanup.sql` performed the additive normalization; `00024_canonical_consolidation.sql` adds defensive `ADD COLUMN IF NOT EXISTS` repetition (idempotent — silently skips on already-applied DBs) and `COMMENT ON COLUMN` documentation marking orphan/deprecated columns. No data is modified, no columns are dropped.
+- **FND-020** (RLS role mismatch — policies referenced literal `'ops_admin'` while `platform_users.role` CHECK accepted seven other values) — `00011_rls_role_alignment.sql` had already replaced literal `'ops_admin'` policies with `role IN (...)`. `00025_rls_role_alignment.sql` introduces the `is_platform_staff` / `is_finance_staff` / `is_support_staff` helpers and refactors the verbose role-IN policies to call them.
+
+**Still pending (out of Phase 2 scope):**
+
+1. **`packages/db/src/generated/database.types.ts`** is regenerated against the local DB at the end of Phase 2 (`pnpm db:generate`). If you ever regenerate from a stale schema, type drift returns. Treat the generated file as a snapshot, not a contract. **Warning:** the `db:generate` script redirects stdout to `database.types.ts`; if the CLI fails (e.g. Docker missing), the file can be **truncated** — restore with `git checkout -- packages/db/src/generated/database.types.ts`.
+2. The empty `supabase/migrations/20260501080818_phase_b_security_rls_hardening.sql` file shares a name suffix with `00017_phase_b_security_rls_hardening.sql` but contains no SQL. It is harmless but confusing. Phase 12 launch checklist will revisit whether to remove it (would require migration history rewrite, which is out of scope here).
+3. Phase 6 (Stripe correctness) will move tax/fee constants (`HST_RATE`, `SERVICE_FEE_PERCENT`) from `packages/engine/src/constants.ts` into the `platform_settings` row; the schema is already capable, only the runtime read path needs to change.
 
 ---
 

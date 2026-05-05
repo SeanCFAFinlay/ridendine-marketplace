@@ -20,6 +20,13 @@
       "persistent": true
     },
     "lint": {},
-    "typecheck": {}
+    "typecheck": {},
+    "db:generate": {
+      "cache": false,
+      "env": [
+        "DATABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_URL"
+      ]
+    }
   }
 }
