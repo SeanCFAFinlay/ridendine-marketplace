@@ -47,7 +47,7 @@ export default function AutomationPage() {
       const res = await fetch('/api/engine/rules', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ruleId, enabled: !currentEnabled }),
+        body: JSON.stringify({ action: 'update_automation_rule', ruleId, enabled: !currentEnabled }),
       });
       if (!res.ok) throw new Error('Failed');
       setRules(rules.map(r => r.id === ruleId ? { ...r, enabled: !currentEnabled } : r));

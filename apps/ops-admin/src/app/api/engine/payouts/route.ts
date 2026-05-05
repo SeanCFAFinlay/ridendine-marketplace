@@ -2,6 +2,8 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import { finalizeOpsActor, getEngine, getOpsActorContext, guardPlatformApi } from '@/lib/engine';
+import { bankPayoutCommandSchema, type OpsCommandInput } from '@ridendine/validation';
+import { operationResultResponse, parseJsonBody } from '@/lib/validation';
 
 function buildChefTotals(chefPayables: any[]) {
   const totals = new Map<string, number>();
@@ -110,94 +112,9 @@ export async function POST(request: NextRequest) {
   const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'finance_payouts'));
   if (opsActor instanceof Response) return opsActor;
 
-  const {
-    chefId,
-    storefrontId,
-    amountCents,
-    action,
-    periodStart,
-    periodEnd,
-    payeeType = 'chef',
-    payoutId,
-    payoutIds,
-    bankBatchId,
-    bankReference,
-  } = await request.json();
+  const actionInput = await parseJsonBody(request, bankPayoutCommandSchema);
+  if (actionInput instanceof Response) return actionInput;
 
-  const engine = getEngine();
-  const bankPayeeType = payeeType === 'driver' ? 'driver' : 'chef';
-
-  if (action === 'approve_bank_payout') {
-    const result = await engine.payoutAutomation.approveBankPayout({ payeeType: bankPayeeType, payoutId, actor: opsActor });
-    return NextResponse.json({ success: result.ok, error: result.error }, { status: result.ok ? 200 : 400 });
-  }
-
-  if (action === 'export_bank_batch') {
-    const ids = Array.isArray(payoutIds) ? payoutIds : payoutId ? [payoutId] : [];
-    const result = await engine.payoutAutomation.exportBankPayoutBatch({
-      payeeType: bankPayeeType,
-      payoutIds: ids,
-      actor: opsActor,
-      bankBatchId,
-    });
-    return NextResponse.json({ success: result.ok, data: result, error: result.error }, { status: result.ok ? 200 : 400 });
-  }
-
-  if (action === 'mark_bank_submitted') {
-    const result = await engine.payoutAutomation.markBankPayoutSubmitted({
-      payeeType: bankPayeeType,
-      payoutId,
-      actor: opsActor,
-      bankReference,
-    });
-    return NextResponse.json({ success: result.ok, error: result.error }, { status: result.ok ? 200 : 400 });
-  }
-
-  if (action === 'mark_bank_paid') {
-    const result = await engine.payoutAutomation.markBankPayoutPaid({
-      payeeType: bankPayeeType,
-      payoutId,
-      actor: opsActor,
-      bankReference,
-    });
-    return NextResponse.json({ success: result.ok, error: result.error }, { status: result.ok ? 200 : 400 });
-  }
-
-  if (action === 'reconcile_bank_payout') {
-    const result = await engine.payoutAutomation.reconcileBankPayout({
-      payeeType: bankPayeeType,
-      payoutId,
-      actor: opsActor,
-      bankReference,
-    });
-    return NextResponse.json({ success: result.ok, error: result.error }, { status: result.ok ? 200 : 400 });
-  }
-
-  if (action === 'execute_chef_run') {
-    const now = new Date();
-    const end = periodEnd || now.toISOString();
-    const start = periodStart || new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const result = await engine.payoutAutomation.executeChefRun({
-      periodStart: start,
-      periodEnd: end,
-      actor: opsActor,
-    });
-    const status = result.processed > 0 ? 200 : 400;
-    return NextResponse.json({ success: result.processed > 0, data: result, error: result.errors[0] }, { status });
-  }
-
-  if (!chefId || !storefrontId || !amountCents) {
-    return NextResponse.json({ error: 'chefId, storefrontId, and amountCents required' }, { status: 400 });
-  }
-
-  const scheduled = await engine.payoutAutomation.scheduleChefPayout({
-    chefId,
-    storefrontId,
-    amountCents: Math.floor(Number(amountCents)),
-    actor: opsActor,
-  });
-  if (scheduled.error) {
-    return NextResponse.json({ success: false, error: scheduled.error }, { status: 400 });
-  }
-  return NextResponse.json({ success: true, data: scheduled });
+  const result = await getEngine().operations.execute(actionInput as OpsCommandInput, opsActor);
+  return operationResultResponse(result);
 }

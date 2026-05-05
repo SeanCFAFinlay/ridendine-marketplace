@@ -18,10 +18,10 @@ export default function AnnouncementsPage() {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ sent: number; audience: string } | null>(null);
   const [error, setError] = useState('');
+  const [confirming, setConfirming] = useState(false);
 
-  const handleSend = async () => {
+  const submitAnnouncement = async () => {
     if (!title.trim() || !body.trim()) { setError('Title and message required'); return; }
-    if (!confirm(`Send "${title}" to ${AUDIENCES.find(a => a.value === audience)?.label}?`)) return;
 
     setSending(true); setError(''); setResult(null);
     try {
@@ -34,8 +34,14 @@ export default function AnnouncementsPage() {
       if (!res.ok) throw new Error(data.error);
       setResult(data.data);
       setTitle(''); setBody('');
+      setConfirming(false);
     } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); }
     finally { setSending(false); }
+  };
+
+  const handleSend = () => {
+    if (!title.trim() || !body.trim()) { setError('Title and message required'); return; }
+    setConfirming(true);
   };
 
   return (
@@ -88,6 +94,21 @@ export default function AnnouncementsPage() {
           <Button onClick={handleSend} disabled={sending} className="w-full bg-[#E85D26] hover:bg-[#d44e1e]" size="lg">
             {sending ? 'Sending...' : `Send to ${AUDIENCES.find(a => a.value === audience)?.label}`}
           </Button>
+          {confirming && (
+            <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3">
+              <p className="text-sm text-yellow-100">
+                Confirm sending "{title}" to {AUDIENCES.find(a => a.value === audience)?.label}.
+              </p>
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" onClick={submitAnnouncement} disabled={sending}>
+                  Confirm Send
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setConfirming(false)} disabled={sending}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     </DashboardLayout>

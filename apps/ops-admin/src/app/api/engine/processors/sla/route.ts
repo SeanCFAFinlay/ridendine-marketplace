@@ -14,6 +14,7 @@ import {
   checkStalePreparingOrders,
 } from '@ridendine/engine';
 import { validateEngineProcessorHeaders } from '@ridendine/utils';
+import { claimProcessorRun, finishProcessorRun } from '@/lib/processor-runs';
 
 export async function POST(request: NextRequest) {
   if (!validateEngineProcessorHeaders(request.headers)) {
@@ -25,6 +26,17 @@ export async function POST(request: NextRequest) {
 
   try {
     const client = createAdminClient();
+    const processorRun = await claimProcessorRun(client, 'sla', request.headers);
+    if (!processorRun.claimed) {
+      return NextResponse.json({
+        success: !processorRun.error,
+        data: {
+          skipped: true,
+          idempotencyKey: processorRun.idempotencyKey,
+        },
+        error: processorRun.error,
+      }, { status: processorRun.error ? 500 : 200 });
+    }
     const engine = createCentralEngine(client);
     const actor = { userId: 'system', role: 'system' as const };
 
@@ -88,10 +100,11 @@ export async function POST(request: NextRequest) {
     // Flush queued domain events
     await engine.events.flush();
 
-    return NextResponse.json({
+    const result = {
       success: true,
       data: {
         processedAt: new Date().toISOString(),
+        idempotencyKey: processorRun.idempotencyKey,
         slaTimers: {
           warnings: timerResult.warnings.length,
           breaches: timerResult.breaches.length,
@@ -102,7 +115,9 @@ export async function POST(request: NextRequest) {
           staleAlerts,
         },
       },
-    });
+    };
+    await finishProcessorRun(client, processorRun.runId, 'completed', result.data);
+    return NextResponse.json(result);
   } catch (error) {
     console.error('SLA processor error:', error);
     return NextResponse.json(

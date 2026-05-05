@@ -4,10 +4,11 @@
 // ==========================================
 
 import type { NextRequest } from 'next/server';
+import { exceptionCommandSchema, type OpsCommandInput } from '@ridendine/validation';
+import { operationResultResponse, parseJsonBody } from '@/lib/validation';
 import {
   getEngine,
   getOpsActorContext,
-  errorResponse,
   finalizeOpsActor,
   guardPlatformApi,
   successResponse,
@@ -57,49 +58,9 @@ export async function POST(request: NextRequest) {
   const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'exceptions_write'));
   if (opsActor instanceof Response) return opsActor;
 
-  const body = await request.json();
-  const { action, ...actionParams } = body;
+  const actionInput = await parseJsonBody(request, exceptionCommandSchema);
+  if (actionInput instanceof Response) return actionInput;
 
-  const engine = getEngine();
-
-  switch (action) {
-    case 'create': {
-      const result = await engine.support.createException(
-        {
-          type: actionParams.type,
-          severity: actionParams.severity,
-          orderId: actionParams.orderId,
-          customerId: actionParams.customerId,
-          chefId: actionParams.chefId,
-          driverId: actionParams.driverId,
-          deliveryId: actionParams.deliveryId,
-          title: actionParams.title,
-          description: actionParams.description,
-          recommendedActions: actionParams.recommendedActions,
-          slaMinutes: actionParams.slaMinutes,
-        },
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data, 201);
-    }
-
-    case 'from_ticket': {
-      const result = await engine.support.createFromSupportTicket(
-        actionParams.ticketId,
-        actionParams.exceptionType,
-        actionParams.severity,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data, 201);
-    }
-
-    default:
-      return errorResponse('INVALID_ACTION', `Unknown action: ${action}`);
-  }
+  const result = await getEngine().operations.execute(actionInput as OpsCommandInput, opsActor);
+  return operationResultResponse(result, 201);
 }

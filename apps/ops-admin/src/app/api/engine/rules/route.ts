@@ -1,7 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
-import { getOpsActorContext, guardPlatformApi } from '@/lib/engine';
+import { finalizeOpsActor, getEngine, getOpsActorContext, guardPlatformApi } from '@/lib/engine';
+import { automationRuleCommandSchema } from '@ridendine/validation';
+import { operationResultResponse, parseJsonBody } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,26 +87,11 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   const actor = await getOpsActorContext();
-  const denied = guardPlatformApi(actor, 'engine_rules');
-  if (denied) return denied;
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'engine_rules'));
+  if (opsActor instanceof Response) return opsActor;
 
-  const { ruleId, enabled, params } = await request.json();
-  if (!ruleId) return NextResponse.json({ error: 'ruleId required' }, { status: 400 });
-
-  const client = createAdminClient() as any;
-  const { data: settings } = await client.from('platform_settings').select('setting_value').limit(1).single();
-
-  const currentRules: AutomationRule[] = settings?.setting_value?.automation_rules || DEFAULT_RULES;
-  const ruleIndex = currentRules.findIndex(r => r.id === ruleId);
-
-  if (ruleIndex === -1) return NextResponse.json({ error: 'Rule not found' }, { status: 404 });
-
-  if (enabled !== undefined) currentRules[ruleIndex]!.enabled = enabled;
-  if (params !== undefined) currentRules[ruleIndex]!.params = { ...currentRules[ruleIndex]!.params, ...params };
-
-  await client.from('platform_settings').update({
-    setting_value: { ...settings?.setting_value, automation_rules: currentRules },
-  }).not('id', 'is', null);
-
-  return NextResponse.json({ success: true, data: currentRules[ruleIndex] });
+  const actionInput = await parseJsonBody(request, automationRuleCommandSchema);
+  if (actionInput instanceof Response) return actionInput;
+  const result = await getEngine().operations.execute(actionInput, opsActor);
+  return operationResultResponse(result);
 }

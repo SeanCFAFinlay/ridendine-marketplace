@@ -28,6 +28,12 @@ export default function DispatchConsolePage() {
   const [history, setHistory] = useState<OfferHistoryRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    type: 'force_assign' | 'add_ops_note';
+    deliveryId: string;
+    driverId?: string;
+  } | null>(null);
+  const [actionReason, setActionReason] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -75,8 +81,7 @@ export default function DispatchConsolePage() {
     }));
   }, [board]);
 
-  async function forceAssign(deliveryId: string, driverId: string) {
-    const reason = window.prompt('Reason for force assign (required)', 'Manual dispatch override');
+  async function forceAssign(deliveryId: string, driverId: string, reason: string) {
     if (!reason || reason.trim().length < 3) return;
     setBusyId(deliveryId);
     try {
@@ -92,17 +97,18 @@ export default function DispatchConsolePage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        window.alert(json.error?.message || json.message || 'Force assign failed');
+        setError(json.error?.message || json.message || 'Force assign failed');
         return;
       }
+      setPendingAction(null);
+      setActionReason('');
       await load();
     } finally {
       setBusyId(null);
     }
   }
 
-  async function holdDelivery(deliveryId: string) {
-    const note = window.prompt('Hold note (min 3 chars)', 'Dispatch hold — do not auto-offer');
+  async function holdDelivery(deliveryId: string, note: string) {
     if (!note || note.trim().length < 3) return;
     setBusyId(deliveryId);
     try {
@@ -115,6 +121,8 @@ export default function DispatchConsolePage() {
           note: note.trim(),
         }),
       });
+      setPendingAction(null);
+      setActionReason('');
       await load();
     } finally {
       setBusyId(null);
@@ -182,7 +190,14 @@ export default function DispatchConsolePage() {
                           size="sm"
                           className="bg-[#E85D26] text-white"
                           disabled={busyId === item.deliveryId}
-                          onClick={() => forceAssign(item.deliveryId, item.topCandidates[0]!.driverId)}
+                          onClick={() => {
+                            setActionReason('Manual dispatch override');
+                            setPendingAction({
+                              type: 'force_assign',
+                              deliveryId: item.deliveryId,
+                              driverId: item.topCandidates[0]!.driverId,
+                            });
+                          }}
                         >
                           Force assign #1
                         </Button>
@@ -191,7 +206,10 @@ export default function DispatchConsolePage() {
                         size="sm"
                         variant="outline"
                         disabled={busyId === item.deliveryId}
-                        onClick={() => holdDelivery(item.deliveryId)}
+                        onClick={() => {
+                          setActionReason('Dispatch hold - do not auto-offer');
+                          setPendingAction({ type: 'add_ops_note', deliveryId: item.deliveryId });
+                        }}
                       >
                         Hold
                       </Button>
@@ -204,6 +222,34 @@ export default function DispatchConsolePage() {
                         </Link>
                       )}
                     </div>
+                    {pendingAction?.deliveryId === item.deliveryId && (
+                      <div className="mt-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3">
+                        <p className="text-xs font-semibold text-yellow-100">
+                          {pendingAction.type === 'force_assign' ? 'Force assign requires a reason' : 'Hold requires an ops note'}
+                        </p>
+                        <textarea
+                          value={actionReason}
+                          onChange={(event) => setActionReason(event.target.value)}
+                          className="mt-2 min-h-20 w-full rounded border border-gray-700 bg-gray-950 px-2 py-1 text-xs text-white"
+                        />
+                        <div className="mt-2 flex gap-2">
+                          <Button
+                            size="sm"
+                            disabled={Boolean(busyId)}
+                            onClick={() =>
+                              pendingAction.type === 'force_assign' && pendingAction.driverId
+                                ? forceAssign(pendingAction.deliveryId, pendingAction.driverId, actionReason)
+                                : holdDelivery(pendingAction.deliveryId, actionReason)
+                            }
+                          >
+                            Confirm
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setPendingAction(null)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))
               ) : (

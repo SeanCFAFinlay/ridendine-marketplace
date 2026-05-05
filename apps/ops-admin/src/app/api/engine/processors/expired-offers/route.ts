@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import { createCentralEngine } from '@ridendine/engine';
 import { validateEngineProcessorHeaders } from '@ridendine/utils';
+import { claimProcessorRun, finishProcessorRun } from '@/lib/processor-runs';
 
 export async function POST(request: NextRequest) {
   if (!validateEngineProcessorHeaders(request.headers)) {
@@ -20,6 +21,17 @@ export async function POST(request: NextRequest) {
 
   try {
     const client = createAdminClient();
+    const processorRun = await claimProcessorRun(client, 'expired-offers', request.headers);
+    if (!processorRun.claimed) {
+      return NextResponse.json({
+        success: !processorRun.error,
+        data: {
+          skipped: true,
+          idempotencyKey: processorRun.idempotencyKey,
+        },
+        error: processorRun.error,
+      }, { status: processorRun.error ? 500 : 200 });
+    }
     const engine = createCentralEngine(client);
 
     const actor = { userId: 'system', role: 'system' as const };
@@ -29,13 +41,16 @@ export async function POST(request: NextRequest) {
     // Flush any queued domain events
     await engine.events.flush();
 
-    return NextResponse.json({
+    const result = {
       success: true,
       data: {
         processedAt: new Date().toISOString(),
         expiredOffers: expiredCount,
+        idempotencyKey: processorRun.idempotencyKey,
       },
-    });
+    };
+    await finishProcessorRun(client, processorRun.runId, 'completed', result.data);
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Expired offers processor error:', error);
     return NextResponse.json(

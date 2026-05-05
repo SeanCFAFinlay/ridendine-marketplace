@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   deliveryInterventionActionSchema,
   financeActionSchema,
+  opsCommandSchema,
   platformSettingsUpdateSchema,
 } from '@ridendine/validation';
 
@@ -70,5 +71,41 @@ describe('ops control plane validation', () => {
         approvedAmountCents: 2500,
       }).success
     ).toBe(true);
+  });
+
+  it('requires typed bank payout references for paid and reconciled states', () => {
+    expect(
+      opsCommandSchema.safeParse({
+        action: 'mark_bank_paid',
+        payeeType: 'chef',
+        payoutId: '123e4567-e89b-12d3-a456-426614174003',
+      }).success
+    ).toBe(false);
+
+    expect(
+      opsCommandSchema.safeParse({
+        action: 'mark_bank_paid',
+        payeeType: 'chef',
+        payoutId: '123e4567-e89b-12d3-a456-426614174003',
+        bankReference: 'BANK-REF-100',
+      }).success
+    ).toBe(true);
+  });
+
+  it('routes refund processing as an engine command without route-supplied Stripe ids', () => {
+    expect(
+      opsCommandSchema.safeParse({
+        action: 'process_refund',
+        refundCaseId: '123e4567-e89b-12d3-a456-426614174004',
+      }).success
+    ).toBe(true);
+
+    expect(
+      opsCommandSchema.safeParse({
+        action: 'process_refund',
+        refundCaseId: '123e4567-e89b-12d3-a456-426614174004',
+        stripeRefundId: 'route_supplied_refund_id',
+      }).success
+    ).toBe(false);
   });
 });

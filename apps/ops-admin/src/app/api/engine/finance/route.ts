@@ -5,6 +5,7 @@
 
 import type { NextRequest } from 'next/server';
 import { financeActionSchema } from '@ridendine/validation';
+import { operationResultResponse, parseJsonBody } from '@/lib/validation';
 import {
   getEngine,
   getOpsActorContext,
@@ -53,80 +54,9 @@ export async function POST(request: NextRequest) {
   const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'finance_engine'));
   if (opsActor instanceof Response) return opsActor;
 
-  const body = await request.json();
-  const parsed = financeActionSchema.safeParse(body);
-  if (!parsed.success) {
-    return errorResponse('INVALID_INPUT', parsed.error.issues[0]?.message || 'Invalid finance action');
-  }
-
-  const actionInput = parsed.data;
-
+  const actionInput = await parseJsonBody(request, financeActionSchema);
+  if (actionInput instanceof Response) return actionInput;
   const engine = getEngine();
-
-  switch (actionInput.action) {
-    case 'approve_refund': {
-      const result = await engine.commerce.approveRefund(
-        actionInput.refundCaseId,
-        actionInput.approvedAmountCents,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'deny_refund': {
-      const result = await engine.commerce.denyRefund(
-        actionInput.refundCaseId,
-        actionInput.reason,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'process_refund': {
-      const result = await engine.commerce.processRefund(
-        actionInput.refundCaseId,
-        actionInput.stripeRefundId,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'create_payout_hold': {
-      const result = await engine.commerce.createPayoutHold(
-        actionInput.payeeType,
-        actionInput.payeeId,
-        actionInput.orderId,
-        actionInput.amountCents,
-        actionInput.reason,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data, 201);
-    }
-
-    case 'release_payout_hold': {
-      const result = await engine.commerce.releasePayoutHold(
-        actionInput.adjustmentId,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    default:
-      return errorResponse('INVALID_ACTION', 'Unknown action');
-  }
+  const result = await engine.operations.execute(actionInput, opsActor);
+  return operationResultResponse(result, actionInput.action === 'create_payout_hold' ? 201 : 200);
 }

@@ -26,6 +26,7 @@ export * from './orchestrators/commerce.engine';
 export * from './orchestrators/support.engine';
 export * from './orchestrators/platform.engine';
 export * from './orchestrators/ops.engine';
+export * from './orchestrators/operations-command.gateway';
 
 // Risk (IRR-022) — deterministic pre-payment / pre-mutation checks; wire at API in Phase 6+
 export * from './orchestrators/risk.engine';

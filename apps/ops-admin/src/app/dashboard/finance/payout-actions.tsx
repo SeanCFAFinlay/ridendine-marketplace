@@ -31,6 +31,12 @@ export function PayoutActions() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [pendingChef, setPendingChef] = useState<PayableChef | null>(null);
+  const [pendingBankAction, setPendingBankAction] = useState<{
+    payout: BankPayout;
+    action: string;
+  } | null>(null);
+  const [bankReference, setBankReference] = useState('');
 
   useEffect(() => {
     fetch('/api/engine/payouts')
@@ -50,7 +56,6 @@ export function PayoutActions() {
       setError(`${chef.name} doesn't have a storefront payout account`);
       return;
     }
-    if (!confirm(`Pay $${chef.balance.toFixed(2)} to ${chef.name}?`)) return;
 
     setPaying(chef.chefId);
     setError('');
@@ -59,6 +64,7 @@ export function PayoutActions() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'schedule_chef_payout',
           chefId: chef.chefId,
           storefrontId: chef.storefrontId,
           amountCents: Math.round(chef.balance * 100),
@@ -85,6 +91,7 @@ export function PayoutActions() {
         },
         ...bankPayouts,
       ]);
+      setPendingChef(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payout failed');
     } finally {
@@ -92,12 +99,12 @@ export function PayoutActions() {
     }
   };
 
-  const runBankAction = async (payout: BankPayout, action: string) => {
-    const bankReference =
-      action === 'mark_bank_paid' || action === 'mark_bank_submitted' || action === 'reconcile_bank_payout'
-        ? window.prompt('BANK reference', payout.bankReference || '')
-        : undefined;
-    if (bankReference === null) return;
+  const runBankAction = async (payout: BankPayout, action: string, reference: string) => {
+    const needsReference = action === 'mark_bank_paid' || action === 'reconcile_bank_payout';
+    if (needsReference && reference.trim().length < 3) {
+      setError('BANK reference is required for paid and reconciled payouts');
+      return;
+    }
 
     setPaying(`${action}:${payout.id}`);
     setError('');
@@ -110,7 +117,7 @@ export function PayoutActions() {
           payeeType: payout.payeeType,
           payoutId: payout.id,
           payoutIds: [payout.id],
-          bankReference,
+          bankReference: reference.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -127,12 +134,14 @@ export function PayoutActions() {
           ? {
               ...p,
               status: nextStatus[action] ?? p.status,
-              bankReference: bankReference ?? p.bankReference,
+              bankReference: reference.trim() || p.bankReference,
               bankBatchId: data.data?.bankBatchId ?? p.bankBatchId,
               reconciliationStatus: action === 'reconcile_bank_payout' ? 'reconciled' : p.reconciliationStatus,
             }
           : p
       ));
+      setPendingBankAction(null);
+      setBankReference('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'BANK action failed');
     } finally {
@@ -162,24 +171,46 @@ export function PayoutActions() {
       ) : (
         <div className="space-y-3">
           {chefs.map((chef) => (
-            <div key={chef.chefId} className="flex items-center justify-between rounded-lg bg-[#1a1a2e] p-4">
-              <div>
-                <p className="font-medium text-white">{chef.name}</p>
-                <p className="text-xs text-gray-500">
-                  Earned: ${chef.totalEarned.toFixed(2)} | Paid: ${chef.totalPaid.toFixed(2)}
-                </p>
+            <div key={chef.chefId} className="rounded-lg bg-[#1a1a2e] p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-white">{chef.name}</p>
+                  <p className="text-xs text-gray-500">
+                    Earned: ${chef.totalEarned.toFixed(2)} | Paid: ${chef.totalPaid.toFixed(2)}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-lg font-bold text-emerald-400">${chef.balance.toFixed(2)}</span>
+                  <Button
+                    size="sm"
+                    onClick={() => setPendingChef(chef)}
+                    disabled={paying === chef.chefId || chef.balance <= 0}
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    {paying === chef.chefId ? 'Recording...' : 'Record BANK'}
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-lg font-bold text-emerald-400">${chef.balance.toFixed(2)}</span>
-                <Button
-                  size="sm"
-                  onClick={() => executePayout(chef)}
-                  disabled={paying === chef.chefId || chef.balance <= 0}
-                  className="bg-emerald-600 hover:bg-emerald-700"
-                >
-                  {paying === chef.chefId ? 'Recording...' : 'Record BANK'}
-                </Button>
-              </div>
+              {pendingChef?.chefId === chef.chefId && (
+                <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
+                  <p className="text-sm text-emerald-100">
+                    Schedule BANK payout for ${chef.balance.toFixed(2)} to {chef.name}.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => executePayout(chef)}
+                      disabled={Boolean(paying)}
+                      className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                      Confirm Schedule
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setPendingChef(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -204,32 +235,68 @@ export function PayoutActions() {
                   </div>
                   <div className="flex flex-wrap justify-end gap-2">
                     {payout.status === 'scheduled' && (
-                      <Button size="sm" variant="outline" onClick={() => runBankAction(payout, 'approve_bank_payout')} disabled={Boolean(paying)}>
+                      <Button size="sm" variant="outline" onClick={() => setPendingBankAction({ payout, action: 'approve_bank_payout' })} disabled={Boolean(paying)}>
                         Approve
                       </Button>
                     )}
                     {['scheduled', 'approved'].includes(payout.status) && (
-                      <Button size="sm" variant="outline" onClick={() => runBankAction(payout, 'export_bank_batch')} disabled={Boolean(paying)}>
+                      <Button size="sm" variant="outline" onClick={() => setPendingBankAction({ payout, action: 'export_bank_batch' })} disabled={Boolean(paying)}>
                         Export
                       </Button>
                     )}
                     {payout.status === 'exported' && (
-                      <Button size="sm" variant="outline" onClick={() => runBankAction(payout, 'mark_bank_submitted')} disabled={Boolean(paying)}>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setBankReference(payout.bankReference || '');
+                        setPendingBankAction({ payout, action: 'mark_bank_submitted' });
+                      }} disabled={Boolean(paying)}>
                         Submitted
                       </Button>
                     )}
                     {['exported', 'bank_submitted'].includes(payout.status) && (
-                      <Button size="sm" variant="outline" onClick={() => runBankAction(payout, 'mark_bank_paid')} disabled={Boolean(paying)}>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setBankReference(payout.bankReference || '');
+                        setPendingBankAction({ payout, action: 'mark_bank_paid' });
+                      }} disabled={Boolean(paying)}>
                         Paid
                       </Button>
                     )}
                     {payout.status === 'paid' && (
-                      <Button size="sm" variant="outline" onClick={() => runBankAction(payout, 'reconcile_bank_payout')} disabled={Boolean(paying)}>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setBankReference(payout.bankReference || '');
+                        setPendingBankAction({ payout, action: 'reconcile_bank_payout' });
+                      }} disabled={Boolean(paying)}>
                         Reconcile
                       </Button>
                     )}
                   </div>
                 </div>
+                {pendingBankAction?.payout.id === payout.id && (
+                  <div className="mt-3 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3">
+                    <p className="text-sm text-blue-100">
+                      Confirm {pendingBankAction.action.replace(/_/g, ' ')} for {payout.name}.
+                    </p>
+                    {['mark_bank_submitted', 'mark_bank_paid', 'reconcile_bank_payout'].includes(pendingBankAction.action) && (
+                      <input
+                        value={bankReference}
+                        onChange={(event) => setBankReference(event.target.value)}
+                        placeholder="BANK reference"
+                        className="mt-3 w-full rounded-lg border border-gray-600 bg-[#101827] px-3 py-2 text-sm text-white"
+                      />
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => runBankAction(payout, pendingBankAction.action, bankReference)}
+                        disabled={Boolean(paying)}
+                      >
+                        Confirm
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setPendingBankAction(null)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

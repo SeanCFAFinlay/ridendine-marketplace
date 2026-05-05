@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+const uuid = z.string().uuid();
+const requiredReason = z.string().min(3).max(500);
+const requiredNote = z.string().min(3).max(2000);
+
 export const platformSettingsSchema = z.object({
   platformFeePercent: z.number().min(0).max(100),
   serviceFeePercent: z.number().min(0).max(100),
@@ -79,31 +83,237 @@ export const deliveryInterventionActionSchema = z.discriminatedUnion('action', [
 export const financeActionSchema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('approve_refund'),
-    refundCaseId: z.string().uuid(),
+    refundCaseId: uuid,
     approvedAmountCents: z.number().int().min(1),
-  }),
+  }).strict(),
   z.object({
     action: z.literal('deny_refund'),
-    refundCaseId: z.string().uuid(),
-    reason: z.string().min(3).max(500),
-  }),
+    refundCaseId: uuid,
+    reason: requiredReason,
+  }).strict(),
   z.object({
     action: z.literal('process_refund'),
-    refundCaseId: z.string().uuid(),
-    stripeRefundId: z.string().min(3).max(255),
-  }),
+    refundCaseId: uuid,
+  }).strict(),
   z.object({
     action: z.literal('create_payout_hold'),
     payeeType: z.enum(['chef', 'driver']),
-    payeeId: z.string().uuid(),
-    orderId: z.string().uuid(),
+    payeeId: uuid,
+    orderId: uuid,
     amountCents: z.number().int().min(1),
-    reason: z.string().min(3).max(500),
-  }),
+    reason: requiredReason,
+  }).strict(),
   z.object({
     action: z.literal('release_payout_hold'),
-    adjustmentId: z.string().uuid(),
+    adjustmentId: uuid,
+  }).strict(),
+]);
+
+export const refundCommandSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('request_refund'),
+    orderId: uuid,
+    amountCents: z.coerce.number().int().min(1),
+    reason: z.enum([
+      'customer_requested',
+      'order_cancelled',
+      'missing_items',
+      'wrong_order',
+      'quality_issue',
+      'late_delivery',
+      'never_delivered',
+      'damaged_order',
+      'fraudulent',
+      'duplicate_charge',
+      'ops_goodwill',
+    ]),
+    notes: z.string().max(2000).optional(),
+  }).strict(),
+  ...financeActionSchema.options,
+]);
+
+export const bankPayoutCommandSchema = z.union([
+  z.object({
+    action: z.literal('schedule_chef_payout'),
+    chefId: uuid,
+    storefrontId: uuid,
+    amountCents: z.coerce.number().int().min(1),
+  }).strict(),
+  z.object({
+    action: z.literal('execute_chef_run'),
+    periodStart: z.string().datetime().optional(),
+    periodEnd: z.string().datetime().optional(),
+  }).strict(),
+  z.object({
+    action: z.literal('execute_driver_run'),
+    periodStart: z.string().datetime().optional(),
+    periodEnd: z.string().datetime().optional(),
+  }).strict(),
+  z.object({
+    action: z.literal('approve_bank_payout'),
+    payeeType: z.enum(['chef', 'driver']).default('chef'),
+    payoutId: uuid,
+  }).strict(),
+  z.object({
+    action: z.literal('export_bank_batch'),
+    payeeType: z.enum(['chef', 'driver']).default('chef'),
+    payoutId: uuid.optional(),
+    payoutIds: z.array(uuid).optional(),
+    bankBatchId: z.string().min(3).max(120).optional(),
+  }).strict().refine((input) => Boolean(input.payoutId || input.payoutIds?.length), {
+    message: 'At least one payout id is required',
+    path: ['payoutIds'],
   }),
+  z.object({
+    action: z.literal('mark_bank_submitted'),
+    payeeType: z.enum(['chef', 'driver']).default('chef'),
+    payoutId: uuid,
+    bankReference: z.string().min(3).max(120).optional(),
+  }).strict(),
+  z.object({
+    action: z.literal('mark_bank_paid'),
+    payeeType: z.enum(['chef', 'driver']).default('chef'),
+    payoutId: uuid,
+    bankReference: z.string().min(3).max(120),
+  }).strict(),
+  z.object({
+    action: z.literal('reconcile_bank_payout'),
+    payeeType: z.enum(['chef', 'driver']).default('chef'),
+    payoutId: uuid,
+    bankReference: z.string().min(3).max(120),
+  }).strict(),
+]);
+
+export const dashboardCommandSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('acknowledge_alert'),
+    alertId: uuid,
+  }).strict(),
+  z.object({
+    action: z.literal('process_expired_offers'),
+  }).strict(),
+  z.object({
+    action: z.literal('process_sla_timers'),
+  }).strict(),
+]);
+
+export const maintenanceCommandSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('activate_maintenance'),
+    message: requiredReason.optional(),
+  }).strict(),
+  z.object({
+    action: z.literal('deactivate_maintenance'),
+  }).strict(),
+]);
+
+export const automationRuleCommandSchema = z.object({
+  action: z.literal('update_automation_rule'),
+  ruleId: z.string().min(3).max(120),
+  enabled: z.boolean().optional(),
+  params: z.record(z.unknown()).optional(),
+}).strict().refine((input) => input.enabled !== undefined || input.params !== undefined, {
+  message: 'enabled or params is required',
+});
+
+export const exceptionCommandSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('create_exception'),
+    type: z.string().min(3).max(80),
+    severity: z.string().min(3).max(40),
+    orderId: uuid.optional(),
+    customerId: uuid.optional(),
+    chefId: uuid.optional(),
+    driverId: uuid.optional(),
+    deliveryId: uuid.optional(),
+    title: z.string().min(3).max(160),
+    description: requiredReason,
+    recommendedActions: z.array(z.string().min(1).max(160)).optional(),
+    slaMinutes: z.number().int().min(1).max(10080).optional(),
+  }).strict(),
+  z.object({
+    action: z.literal('create_exception_from_ticket'),
+    ticketId: uuid,
+    exceptionType: z.string().min(3).max(80),
+    severity: z.string().min(3).max(40),
+  }).strict(),
+  z.object({
+    action: z.literal('acknowledge_exception'),
+    exceptionId: uuid,
+  }).strict(),
+  z.object({
+    action: z.literal('update_exception_status'),
+    exceptionId: uuid,
+    status: z.string().min(3).max(40),
+    notes: z.string().max(2000).optional(),
+  }).strict(),
+  z.object({
+    action: z.literal('escalate_exception'),
+    exceptionId: uuid,
+    reason: requiredReason,
+  }).strict(),
+  z.object({
+    action: z.literal('resolve_exception'),
+    exceptionId: uuid,
+    resolution: requiredReason,
+    linkedRefundId: uuid.optional(),
+    linkedPayoutAdjustmentId: uuid.optional(),
+  }).strict(),
+  z.object({
+    action: z.literal('add_exception_note'),
+    exceptionId: uuid,
+    content: requiredNote,
+    isInternal: z.boolean().default(true),
+  }).strict(),
+]);
+
+export const orderCommandSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('accept_order'),
+    orderId: uuid,
+    estimatedPrepMinutes: z.coerce.number().int().min(5).max(180).default(20),
+  }).strict(),
+  z.object({
+    action: z.literal('reject_order'),
+    orderId: uuid,
+    reason: requiredReason,
+    notes: z.string().max(2000).optional(),
+  }).strict(),
+  z.object({
+    action: z.literal('start_preparing_order'),
+    orderId: uuid,
+  }).strict(),
+  z.object({
+    action: z.literal('mark_order_ready'),
+    orderId: uuid,
+  }).strict(),
+  z.object({
+    action: z.literal('cancel_order'),
+    orderId: uuid,
+    reason: requiredReason,
+    notes: z.string().max(2000).optional(),
+  }).strict(),
+  z.object({
+    action: z.literal('complete_order'),
+    orderId: uuid,
+  }).strict(),
+  z.object({
+    action: z.literal('override_order_status'),
+    orderId: uuid,
+    targetStatus: z.string().min(3).max(80),
+    reason: requiredReason,
+  }).strict(),
+]);
+
+export const opsCommandSchema = z.union([
+  deliveryInterventionActionSchema,
+  refundCommandSchema,
+  bankPayoutCommandSchema,
+  dashboardCommandSchema,
+  maintenanceCommandSchema,
+  automationRuleCommandSchema,
+  exceptionCommandSchema,
+  orderCommandSchema,
 ]);
 
 // ==========================================
@@ -166,6 +376,7 @@ export type PlatformSettingsInput = z.infer<typeof platformSettingsSchema>;
 export type PlatformSettingsUpdateInput = z.infer<typeof platformSettingsUpdateSchema>;
 export type DeliveryInterventionActionInput = z.infer<typeof deliveryInterventionActionSchema>;
 export type FinanceActionInput = z.infer<typeof financeActionSchema>;
+export type OpsCommandInput = z.infer<typeof opsCommandSchema>;
 export type ChefPatchInput = z.infer<typeof chefPatchSchema>;
 export type DriverPatchInput = z.infer<typeof driverPatchSchema>;
 export type OpsDeliveryPatchInput = z.infer<typeof opsDeliveryPatchSchema>;

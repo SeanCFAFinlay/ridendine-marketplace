@@ -16,6 +16,7 @@ export function MaintenanceToggle() {
   const [toggling, setToggling] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [pendingAction, setPendingAction] = useState<'activate_maintenance' | 'deactivate_maintenance' | null>(null);
 
   useEffect(() => {
     fetch('/api/engine/maintenance')
@@ -25,12 +26,7 @@ export function MaintenanceToggle() {
       .finally(() => setLoading(false));
   }, []);
 
-  const toggle = async (action: 'activate' | 'deactivate') => {
-    const confirmMsg = action === 'activate'
-      ? `This will PAUSE ALL storefronts. No new orders can be placed. Continue?`
-      : `This will restore all storefronts that were paused by maintenance. Continue?`;
-    if (!confirm(confirmMsg)) return;
-
+  const toggle = async (action: 'activate_maintenance' | 'deactivate_maintenance') => {
     setToggling(true); setError('');
     try {
       const res = await fetch('/api/engine/maintenance', {
@@ -44,6 +40,7 @@ export function MaintenanceToggle() {
       const fresh = await fetch('/api/engine/maintenance').then(r => r.json());
       if (fresh.success) setState(fresh.data);
       setMessage('');
+      setPendingAction(null);
     } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); }
     finally { setToggling(false); }
   };
@@ -75,7 +72,7 @@ export function MaintenanceToggle() {
         </div>
         <div className="flex-shrink-0">
           {isActive ? (
-            <Button onClick={() => toggle('deactivate')} disabled={toggling}
+            <Button onClick={() => setPendingAction('deactivate_maintenance')} disabled={toggling}
               className="bg-emerald-600 hover:bg-emerald-700">
               {toggling ? 'Restoring...' : 'End Maintenance'}
             </Button>
@@ -84,13 +81,30 @@ export function MaintenanceToggle() {
               <input value={message} onChange={e => setMessage(e.target.value)}
                 placeholder="Reason (optional)"
                 className="w-full rounded-lg bg-[#1a1a2e] border border-gray-600 text-white px-3 py-1.5 text-sm" />
-              <Button onClick={() => toggle('activate')} disabled={toggling} variant="destructive" className="w-full">
+              <Button onClick={() => setPendingAction('activate_maintenance')} disabled={toggling} variant="destructive" className="w-full">
                 {toggling ? 'Activating...' : 'Activate Maintenance'}
               </Button>
             </div>
           )}
         </div>
       </div>
+      {pendingAction && (
+        <div className="mt-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3">
+          <p className="text-sm text-yellow-100">
+            {pendingAction === 'activate_maintenance'
+              ? 'Confirm maintenance mode. This pauses active storefronts and blocks new orders.'
+              : 'Confirm ending maintenance. Storefronts paused by maintenance will be restored.'}
+          </p>
+          <div className="mt-3 flex gap-2">
+            <Button size="sm" onClick={() => toggle(pendingAction)} disabled={toggling}>
+              Confirm
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setPendingAction(null)} disabled={toggling}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
       {error && <div className="mt-3 rounded-lg bg-red-500/20 p-2 text-xs text-red-300">{error}</div>}
     </Card>
   );

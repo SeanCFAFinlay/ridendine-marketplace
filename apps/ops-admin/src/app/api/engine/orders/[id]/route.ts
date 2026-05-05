@@ -5,6 +5,8 @@
 
 import type { NextRequest } from 'next/server';
 import { createAdminClient, type SupabaseClient } from '@ridendine/db';
+import { orderCommandSchema } from '@ridendine/validation';
+import { operationResultResponse } from '@/lib/validation';
 import {
   finalizeOpsActor,
   getEngine,
@@ -14,7 +16,6 @@ import {
   hasPlatformApiCapability,
   successResponse,
 } from '@/lib/engine';
-import type { EngineOrderStatus, OrderCancelReason } from '@ridendine/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -107,91 +108,41 @@ export async function PATCH(
   const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'ops_orders_write'));
   if (opsActor instanceof Response) return opsActor;
 
-  const body = await request.json();
-  const { action, ...actionParams } = body;
-
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return errorResponse('INVALID_JSON', 'Request body must be valid JSON', 400);
+  }
+  const actionMap: Record<string, string> = {
+    accept: 'accept_order',
+    reject: 'reject_order',
+    start_preparing: 'start_preparing_order',
+    mark_ready: 'mark_order_ready',
+    cancel: 'cancel_order',
+    complete: 'complete_order',
+    override: 'override_order_status',
+  };
+  const parsed = orderCommandSchema.safeParse({
+    ...body,
+    action: actionMap[body?.action] || body?.action,
+    orderId,
+  });
+  if (!parsed.success) {
+    return errorResponse(
+      'INVALID_INPUT',
+      parsed.error.issues[0]?.message || 'Invalid order action',
+      400
+    );
+  }
+  const actionInput = parsed.data;
   const engine = getEngine();
 
-  switch (action) {
-    case 'accept': {
-      const result = await engine.orders.acceptOrder(
-        orderId,
-        actionParams.estimatedPrepMinutes || 20,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'reject': {
-      const result = await engine.orders.rejectOrder(
-        orderId,
-        actionParams.reason,
-        actionParams.notes,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'start_preparing': {
-      const result = await engine.orders.startPreparing(orderId, opsActor);
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'mark_ready': {
-      const result = await engine.platform.markOrderReady(orderId, opsActor);
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'cancel': {
-      const result = await engine.orders.cancelOrder(
-        orderId,
-        actionParams.reason as OrderCancelReason,
-        actionParams.notes,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'complete': {
-      const result = await engine.orders.completeOrder(orderId, opsActor);
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'override': {
-      const deniedOverride = guardPlatformApi(opsActor, 'order_override');
-      if (deniedOverride) return deniedOverride;
-
-      const result = await engine.orders.opsOverride(
-        orderId,
-        actionParams.targetStatus as EngineOrderStatus,
-        actionParams.reason,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    default:
-      return errorResponse('INVALID_ACTION', `Unknown action: ${action}`);
+  if (actionInput.action === 'override_order_status') {
+    const deniedOverride = guardPlatformApi(opsActor, 'order_override');
+    if (deniedOverride) return deniedOverride;
   }
+
+  const result = await engine.operations.execute(actionInput, opsActor);
+  return operationResultResponse(result);
 }

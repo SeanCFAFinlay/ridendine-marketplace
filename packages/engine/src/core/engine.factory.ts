@@ -16,6 +16,10 @@ import { CommerceLedgerEngine, createCommerceLedgerEngine } from '../orchestrato
 import { SupportExceptionEngine, createSupportExceptionEngine } from '../orchestrators/support.engine';
 import { PlatformWorkflowEngine, createPlatformWorkflowEngine } from '../orchestrators/platform.engine';
 import { OpsControlEngine, createOpsControlEngine } from '../orchestrators/ops.engine';
+import {
+  OperationsCommandGateway,
+  createOperationsCommandGateway,
+} from '../orchestrators/operations-command.gateway';
 import { MasterOrderEngine, createMasterOrderEngine } from '../orchestrators/master-order-engine';
 import { DeliveryEngine as MasterDeliveryEngine, createDeliveryEngine } from '../orchestrators/delivery-engine';
 import { BusinessRulesEngine, createBusinessRulesEngine } from './business-rules-engine';
@@ -62,6 +66,7 @@ export interface CentralEngine {
   support: SupportExceptionEngine;
   platform: PlatformWorkflowEngine;
   ops: OpsControlEngine;
+  operations: OperationsCommandGateway;
 }
 
 /**
@@ -111,6 +116,18 @@ export function createCentralEngine(
   const support = createSupportExceptionEngine(client, events, audit);
   const platform = createPlatformWorkflowEngine(client, events, audit, orders, dispatch, support);
   const ops = createOpsControlEngine(client, events, audit, dispatch, support, commerce);
+  const operations = createOperationsCommandGateway({
+    client,
+    audit,
+    orders,
+    platform,
+    dispatch,
+    ops,
+    commerce,
+    support,
+    payoutAutomation,
+    sla,
+  });
 
   return {
     events,
@@ -132,6 +149,7 @@ export function createCentralEngine(
     support,
     platform,
     ops,
+    operations,
   };
 }
 

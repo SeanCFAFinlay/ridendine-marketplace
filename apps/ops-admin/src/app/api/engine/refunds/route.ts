@@ -12,7 +12,8 @@ import {
   finalizeOpsActor,
   guardPlatformApi,
 } from '@/lib/engine';
-import type { RefundReason } from '@ridendine/types';
+import { refundCommandSchema } from '@ridendine/validation';
+import { operationResultResponse, parseJsonBody } from '@/lib/validation';
 
 /**
  * GET /api/engine/refunds
@@ -35,86 +36,14 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   const actor = await getOpsActorContext();
-  const body = await request.json();
-  const { action, ...actionParams } = body;
+  const actionInput = await parseJsonBody(request, refundCommandSchema);
+  if (actionInput instanceof Response) return actionInput;
 
-  const engine = getEngine();
+  const capability =
+    actionInput.action === 'request_refund' ? 'finance_refunds_request' : 'finance_refunds_sensitive';
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, capability));
+  if (opsActor instanceof Response) return opsActor;
 
-  switch (action) {
-    case 'request': {
-      const opsActor = finalizeOpsActor(
-        actor,
-        guardPlatformApi(actor, 'finance_refunds_request')
-      );
-      if (opsActor instanceof Response) return opsActor;
-
-      const result = await engine.commerce.requestRefund(
-        actionParams.orderId,
-        actionParams.amountCents,
-        actionParams.reason as RefundReason,
-        actionParams.notes,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data, 201);
-    }
-
-    case 'approve': {
-      const opsActor = finalizeOpsActor(
-        actor,
-        guardPlatformApi(actor, 'finance_refunds_sensitive')
-      );
-      if (opsActor instanceof Response) return opsActor;
-
-      const result = await engine.commerce.approveRefund(
-        actionParams.refundCaseId,
-        actionParams.approvedAmountCents,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'deny': {
-      const opsActor = finalizeOpsActor(
-        actor,
-        guardPlatformApi(actor, 'finance_refunds_sensitive')
-      );
-      if (opsActor instanceof Response) return opsActor;
-
-      const result = await engine.commerce.denyRefund(
-        actionParams.refundCaseId,
-        actionParams.reason,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'process': {
-      const opsActor = finalizeOpsActor(
-        actor,
-        guardPlatformApi(actor, 'finance_refunds_sensitive')
-      );
-      if (opsActor instanceof Response) return opsActor;
-
-      const result = await engine.commerce.createStripeRefund(
-        actionParams.refundCaseId,
-        opsActor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    default:
-      return errorResponse('INVALID_ACTION', `Unknown action: ${action}`);
-  }
+  const result = await getEngine().operations.execute(actionInput, opsActor);
+  return operationResultResponse(result, actionInput.action === 'request_refund' ? 201 : 200);
 }

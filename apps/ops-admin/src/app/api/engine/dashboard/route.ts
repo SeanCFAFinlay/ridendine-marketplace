@@ -5,6 +5,8 @@
 
 import type { NextRequest } from 'next/server';
 import { createAdminClient, type SupabaseClient } from '@ridendine/db';
+import { dashboardCommandSchema } from '@ridendine/validation';
+import { operationResultResponse, parseJsonBody } from '@/lib/validation';
 import {
   getEngine,
   getOpsActorContext,
@@ -118,43 +120,9 @@ export async function POST(request: NextRequest) {
   const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'dashboard_actions'));
   if (opsActor instanceof Response) return opsActor;
 
-  const body = await request.json();
-  const { action, ...actionParams } = body;
-
-  const adminClient = createAdminClient() as unknown as SupabaseClient;
+  const actionInput = await parseJsonBody(request, dashboardCommandSchema);
+  if (actionInput instanceof Response) return actionInput;
   const engine = getEngine();
-
-  switch (action) {
-    case 'acknowledge_alert': {
-      const { error } = await adminClient
-        .from('system_alerts')
-        .update({
-          acknowledged: true,
-          acknowledged_by: opsActor.userId,
-          acknowledged_at: new Date().toISOString(),
-        })
-        .eq('id', actionParams.alertId);
-
-      if (error) {
-        return errorResponse('UPDATE_FAILED', error.message);
-      }
-      return successResponse({ acknowledged: true });
-    }
-
-    case 'process_expired_offers': {
-      const processed = await engine.dispatch.processExpiredOffers(opsActor);
-      return successResponse({ processedCount: processed });
-    }
-
-    case 'process_sla_timers': {
-      const { warnings, breaches } = await engine.sla.processExpiredTimers(opsActor);
-      return successResponse({
-        warningsCount: warnings.length,
-        breachesCount: breaches.length,
-      });
-    }
-
-    default:
-      return errorResponse('INVALID_ACTION', `Unknown action: ${action}`);
-  }
+  const result = await engine.operations.execute(actionInput, opsActor);
+  return operationResultResponse(result);
 }

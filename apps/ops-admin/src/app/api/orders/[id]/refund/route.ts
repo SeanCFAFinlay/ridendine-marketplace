@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient, getOrderById, type SupabaseClient } from '@ridendine/db';
-import { getStripeClient } from '@ridendine/engine';
+import { refundSchema } from '@ridendine/validation';
 import {
   evaluateRateLimit,
   RATE_LIMIT_POLICIES,
@@ -37,107 +36,86 @@ export async function POST(
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
 
     const { id } = await params;
-    const body = await request.json();
-    const { amount, reason } = body;
-
-    if (!amount || amount <= 0) {
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
       return NextResponse.json(
-        { error: 'Valid refund amount is required' },
+        { error: 'Request body must be valid JSON' },
         { status: 400 }
       );
     }
 
-    const supabase = createAdminClient() as unknown as SupabaseClient;
-    const order = await getOrderById(supabase, id);
-
-    if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-    }
-
-    if (!order.payment_intent_id) {
+    const parsed = refundSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Order has no payment intent' },
+        { error: parsed.error.issues[0]?.message || 'Invalid refund payload' },
         { status: 400 }
       );
     }
 
-    if (order.payment_status !== 'completed') {
-      return NextResponse.json(
-        { error: 'Order payment is not completed' },
-        { status: 400 }
-      );
-    }
-
-    if (amount > order.total) {
-      return NextResponse.json(
-        { error: 'Refund amount cannot exceed order total' },
-        { status: 400 }
-      );
-    }
-
-    const stripe = getStripeClient();
-
-    const refund = await stripe.refunds.create({
-      payment_intent: order.payment_intent_id,
-      amount: amount,
-      reason: reason === 'duplicate' ? 'duplicate' :
-              reason === 'fraudulent' ? 'fraudulent' :
-              'requested_by_customer',
-      metadata: {
-        order_id: order.id,
-        order_number: order.order_number,
-        refund_reason: reason || 'No reason provided',
-      },
-    });
-
-    // Transition order status through MasterOrderEngine
-    const isFullRefund = amount >= order.total;
     const engine = getEngine();
-    const result = await engine.masterOrder.refundOrder({
-      orderId: order.id,
-      actorId: opsActor.userId,
-      actorRole: opsActor.role as string,
-      reason: reason || 'Refund processed',
-    });
+    const amountCents = Math.round(parsed.data.amount);
+    const refundReason =
+      parsed.data.reason === 'fraudulent'
+        ? 'fraudulent'
+        : parsed.data.reason === 'duplicate'
+          ? 'duplicate_charge'
+          : 'customer_requested';
 
-    if (!result.success) {
-      // Refund was processed in Stripe but engine transition failed.
-      // Log warning but don't fail the request since money was already refunded.
-      console.warn(`Engine transition failed after Stripe refund: ${result.error}`);
+    const requested = await engine.operations.execute(
+      {
+        action: 'request_refund',
+        orderId: id,
+        amountCents,
+        reason: refundReason,
+        notes: parsed.data.reason || 'Ops refund requested',
+      },
+      opsActor
+    );
+    const refundCase = requested.data as { id?: string } | undefined;
+    if (!requested.success || !refundCase?.id) {
+      return NextResponse.json(
+        { error: requested.error?.message || 'Refund request failed' },
+        { status: 400 }
+      );
     }
 
-    // Create notification for customer
-    await (supabase as any).from('notifications').insert({
-      user_id: order.customer_id,
-      type: 'refund',
-      title: isFullRefund ? 'Refund Processed' : 'Partial Refund Processed',
-      body: `A refund of $${(amount / 100).toFixed(2)} has been issued for order #${order.order_number}.`,
-      data: {
-        order_id: order.id,
-        refund_amount: amount,
-        refund_id: refund.id,
+    const approved = await engine.operations.execute(
+      {
+        action: 'approve_refund',
+        refundCaseId: refundCase.id,
+        approvedAmountCents: amountCents,
       },
-      read: false,
-    });
+      opsActor
+    );
+    if (!approved.success) {
+      return NextResponse.json(
+        { error: approved.error?.message || 'Refund approval failed' },
+        { status: 400 }
+      );
+    }
+
+    const processed = await engine.operations.execute(
+      {
+        action: 'process_refund',
+        refundCaseId: refundCase.id,
+      },
+      opsActor
+    );
+    if (!processed.success) {
+      return NextResponse.json(
+        { error: processed.error?.message || 'Refund processing failed' },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      data: {
-        refundId: refund.id,
-        amount: refund.amount,
-        status: refund.status,
-        orderPaymentStatus: isFullRefund ? 'refunded' : 'partial_refunded',
-      },
+      data: processed.data,
     });
   } catch (error) {
     console.error('Refund error:', error);
-
-    if (error instanceof Error && error.name === 'StripeError') {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
 
     return NextResponse.json(
       { error: 'Internal server error' },

@@ -4,13 +4,16 @@
 // ==========================================
 
 import type { NextRequest } from 'next/server';
+import { exceptionCommandSchema, type OpsCommandInput } from '@ridendine/validation';
+import { operationResultResponse } from '@/lib/validation';
 import {
   getEngine,
   getOpsActorContext,
   errorResponse,
   successResponse,
+  finalizeOpsActor,
+  guardPlatformApi,
 } from '@/lib/engine';
-import type { ExceptionStatus } from '@ridendine/types';
 
 /**
  * GET /api/engine/exceptions/[id]
@@ -48,77 +51,36 @@ export async function PATCH(
   const { id: exceptionId } = await params;
 
   const actor = await getOpsActorContext();
-  if (!actor) {
-    return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+  const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'exceptions_write'));
+  if (opsActor instanceof Response) return opsActor;
+
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return errorResponse('INVALID_JSON', 'Request body must be valid JSON', 400);
   }
-
-  const body = await request.json();
-  const { action, ...actionParams } = body;
-
-  const engine = getEngine();
-
-  switch (action) {
-    case 'acknowledge': {
-      const result = await engine.support.acknowledgeException(exceptionId, actor);
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'update_status': {
-      const result = await engine.support.updateExceptionStatus(
-        exceptionId,
-        actionParams.status as ExceptionStatus,
-        actionParams.notes,
-        actor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'escalate': {
-      const result = await engine.support.escalateException(
-        exceptionId,
-        actionParams.reason,
-        actor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'resolve': {
-      const result = await engine.support.resolveException(
-        exceptionId,
-        actionParams.resolution,
-        actionParams.linkedRefundId,
-        actionParams.linkedPayoutAdjustmentId,
-        actor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    case 'add_note': {
-      const result = await engine.support.addNote(
-        exceptionId,
-        actionParams.content,
-        actionParams.isInternal ?? true,
-        actor
-      );
-      if (!result.success) {
-        return errorResponse(result.error!.code, result.error!.message);
-      }
-      return successResponse(result.data);
-    }
-
-    default:
-      return errorResponse('INVALID_ACTION', `Unknown action: ${action}`);
+  const actionMap: Record<string, string> = {
+    acknowledge: 'acknowledge_exception',
+    update_status: 'update_exception_status',
+    escalate: 'escalate_exception',
+    resolve: 'resolve_exception',
+    add_note: 'add_exception_note',
+  };
+  const parsed = exceptionCommandSchema.safeParse({
+    ...body,
+    action: actionMap[body?.action] || body?.action,
+    exceptionId,
+  });
+  if (!parsed.success) {
+    return errorResponse(
+      'INVALID_INPUT',
+      parsed.error.issues[0]?.message || 'Invalid exception action',
+      400
+    );
   }
+  const actionInput = parsed.data;
+
+  const result = await getEngine().operations.execute(actionInput as OpsCommandInput, opsActor);
+  return operationResultResponse(result);
 }
