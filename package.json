@@ -37,7 +37,9 @@
     "ui:screenshots:sync": "tsx scripts/ui/sync-ui-screenshots.ts",
     "ui:docs": "tsx scripts/ui/generate-command-center-docs.ts",
     "ui:command-center": "pnpm ui:registry && pnpm ui:screenshots:sync && pnpm ui:docs",
-    "audit:guards": "node scripts/audit/check-api-route-guards.mjs"
+    "audit:guards": "node scripts/audit/check-api-route-guards.mjs",
+    "test:e2e:setup": "supabase db reset && pnpm db:seed",
+    "test:e2e:lifecycle": "concurrently --kill-others --success first \"pnpm dev:web\" \"pnpm dev:chef\" \"pnpm dev:ops\" \"pnpm dev:driver\" \"wait-on http://localhost:3000 http://localhost:3001 http://localhost:3002 http://localhost:3003 && playwright test e2e/lifecycle\""
   },
   "dependencies": {
     "@sentry/nextjs": "^9.0.0",
@@ -48,6 +50,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.55.1",
+    "concurrently": "^9.0.0",
+    "wait-on": "^8.0.0",
     "@eslint/js": "^9.39.4",
     "@types/node": "^20.17.0",
     "eslint": "^9.39.4",
