@@ -1,5 +1,7 @@
+import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { createServerClient, getStorefrontByChefId, type SupabaseClient } from '@ridendine/db';
+import { EmptyState } from '@ridendine/ui';
 import { StorefrontForm } from '@/components/storefront/storefront-form';
 import { StorefrontSetupForm } from '@/components/storefront/storefront-setup-form';
 
@@ -79,10 +81,24 @@ export default async function StorefrontPage() {
     if (!isAuthenticated) {
       return (
         <div className="flex h-96 items-center justify-center">
-          <div className="text-center">
-            <p className="text-gray-900 font-semibold">Please sign in</p>
-            <p className="mt-2 text-gray-500 text-sm">You need to be signed in to manage your storefront.</p>
-          </div>
+          <EmptyState
+            className="border-amber-200 bg-amber-50"
+            icon={
+              <svg className="h-12 w-12 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            }
+            title="Sign in required"
+            description="You need to be signed in to manage your storefront."
+            action={
+              <Link
+                href="/auth/login"
+                className="inline-flex rounded-lg bg-[#E85D26] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#d44e1e]"
+              >
+                Sign In
+              </Link>
+            }
+          />
         </div>
       );
     }
@@ -91,10 +107,24 @@ export default async function StorefrontPage() {
     if (!hasChefProfile) {
       return (
         <div className="flex h-96 items-center justify-center">
-          <div className="text-center">
-            <p className="text-gray-900 font-semibold">Chef profile not found</p>
-            <p className="mt-2 text-gray-500 text-sm">Please complete your chef registration first.</p>
-          </div>
+          <EmptyState
+            className="border-gray-200 bg-white"
+            icon={
+              <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            }
+            title="Chef profile not found"
+            description="Complete your chef registration to set up your storefront and start receiving orders."
+            action={
+              <Link
+                href="/dashboard/storefront/setup"
+                className="inline-flex rounded-lg bg-[#E85D26] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#d44e1e]"
+              >
+                Complete Setup
+              </Link>
+            }
+          />
         </div>
       );
     }
@@ -129,10 +159,16 @@ export default async function StorefrontPage() {
     console.error('Storefront page error:', error);
     return (
       <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-900 font-semibold">Unable to load storefront</p>
-          <p className="mt-2 text-gray-500 text-sm">Please refresh the page or contact support.</p>
-        </div>
+        <EmptyState
+          className="border-red-200 bg-red-50"
+          icon={
+            <svg className="h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+          }
+          title="Unable to load storefront"
+          description="Something went wrong. Please refresh the page or contact support."
+        />
       </div>
     );
   }

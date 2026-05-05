@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { createServerClient, getStorefrontByChefId, getOrdersByStorefront } from '@ridendine/db';
+import { AlertTriangle } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,14 +15,19 @@ const STATUS_STYLES: Record<string, string> = {
   cancelled: 'bg-red-50 text-red-700 border border-red-200',
 };
 
-async function getChefStorefront() {
+interface ChefStorefrontResult {
+  storefront: Awaited<ReturnType<typeof getStorefrontByChefId>>;
+  chefId: string | null;
+}
+
+async function getChefStorefront(): Promise<ChefStorefrontResult> {
   try {
     const cookieStore = await cookies();
     const supabase = createServerClient(cookieStore);
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return null;
+    if (!user) return { storefront: null, chefId: null };
 
     const result: any = await supabase
       .from('chef_profiles')
@@ -29,10 +35,26 @@ async function getChefStorefront() {
       .eq('user_id', user.id)
       .single();
 
-    if (result.error || !result.data) return null;
-    return await getStorefrontByChefId(supabase as any, result.data.id);
+    if (result.error || !result.data) return { storefront: null, chefId: null };
+    const storefront = await getStorefrontByChefId(supabase as any, result.data.id);
+    return { storefront, chefId: result.data.id };
   } catch {
-    return null;
+    return { storefront: null, chefId: null };
+  }
+}
+
+async function hasStripeAccount(chefId: string): Promise<boolean> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(cookieStore);
+    const { data } = await supabase
+      .from('chef_payout_accounts')
+      .select('stripe_account_id')
+      .eq('chef_id', chefId)
+      .maybeSingle();
+    return !!(data?.stripe_account_id);
+  } catch {
+    return true; // Fail open — don't show banner on error
   }
 }
 
@@ -96,7 +118,7 @@ async function getDashboardData(storefrontId: string) {
 }
 
 export default async function DashboardPage() {
-  const storefront = await getChefStorefront();
+  const { storefront, chefId } = await getChefStorefront();
 
   if (!storefront) {
     return (
@@ -120,7 +142,10 @@ export default async function DashboardPage() {
     );
   }
 
-  const { stats, recentOrders } = await getDashboardData(storefront.id);
+  const [{ stats, recentOrders }, stripeConnected] = await Promise.all([
+    getDashboardData(storefront.id),
+    chefId ? hasStripeAccount(chefId) : Promise.resolve(true),
+  ]);
 
   const statsData = [
     {
@@ -159,6 +184,25 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* Stripe Connect Banner */}
+      {!stripeConnected && (
+        <div className="flex items-center justify-between rounded-xl border border-amber-300 bg-amber-50 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" />
+            <div>
+              <p className="text-sm font-semibold text-amber-900">Connect Stripe to receive payouts</p>
+              <p className="text-xs text-amber-700">You won&apos;t be able to receive payments until your Stripe account is connected.</p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/payouts/setup"
+            className="ml-4 flex-shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+          >
+            Connect Stripe
+          </Link>
+        </div>
+      )}
+
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">

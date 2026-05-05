@@ -5,6 +5,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Card, Button } from '@ridendine/ui';
 import type { Driver } from '@ridendine/db';
+import { NotificationPreferences } from '@/components/settings/notification-preferences';
 
 type Props = {
   driver: Driver;
@@ -76,6 +77,8 @@ export default function SettingsClient({ driver, balanceCents }: Props) {
         <Link href="/earnings" className="block text-center text-[15px] font-medium text-brand-600">
           Go to Earnings
         </Link>
+
+        <NotificationPreferences />
       </div>
 
       <nav className="fixed bottom-0 left-0 right-0 border-t border-[#e5e7eb] bg-white">

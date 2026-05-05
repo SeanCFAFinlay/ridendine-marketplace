@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { createServerClient, getChefByUserId } from '@ridendine/db';
 import { ProfileForm } from '@/components/profile/profile-form';
+import { NotificationPreferences } from '@/components/settings/notification-preferences';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,7 @@ export default async function SettingsPage() {
       </div>
 
       <ProfileForm profile={profile} />
+      <NotificationPreferences />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, Badge, Button } from '@ridendine/ui';
 import { chefStorefrontOrdersChannel, createBrowserClient, parseOrdersRealtimeRow } from '@ridendine/db';
+import { OrderToast, type ToastMsg } from './order-toast';
 
 interface Order {
   id: string;
@@ -79,6 +80,19 @@ export function OrdersList({ initialOrders, storefrontId }: OrdersListProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [playSound, setPlaySound] = useState(false);
+  const [toasts, setToasts] = useState<ToastMsg[]>([]);
+
+  const addToast = useCallback((message: string) => {
+    const id = Date.now().toString();
+    setToasts((prev) => [...prev, { id, message }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 6000);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const supabase = useMemo(() => createBrowserClient(), []);
 
@@ -100,6 +114,12 @@ export function OrdersList({ initialOrders, storefrontId }: OrdersListProps) {
             const newOrder = payload.new as Order;
             setOrders((prev) => [newOrder, ...prev]);
             setPlaySound(true);
+            const orderNum = (payload.new as Order).order_number ?? '';
+            const customer = (payload.new as Order).customer;
+            const customerName = customer
+              ? `${customer.first_name} ${customer.last_name}`
+              : 'a customer';
+            addToast(`New order ${orderNum} from ${customerName}`);
           } else if (payload.eventType === 'UPDATE') {
             const row = parseOrdersRealtimeRow(payload.new);
             if (!row || row.storefront_id !== storefrontId) return;
@@ -115,7 +135,7 @@ export function OrdersList({ initialOrders, storefrontId }: OrdersListProps) {
     return () => {
       db.removeChannel(channel);
     };
-  }, [supabase, storefrontId]);
+  }, [supabase, storefrontId, addToast]);
 
   // Play notification sound for new orders
   useEffect(() => {
@@ -233,6 +253,7 @@ export function OrdersList({ initialOrders, storefrontId }: OrdersListProps) {
 
   return (
     <>
+      <OrderToast toasts={toasts} onDismiss={dismissToast} />
       {error && (
         <div className="mb-4 rounded-lg bg-red-50 p-4">
           <p className="text-sm text-red-800">{error}</p>

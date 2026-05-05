@@ -33,6 +33,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="theme-color" content="#E85D26" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="RideNDine Driver" />
+      </head>
       <body className="min-h-screen bg-[#FAFAFA] font-sans antialiased">
         <AuthProvider>{children}</AuthProvider>
         <ServiceWorkerRegister />
