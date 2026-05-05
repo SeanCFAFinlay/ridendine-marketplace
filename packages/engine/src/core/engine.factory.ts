@@ -9,6 +9,8 @@ import { AuditLogger, createAuditLogger } from './audit-logger';
 import { SLAManager, createSLAManager } from './sla-manager';
 import { NotificationSender, createNotificationSender } from './notification-sender';
 import { createResendProvider } from './email-provider';
+import { createTwilioProvider } from './sms-provider';
+import { NotificationTriggers, createNotificationTriggers } from './notification-triggers';
 import type { PaymentAdapter } from '../types/payment-adapter';
 import { OrderCreationService, createOrderCreationService } from '../orchestrators/order-creation.service';
 import { KitchenEngine, createKitchenEngine } from '../orchestrators/kitchen.engine';
@@ -44,6 +46,7 @@ export interface CentralEngine {
   audit: AuditLogger;
   sla: SLAManager;
   notifications: NotificationSender;
+  triggers: NotificationTriggers;
   /** Phase 1+ routing / ETA (server-side; use for refreshFromDriverPing, etc.). */
   eta: EtaService;
 
@@ -96,6 +99,10 @@ export function createCentralEngine(
 
   // Register email provider (only active when RESEND_API_KEY is set)
   notifications.registerProvider(createResendProvider());
+  // Register SMS provider (only active when TWILIO_* env vars are set)
+  notifications.registerProvider(createTwilioProvider());
+
+  const triggers = createNotificationTriggers(client, notifications);
 
   // Create business rules engine (validation layer)
   const rules = createBusinessRulesEngine(client);
@@ -153,6 +160,7 @@ export function createCentralEngine(
     audit,
     sla,
     notifications,
+    triggers,
     eta,
     rules,
     masterOrder,

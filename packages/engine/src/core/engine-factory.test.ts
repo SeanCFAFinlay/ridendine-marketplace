@@ -40,6 +40,18 @@ vi.mock('./email-provider', () => ({
   })),
 }));
 
+vi.mock('./sms-provider', () => ({
+  createTwilioProvider: vi.fn(() => ({
+    name: 'mock-twilio',
+    isAvailable: () => false,
+    deliver: vi.fn(),
+  })),
+}));
+
+vi.mock('./notification-triggers', () => ({
+  createNotificationTriggers: vi.fn(() => ({})),
+}));
+
 vi.mock('./business-rules-engine', () => ({
   createBusinessRulesEngine: vi.fn(() => ({})),
 }));
@@ -166,14 +178,21 @@ describe('createCentralEngine', () => {
     expect(engine.dispatch).toBe(engine.dispatchOrchestrator);
   });
 
-  it('registers email provider on the notification sender', async () => {
+  it('registers email and SMS providers on the notification sender', async () => {
     const { createCentralEngine } = await import('./engine.factory');
     const { createNotificationSender } = await import('./notification-sender');
 
     createCentralEngine({} as any);
 
     const sender = (createNotificationSender as any).mock.results[0]?.value;
-    expect(sender.registerProvider).toHaveBeenCalledTimes(1);
+    // Resend (email) + Twilio (SMS) = 2 providers
+    expect(sender.registerProvider).toHaveBeenCalledTimes(2);
+  });
+
+  it('exposes triggers on the engine', async () => {
+    const { createCentralEngine } = await import('./engine.factory');
+    const engine = createCentralEngine({} as any);
+    expect(engine).toHaveProperty('triggers');
   });
 
   it('passes the Supabase client to createEventEmitter', async () => {
