@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ridéndine Wiring Viewer</title>
+  <style>
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #080b10; color: #e5edf7; }
+    main { max-width: 1200px; margin: 0 auto; padding: 32px; }
+    h1 { font-size: 40px; margin: 0 0 8px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .card { border: 1px solid rgba(255,255,255,.12); background: #111827; border-radius: 18px; padding: 18px; box-shadow: 0 18px 50px rgba(0,0,0,.25); }
+    .wired { color: #22c55e; font-weight: 700; }
+    .partial { color: #f59e0b; font-weight: 700; }
+    .missing { color: #ef4444; font-weight: 700; }
+    a { color: #fbbf24; }
+    li { margin: 8px 0; }
+    pre { overflow: auto; background: #020617; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; padding: 16px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Ridéndine Wiring Viewer</h1>
+    <p>Static index for generated wiring docs. Status colors: <span class="wired">WIRED</span>, <span class="partial">PARTIAL</span>, <span class="missing">MISSING</span>.</p>
+    <div class="grid"><section class="card"><h2>Customer Web</h2><p>24 pages · 18 APIs</p><ul><li><span class="wired">WIRED</span> /about</li><li><span class="partial">PARTIAL</span> /account/addresses</li><li><span class="wired">WIRED</span> /account/favorites</li><li><span class="partial">PARTIAL</span> /account/orders</li><li><span class="wired">WIRED</span> /account</li><li><span class="partial">PARTIAL</span> /account/settings</li><li><span class="partial">PARTIAL</span> /auth/forgot-password</li><li><span class="partial">PARTIAL</span> /auth/login</li><li><span class="partial">PARTIAL</span> /auth/signup</li><li><span class="wired">WIRED</span> /cart</li><li><span class="partial">PARTIAL</span> /checkout</li><li><span class="wired">WIRED</span> /chef-resources</li></ul></section>
+<section class="card"><h2>Ops Admin</h2><p>36 pages · 46 APIs</p><ul><li><span class="partial">PARTIAL</span> /auth/login</li><li><span class="partial">PARTIAL</span> /dashboard/activity</li><li><span class="partial">PARTIAL</span> /dashboard/analytics</li><li><span class="partial">PARTIAL</span> /dashboard/announcements</li><li><span class="partial">PARTIAL</span> /dashboard/automation</li><li><span class="wired">WIRED</span> /dashboard/chefs/:id</li><li><span class="partial">PARTIAL</span> /dashboard/chefs/approvals</li><li><span class="partial">PARTIAL</span> /dashboard/chefs</li><li><span class="wired">WIRED</span> /dashboard/customers/:id</li><li><span class="partial">PARTIAL</span> /dashboard/customers</li><li><span class="wired">WIRED</span> /dashboard/deliveries/:id</li><li><span class="partial">PARTIAL</span> /dashboard/deliveries</li></ul></section>
+<section class="card"><h2>Chef Admin</h2><p>12 pages · 13 APIs</p><ul><li><span class="partial">PARTIAL</span> /auth/login</li><li><span class="partial">PARTIAL</span> /auth/signup</li><li><span class="wired">WIRED</span> /dashboard/analytics</li><li><span class="wired">WIRED</span> /dashboard/availability</li><li><span class="wired">WIRED</span> /dashboard/menu</li><li><span class="wired">WIRED</span> /dashboard/orders</li><li><span class="wired">WIRED</span> /dashboard</li><li><span class="wired">WIRED</span> /dashboard/payouts</li><li><span class="partial">PARTIAL</span> /dashboard/reviews</li><li><span class="wired">WIRED</span> /dashboard/settings</li><li><span class="wired">WIRED</span> /dashboard/storefront</li><li><span class="wired">WIRED</span> /</li></ul></section>
+<section class="card"><h2>Driver App</h2><p>8 pages · 12 APIs</p><ul><li><span class="partial">PARTIAL</span> /auth/login</li><li><span class="partial">PARTIAL</span> /auth/signup</li><li><span class="wired">WIRED</span> /delivery/:id</li><li><span class="wired">WIRED</span> /earnings</li><li><span class="wired">WIRED</span> /history</li><li><span class="wired">WIRED</span> /</li><li><span class="wired">WIRED</span> /profile</li><li><span class="wired">WIRED</span> /settings</li></ul></section></div>
+    <section class="card">
+      <h2>Documents</h2>
+      <p><a href="./ROUTE_INVENTORY.md">Route inventory</a> · <a href="./API_INVENTORY.md">API inventory</a> · <a href="./PAGE_WIRING_MATRIX.md">Page matrix</a> · <a href="./RIDENDINE_MASTER_WIRING_DIAGRAM.md">Master diagram</a></p>
+    </section>
+    <section class="card">
+      <h2>Mermaid Overview</h2>
+      <pre>flowchart TB
+  Customer --> APIs
+  Chef --> APIs
+  Driver --> APIs
+  Ops --> APIs
+  APIs --> Supabase
+  APIs --> Engine
+  APIs --> Stripe
+  Engine --> Realtime</pre>
+    </section>
+  </main>
+</body>
+</html>

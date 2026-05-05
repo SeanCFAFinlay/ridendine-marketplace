@@ -81,6 +81,7 @@ export default async function FinancePage() {
           <div className="flex gap-2">
             <a href="/api/export?type=orders" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export Orders CSV</a>
             <a href="/api/export?type=ledger" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export Ledger CSV</a>
+            <a href="/api/export?type=bank_payouts" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export BANK CSV</a>
             <a href="/api/export?type=stripe_events" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export Stripe Webhook CSV</a>
           </div>
         </div>

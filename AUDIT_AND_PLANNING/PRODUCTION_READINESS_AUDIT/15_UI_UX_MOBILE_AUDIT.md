@@ -1,0 +1,7 @@
+# UI UX Mobile Audit
+| App | Customer UX | Chef UX | Driver UX | Ops UX | Finance UX | Evidence | Status | Required Fix |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Customer Web | 66 | N/A | N/A | N/A | Checkout finance clarity 45 | [apps/web/src/app/page.tsx](../../apps/web/src/app/page.tsx)<br>[apps/web/src/app/checkout/page.tsx](../../apps/web/src/app/checkout/page.tsx)<br>[docs/ui/page-registry.json](../../docs/ui/page-registry.json) | PARTIAL | Migrate production checkout/tracking to blueprint quality and mobile QA |
+| Chef Admin | N/A | 58 | N/A | N/A | Payout clarity 45 | [apps/chef-admin/src/app/dashboard/orders/page.tsx](../../apps/chef-admin/src/app/dashboard/orders/page.tsx)<br>[apps/chef-admin/src/app/dashboard/menu/page.tsx](../../apps/chef-admin/src/app/dashboard/menu/page.tsx) | PARTIAL | Tablet-first kitchen speed audit and action confirmations |
+| Driver App | N/A | N/A | 55 | N/A | Earnings 50 | [apps/driver-app/src/app/page.tsx](../../apps/driver-app/src/app/page.tsx)<br>[apps/driver-app/src/app/delivery/[id]/page.tsx](../../apps/driver-app/src/app/delivery/[id]/page.tsx) | PARTIAL | Mobile field test: offer, navigation, pickup/dropoff flow |
+| Ops Admin | N/A | N/A | N/A | 58 | 48 | [apps/ops-admin/src/app/dashboard/page.tsx](../../apps/ops-admin/src/app/dashboard/page.tsx)<br>[apps/ops-admin/src/app/dashboard/finance/page.tsx](../../apps/ops-admin/src/app/dashboard/finance/page.tsx) | PARTIAL | Command-center density, finance readability, alert prioritization |

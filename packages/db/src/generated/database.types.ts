@@ -554,39 +554,66 @@ export type Database = {
       chef_payouts: {
         Row: {
           amount: number
+          approved_at: string | null
+          approved_by: string | null
+          bank_batch_id: string | null
+          bank_reference: string | null
           chef_id: string
           created_at: string
+          executed_at: string | null
+          executed_by: string | null
           id: string
           orders_count: number
           paid_at: string | null
+          payment_rail: string
           period_end: string
           period_start: string
+          reconciliation_status: string
           status: string
           stripe_transfer_id: string | null
+          updated_at: string
         }
         Insert: {
           amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_batch_id?: string | null
+          bank_reference?: string | null
           chef_id: string
           created_at?: string
+          executed_at?: string | null
+          executed_by?: string | null
           id?: string
           orders_count?: number
           paid_at?: string | null
+          payment_rail?: string
           period_end: string
           period_start: string
+          reconciliation_status?: string
           status?: string
           stripe_transfer_id?: string | null
+          updated_at?: string
         }
         Update: {
           amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_batch_id?: string | null
+          bank_reference?: string | null
           chef_id?: string
           created_at?: string
+          executed_at?: string | null
+          executed_by?: string | null
           id?: string
           orders_count?: number
           paid_at?: string | null
+          payment_rail?: string
           period_end?: string
           period_start?: string
+          reconciliation_status?: string
           status?: string
           stripe_transfer_id?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1288,36 +1315,63 @@ export type Database = {
       driver_payouts: {
         Row: {
           amount: number
+          approved_at: string | null
+          approved_by: string | null
+          bank_batch_id: string | null
+          bank_reference: string | null
           created_at: string
           driver_id: string
+          executed_at: string | null
+          executed_by: string | null
           id: string
+          paid_at: string | null
           payout_run_id: string | null
+          payment_rail: string
           period_end: string
           period_start: string
+          reconciliation_status: string
           status: string
           stripe_transfer_id: string | null
           updated_at: string
         }
         Insert: {
           amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_batch_id?: string | null
+          bank_reference?: string | null
           created_at?: string
           driver_id: string
+          executed_at?: string | null
+          executed_by?: string | null
           id?: string
+          paid_at?: string | null
           payout_run_id?: string | null
+          payment_rail?: string
           period_end: string
           period_start: string
+          reconciliation_status?: string
           status?: string
           stripe_transfer_id?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_batch_id?: string | null
+          bank_reference?: string | null
           created_at?: string
           driver_id?: string
+          executed_at?: string | null
+          executed_by?: string | null
           id?: string
+          paid_at?: string | null
           payout_run_id?: string | null
+          payment_rail?: string
           period_end?: string
           period_start?: string
+          reconciliation_status?: string
           status?: string
           stripe_transfer_id?: string | null
           updated_at?: string
@@ -4866,4 +4920,3 @@ export const Constants = {
     },
   },
 } as const
-

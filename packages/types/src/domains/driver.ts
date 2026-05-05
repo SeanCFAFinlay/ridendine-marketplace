@@ -3,6 +3,7 @@
 // ==========================================
 
 import type { DriverStatus, DriverPresenceStatus, DocumentType, DocumentStatus } from '../enums';
+import type { BankPayoutStatus } from './chef';
 
 export interface Driver {
   id: string;
@@ -97,10 +98,19 @@ export interface DriverPayout {
   driver_id: string;
   payout_run_id: string | null;
   amount: number;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: BankPayoutStatus;
+  payment_rail: 'bank';
+  bank_batch_id: string | null;
+  bank_reference: string | null;
+  reconciliation_status: 'pending' | 'reconciled' | 'disputed';
   stripe_transfer_id: string | null;
   period_start: string;
   period_end: string;
+  approved_by: string | null;
+  approved_at: string | null;
+  executed_by: string | null;
+  executed_at: string | null;
+  paid_at: string | null;
   created_at: string;
   updated_at: string;
 }

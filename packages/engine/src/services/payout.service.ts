@@ -29,6 +29,12 @@ export type PayoutServiceDeps = {
   getStripe?: () => Stripe | null;
 };
 
+type BankPayoutPayeeType = 'chef' | 'driver';
+
+function bankPayoutTable(payeeType: BankPayoutPayeeType): 'chef_payouts' | 'driver_payouts' {
+  return payeeType === 'chef' ? 'chef_payouts' : 'driver_payouts';
+}
+
 export class PayoutService {
   constructor(
     private readonly client: SupabaseClient,
@@ -97,11 +103,6 @@ export class PayoutService {
       return { runId: '', processed: 0, errors: ['No chef payables to settle'] };
     }
 
-    const stripe = this.deps.getStripe?.() ?? null;
-    if (!stripe) {
-      return { runId: '', processed: 0, errors: ['Stripe is not configured (STRIPE_SECRET_KEY)'] };
-    }
-
     const totalCents = preview.lines.reduce((s, l) => s + l.amountCents, 0);
     const { data: run, error: runErr } = await this.client
       .from('payout_runs')
@@ -138,17 +139,6 @@ export class PayoutService {
         continue;
       }
 
-      const { data: payoutAcct } = await this.client
-        .from('chef_payout_accounts')
-        .select('stripe_account_id')
-        .eq('chef_id', chefId)
-        .maybeSingle();
-      const destination = payoutAcct?.stripe_account_id as string | null;
-      if (!destination) {
-        errors.push(`No Stripe account for chef ${chefId}`);
-        continue;
-      }
-
       const risk = await validateChefPayoutLine(this.client, {
         storefrontId: line.payeeId,
         chefId,
@@ -167,34 +157,6 @@ export class PayoutService {
         continue;
       }
 
-      let transferId: string | null = null;
-      try {
-        const tr = await stripe.transfers.create(
-          {
-            amount: line.amountCents,
-            currency: line.currency.toLowerCase(),
-            destination,
-            metadata: {
-              payout_run_id: runId,
-              storefront_id: line.payeeId,
-              payee: 'chef',
-            },
-          },
-          { idempotencyKey: `chef_payout_${runId}_${line.payeeId}`.slice(0, 240) }
-        );
-        transferId = tr.id;
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        errors.push(`Stripe transfer failed (${line.payeeId}): ${msg}`);
-        await this.safeAudit({
-          actor: input.actor,
-          entityType: 'chef_payout_stripe_error',
-          entityId: runId,
-          afterState: { storefrontId: line.payeeId, error: msg.slice(0, 500) },
-        });
-        continue;
-      }
-
       const led = await this.ledger.recordPayout({
         orderId: null,
         payee: 'chef',
@@ -202,22 +164,11 @@ export class PayoutService {
         amountCents: line.amountCents,
         currency: line.currency,
         payoutRunId: runId,
-        description: `Chef weekly payout run ${runId}`,
-        stripeId: transferId,
+        description: `Bank-funded chef weekly payout run ${runId}`,
+        stripeId: null,
       });
       if (led.error) {
-        errors.push(`Ledger failed after Stripe transfer ${transferId}: ${led.error}`);
-        try {
-          await stripe.transfers.createReversal(transferId, { amount: line.amountCents });
-        } catch (revErr) {
-          const rm = revErr instanceof Error ? revErr.message : String(revErr);
-          await this.safeAudit({
-            actor: input.actor,
-            entityType: 'chef_payout_reversal_failed',
-            entityId: runId,
-            afterState: { transferId, error: rm.slice(0, 500) },
-          });
-        }
+        errors.push(`Ledger failed for bank-funded chef payout: ${led.error}`);
         continue;
       }
 
@@ -226,24 +177,21 @@ export class PayoutService {
         amount: line.amountCents,
         period_start: input.periodStart,
         period_end: input.periodEnd,
-        status: 'completed',
+        status: 'paid',
+        payment_rail: 'bank',
+        reconciliation_status: 'pending',
         orders_count: 0,
-        stripe_transfer_id: transferId,
+        stripe_transfer_id: null,
         payout_run_id: runId,
         paid_at: new Date().toISOString(),
       });
       if (cpErr) {
         errors.push(`chef_payouts insert failed: ${cpErr.message}`);
-        try {
-          await stripe.transfers.createReversal(transferId, { amount: line.amountCents });
-        } catch {
-          /* logged below */
-        }
         await this.safeAudit({
           actor: input.actor,
           entityType: 'chef_payout_row_failed',
           entityId: runId,
-          afterState: { transferId, error: cpErr.message },
+          afterState: { paymentRail: 'bank', error: cpErr.message },
         });
         continue;
       }
@@ -308,11 +256,6 @@ export class PayoutService {
       return { runId: '', processed: 0, errors: ['No driver payables to settle'] };
     }
 
-    const stripe = this.deps.getStripe?.() ?? null;
-    if (!stripe) {
-      return { runId: '', processed: 0, errors: ['Stripe is not configured (STRIPE_SECRET_KEY)'] };
-    }
-
     const totalCents = preview.lines.reduce((s, l) => s + l.amountCents, 0);
     const { data: run, error: runErr } = await this.client
       .from('payout_runs')
@@ -338,17 +281,6 @@ export class PayoutService {
     let ok = 0;
 
     for (const line of preview.lines) {
-      const { data: drv } = await this.client
-        .from('drivers')
-        .select('stripe_connect_account_id')
-        .eq('id', line.payeeId)
-        .maybeSingle();
-      const destination = drv?.stripe_connect_account_id as string | null;
-      if (!destination) {
-        errors.push(`No Stripe Connect account for driver ${line.payeeId}`);
-        continue;
-      }
-
       const risk = await validateDriverBatchPayoutLine(this.client, {
         driverId: line.payeeId,
         amountCents: line.amountCents,
@@ -365,34 +297,6 @@ export class PayoutService {
         continue;
       }
 
-      let transferId: string | null = null;
-      try {
-        const tr = await stripe.transfers.create(
-          {
-            amount: line.amountCents,
-            currency: line.currency.toLowerCase(),
-            destination,
-            metadata: {
-              payout_run_id: runId,
-              driver_id: line.payeeId,
-              payee: 'driver',
-            },
-          },
-          { idempotencyKey: `driver_payout_${runId}_${line.payeeId}`.slice(0, 240) }
-        );
-        transferId = tr.id;
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        errors.push(`Stripe transfer failed (${line.payeeId}): ${msg}`);
-        await this.safeAudit({
-          actor: input.actor,
-          entityType: 'driver_payout_stripe_error',
-          entityId: runId,
-          afterState: { driverId: line.payeeId, error: msg.slice(0, 500) },
-        });
-        continue;
-      }
-
       const led = await this.ledger.recordPayout({
         orderId: null,
         payee: 'driver',
@@ -400,22 +304,11 @@ export class PayoutService {
         amountCents: line.amountCents,
         currency: line.currency,
         payoutRunId: runId,
-        description: `Driver daily payout run ${runId}`,
-        stripeId: transferId,
+        description: `Bank-funded driver daily payout run ${runId}`,
+        stripeId: null,
       });
       if (led.error) {
-        errors.push(`Ledger failed after Stripe transfer ${transferId}: ${led.error}`);
-        try {
-          await stripe.transfers.createReversal(transferId, { amount: line.amountCents });
-        } catch (revErr) {
-          const rm = revErr instanceof Error ? revErr.message : String(revErr);
-          await this.safeAudit({
-            actor: input.actor,
-            entityType: 'driver_payout_reversal_failed',
-            entityId: runId,
-            afterState: { transferId, error: rm.slice(0, 500) },
-          });
-        }
+        errors.push(`Ledger failed for bank-funded driver payout: ${led.error}`);
         continue;
       }
 
@@ -425,22 +318,19 @@ export class PayoutService {
         amount: amountDollars,
         period_start: input.periodStart,
         period_end: input.periodEnd,
-        status: 'completed',
+        status: 'paid',
+        payment_rail: 'bank',
+        reconciliation_status: 'pending',
         payout_run_id: runId,
-        stripe_transfer_id: transferId,
+        stripe_transfer_id: null,
       });
       if (dpErr) {
         errors.push(`driver_payouts insert failed: ${dpErr.message}`);
-        try {
-          await stripe.transfers.createReversal(transferId, { amount: line.amountCents });
-        } catch {
-          /* noop */
-        }
         await this.safeAudit({
           actor: input.actor,
           entityType: 'driver_payout_row_failed',
           entityId: runId,
-          afterState: { transferId, error: dpErr.message },
+          afterState: { paymentRail: 'bank', error: dpErr.message },
         });
         continue;
       }
@@ -458,6 +348,180 @@ export class PayoutService {
       .eq('id', runId);
 
     return { runId, processed: ok, errors };
+  }
+
+  async scheduleChefPayout(input: {
+    chefId: string;
+    storefrontId: string;
+    amountCents: number;
+    actor: ActorContext;
+  }): Promise<{ payoutId: string; amountCents: number; currency: string; error?: string }> {
+    if (!Number.isInteger(input.amountCents) || input.amountCents <= 0) {
+      return { payoutId: '', amountCents: input.amountCents, currency: 'CAD', error: 'amountCents must be a positive integer' };
+    }
+
+    const { data: account } = await this.client
+      .from('platform_accounts')
+      .select('balance_cents, currency')
+      .eq('account_type', 'chef_payable')
+      .eq('owner_id', input.storefrontId)
+      .maybeSingle();
+
+    const balanceCents = Number((account as { balance_cents?: number } | null)?.balance_cents ?? 0);
+    const currency = ((account as { currency?: string } | null)?.currency ?? 'CAD').toUpperCase();
+    if (input.amountCents > balanceCents) {
+      return { payoutId: '', amountCents: input.amountCents, currency, error: 'Amount exceeds available chef payable balance' };
+    }
+
+    const now = new Date();
+    const periodStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const { data, error } = await this.client
+      .from('chef_payouts')
+      .insert({
+        chef_id: input.chefId,
+        amount: input.amountCents,
+        status: 'scheduled',
+        payment_rail: 'bank',
+        reconciliation_status: 'pending',
+        period_start: periodStart.toISOString(),
+        period_end: now.toISOString(),
+        orders_count: 0,
+      })
+      .select('id')
+      .single();
+
+    if (error || !data) {
+      return { payoutId: '', amountCents: input.amountCents, currency, error: error?.message ?? 'chef_payouts insert failed' };
+    }
+
+    await this.safeAudit({
+      actor: input.actor,
+      entityType: 'chef_payout',
+      entityId: data.id as string,
+      afterState: {
+        status: 'scheduled',
+        chefId: input.chefId,
+        storefrontId: input.storefrontId,
+        amountCents: input.amountCents,
+      },
+    });
+
+    return { payoutId: data.id as string, amountCents: input.amountCents, currency };
+  }
+
+  async approveBankPayout(input: {
+    payeeType: BankPayoutPayeeType;
+    payoutId: string;
+    actor: ActorContext;
+  }): Promise<{ ok: boolean; error?: string }> {
+    const now = new Date().toISOString();
+    const { error } = await this.client
+      .from(bankPayoutTable(input.payeeType))
+      .update({
+        status: 'approved',
+        payment_rail: 'bank',
+        approved_by: input.actor.userId,
+        approved_at: now,
+        updated_at: now,
+      })
+      .eq('id', input.payoutId)
+      .eq('status', 'scheduled')
+      .select('id')
+      .single();
+
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  }
+
+  async exportBankPayoutBatch(input: {
+    payeeType: BankPayoutPayeeType;
+    payoutIds: string[];
+    actor: ActorContext;
+    bankBatchId?: string;
+  }): Promise<{ ok: boolean; bankBatchId: string; error?: string }> {
+    const bankBatchId = input.bankBatchId ?? `bank_${input.payeeType}_${Date.now()}`;
+    if (input.payoutIds.length === 0) {
+      return { ok: false, bankBatchId, error: 'No payout ids provided' };
+    }
+
+    const now = new Date().toISOString();
+    const { error } = await this.client
+      .from(bankPayoutTable(input.payeeType))
+      .update({
+        status: 'exported',
+        payment_rail: 'bank',
+        bank_batch_id: bankBatchId,
+        executed_by: input.actor.userId,
+        executed_at: now,
+        updated_at: now,
+      })
+      .in('id', input.payoutIds)
+      .in('status', ['approved', 'scheduled']);
+
+    if (error) return { ok: false, bankBatchId, error: error.message };
+    return { ok: true, bankBatchId };
+  }
+
+  async markBankPayoutSubmitted(input: {
+    payeeType: BankPayoutPayeeType;
+    payoutId: string;
+    actor: ActorContext;
+    bankReference?: string;
+  }): Promise<{ ok: boolean; error?: string }> {
+    return this.updateBankPayoutStatus(input.payeeType, input.payoutId, {
+      status: 'bank_submitted',
+      bank_reference: input.bankReference ?? null,
+      executed_by: input.actor.userId,
+      executed_at: new Date().toISOString(),
+    });
+  }
+
+  async markBankPayoutPaid(input: {
+    payeeType: BankPayoutPayeeType;
+    payoutId: string;
+    actor: ActorContext;
+    bankReference: string;
+  }): Promise<{ ok: boolean; error?: string }> {
+    return this.updateBankPayoutStatus(input.payeeType, input.payoutId, {
+      status: 'paid',
+      bank_reference: input.bankReference,
+      paid_at: new Date().toISOString(),
+      executed_by: input.actor.userId,
+      executed_at: new Date().toISOString(),
+    });
+  }
+
+  async reconcileBankPayout(input: {
+    payeeType: BankPayoutPayeeType;
+    payoutId: string;
+    actor: ActorContext;
+    bankReference?: string;
+  }): Promise<{ ok: boolean; error?: string }> {
+    return this.updateBankPayoutStatus(input.payeeType, input.payoutId, {
+      status: 'reconciled',
+      reconciliation_status: 'reconciled',
+      bank_reference: input.bankReference ?? null,
+    });
+  }
+
+  private async updateBankPayoutStatus(
+    payeeType: BankPayoutPayeeType,
+    payoutId: string,
+    patch: Record<string, unknown>
+  ): Promise<{ ok: boolean; error?: string }> {
+    const { error } = await this.client
+      .from(bankPayoutTable(payeeType))
+      .update({
+        payment_rail: 'bank',
+        updated_at: new Date().toISOString(),
+        ...patch,
+      })
+      .eq('id', payoutId)
+      .select('id')
+      .single();
+
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
   }
 
   instantFeeCents(amountCents: number): number {
@@ -534,29 +598,6 @@ export class PayoutService {
     }
 
     const fee = (locked.fee_cents as number) ?? this.instantFeeCents(input.amountCents);
-    const stripe = this.deps.getStripe?.() ?? null;
-    if (!stripe) {
-      await this.client
-        .from('instant_payout_requests')
-        .update({ status: 'failed', failure_reason: 'Stripe not configured' })
-        .eq('id', input.requestId);
-      return { ok: false, error: 'Stripe is not configured (STRIPE_SECRET_KEY)' };
-    }
-
-    const { data: drv } = await this.client
-      .from('drivers')
-      .select('stripe_connect_account_id')
-      .eq('id', input.driverId)
-      .maybeSingle();
-    const connectId = drv?.stripe_connect_account_id as string | null;
-    if (!connectId) {
-      await this.client
-        .from('instant_payout_requests')
-        .update({ status: 'failed', failure_reason: 'No Stripe Connect account' })
-        .eq('id', input.requestId);
-      return { ok: false, error: 'No Stripe Connect account' };
-    }
-
     const feeLed = await this.ledger.recordInstantPayoutFee({
       orderId: null,
       driverId: input.driverId,
@@ -572,42 +613,6 @@ export class PayoutService {
       return { ok: false, error: feeLed.error };
     }
 
-    let payoutId: string | null = null;
-    try {
-      const payout = await stripe.payouts.create(
-        {
-          amount: input.amountCents,
-          currency: input.currency.toLowerCase(),
-          method: 'instant',
-        },
-        {
-          stripeAccount: connectId,
-          idempotencyKey: `instant_payout_${input.requestId}`.slice(0, 240),
-        }
-      );
-      payoutId = payout.id;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      await this.ledger.reverseInstantPayoutFee({
-        orderId: null,
-        driverId: input.driverId,
-        feeCents: fee,
-        currency: input.currency,
-        requestId: input.requestId,
-      });
-      await this.client
-        .from('instant_payout_requests')
-        .update({ status: 'failed', failure_reason: msg.slice(0, 500) })
-        .eq('id', input.requestId);
-      await this.safeAudit({
-        actor,
-        entityType: 'instant_payout_stripe_error',
-        entityId: input.requestId,
-        afterState: { error: msg.slice(0, 500) },
-      });
-      return { ok: false, error: msg };
-    }
-
     const payoutLed = await this.ledger.recordPayout({
       orderId: null,
       payee: 'driver',
@@ -615,8 +620,8 @@ export class PayoutService {
       amountCents: input.amountCents,
       currency: input.currency,
       payoutRunId: `instant_principal:${input.requestId}`,
-      description: `Instant payout principal ${input.requestId}`,
-      stripeId: payoutId,
+      description: `Bank-funded instant payout principal ${input.requestId}`,
+      stripeId: null,
     });
     if (payoutLed.error) {
       await this.safeAudit({
@@ -624,9 +629,9 @@ export class PayoutService {
         entityType: 'instant_payout_ledger_critical',
         entityId: input.requestId,
         afterState: {
-          stripe_payout_id: payoutId,
+          paymentRail: 'bank',
           error: payoutLed.error,
-          note: 'Stripe payout succeeded but principal ledger failed — requires manual reconciliation',
+          note: 'Bank-funded instant payout ledger failed — requires manual reconciliation',
         },
       });
       await this.client
@@ -634,7 +639,7 @@ export class PayoutService {
         .update({
           status: 'failed',
           failure_reason: `ledger_principal_failed: ${payoutLed.error}`,
-          stripe_payout_id: payoutId,
+          stripe_payout_id: null,
         })
         .eq('id', input.requestId);
       return { ok: false, error: payoutLed.error };
@@ -645,7 +650,7 @@ export class PayoutService {
       .update({
         status: 'executed',
         executed_at: new Date().toISOString(),
-        stripe_payout_id: payoutId,
+        stripe_payout_id: null,
         failure_reason: null,
       })
       .eq('id', input.requestId);

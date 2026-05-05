@@ -29,7 +29,12 @@
     "test:smoke": "playwright test --grep @smoke",
     "test:load": "node scripts/load/run-load-smoke.mjs",
     "test:load:dry-run": "node scripts/load/run-load-smoke.mjs --dry-run",
-    "test:load:staging": "node scripts/load/run-load-smoke.mjs"
+    "test:load:staging": "node scripts/load/run-load-smoke.mjs",
+    "ui:screenshots": "tsx scripts/ui/generate-ui-screenshots.ts",
+    "ui:registry": "tsx scripts/ui/build-page-registry.ts",
+    "ui:screenshots:sync": "tsx scripts/ui/sync-ui-screenshots.ts",
+    "ui:docs": "tsx scripts/ui/generate-command-center-docs.ts",
+    "ui:command-center": "pnpm ui:registry && pnpm ui:screenshots:sync && pnpm ui:docs"
   },
   "dependencies": {
     "@sentry/nextjs": "^9.0.0",
@@ -45,6 +50,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "prettier": "^3.4.0",
+    "tsx": "^4.19.2",
     "turbo": "^2.3.0",
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.58.0"

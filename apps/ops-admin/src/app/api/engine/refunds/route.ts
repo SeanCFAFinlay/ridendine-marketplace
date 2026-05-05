@@ -14,15 +14,6 @@ import {
 } from '@/lib/engine';
 import type { RefundReason } from '@ridendine/types';
 
-/** Real Stripe refund IDs (live or test) use this prefix; never accept synthetic `mock_*` IDs (Phase 13). */
-function isValidStripeRefundId(value: unknown): value is string {
-  if (typeof value !== 'string') return false;
-  const id = value.trim();
-  if (id.length < 10 || id.length > 255) return false;
-  if (id.startsWith('mock_')) return false;
-  return /^re_[A-Za-z0-9]+$/.test(id);
-}
-
 /**
  * GET /api/engine/refunds
  * Get pending refunds
@@ -113,17 +104,8 @@ export async function POST(request: NextRequest) {
       );
       if (opsActor instanceof Response) return opsActor;
 
-      if (!isValidStripeRefundId(actionParams.stripeRefundId)) {
-        return errorResponse(
-          'STRIPE_REFUND_ID_REQUIRED',
-          'process requires a real Stripe refund id (re_...) from your Stripe API after the refund is created; synthetic ids are not allowed.',
-          400
-        );
-      }
-
-      const result = await engine.commerce.processRefund(
+      const result = await engine.commerce.createStripeRefund(
         actionParams.refundCaseId,
-        actionParams.stripeRefundId,
         opsActor
       );
       if (!result.success) {

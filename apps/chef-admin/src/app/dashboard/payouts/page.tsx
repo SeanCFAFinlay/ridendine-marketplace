@@ -7,7 +7,7 @@ import { createBrowserClient } from '@ridendine/db';
 interface Payout {
   id: string;
   amount: number;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'scheduled' | 'approved' | 'exported' | 'bank_submitted' | 'paid' | 'failed' | 'reconciled';
   created_at: string;
   paid_at: string | null;
   period_start: string;
@@ -108,8 +108,8 @@ export default function PayoutsPage() {
 
           // Subtract already paid out amounts
           payoutsData?.forEach((p: Payout) => {
-            if (p.status === 'completed') {
-              available -= p.amount;
+            if (['scheduled', 'approved', 'exported', 'bank_submitted', 'paid', 'reconciled'].includes(p.status)) {
+              available -= p.amount / 100;
             }
           });
 
@@ -245,8 +245,8 @@ export default function PayoutsPage() {
           <p className="text-sm text-gray-500">Total Paid Out</p>
           <p className="mt-1 text-3xl font-bold text-gray-900">
             ${payouts
-              .filter((p) => p.status === 'completed')
-              .reduce((sum, p) => sum + p.amount, 0)
+              .filter((p) => ['paid', 'reconciled'].includes(p.status))
+              .reduce((sum, p) => sum + p.amount / 100, 0)
               .toFixed(2)}
           </p>
           <p className="mt-1 text-xs text-gray-400">Lifetime earnings</p>
@@ -297,13 +297,13 @@ export default function PayoutsPage() {
                       {new Date(payout.period_end).toLocaleDateString()}
                     </td>
                     <td className="py-3 font-medium text-gray-900">
-                      ${payout.amount.toFixed(2)}
+                      ${(payout.amount / 100).toFixed(2)}
                     </td>
                     <td className="py-3">
                       <Badge
                         variant={
-                          payout.status === 'completed' ? 'success' :
-                          payout.status === 'processing' ? 'info' :
+                          ['paid', 'reconciled'].includes(payout.status) ? 'success' :
+                          ['exported', 'bank_submitted'].includes(payout.status) ? 'info' :
                           payout.status === 'failed' ? 'error' : 'warning'
                         }
                       >

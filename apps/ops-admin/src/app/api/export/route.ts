@@ -59,6 +59,44 @@ async function fetchStripeEventsProcessed(client: any, startDate: string, endDat
   };
 }
 
+async function fetchBankPayouts(client: any, startDate: string, endDate: string) {
+  const { data } = await client
+    .from('chef_payouts')
+    .select('id, chef_id, amount, status, bank_batch_id, bank_reference, reconciliation_status, period_start, period_end, created_at')
+    .eq('payment_rail', 'bank')
+    .gte('created_at', startDate)
+    .lte('created_at', endDate)
+    .order('created_at', { ascending: false });
+  return {
+    rows: (data || []).map((r: any) => ({
+      payout_id: r.id,
+      payee_type: 'chef',
+      payee_id: r.chef_id,
+      amount: (r.amount / 100).toFixed(2),
+      status: r.status,
+      bank_batch_id: r.bank_batch_id,
+      bank_reference: r.bank_reference,
+      reconciliation_status: r.reconciliation_status,
+      period_start: r.period_start,
+      period_end: r.period_end,
+      created_at: r.created_at,
+    })),
+    headers: [
+      'Payout ID',
+      'Payee Type',
+      'Payee ID',
+      'Amount',
+      'Status',
+      'BANK Batch ID',
+      'BANK Reference',
+      'Reconciliation Status',
+      'Period Start',
+      'Period End',
+      'Created At',
+    ],
+  };
+}
+
 async function fetchCustomers(client: any) {
   const { data } = await client.from('customers')
     .select('first_name, last_name, email, phone, created_at')
@@ -97,7 +135,7 @@ export async function GET(request: NextRequest) {
   const startDate = searchParams.get('start') || new Date(Date.now() - THIRTY_DAYS_MS).toISOString();
   const endDate = searchParams.get('end') || new Date().toISOString();
 
-  const financeExportTypes = new Set(['ledger', 'stripe_events']);
+  const financeExportTypes = new Set(['ledger', 'stripe_events', 'bank_payouts']);
   const exportDenied = financeExportTypes.has(type || '')
     ? guardPlatformApi(actor, 'finance_export_ledger')
     : guardPlatformApi(actor, 'ops_export_operational');
@@ -120,6 +158,10 @@ export async function GET(request: NextRequest) {
       ({ rows, headers } = await fetchStripeEventsProcessed(client, startDate, endDate));
       break;
     }
+    case 'bank_payouts': {
+      ({ rows, headers } = await fetchBankPayouts(client, startDate, endDate));
+      break;
+    }
     case 'customers': {
       ({ rows, headers } = await fetchCustomers(client));
       break;
@@ -136,7 +178,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            'Invalid type. Use: orders, ledger, stripe_events, customers, chefs, drivers',
+            'Invalid type. Use: orders, ledger, stripe_events, bank_payouts, customers, chefs, drivers',
         },
         { status: 400 }
       );

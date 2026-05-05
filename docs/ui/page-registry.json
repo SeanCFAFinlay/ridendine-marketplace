@@ -1,0 +1,679 @@
+{
+  "generatedAt": "2026-05-03T06:10:52.139Z",
+  "source": {
+    "screenshots": "docs/ui/screenshots",
+    "wiringMatrix": "docs/wiring/PAGE_WIRING_MATRIX.md"
+  },
+  "pages": [
+    {
+      "id": "customer-home",
+      "app": "web",
+      "name": "Customer Home",
+      "route": "/ui-blueprint/customer-home",
+      "screenshot": "docs/ui/screenshots/customer-home.png",
+      "publicScreenshot": "/screenshots/customer-home.png",
+      "designIntent": "Marketplace discovery and active order awareness",
+      "components": [
+        "AppShell",
+        "PageHeader",
+        "MetricCard",
+        "MapPlaceholder",
+        "LiveFeed"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "customer-menu",
+      "app": "web",
+      "name": "Customer Menu",
+      "route": "/ui-blueprint/customer-menu",
+      "screenshot": "docs/ui/screenshots/customer-menu.png",
+      "publicScreenshot": "/screenshots/customer-menu.png",
+      "designIntent": "Chef menu with sticky cart",
+      "components": [
+        "TabNav",
+        "OrderCard",
+        "DrawerPanel"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "customer-checkout",
+      "app": "web",
+      "name": "Customer Checkout",
+      "route": "/ui-blueprint/customer-checkout",
+      "screenshot": "docs/ui/screenshots/customer-checkout.png",
+      "publicScreenshot": "/screenshots/customer-checkout.png",
+      "designIntent": "Cart, address, fees, and payment state",
+      "components": [
+        "OrderCard",
+        "PayoutCard",
+        "ActionButton"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "customer-order-tracking",
+      "app": "web",
+      "name": "Customer Order Tracking",
+      "route": "/ui-blueprint/customer-order-tracking",
+      "screenshot": "docs/ui/screenshots/customer-order-tracking.png",
+      "publicScreenshot": "/screenshots/customer-order-tracking.png",
+      "designIntent": "ETA, map, and timeline",
+      "components": [
+        "MapPlaceholder",
+        "OrderTimeline"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "chef-dashboard",
+      "app": "chef-admin",
+      "name": "Chef Dashboard",
+      "route": "/ui-blueprint/chef-dashboard",
+      "screenshot": "docs/ui/screenshots/chef-dashboard.png",
+      "publicScreenshot": "/screenshots/chef-dashboard.png",
+      "designIntent": "Live kitchen operating view",
+      "components": [
+        "MetricCard",
+        "DataTable",
+        "LiveFeed"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "chef-orders",
+      "app": "chef-admin",
+      "name": "Chef Orders",
+      "route": "/ui-blueprint/chef-orders",
+      "screenshot": "docs/ui/screenshots/chef-orders.png",
+      "publicScreenshot": "/screenshots/chef-orders.png",
+      "designIntent": "Kanban-style queue and detail drawer",
+      "components": [
+        "OrderCard",
+        "DrawerPanel",
+        "OrderTimeline"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "chef-menu-manager",
+      "app": "chef-admin",
+      "name": "Chef Menu Manager",
+      "route": "/ui-blueprint/chef-menu-manager",
+      "screenshot": "docs/ui/screenshots/chef-menu-manager.png",
+      "publicScreenshot": "/screenshots/chef-menu-manager.png",
+      "designIntent": "Menu sections and item availability",
+      "components": [
+        "TabNav",
+        "OrderCard"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "chef-analytics",
+      "app": "chef-admin",
+      "name": "Chef Analytics",
+      "route": "/ui-blueprint/chef-analytics",
+      "screenshot": "docs/ui/screenshots/chef-analytics.png",
+      "publicScreenshot": "/screenshots/chef-analytics.png",
+      "designIntent": "Sales, order volume, popular items, and operating rhythm",
+      "components": [
+        "MetricCard",
+        "DataTable",
+        "LiveFeed"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "chef-settings",
+      "app": "chef-admin",
+      "name": "Chef Settings",
+      "route": "/ui-blueprint/chef-settings",
+      "screenshot": "docs/ui/screenshots/chef-settings.png",
+      "publicScreenshot": "/screenshots/chef-settings.png",
+      "designIntent": "Profile, payout status, hours, and service area",
+      "components": [
+        "UserAvatar",
+        "OrderCard",
+        "DrawerPanel"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "driver-home",
+      "app": "driver-app",
+      "name": "Driver Home",
+      "route": "/ui-blueprint/driver-home",
+      "screenshot": "docs/ui/screenshots/driver-home.png",
+      "publicScreenshot": "/screenshots/driver-home.png",
+      "designIntent": "Online state and offers",
+      "components": [
+        "MetricCard",
+        "MapPlaceholder"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "driver-offer",
+      "app": "driver-app",
+      "name": "Driver Offer",
+      "route": "/ui-blueprint/driver-offer",
+      "screenshot": "docs/ui/screenshots/driver-offer.png",
+      "publicScreenshot": "/screenshots/driver-offer.png",
+      "designIntent": "Fast accept/reject offer screen",
+      "components": [
+        "MapPlaceholder",
+        "OrderCard"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "driver-active-delivery",
+      "app": "driver-app",
+      "name": "Driver Active Delivery",
+      "route": "/ui-blueprint/driver-active-delivery",
+      "screenshot": "docs/ui/screenshots/driver-active-delivery.png",
+      "publicScreenshot": "/screenshots/driver-active-delivery.png",
+      "designIntent": "Route and status progression",
+      "components": [
+        "MapPlaceholder",
+        "OrderTimeline"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "driver-earnings",
+      "app": "driver-app",
+      "name": "Driver Earnings",
+      "route": "/ui-blueprint/driver-earnings",
+      "screenshot": "docs/ui/screenshots/driver-earnings.png",
+      "publicScreenshot": "/screenshots/driver-earnings.png",
+      "designIntent": "Daily and weekly payout summary",
+      "components": [
+        "MoneyCard",
+        "PayoutCard",
+        "DataTable"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "driver-settings",
+      "app": "driver-app",
+      "name": "Driver Settings",
+      "route": "/ui-blueprint/driver-settings",
+      "screenshot": "docs/ui/screenshots/driver-settings.png",
+      "publicScreenshot": "/screenshots/driver-settings.png",
+      "designIntent": "Vehicle, profile, and notification preferences",
+      "components": [
+        "UserAvatar",
+        "OrderCard",
+        "StatusBadge"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "ops-dashboard",
+      "app": "ops-admin",
+      "name": "Ops Dashboard",
+      "route": "/ui-blueprint/ops-dashboard",
+      "screenshot": "docs/ui/screenshots/ops-dashboard.png",
+      "publicScreenshot": "/screenshots/ops-dashboard.png",
+      "designIntent": "Command center overview",
+      "components": [
+        "MetricCard",
+        "DataTable",
+        "LiveFeed"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md",
+        "docs/wiring/RIDENDINE_MASTER_WIRING_DIAGRAM.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "ops-dispatch",
+      "app": "ops-admin",
+      "name": "Ops Dispatch",
+      "route": "/ui-blueprint/ops-dispatch",
+      "screenshot": "docs/ui/screenshots/ops-dispatch.png",
+      "publicScreenshot": "/screenshots/ops-dispatch.png",
+      "designIntent": "Assignment and map workflow",
+      "components": [
+        "MapPlaceholder",
+        "FilterBar",
+        "DrawerPanel"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "ops-finance",
+      "app": "ops-admin",
+      "name": "Ops Finance",
+      "route": "/ui-blueprint/ops-finance",
+      "screenshot": "docs/ui/screenshots/ops-finance.png",
+      "publicScreenshot": "/screenshots/ops-finance.png",
+      "designIntent": "Revenue and reconciliation health",
+      "components": [
+        "MoneyCard",
+        "PayoutCard",
+        "DataTable"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md",
+        "docs/wiring/API_INVENTORY.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "ops-payouts",
+      "app": "ops-admin",
+      "name": "Ops Payouts",
+      "route": "/ui-blueprint/ops-payouts",
+      "screenshot": "docs/ui/screenshots/ops-payouts.png",
+      "publicScreenshot": "/screenshots/ops-payouts.png",
+      "designIntent": "Payout review and approvals",
+      "components": [
+        "PayoutCard",
+        "DataTable"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md",
+        "docs/wiring/MISSING_WIRING_REPORT.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "ops-reconciliation",
+      "app": "ops-admin",
+      "name": "Ops Reconciliation",
+      "route": "/ui-blueprint/ops-reconciliation",
+      "screenshot": "docs/ui/screenshots/ops-reconciliation.png",
+      "publicScreenshot": "/screenshots/ops-reconciliation.png",
+      "designIntent": "Stripe and ledger matching",
+      "components": [
+        "DataTable",
+        "StatusBadge"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md",
+        "docs/wiring/API_INVENTORY.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "ops-system-health",
+      "app": "ops-admin",
+      "name": "Ops System Health",
+      "route": "/ui-blueprint/ops-system-health",
+      "screenshot": "docs/ui/screenshots/ops-system-health.png",
+      "publicScreenshot": "/screenshots/ops-system-health.png",
+      "designIntent": "API, DB, webhook, cron, and queue status",
+      "components": [
+        "MetricCard",
+        "HealthDot"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/API_INVENTORY.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    },
+    {
+      "id": "ops-users",
+      "app": "ops-admin",
+      "name": "Ops Users",
+      "route": "/ui-blueprint/ops-users",
+      "screenshot": "docs/ui/screenshots/ops-users.png",
+      "publicScreenshot": "/screenshots/ops-users.png",
+      "designIntent": "Customers, chefs, drivers, risk, and account status",
+      "components": [
+        "UserAvatar",
+        "OrderCard",
+        "StatusBadge"
+      ],
+      "docs": [
+        "docs/ui/PAGE_BLUEPRINTS.md",
+        "docs/wiring/PAGE_WIRING_MATRIX.md"
+      ],
+      "apis": [],
+      "dbTables": [],
+      "packages": [
+        "@ridendine/ui"
+      ],
+      "status": "PARTIAL",
+      "missingWiring": [
+        "Review auth/data/API wiring"
+      ],
+      "changeRequests": [],
+      "implementationNotes": [
+        "Blueprint route uses isolated visual data only.",
+        "Production wiring must be verified against real app route/API files before status is upgraded."
+      ]
+    }
+  ]
+}

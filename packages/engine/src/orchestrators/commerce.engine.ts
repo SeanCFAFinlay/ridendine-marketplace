@@ -20,6 +20,11 @@ import {
   DRIVER_PAYOUT_PERCENT,
   HST_RATE,
 } from '../constants';
+import { getStripeClient } from '../services/stripe.service';
+
+interface CommerceLedgerEngineDeps {
+  getStripe?: () => Pick<ReturnType<typeof getStripeClient>, 'refunds'> | null;
+}
 
 interface RefundCase {
   id: string;
@@ -102,15 +107,18 @@ export class CommerceLedgerEngine {
   private client: SupabaseClient;
   private eventEmitter: DomainEventEmitter;
   private auditLogger: AuditLogger;
+  private deps: CommerceLedgerEngineDeps;
 
   constructor(
     client: SupabaseClient,
     eventEmitter: DomainEventEmitter,
-    auditLogger: AuditLogger
+    auditLogger: AuditLogger,
+    deps: CommerceLedgerEngineDeps = {}
   ) {
     this.client = client;
     this.eventEmitter = eventEmitter;
     this.auditLogger = auditLogger;
+    this.deps = deps;
   }
 
   /**
@@ -585,6 +593,85 @@ export class CommerceLedgerEngine {
     return { success: true, data: updated as RefundCase };
   }
 
+  async createStripeRefund(
+    refundCaseId: string,
+    actor: ActorContext
+  ): Promise<OperationResult<RefundCase>> {
+    if (
+      !['ops_admin', 'ops_manager', 'finance_admin', 'finance_manager', 'super_admin', 'system'].includes(
+        actor.role
+      )
+    ) {
+      return {
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Not authorized to process refunds' },
+      };
+    }
+
+    const { data: refundCase, error } = await this.client
+      .from('refund_cases')
+      .select('*, orders(id, total, payment_intent_id)')
+      .eq('id', refundCaseId)
+      .single();
+
+    if (error || !refundCase) {
+      return {
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Refund case not found' },
+      };
+    }
+
+    if (refundCase.status !== 'approved') {
+      return {
+        success: false,
+        error: { code: 'INVALID_STATUS', message: 'Refund must be approved before processing' },
+      };
+    }
+
+    const paymentIntentId = refundCase.orders?.payment_intent_id as string | null | undefined;
+    if (!paymentIntentId) {
+      return {
+        success: false,
+        error: { code: 'PAYMENT_NOT_FOUND', message: 'Order does not have a Stripe payment intent' },
+      };
+    }
+
+    const rawAmountCents = refundCase.approved_amount_cents as unknown;
+    if (
+      typeof rawAmountCents !== 'number' ||
+      !Number.isInteger(rawAmountCents) ||
+      rawAmountCents <= 0
+    ) {
+      return {
+        success: false,
+        error: { code: 'INVALID_AMOUNT', message: 'Approved refund amount is required' },
+      };
+    }
+    const amountCents = rawAmountCents;
+
+    const stripe = this.deps.getStripe?.() ?? getStripeClient();
+    if (!stripe) {
+      return {
+        success: false,
+        error: { code: 'PAYMENT_CONFIG_ERROR', message: 'Stripe is not configured' },
+      };
+    }
+
+    const stripeRefund = await stripe.refunds.create(
+      {
+        payment_intent: paymentIntentId,
+        amount: amountCents,
+        metadata: {
+          refund_case_id: refundCaseId,
+          order_id: refundCase.order_id as string,
+        },
+      },
+      { idempotencyKey: `refund_case_${refundCaseId}` }
+    );
+
+    return this.processRefund(refundCaseId, stripeRefund.id, actor);
+  }
+
   /**
    * Deny refund
    */
@@ -940,7 +1027,8 @@ export class CommerceLedgerEngine {
 export function createCommerceLedgerEngine(
   client: SupabaseClient,
   eventEmitter: DomainEventEmitter,
-  auditLogger: AuditLogger
+  auditLogger: AuditLogger,
+  deps?: CommerceLedgerEngineDeps
 ): CommerceLedgerEngine {
-  return new CommerceLedgerEngine(client, eventEmitter, auditLogger);
+  return new CommerceLedgerEngine(client, eventEmitter, auditLogger, deps);
 }

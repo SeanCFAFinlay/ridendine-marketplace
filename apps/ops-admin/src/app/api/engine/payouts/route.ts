@@ -1,8 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
-import { getStripeClient } from '@ridendine/engine';
-import { finalizeOpsActor, getOpsActorContext, guardPlatformApi } from '@/lib/engine';
+import { finalizeOpsActor, getEngine, getOpsActorContext, guardPlatformApi } from '@/lib/engine';
 
 function buildChefTotals(chefPayables: any[]) {
   const totals = new Map<string, number>();
@@ -39,13 +38,16 @@ export async function GET() {
   const { data: paidPayouts } = await client
     .from('chef_payouts')
     .select('chef_id, amount')
-    .eq('status', 'completed');
+    .in('status', ['scheduled', 'approved', 'exported', 'bank_submitted', 'paid', 'reconciled']);
 
   const paidTotals = buildPaidTotals(paidPayouts || []);
 
   const chefIds = [...chefTotals.keys()];
   const { data: chefs } = chefIds.length > 0
     ? await client.from('chef_profiles').select('id, display_name, user_id').in('id', chefIds)
+    : { data: [] };
+  const { data: storefronts } = chefIds.length > 0
+    ? await client.from('chef_storefronts').select('id, chef_id').in('chef_id', chefIds)
     : { data: [] };
 
   const { data: payoutAccounts } = chefIds.length > 0
@@ -55,15 +57,19 @@ export async function GET() {
   const accountMap = new Map<string, { stripe_account_id?: string; payout_enabled?: boolean }>(
     (payoutAccounts || []).map((a: any) => [a.chef_id, a])
   );
+  const storefrontMap = new Map<string, string>(
+    (storefronts || []).map((s: any) => [s.chef_id, s.id])
+  );
 
   const payableChefs = (chefs || [])
     .map((chef: any) => {
       const totalEarned = (chefTotals.get(chef.id) || 0) / 100;
-      const totalPaid = paidTotals.get(chef.id) || 0;
+      const totalPaid = (paidTotals.get(chef.id) || 0) / 100;
       const balance = totalEarned - totalPaid;
       const account = accountMap.get(chef.id);
       return {
         chefId: chef.id,
+        storefrontId: storefrontMap.get(chef.id) || null,
         name: chef.display_name,
         totalEarned,
         totalPaid,
@@ -74,7 +80,29 @@ export async function GET() {
     })
     .filter((c: any) => c.balance > 0);
 
-  return NextResponse.json({ success: true, data: payableChefs });
+  const { data: bankPayoutsRaw } = await client
+    .from('chef_payouts')
+    .select('id, chef_id, amount, status, payment_rail, bank_batch_id, bank_reference, reconciliation_status, created_at')
+    .eq('payment_rail', 'bank')
+    .in('status', ['scheduled', 'approved', 'exported', 'bank_submitted', 'paid']);
+
+  const bankPayouts = (bankPayoutsRaw || []).map((p: any) => {
+    const chef = (chefs || []).find((c: any) => c.id === p.chef_id);
+    return {
+      id: p.id,
+      payeeType: 'chef',
+      payeeId: p.chef_id,
+      name: chef?.display_name || p.chef_id,
+      amountCents: p.amount,
+      status: p.status,
+      bankBatchId: p.bank_batch_id,
+      bankReference: p.bank_reference,
+      reconciliationStatus: p.reconciliation_status,
+      createdAt: p.created_at,
+    };
+  });
+
+  return NextResponse.json({ success: true, data: { payableChefs, bankPayouts } });
 }
 
 export async function POST(request: NextRequest) {
@@ -82,37 +110,94 @@ export async function POST(request: NextRequest) {
   const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, 'finance_payouts'));
   if (opsActor instanceof Response) return opsActor;
 
-  const { chefId, amountCents, stripeAccountId } = await request.json();
+  const {
+    chefId,
+    storefrontId,
+    amountCents,
+    action,
+    periodStart,
+    periodEnd,
+    payeeType = 'chef',
+    payoutId,
+    payoutIds,
+    bankBatchId,
+    bankReference,
+  } = await request.json();
 
-  if (!chefId || !amountCents || !stripeAccountId) {
-    return NextResponse.json({ error: 'chefId, amountCents, and stripeAccountId required' }, { status: 400 });
+  const engine = getEngine();
+  const bankPayeeType = payeeType === 'driver' ? 'driver' : 'chef';
+
+  if (action === 'approve_bank_payout') {
+    const result = await engine.payoutAutomation.approveBankPayout({ payeeType: bankPayeeType, payoutId, actor: opsActor });
+    return NextResponse.json({ success: result.ok, error: result.error }, { status: result.ok ? 200 : 400 });
   }
 
-  try {
-    const stripe = getStripeClient();
-    const transfer = await stripe.transfers.create({
-      amount: amountCents,
-      currency: 'cad',
-      destination: stripeAccountId,
-      metadata: { chef_id: chefId, initiated_by: opsActor.userId },
+  if (action === 'export_bank_batch') {
+    const ids = Array.isArray(payoutIds) ? payoutIds : payoutId ? [payoutId] : [];
+    const result = await engine.payoutAutomation.exportBankPayoutBatch({
+      payeeType: bankPayeeType,
+      payoutIds: ids,
+      actor: opsActor,
+      bankBatchId,
     });
+    return NextResponse.json({ success: result.ok, data: result, error: result.error }, { status: result.ok ? 200 : 400 });
+  }
 
-    const client = createAdminClient() as any;
+  if (action === 'mark_bank_submitted') {
+    const result = await engine.payoutAutomation.markBankPayoutSubmitted({
+      payeeType: bankPayeeType,
+      payoutId,
+      actor: opsActor,
+      bankReference,
+    });
+    return NextResponse.json({ success: result.ok, error: result.error }, { status: result.ok ? 200 : 400 });
+  }
+
+  if (action === 'mark_bank_paid') {
+    const result = await engine.payoutAutomation.markBankPayoutPaid({
+      payeeType: bankPayeeType,
+      payoutId,
+      actor: opsActor,
+      bankReference,
+    });
+    return NextResponse.json({ success: result.ok, error: result.error }, { status: result.ok ? 200 : 400 });
+  }
+
+  if (action === 'reconcile_bank_payout') {
+    const result = await engine.payoutAutomation.reconcileBankPayout({
+      payeeType: bankPayeeType,
+      payoutId,
+      actor: opsActor,
+      bankReference,
+    });
+    return NextResponse.json({ success: result.ok, error: result.error }, { status: result.ok ? 200 : 400 });
+  }
+
+  if (action === 'execute_chef_run') {
     const now = new Date();
-    await client.from('chef_payouts').insert({
-      chef_id: chefId,
-      stripe_transfer_id: transfer.id,
-      amount: amountCents,
-      status: 'completed',
-      period_start: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      period_end: now.toISOString(),
-      paid_at: now.toISOString(),
+    const end = periodEnd || now.toISOString();
+    const start = periodStart || new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const result = await engine.payoutAutomation.executeChefRun({
+      periodStart: start,
+      periodEnd: end,
+      actor: opsActor,
     });
-
-    return NextResponse.json({ success: true, data: { transferId: transfer.id } });
-  } catch (error) {
-    return NextResponse.json({
-      error: error instanceof Error ? error.message : 'Payout failed',
-    }, { status: 500 });
+    const status = result.processed > 0 ? 200 : 400;
+    return NextResponse.json({ success: result.processed > 0, data: result, error: result.errors[0] }, { status });
   }
+
+  if (!chefId || !storefrontId || !amountCents) {
+    return NextResponse.json({ error: 'chefId, storefrontId, and amountCents required' }, { status: 400 });
+  }
+
+  const scheduled = await engine.payoutAutomation.scheduleChefPayout({
+    chefId,
+    storefrontId,
+    amountCents: Math.floor(Number(amountCents)),
+    actor: opsActor,
+  });
+  if (scheduled.error) {
+    return NextResponse.json({ success: false, error: scheduled.error }, { status: 400 });
+  }
+  return NextResponse.json({ success: true, data: scheduled });
 }

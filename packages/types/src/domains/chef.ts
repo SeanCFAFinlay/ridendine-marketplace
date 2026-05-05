@@ -77,6 +77,38 @@ export interface ChefPayoutAccount {
   updated_at: string;
 }
 
+export type BankPayoutStatus =
+  | 'scheduled'
+  | 'approved'
+  | 'exported'
+  | 'bank_submitted'
+  | 'paid'
+  | 'failed'
+  | 'reconciled';
+
+export interface ChefPayout {
+  id: string;
+  chef_id: string;
+  payout_run_id: string | null;
+  amount: number;
+  status: BankPayoutStatus;
+  payment_rail: 'bank';
+  bank_batch_id: string | null;
+  bank_reference: string | null;
+  reconciliation_status: 'pending' | 'reconciled' | 'disputed';
+  stripe_transfer_id: string | null;
+  period_start: string;
+  period_end: string;
+  orders_count: number;
+  approved_by: string | null;
+  approved_at: string | null;
+  executed_by: string | null;
+  executed_at: string | null;
+  paid_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ChefAvailability {
   id: string;
   storefront_id: string;

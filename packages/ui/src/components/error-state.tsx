@@ -5,6 +5,7 @@ import { Button } from './button';
 export interface ErrorStateProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
   message?: string;
+  description?: string;
   onRetry?: () => void;
 }
 
@@ -12,13 +13,14 @@ export function ErrorState({
   className,
   title = 'Something went wrong',
   message = 'An error occurred. Please try again.',
+  description,
   onRetry,
   ...props
 }: ErrorStateProps) {
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center py-12 text-center',
+        'flex flex-col items-center justify-center rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-12 text-center',
         className
       )}
       {...props}
@@ -33,8 +35,8 @@ export function ErrorState({
           />
         </svg>
       </div>
-      <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-      <p className="mt-1 text-sm text-gray-500">{message}</p>
+      <h3 className="text-lg font-medium text-red-100">{title}</h3>
+      <p className="mt-1 text-sm text-red-100/75">{description ?? message}</p>
       {onRetry && (
         <Button onClick={onRetry} variant="outline" className="mt-4">
           Try again
