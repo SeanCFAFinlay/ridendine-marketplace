@@ -5,6 +5,7 @@
 
 // Mock dependencies before importing
 jest.mock('@/lib/engine', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { NextResponse } = require('next/server');
   return {
     getOpsActorContext: jest.fn(),

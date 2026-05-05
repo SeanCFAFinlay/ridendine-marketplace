@@ -4,9 +4,36 @@ import Image from 'next/image';
 import { Button } from '@ridendine/ui';
 import { Header } from '@/components/layout/header';
 import { FeaturedChefs } from '@/components/home/featured-chefs';
+import { createAdminClient } from '@ridendine/db';
 
 // Opt out of static generation due to auth context requirements
 export const dynamic = 'force-dynamic';
+
+async function fetchHomeStats(): Promise<{ activeChefs: number; liveMenuItems: number }> {
+  try {
+    const admin = createAdminClient();
+
+    const [chefsRes, menuRes] = await Promise.all([
+      admin
+        .from('chef_storefronts')
+        .select('id, chef_profiles!inner(status)', { count: 'exact', head: true })
+        .eq('is_active', true)
+        .eq('chef_profiles.status', 'approved'),
+      admin
+        .from('menu_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_available', true)
+        .eq('is_sold_out', false),
+    ]);
+
+    return {
+      activeChefs: chefsRes.count ?? 0,
+      liveMenuItems: menuRes.count ?? 0,
+    };
+  } catch {
+    return { activeChefs: 0, liveMenuItems: 0 };
+  }
+}
 
 export const metadata: Metadata = {
   title: 'RideNDine - Chef-First Food Delivery',
@@ -24,7 +51,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { activeChefs, liveMenuItems } = await fetchHomeStats();
+
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -82,11 +111,15 @@ export default function HomePage() {
             {/* Stats */}
             <div className="mt-12 grid grid-cols-3 gap-6 border-t border-gray-100 pt-10">
               <div>
-                <p className="text-2xl font-bold text-[#E85D26]">3</p>
+                <p className="text-2xl font-bold text-[#E85D26]">
+                  {activeChefs > 0 ? activeChefs : '—'}
+                </p>
                 <p className="mt-1 text-sm text-gray-500">Local Chefs</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-[#E85D26]">15+</p>
+                <p className="text-2xl font-bold text-[#E85D26]">
+                  {liveMenuItems > 0 ? `${liveMenuItems}+` : '—'}
+                </p>
                 <p className="mt-1 text-sm text-gray-500">Unique Dishes</p>
               </div>
               <div>
@@ -168,7 +201,7 @@ export default function HomePage() {
               </svg>
             </Link>
           </div>
-          <FeaturedChefs />
+          <FeaturedChefs limit={3} />
           <div className="mt-8 text-center sm:hidden">
             <Link href="/chefs">
               <Button variant="outline" className="border-[#E85D26] text-[#E85D26]">
@@ -179,73 +212,22 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Chef Spotlight */}
-      <section className="py-20 bg-gradient-to-br from-[#1a7a6e] to-[#0d5c52]">
+      {/* Community Banner */}
+      <section className="py-16 bg-gradient-to-br from-[#1a7a6e] to-[#0d5c52]">
         <div className="container">
-          <div className="grid gap-12 lg:grid-cols-3">
-            {/* Sean */}
-            <div className="rounded-2xl bg-white/10 p-8 text-white backdrop-blur-sm">
-              <div className="mb-4 flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-[#E85D26] flex items-center justify-center text-2xl font-bold text-white">S</div>
-                <div>
-                  <h3 className="text-xl font-bold">Sean</h3>
-                  <p className="text-[#a8e6df]">Every Bite Yum</p>
-                </div>
-              </div>
-              <p className="text-sm text-white/80 leading-relaxed">
-                Bold comfort food made with love. Smash burgers, Nashville hot chicken, and creative Canadian-fusion dishes that make every bite count.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">Comfort Food</span>
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">Canadian</span>
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">Fusion</span>
-              </div>
-              <Link href="/chefs/every-bite-yum" className="mt-6 inline-flex items-center text-sm font-medium text-[#E85D26] hover:text-orange-300">
-                View menu →
-              </Link>
-            </div>
-
-            {/* Tuan */}
-            <div className="rounded-2xl bg-white/10 p-8 text-white backdrop-blur-sm">
-              <div className="mb-4 flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-[#E85D26] flex items-center justify-center text-2xl font-bold text-white">T</div>
-                <div>
-                  <h3 className="text-xl font-bold">Tuan</h3>
-                  <p className="text-[#a8e6df]">HOÀNG GIA PHỞ</p>
-                </div>
-              </div>
-              <p className="text-sm text-white/80 leading-relaxed">
-                Authentic Vietnamese royal cuisine from Huế. Slow-cooked broths, hand-crafted noodle soups, and traditional dishes that bring Vietnam to your door.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">Vietnamese</span>
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">Phở</span>
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">Noodle Soups</span>
-              </div>
-              <Link href="/chefs/hoang-gia-pho" className="mt-6 inline-flex items-center text-sm font-medium text-[#E85D26] hover:text-orange-300">
-                View menu →
-              </Link>
-            </div>
-
-            {/* Ryo */}
-            <div className="rounded-2xl bg-white/10 p-8 text-white backdrop-blur-sm">
-              <div className="mb-4 flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-[#E85D26] flex items-center justify-center text-2xl font-bold text-white">R</div>
-                <div>
-                  <h3 className="text-xl font-bold">Ryo</h3>
-                  <p className="text-[#a8e6df]">COOCO</p>
-                </div>
-              </div>
-              <p className="text-sm text-white/80 leading-relaxed">
-                Japanese home cooking elevated. Osaka-trained precision meets Hamilton hospitality — tonkotsu ramen, gyudon, and chicken katsu curry crafted with care.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">Japanese</span>
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">Ramen</span>
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">Katsu</span>
-              </div>
-              <Link href="/chefs/cooco" className="mt-6 inline-flex items-center text-sm font-medium text-[#E85D26] hover:text-orange-300">
-                View menu →
+          <div className="mx-auto max-w-3xl text-center text-white">
+            <h2 className="text-3xl font-bold sm:text-4xl">Real Chefs. Real Kitchens.</h2>
+            <p className="mt-4 text-lg text-white/80">
+              Every meal on RideNDine is crafted by a verified home chef in Hamilton. No ghost kitchens. No mass production. Just authentic, home-cooked food made with care.
+            </p>
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Link href="/chefs">
+                <Button
+                  size="lg"
+                  className="w-full bg-white text-[#1a7a6e] hover:bg-teal-50 sm:w-auto px-8 py-3 font-semibold"
+                >
+                  Meet Our Chefs
+                </Button>
               </Link>
             </div>
           </div>

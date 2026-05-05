@@ -9,7 +9,7 @@ type SettingsFormProps = {
 };
 
 const inputClass =
-  'w-full rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-white disabled:opacity-60';
+  'w-full rounded-lg border border-gray-700 bg-opsPanel px-3 py-2 text-white disabled:opacity-60';
 
 function NumberField({
   label,
@@ -51,7 +51,7 @@ function ToggleField({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between rounded-lg border border-gray-700 bg-[#1a1a2e] px-4 py-3">
+    <label className="flex items-center justify-between rounded-lg border border-gray-700 bg-opsPanel px-4 py-3">
       <span className="text-sm text-gray-300">{label}</span>
       <input
         type="checkbox"

@@ -214,18 +214,21 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     switch (action) {
       case 'cancel': {
         const cancelReason = reason || 'customer_requested';
-        const result = await engine.orders.cancelOrder(
+        const result = await engine.orders.cancelOrder({
           orderId,
-          cancelReason,
+          actorId: customerContext.actor.userId,
+          actorType: customerContext.actor.role,
+          actorRole: customerContext.actor.role,
+          reason: cancelReason,
           notes,
-          customerContext.actor
-        );
+          actor: customerContext.actor,
+        });
 
         if (!result.success) {
-          return errorResponse(result.error!.code, result.error!.message);
+          return errorResponse('CANCEL_FAILED', result.error ?? 'Cancel failed');
         }
 
-        return successResponse(result.data);
+        return successResponse(result.order);
       }
 
       default:

@@ -349,13 +349,13 @@ export default function LiveMap() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex gap-2 bg-[#1a1a2e] p-4">
+      <div className="flex gap-2 bg-opsPanel p-4">
         <button
           onClick={() => setFilter('all')}
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             filter === 'all'
               ? 'bg-[#E85D26] text-white'
-              : 'bg-[#16213e] text-gray-300 hover:bg-[#1a1a2e]'
+              : 'bg-opsPanel text-gray-300 hover:bg-opsPanel'
           }`}
         >
           All ({drivers.length})
@@ -365,7 +365,7 @@ export default function LiveMap() {
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             filter === 'online'
               ? 'bg-green-600 text-white'
-              : 'bg-[#16213e] text-gray-300 hover:bg-[#1a1a2e]'
+              : 'bg-opsPanel text-gray-300 hover:bg-opsPanel'
           }`}
         >
           Online ({counts.online})
@@ -375,7 +375,7 @@ export default function LiveMap() {
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             filter === 'busy'
               ? 'bg-orange-600 text-white'
-              : 'bg-[#16213e] text-gray-300 hover:bg-[#1a1a2e]'
+              : 'bg-opsPanel text-gray-300 hover:bg-opsPanel'
           }`}
         >
           Busy ({counts.busy})
@@ -385,7 +385,7 @@ export default function LiveMap() {
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             filter === 'offline'
               ? 'bg-gray-600 text-white'
-              : 'bg-[#16213e] text-gray-300 hover:bg-[#1a1a2e]'
+              : 'bg-opsPanel text-gray-300 hover:bg-opsPanel'
           }`}
         >
           Offline ({counts.offline})
@@ -394,7 +394,7 @@ export default function LiveMap() {
 
       <div ref={containerRef} className="flex-1" style={{ minHeight: '400px' }} />
       {(loading || loadError || (drivers.length === 0 && deliveries.length === 0)) && (
-        <div className="border-t border-gray-800 bg-[#16213e] px-4 py-3 text-sm">
+        <div className="border-t border-gray-800 bg-opsPanel px-4 py-3 text-sm">
           {loading && <p className="text-gray-400">Loading live map data...</p>}
           {loadError && <p className="text-red-300">{loadError}</p>}
           {!loading && !loadError && drivers.length === 0 && deliveries.length === 0 && (
@@ -403,7 +403,7 @@ export default function LiveMap() {
         </div>
       )}
 
-      <div className="border-t border-gray-800 bg-[#16213e] p-4">
+      <div className="border-t border-gray-800 bg-opsPanel p-4">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-2xl font-bold text-green-400">{counts.online}</p>

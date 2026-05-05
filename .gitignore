@@ -21,6 +21,10 @@ out/
 *.pem
 *.key
 
+# Legacy test credentials file (removed in rebuild Phase 1).
+# Listed here so a future accidental paste of the same filename never re-enters the repo.
+TEST_CREDENTIALS.md
+
 # IDE
 .vscode/
 .idea/

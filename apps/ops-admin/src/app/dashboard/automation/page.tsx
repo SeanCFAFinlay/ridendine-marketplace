@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Badge, Button } from '@ridendine/ui';
+import { Card, Badge } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
 interface AutomationRule {
@@ -70,7 +70,7 @@ export default function AutomationPage() {
           <div className="space-y-4">
             {rules.map((rule) => (
               <Card key={rule.id} className={`p-5 transition-colors ${
-                rule.enabled ? 'border-emerald-500/30 bg-[#16213e]' : 'border-gray-800 bg-[#16213e]/50'
+                rule.enabled ? 'border-emerald-500/30 bg-opsPanel' : 'border-gray-800 bg-opsPanel/50'
               }`}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -111,7 +111,7 @@ export default function AutomationPage() {
           </div>
         )}
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h3 className="text-sm font-semibold text-white mb-2">How Rules Work</h3>
           <ul className="space-y-1 text-xs text-gray-400">
             <li>Rules are evaluated during each SLA processor cycle (every 60 seconds)</li>

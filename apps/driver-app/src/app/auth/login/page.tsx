@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Button, Input } from '@ridendine/ui';
+import { Button } from '@ridendine/ui';
 
 export default function DriverLoginPage() {
   const searchParams = useSearchParams();
@@ -45,7 +45,7 @@ export default function DriverLoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#0f1923] to-[#1a2d3d] px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-opsCanvas to-[#1a2d3d] px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="mb-8 text-center">

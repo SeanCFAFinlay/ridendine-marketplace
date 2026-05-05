@@ -53,32 +53,17 @@ describe('createAuthMiddleware', () => {
     // Restore default: no session
     vi.mocked(createServerClient).mockImplementation(() => makeSupabaseClient(null) as any);
     process.env = { ...originalEnv };
-    delete process.env.BYPASS_AUTH;
+    delete process.env.ALLOW_DEV_AUTOLOGIN;
   });
 
   afterEach(() => {
     process.env = { ...originalEnv };
   });
 
-  // ---- BYPASS_AUTH guard ----
+  // ---- ALLOW_DEV_AUTOLOGIN guard ----
 
-  it('throws in production when BYPASS_AUTH=true', async () => {
-    process.env.BYPASS_AUTH = 'true';
-    process.env.NODE_ENV = 'production';
-
-    const middleware = createAuthMiddleware({
-      publicRoutes: ['/auth/login'],
-      loginRoute: '/auth/login',
-    });
-
-    const request = createMockRequest('/dashboard');
-    await expect(middleware(request)).rejects.toThrow(
-      'BYPASS_AUTH=true is not allowed in production'
-    );
-  });
-
-  it('allows bypass in development — returns next() immediately', async () => {
-    process.env.BYPASS_AUTH = 'true';
+  it('skips auth checks in development when ALLOW_DEV_AUTOLOGIN=true', async () => {
+    process.env.ALLOW_DEV_AUTOLOGIN = 'true';
     process.env.NODE_ENV = 'development';
 
     const middleware = createAuthMiddleware({
@@ -89,6 +74,48 @@ describe('createAuthMiddleware', () => {
     const request = createMockRequest('/dashboard');
     const result = await middleware(request);
     expect((result as any).type).toBe('next');
+  });
+
+  it('does not skip auth in production even when ALLOW_DEV_AUTOLOGIN=true', async () => {
+    process.env.ALLOW_DEV_AUTOLOGIN = 'true';
+    process.env.NODE_ENV = 'production';
+
+    const middleware = createAuthMiddleware({
+      publicRoutes: ['/auth/login'],
+      loginRoute: '/auth/login',
+    });
+
+    // In production with no session, should redirect to login
+    const request = createMockRequest('/dashboard');
+    const result = await middleware(request);
+    expect((result as any).type).toBe('redirect');
+    expect((result as any).url).toContain('/auth/login');
+  });
+
+  it('does not skip auth when ALLOW_DEV_AUTOLOGIN is not set', async () => {
+    delete process.env.ALLOW_DEV_AUTOLOGIN;
+    process.env.NODE_ENV = 'development';
+
+    const middleware = createAuthMiddleware({
+      publicRoutes: ['/auth/login'],
+      loginRoute: '/auth/login',
+    });
+
+    const request = createMockRequest('/dashboard');
+    const result = await middleware(request);
+    // Should redirect because there's no session
+    expect((result as any).type).toBe('redirect');
+  });
+
+  // ---- Regression: BYPASS_AUTH must not be used ----
+
+  it('regression: middleware source does not reference BYPASS_AUTH', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve, dirname } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const dir = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(resolve(dir, 'middleware.ts'), 'utf-8');
+    expect(source).not.toContain('BYPASS_AUTH');
   });
 
   // ---- Public routes ----

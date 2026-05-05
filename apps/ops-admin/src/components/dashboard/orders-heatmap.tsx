@@ -63,7 +63,7 @@ export function OrdersHeatmap() {
   };
 
   return (
-    <Card className="border-gray-800 bg-[#16213e] p-6">
+    <Card className="border-gray-800 bg-opsPanel p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">Order Activity by Hour</h3>
         <span className="text-xs text-gray-400">Last 7 days</span>

@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@ridendine/db';
 import { createCentralEngine } from '@ridendine/engine';
 import { getDriverActorContext, errorResponse, successResponse } from '@/lib/engine';
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
       return errorResponse('INVALID_AMOUNT', 'amountCents must be a positive integer', 400);
     }
 
-    const { data: acct } = await (db as import('@supabase/supabase-js').SupabaseClient & { from: (t: string) => import('@supabase/supabase-js').SupabaseClient['from'] })
+    const { data: acct } = await (db as SupabaseClient & { from: (t: string) => SupabaseClient['from'] })
       .from('platform_accounts' as never)
       .select('balance_cents, currency')
       .eq('account_type', 'driver_payable')

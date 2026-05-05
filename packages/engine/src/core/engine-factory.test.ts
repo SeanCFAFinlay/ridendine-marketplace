@@ -40,20 +40,72 @@ vi.mock('./email-provider', () => ({
   })),
 }));
 
+vi.mock('./sms-provider', () => ({
+  createTwilioProvider: vi.fn(() => ({
+    name: 'mock-twilio',
+    isAvailable: () => false,
+    deliver: vi.fn(),
+  })),
+}));
+
+vi.mock('./notification-triggers', () => ({
+  createNotificationTriggers: vi.fn(() => ({})),
+}));
+
+vi.mock('./business-rules-engine', () => ({
+  createBusinessRulesEngine: vi.fn(() => ({})),
+}));
+
 vi.mock('../services/eta.service', () => ({
   createEtaService: vi.fn(() => ({ __eta: true })),
 }));
 
-vi.mock('../orchestrators/order.orchestrator', () => ({
-  createOrderOrchestrator: vi.fn(() => ({})),
+vi.mock('../services/ledger.service', () => ({
+  createLedgerService: vi.fn(() => ({})),
+}));
+
+vi.mock('../services/payout.service', () => ({
+  createPayoutService: vi.fn(() => ({})),
+}));
+
+vi.mock('../services/reconciliation.service', () => ({
+  createReconciliationService: vi.fn(() => ({})),
+}));
+
+vi.mock('../services/stripe.service', () => ({
+  getStripeClient: vi.fn(() => ({})),
+}));
+
+vi.mock('../orchestrators/master-order-engine', () => ({
+  createMasterOrderEngine: vi.fn(() => ({})),
+}));
+
+vi.mock('../orchestrators/delivery-engine', () => ({
+  createDeliveryEngine: vi.fn(() => ({})),
+}));
+
+vi.mock('../orchestrators/payout-engine', () => ({
+  createPayoutEngine: vi.fn(() => ({})),
+}));
+
+vi.mock('../orchestrators/order-creation.service', () => ({
+  createOrderCreationService: vi.fn(() => ({})),
+}));
+
+vi.mock('../orchestrators/driver-matching.service', () => ({
+  createDriverMatchingService: vi.fn(() => ({})),
+}));
+
+vi.mock('../orchestrators/offer-management.service', () => ({
+  createOfferManagementService: vi.fn(() => ({})),
+}));
+
+vi.mock('../orchestrators/dispatch-orchestrator', () => ({
+  createDispatchOrchestrator: vi.fn(() => ({})),
 }));
 
 vi.mock('../orchestrators/kitchen.engine', () => ({
   createKitchenEngine: vi.fn(() => ({})),
-}));
-
-vi.mock('../orchestrators/dispatch.engine', () => ({
-  createDispatchEngine: vi.fn(() => ({})),
 }));
 
 vi.mock('../orchestrators/commerce.engine', () => ({
@@ -72,11 +124,13 @@ vi.mock('../orchestrators/ops.engine', () => ({
   createOpsControlEngine: vi.fn(() => ({})),
 }));
 
+vi.mock('../orchestrators/operations-command.gateway', () => ({
+  createOperationsCommandGateway: vi.fn(() => ({})),
+}));
+
 describe('createCentralEngine', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset singleton between tests
-    import('./engine.factory').then(({ resetEngine }) => resetEngine());
   });
 
   it('creates engine with all required service properties', async () => {
@@ -92,10 +146,16 @@ describe('createCentralEngine', () => {
     expect(engine).toHaveProperty('notifications');
     expect(engine).toHaveProperty('eta');
 
-    // Domain orchestrators
+    // Canonical engines
+    expect(engine).toHaveProperty('masterOrder');
+    expect(engine).toHaveProperty('masterDelivery');
+    expect(engine).toHaveProperty('orderCreation');
+    expect(engine).toHaveProperty('dispatchOrchestrator');
+
+    // Aliased facade properties
     expect(engine).toHaveProperty('orders');
-    expect(engine).toHaveProperty('kitchen');
     expect(engine).toHaveProperty('dispatch');
+    expect(engine).toHaveProperty('kitchen');
     expect(engine).toHaveProperty('commerce');
     expect(engine).toHaveProperty('support');
     expect(engine).toHaveProperty('platform');
@@ -106,40 +166,33 @@ describe('createCentralEngine', () => {
     expect(engine).toHaveProperty('reconciliation');
   });
 
-  it('passes paymentAdapter to createOrderOrchestrator', async () => {
+  it('orders is the same instance as masterOrder', async () => {
     const { createCentralEngine } = await import('./engine.factory');
-    const { createOrderOrchestrator } = await import('../orchestrators/order.orchestrator');
-
-    const mockClient = {} as any;
-    const mockAdapter = { cancelPaymentIntent: vi.fn() } as any;
-
-    createCentralEngine(mockClient, mockAdapter);
-
-    const callArgs = (createOrderOrchestrator as any).mock.calls[0];
-    expect(callArgs[5]).toBe(mockAdapter);
-    expect(callArgs[6]).toBeDefined();
+    const engine = createCentralEngine({} as any);
+    expect(engine.orders).toBe(engine.masterOrder);
   });
 
-  it('calls createOrderOrchestrator without adapter when none provided', async () => {
+  it('dispatch is the same instance as dispatchOrchestrator', async () => {
     const { createCentralEngine } = await import('./engine.factory');
-    const { createOrderOrchestrator } = await import('../orchestrators/order.orchestrator');
-
-    createCentralEngine({} as any);
-
-    expect(createOrderOrchestrator).toHaveBeenCalledTimes(1);
-    const callArgs = (createOrderOrchestrator as any).mock.calls[0];
-    expect(callArgs[5]).toBeUndefined();
-    expect(callArgs[6]).toBeDefined();
+    const engine = createCentralEngine({} as any);
+    expect(engine.dispatch).toBe(engine.dispatchOrchestrator);
   });
 
-  it('registers email provider on the notification sender', async () => {
+  it('registers email and SMS providers on the notification sender', async () => {
     const { createCentralEngine } = await import('./engine.factory');
     const { createNotificationSender } = await import('./notification-sender');
 
     createCentralEngine({} as any);
 
     const sender = (createNotificationSender as any).mock.results[0]?.value;
-    expect(sender.registerProvider).toHaveBeenCalledTimes(1);
+    // Resend (email) + Twilio (SMS) = 2 providers
+    expect(sender.registerProvider).toHaveBeenCalledTimes(2);
+  });
+
+  it('exposes triggers on the engine', async () => {
+    const { createCentralEngine } = await import('./engine.factory');
+    const engine = createCentralEngine({} as any);
+    expect(engine).toHaveProperty('triggers');
   });
 
   it('passes the Supabase client to createEventEmitter', async () => {
@@ -163,33 +216,28 @@ describe('createCentralEngine', () => {
   });
 });
 
-describe('getEngine (singleton)', () => {
+describe('getEngine (per-request)', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { resetEngine } = await import('./engine.factory');
-    resetEngine();
   });
 
-  it('returns the same instance on repeated calls', async () => {
-    const { getEngine, resetEngine } = await import('./engine.factory');
-    resetEngine();
+  it('returns a fresh instance on each call', async () => {
+    const { getEngine } = await import('./engine.factory');
 
     const mockClient = {} as any;
     const first = getEngine(mockClient);
-    const second = getEngine(mockClient);
-
-    expect(first).toBe(second);
-  });
-
-  it('creates a fresh instance after resetEngine()', async () => {
-    const { getEngine, resetEngine } = await import('./engine.factory');
-    resetEngine();
-
-    const mockClient = {} as any;
-    const first = getEngine(mockClient);
-    resetEngine();
     const second = getEngine(mockClient);
 
     expect(first).not.toBe(second);
+  });
+
+  it('creates a valid engine on every call', async () => {
+    const { getEngine } = await import('./engine.factory');
+
+    const engine = getEngine({} as any);
+
+    expect(engine).toHaveProperty('orders');
+    expect(engine).toHaveProperty('dispatch');
+    expect(engine).toHaveProperty('orderCreation');
   });
 });

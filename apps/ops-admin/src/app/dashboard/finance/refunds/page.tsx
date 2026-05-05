@@ -1,6 +1,6 @@
-import { Badge, Card } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { getEngine, getOpsActorContext, hasRequiredRole } from '@/lib/engine';
+import { KpiTile, PageHeader, EmptyState } from '@ridendine/ui';
 import { FinanceSubnav } from '../_components/FinanceSubnav';
 import { FinanceAccessDenied } from '../_components/FinanceAccessDenied';
 import { FinanceActions } from '../finance-actions';
@@ -41,31 +41,41 @@ export default async function FinanceRefundsPage() {
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-6">
         <FinanceSubnav />
-        <div>
-          <h1 className="text-3xl font-bold text-white">Refund queue</h1>
-          <p className="mt-1 text-gray-400">Pending refund cases requiring ops / finance review.</p>
+
+        <PageHeader
+          title="Refund Queue"
+          subtitle="Pending refund cases requiring ops / finance review."
+        />
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <KpiTile
+            label="Pending Refund Exposure"
+            value={formatCurrency(pendingAmount)}
+            className="border-gray-800 bg-opsPanel"
+          />
+          <KpiTile
+            label="Auto-Review Threshold"
+            value={formatCurrency(threshold / 100)}
+            className="border-gray-800 bg-opsPanel"
+          />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="border-gray-800 bg-[#16213e] p-6">
-            <p className="text-sm text-gray-400">Pending refund exposure</p>
-            <p className="mt-2 text-3xl font-bold text-red-200">{formatCurrency(pendingAmount)}</p>
-          </Card>
-          <Card className="border-gray-800 bg-[#16213e] p-6">
-            <p className="text-sm text-gray-400">Auto-review threshold</p>
-            <p className="mt-2 text-3xl font-bold text-gray-100">
-              {formatCurrency(threshold / 100)}
-            </p>
-          </Card>
-        </div>
-
-        <Card className="border-gray-800 bg-[#16213e] p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Cases</h2>
-            <Badge className="bg-red-500/20 text-red-100">{pendingRefunds.length}</Badge>
+        <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-white">Cases</h2>
+            <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-300">
+              {pendingRefunds.length}
+            </span>
           </div>
-          <FinanceActions refunds={pendingRefunds} adjustments={[]} />
-        </Card>
+          {pendingRefunds.length === 0 ? (
+            <EmptyState
+              title="No pending refunds"
+              description="All refund cases have been reviewed."
+            />
+          ) : (
+            <FinanceActions refunds={pendingRefunds} adjustments={[]} />
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );

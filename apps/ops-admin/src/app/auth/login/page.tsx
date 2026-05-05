@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { createBrowserClient } from '@ridendine/db';
 import { Button, Card, Input } from '@ridendine/ui';
+import { ShieldCheck } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,7 +47,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1a1a2e] to-[#16213e] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-opsPanel to-opsPanel flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -65,14 +66,12 @@ export default function LoginPage() {
             <span className="text-[#E85D26]">Dine</span>
           </h1>
           <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#E85D26]/20 px-3 py-1 text-xs font-semibold text-[#E85D26]">
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
+            <ShieldCheck className="h-3.5 w-3.5" />
             Operations Admin Portal
           </div>
         </div>
 
-        <Card className="border-gray-700/50 bg-[#16213e]/80 backdrop-blur-sm p-8 shadow-2xl">
+        <Card className="border-gray-700/50 bg-opsPanel/80 backdrop-blur-sm p-8 shadow-2xl">
           <h2 className="text-xl font-semibold text-white text-center mb-6">
             Sign In
           </h2>

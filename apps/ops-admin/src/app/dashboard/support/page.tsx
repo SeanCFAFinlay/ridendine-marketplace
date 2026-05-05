@@ -26,7 +26,7 @@ export default async function SupportPage({
     return (
       <DashboardLayout>
         <div className="mx-auto max-w-2xl">
-          <Card className="border-gray-800 bg-[#16213e] p-8">
+          <Card className="border-gray-800 bg-opsPanel p-8">
             <h1 className="text-xl font-semibold text-white">Support access required</h1>
             <p className="mt-2 text-gray-400">
               Sign in with a platform role that includes the support queue capability.
@@ -78,26 +78,26 @@ export default async function SupportPage({
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="border-gray-800 bg-[#16213e] p-4">
+          <Card className="border-gray-800 bg-opsPanel p-4">
             <p className="text-sm text-gray-400">Backlog</p>
             <p className="mt-2 text-2xl font-bold text-white">{queue.summary.openCount}</p>
           </Card>
-          <Card className="border-gray-800 bg-[#16213e] p-4">
+          <Card className="border-gray-800 bg-opsPanel p-4">
             <p className="text-sm text-gray-400">Urgent</p>
             <p className="mt-2 text-2xl font-bold text-red-200">{queue.summary.urgentCount}</p>
           </Card>
-          <Card className="border-gray-800 bg-[#16213e] p-4">
+          <Card className="border-gray-800 bg-opsPanel p-4">
             <p className="text-sm text-gray-400">At Risk SLA</p>
             <p className="mt-2 text-2xl font-bold text-yellow-200">{sla.atRisk}</p>
           </Card>
-          <Card className="border-gray-800 bg-[#16213e] p-4">
+          <Card className="border-gray-800 bg-opsPanel p-4">
             <p className="text-sm text-gray-400">Breached SLA</p>
             <p className="mt-2 text-2xl font-bold text-red-200">{sla.breached}</p>
           </Card>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[2fr,1fr]">
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-white">Support Queue</h2>
@@ -109,7 +109,7 @@ export default async function SupportPage({
                 <select
                   name="status"
                   defaultValue={statusFilter}
-                  className="rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-sm text-white"
+                  className="rounded-lg border border-gray-700 bg-opsPanel px-3 py-2 text-sm text-white"
                 >
                   <option value="all">All statuses</option>
                   <option value="open">Open</option>
@@ -121,7 +121,7 @@ export default async function SupportPage({
                   name="search"
                   defaultValue={search}
                   placeholder="Search tickets"
-                  className="rounded-lg border border-gray-700 bg-[#1a1a2e] px-3 py-2 text-sm text-white"
+                  className="rounded-lg border border-gray-700 bg-opsPanel px-3 py-2 text-sm text-white"
                 />
                 <button className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-medium text-white">
                   Apply
@@ -131,7 +131,7 @@ export default async function SupportPage({
 
             <div className="mt-6 space-y-3">
               {pageItems.map((ticket) => (
-                <div key={ticket.id} className="rounded-lg bg-[#1a1a2e] p-4">
+                <div key={ticket.id} className="rounded-lg bg-opsPanel p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <p className="font-medium text-white">{ticket.subject}</p>
@@ -160,7 +160,7 @@ export default async function SupportPage({
               <Link
                 href={`/dashboard/support?status=${statusFilter}&search=${encodeURIComponent(search)}&page=${Math.max(1, safePage - 1)}`}
                 className={`rounded-lg px-4 py-2 text-sm ${
-                  safePage <= 1 ? 'pointer-events-none bg-gray-800 text-gray-600' : 'bg-[#1a1a2e] text-white'
+                  safePage <= 1 ? 'pointer-events-none bg-gray-800 text-gray-600' : 'bg-opsPanel text-white'
                 }`}
               >
                 Previous
@@ -168,7 +168,7 @@ export default async function SupportPage({
               <Link
                 href={`/dashboard/support?status=${statusFilter}&search=${encodeURIComponent(search)}&page=${Math.min(totalPages, safePage + 1)}`}
                 className={`rounded-lg px-4 py-2 text-sm ${
-                  safePage >= totalPages ? 'pointer-events-none bg-gray-800 text-gray-600' : 'bg-[#1a1a2e] text-white'
+                  safePage >= totalPages ? 'pointer-events-none bg-gray-800 text-gray-600' : 'bg-opsPanel text-white'
                 }`}
               >
                 Next
@@ -176,11 +176,11 @@ export default async function SupportPage({
             </div>
           </Card>
 
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <h2 className="text-lg font-semibold text-white">Open Exceptions</h2>
             <div className="mt-4 space-y-3">
               {exceptionQueue.slice(0, 8).map((exception) => (
-                <div key={exception.id} className="rounded-lg bg-[#1a1a2e] p-4">
+                <div key={exception.id} className="rounded-lg bg-opsPanel p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-white">{exception.title}</p>
                     <Badge

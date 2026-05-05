@@ -217,3 +217,5 @@ export {
   hasPlatformApiCapability,
   type PlatformApiCapability,
 } from './services/platform-api-guards';
+
+export type { PlatformCapability } from '@ridendine/types';

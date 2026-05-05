@@ -1,3 +1,13 @@
+/**
+ * TODO (LAUNCH BLOCKER): This terms of service was auto-generated as a placeholder.
+ * It has NOT been reviewed or approved by legal counsel.
+ * Specific values (service fee %, HST rate, platform fee %) must be confirmed against
+ * current business rules before publishing. Dispute-resolution clauses require
+ * jurisdiction-specific legal review.
+ * Before launch, replace this content with legally reviewed text or use a service
+ * such as Termly, Iubenda, or engage a lawyer.
+ * See: docs/LAUNCH_CHECKLIST.md — item L1.
+ */
 import { Header } from '@/components/layout/header';
 import Link from 'next/link';
 

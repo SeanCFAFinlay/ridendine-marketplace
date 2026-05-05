@@ -74,7 +74,7 @@ function PeriodToggle({
 
 function MetricRow({ metric }: { metric: EventCount }) {
   return (
-    <div className="flex items-center justify-between rounded-lg bg-[#1a1a2e] px-3 py-2">
+    <div className="flex items-center justify-between rounded-lg bg-opsPanel px-3 py-2">
       <span className="text-sm text-gray-300">
         {EVENT_LABELS[metric.event_name] || metric.event_name}
       </span>
@@ -116,7 +116,7 @@ export function EventMetrics() {
   }, [period]);
 
   return (
-    <Card className="border-gray-800 bg-[#16213e] p-6">
+    <Card className="border-gray-800 bg-opsPanel p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">Event Metrics</h3>
         <PeriodToggle period={period} onSelect={setPeriod} />

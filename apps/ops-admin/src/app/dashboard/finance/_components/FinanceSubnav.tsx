@@ -24,7 +24,7 @@ export function FinanceSubnav() {
             key={href}
             href={href}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-              active ? 'bg-emerald-600/30 text-emerald-200' : 'bg-[#1a1a2e] text-gray-300 hover:bg-gray-700'
+              active ? 'bg-emerald-600/30 text-emerald-200' : 'bg-opsPanel text-gray-300 hover:bg-gray-700'
             }`}
           >
             {label}

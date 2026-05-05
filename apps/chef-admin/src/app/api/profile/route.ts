@@ -1,18 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient, getChefByUserId, updateChefProfile } from '@ridendine/db';
+import { getChefActorContext } from '@/lib/engine';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
+    const ctx = await getChefActorContext();
+    if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const cookieStore = await cookies();
     const supabase = createServerClient(cookieStore);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const chefProfile = await getChefByUserId(supabase as any, user.id);
+    const chefProfile = await getChefByUserId(supabase as any, ctx.actor.userId);
     if (!chefProfile) {
       return NextResponse.json({ error: 'Chef profile not found' }, { status: 404 });
     }
@@ -26,15 +26,13 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const ctx = await getChefActorContext();
+    if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const cookieStore = await cookies();
     const supabase = createServerClient(cookieStore);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const chefProfile = await getChefByUserId(supabase as any, user.id);
+    const chefProfile = await getChefByUserId(supabase as any, ctx.actor.userId);
     if (!chefProfile) {
       return NextResponse.json({ error: 'Chef profile not found' }, { status: 404 });
     }

@@ -1,11 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@ridendine/auth';
 import { Header } from '@/components/layout/header';
 import { orderConfirmationPath } from '@/lib/customer-ordering';
 import { Card, Badge, Button, NoOrdersEmpty, Spinner } from '@ridendine/ui';
+
+interface OrderItem {
+  id: string;
+  quantity: number;
+  menu_item: { id: string; name: string } | null;
+}
 
 interface Order {
   id: string;
@@ -14,16 +21,20 @@ interface Order {
   created_at: string;
   total: number;
   storefront?: {
+    id: string;
     name: string;
     slug: string;
-  };
+  } | null;
+  items?: OrderItem[];
 }
 
 export default function OrdersPage() {
   const { user, loading: authLoading } = useAuthContext();
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchOrders() {
@@ -40,7 +51,21 @@ export default function OrdersPage() {
           return;
         }
         const rows = (json.data?.orders || []) as Order[];
-        setOrders(rows);
+        // Fetch items for completed/delivered orders to enable reorder
+        const enriched = await Promise.all(
+          rows.map(async (order) => {
+            if (!['delivered', 'completed'].includes(order.status)) return order;
+            try {
+              const res = await fetch(`/api/orders/${order.id}`);
+              if (!res.ok) return order;
+              const detail = await res.json();
+              return { ...order, items: detail.data?.order?.items ?? [] };
+            } catch {
+              return order;
+            }
+          })
+        );
+        setOrders(enriched);
       } catch (error) {
         console.error('Failed to fetch orders:', error instanceof Error ? error.message : 'unknown');
         setError('Unable to load orders right now');
@@ -53,6 +78,43 @@ export default function OrdersPage() {
       fetchOrders();
     }
   }, [user, authLoading]);
+
+  const handleReorder = useCallback(async (order: Order) => {
+    if (!order.storefront?.id || !order.items?.length) return;
+    setReorderingId(order.id);
+    const omitted: string[] = [];
+
+    for (const item of order.items) {
+      if (!item.menu_item?.id) continue;
+      try {
+        const res = await fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            storefrontId: order.storefront.id,
+            menuItemId: item.menu_item.id,
+            quantity: item.quantity,
+          }),
+        });
+        if (!res.ok) {
+          omitted.push(item.menu_item.name ?? item.menu_item.id);
+        }
+      } catch {
+        omitted.push(item.menu_item.name ?? item.menu_item.id);
+      }
+    }
+
+    setReorderingId(null);
+
+    if (omitted.length > 0 && omitted.length < order.items.length) {
+      alert(`Some items are no longer available and were skipped:\n• ${omitted.join('\n• ')}`);
+    } else if (omitted.length > 0 && omitted.length >= order.items.length) {
+      alert('None of the items from this order are currently available.');
+      return;
+    }
+
+    router.push(`/checkout?storefrontId=${order.storefront.id}`);
+  }, [router]);
 
   const statusVariant = (status: string): 'success' | 'warning' | 'info' | 'default' | 'error' => {
     const variants: Record<string, 'success' | 'warning' | 'info' | 'default' | 'error'> = {
@@ -135,7 +197,7 @@ export default function OrdersPage() {
                       </Link>
                     )}
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <span className="font-semibold text-gray-900">
                       ${Number(order.total).toFixed(2)}
                     </span>
@@ -144,6 +206,18 @@ export default function OrdersPage() {
                         View Details
                       </Button>
                     </Link>
+                    {['delivered', 'completed'].includes(order.status) &&
+                      order.items &&
+                      order.items.length > 0 && (
+                        <Button
+                          size="sm"
+                          disabled={reorderingId === order.id}
+                          onClick={() => void handleReorder(order)}
+                          className="bg-[#E85D26] text-white hover:bg-[#d44e1e]"
+                        >
+                          {reorderingId === order.id ? 'Adding...' : 'Reorder'}
+                        </Button>
+                      )}
                   </div>
                 </div>
               </Card>

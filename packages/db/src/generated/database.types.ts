@@ -301,6 +301,63 @@ export type Database = {
           },
         ]
       }
+      checkout_idempotency_keys: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          idempotency_key: string
+          last_error: string | null
+          order_id: string | null
+          payment_intent_id: string | null
+          request_hash: string
+          response_payload: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          idempotency_key: string
+          last_error?: string | null
+          order_id?: string | null
+          payment_intent_id?: string | null
+          request_hash: string
+          response_payload?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          idempotency_key?: string
+          last_error?: string | null
+          order_id?: string | null
+          payment_intent_id?: string | null
+          request_hash?: string
+          response_payload?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_idempotency_keys_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_idempotency_keys_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chef_availability: {
         Row: {
           created_at: string
@@ -566,6 +623,7 @@ export type Database = {
           orders_count: number
           paid_at: string | null
           payment_rail: string
+          payout_run_id: string | null
           period_end: string
           period_start: string
           reconciliation_status: string
@@ -587,6 +645,7 @@ export type Database = {
           orders_count?: number
           paid_at?: string | null
           payment_rail?: string
+          payout_run_id?: string | null
           period_end: string
           period_start: string
           reconciliation_status?: string
@@ -608,6 +667,7 @@ export type Database = {
           orders_count?: number
           paid_at?: string | null
           payment_rail?: string
+          payout_run_id?: string | null
           period_end?: string
           period_start?: string
           reconciliation_status?: string
@@ -621,6 +681,13 @@ export type Database = {
             columns: ["chef_id"]
             isOneToOne: false
             referencedRelation: "chef_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chef_payouts_payout_run_id_fkey"
+            columns: ["payout_run_id"]
+            isOneToOne: false
+            referencedRelation: "payout_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -888,6 +955,8 @@ export type Database = {
           escalated_to_ops: boolean | null
           estimated_dropoff_at: string | null
           estimated_pickup_at: string | null
+          eta_dropoff_at: string | null
+          eta_pickup_at: string | null
           id: string
           last_assignment_at: string | null
           notes: string | null
@@ -897,6 +966,15 @@ export type Database = {
           pickup_lng: number | null
           pickup_photo_url: string | null
           pickup_proof_url: string | null
+          route_progress_pct: number | null
+          route_to_dropoff_meters: number | null
+          route_to_dropoff_polyline: string | null
+          route_to_dropoff_seconds: number | null
+          route_to_pickup_meters: number | null
+          route_to_pickup_polyline: string | null
+          route_to_pickup_seconds: number | null
+          routing_computed_at: string | null
+          routing_provider: string | null
           status: string
           updated_at: string
         }
@@ -920,6 +998,8 @@ export type Database = {
           escalated_to_ops?: boolean | null
           estimated_dropoff_at?: string | null
           estimated_pickup_at?: string | null
+          eta_dropoff_at?: string | null
+          eta_pickup_at?: string | null
           id?: string
           last_assignment_at?: string | null
           notes?: string | null
@@ -929,6 +1009,15 @@ export type Database = {
           pickup_lng?: number | null
           pickup_photo_url?: string | null
           pickup_proof_url?: string | null
+          route_progress_pct?: number | null
+          route_to_dropoff_meters?: number | null
+          route_to_dropoff_polyline?: string | null
+          route_to_dropoff_seconds?: number | null
+          route_to_pickup_meters?: number | null
+          route_to_pickup_polyline?: string | null
+          route_to_pickup_seconds?: number | null
+          routing_computed_at?: string | null
+          routing_provider?: string | null
           status?: string
           updated_at?: string
         }
@@ -952,6 +1041,8 @@ export type Database = {
           escalated_to_ops?: boolean | null
           estimated_dropoff_at?: string | null
           estimated_pickup_at?: string | null
+          eta_dropoff_at?: string | null
+          eta_pickup_at?: string | null
           id?: string
           last_assignment_at?: string | null
           notes?: string | null
@@ -961,6 +1052,15 @@ export type Database = {
           pickup_lng?: number | null
           pickup_photo_url?: string | null
           pickup_proof_url?: string | null
+          route_progress_pct?: number | null
+          route_to_dropoff_meters?: number | null
+          route_to_dropoff_polyline?: string | null
+          route_to_dropoff_seconds?: number | null
+          route_to_pickup_meters?: number | null
+          route_to_pickup_polyline?: string | null
+          route_to_pickup_seconds?: number | null
+          routing_computed_at?: string | null
+          routing_provider?: string | null
           status?: string
           updated_at?: string
         }
@@ -1325,12 +1425,13 @@ export type Database = {
           executed_by: string | null
           id: string
           paid_at: string | null
-          payout_run_id: string | null
           payment_rail: string
+          payout_run_id: string | null
           period_end: string
           period_start: string
           reconciliation_status: string
           status: string
+          stripe_payout_id: string | null
           stripe_transfer_id: string | null
           updated_at: string
         }
@@ -1346,12 +1447,13 @@ export type Database = {
           executed_by?: string | null
           id?: string
           paid_at?: string | null
-          payout_run_id?: string | null
           payment_rail?: string
+          payout_run_id?: string | null
           period_end: string
           period_start: string
           reconciliation_status?: string
           status?: string
+          stripe_payout_id?: string | null
           stripe_transfer_id?: string | null
           updated_at?: string
         }
@@ -1367,12 +1469,13 @@ export type Database = {
           executed_by?: string | null
           id?: string
           paid_at?: string | null
-          payout_run_id?: string | null
           payment_rail?: string
+          payout_run_id?: string | null
           period_end?: string
           period_start?: string
           reconciliation_status?: string
           status?: string
+          stripe_payout_id?: string | null
           stripe_transfer_id?: string | null
           updated_at?: string
         }
@@ -1546,11 +1649,14 @@ export type Database = {
           email: string
           first_name: string
           id: string
+          instant_payouts_enabled: boolean
           last_name: string
+          payout_blocked: boolean
           phone: string
           profile_image_url: string | null
           rating: number | null
           status: string
+          stripe_connect_account_id: string | null
           total_deliveries: number
           updated_at: string
           user_id: string
@@ -1562,11 +1668,14 @@ export type Database = {
           email: string
           first_name: string
           id?: string
+          instant_payouts_enabled?: boolean
           last_name: string
+          payout_blocked?: boolean
           phone: string
           profile_image_url?: string | null
           rating?: number | null
           status?: string
+          stripe_connect_account_id?: string | null
           total_deliveries?: number
           updated_at?: string
           user_id: string
@@ -1578,11 +1687,14 @@ export type Database = {
           email?: string
           first_name?: string
           id?: string
+          instant_payouts_enabled?: boolean
           last_name?: string
+          payout_blocked?: boolean
           phone?: string
           profile_image_url?: string | null
           rating?: number | null
           status?: string
+          stripe_connect_account_id?: string | null
           total_deliveries?: number
           updated_at?: string
           user_id?: string
@@ -1623,6 +1735,50 @@ export type Database = {
             columns: ["storefront_id"]
             isOneToOne: false
             referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instant_payout_requests: {
+        Row: {
+          amount_cents: number
+          driver_id: string
+          executed_at: string | null
+          failure_reason: string | null
+          fee_cents: number
+          id: string
+          requested_at: string
+          status: string
+          stripe_payout_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          driver_id: string
+          executed_at?: string | null
+          failure_reason?: string | null
+          fee_cents: number
+          id?: string
+          requested_at?: string
+          status?: string
+          stripe_payout_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          driver_id?: string
+          executed_at?: string | null
+          failure_reason?: string | null
+          fee_cents?: number
+          id?: string
+          requested_at?: string
+          status?: string
+          stripe_payout_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instant_payout_requests_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
             referencedColumns: ["id"]
           },
         ]
@@ -1694,8 +1850,9 @@ export type Database = {
           entity_type: string | null
           entry_type: string
           id: string
+          idempotency_key: string | null
           metadata: Json | null
-          order_id: string
+          order_id: string | null
           stripe_id: string | null
         }
         Insert: {
@@ -1707,8 +1864,9 @@ export type Database = {
           entity_type?: string | null
           entry_type: string
           id?: string
+          idempotency_key?: string | null
           metadata?: Json | null
-          order_id: string
+          order_id?: string | null
           stripe_id?: string | null
         }
         Update: {
@@ -1720,8 +1878,9 @@ export type Database = {
           entity_type?: string | null
           entry_type?: string
           id?: string
+          idempotency_key?: string | null
           metadata?: Json | null
-          order_id?: string
+          order_id?: string | null
           stripe_id?: string | null
         }
         Relationships: [
@@ -2060,6 +2219,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ops_processor_runs: {
+        Row: {
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          idempotency_key: string
+          processor_name: string
+          result: Json
+          started_at: string
+          status: string
+        }
+        Insert: {
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          idempotency_key: string
+          processor_name: string
+          result?: Json
+          started_at?: string
+          status: string
+        }
+        Update: {
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          idempotency_key?: string
+          processor_name?: string
+          result?: Json
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       order_exceptions: {
         Row: {
           assigned_to: string | null
@@ -2339,6 +2531,7 @@ export type Database = {
           payment_intent_id: string | null
           payment_status: string
           prep_started_at: string | null
+          public_stage: string
           ready_at: string | null
           rejection_notes: string | null
           rejection_reason: string | null
@@ -2373,6 +2566,7 @@ export type Database = {
           payment_intent_id?: string | null
           payment_status?: string
           prep_started_at?: string | null
+          public_stage: string
           ready_at?: string | null
           rejection_notes?: string | null
           rejection_reason?: string | null
@@ -2407,6 +2601,7 @@ export type Database = {
           payment_intent_id?: string | null
           payment_status?: string
           prep_started_at?: string | null
+          public_stage?: string
           ready_at?: string | null
           rejection_notes?: string | null
           rejection_reason?: string | null
@@ -2551,6 +2746,39 @@ export type Database = {
           successful_payouts?: number
           total_amount?: number
           total_recipients?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_accounts: {
+        Row: {
+          account_type: string
+          balance_cents: number
+          currency: string
+          id: string
+          lifetime_earned_cents: number
+          owner_id: string
+          pending_payout_cents: number
+          updated_at: string
+        }
+        Insert: {
+          account_type: string
+          balance_cents?: number
+          currency?: string
+          id?: string
+          lifetime_earned_cents?: number
+          owner_id: string
+          pending_payout_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          account_type?: string
+          balance_cents?: number
+          currency?: string
+          id?: string
+          lifetime_earned_cents?: number
+          owner_id?: string
+          pending_payout_cents?: number
           updated_at?: string
         }
         Relationships: []
@@ -2910,6 +3138,45 @@ export type Database = {
           },
         ]
       }
+      service_areas: {
+        Row: {
+          created_at: string
+          dispatch_radius_km: number | null
+          id: string
+          is_active: boolean
+          max_offer_attempts: number | null
+          name: string
+          offer_ttl_seconds: number | null
+          polygon: unknown
+          surge_multiplier: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dispatch_radius_km?: number | null
+          id?: string
+          is_active?: boolean
+          max_offer_attempts?: number | null
+          name: string
+          offer_ttl_seconds?: number | null
+          polygon: unknown
+          surge_multiplier?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dispatch_radius_km?: number | null
+          id?: string
+          is_active?: boolean
+          max_offer_attempts?: number | null
+          name?: string
+          offer_ttl_seconds?: number | null
+          polygon?: unknown
+          surge_multiplier?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sla_timers: {
         Row: {
           breached_at: string | null
@@ -3038,6 +3305,7 @@ export type Database = {
           processing_status: string
           related_order_id: string | null
           related_payment_id: string | null
+          stripe_amount_cents: number | null
           stripe_event_id: string
         }
         Insert: {
@@ -3051,6 +3319,7 @@ export type Database = {
           processing_status?: string
           related_order_id?: string | null
           related_payment_id?: string | null
+          stripe_amount_cents?: number | null
           stripe_event_id: string
         }
         Update: {
@@ -3064,6 +3333,7 @@ export type Database = {
           processing_status?: string
           related_order_id?: string | null
           related_payment_id?: string | null
+          stripe_amount_cents?: number | null
           stripe_event_id?: string
         }
         Relationships: [
@@ -3073,6 +3343,60 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_reconciliation: {
+        Row: {
+          created_at: string
+          id: string
+          ledger_entry_ids: string[]
+          notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          stripe_event_id: string
+          variance_cents: number
+          variance_flagged: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ledger_entry_ids?: string[]
+          notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          stripe_event_id: string
+          variance_cents?: number
+          variance_flagged?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ledger_entry_ids?: string[]
+          notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          stripe_event_id?: string
+          variance_cents?: number
+          variance_flagged?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_reconciliation_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "platform_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stripe_reconciliation_stripe_event_id_fkey"
+            columns: ["stripe_event_id"]
+            isOneToOne: true
+            referencedRelation: "stripe_events_processed"
+            referencedColumns: ["stripe_event_id"]
           },
         ]
       }
@@ -3604,8 +3928,15 @@ export type Database = {
         Args: { storefront_id: string }
         Returns: undefined
       }
+      is_finance_staff: { Args: { uid: string }; Returns: boolean }
       is_ops_admin: { Args: { user_id: string }; Returns: boolean }
+      is_platform_staff: { Args: { uid: string }; Returns: boolean }
+      is_support_staff: { Args: { uid: string }; Returns: boolean }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      orders_public_stage_from_engine: {
+        Args: { p_engine: string }
+        Returns: string
+      }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
@@ -4920,3 +5251,4 @@ export const Constants = {
     },
   },
 } as const
+

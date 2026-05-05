@@ -151,14 +151,14 @@ export function PayoutActions() {
 
   if (loading) {
     return (
-      <Card className="border-gray-800 bg-[#16213e] p-6">
+      <Card className="border-gray-800 bg-opsPanel p-6">
         <div className="animate-pulse h-20 bg-gray-700/30 rounded" />
       </Card>
     );
   }
 
   return (
-    <Card className="border-gray-800 bg-[#16213e] p-6">
+    <Card className="border-gray-800 bg-opsPanel p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">Chef Payouts</h3>
         <span className="text-sm text-gray-400">{chefs.length} chefs with balance</span>
@@ -171,7 +171,7 @@ export function PayoutActions() {
       ) : (
         <div className="space-y-3">
           {chefs.map((chef) => (
-            <div key={chef.chefId} className="rounded-lg bg-[#1a1a2e] p-4">
+            <div key={chef.chefId} className="rounded-lg bg-opsPanel p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-white">{chef.name}</p>
@@ -223,7 +223,7 @@ export function PayoutActions() {
           </div>
           <div className="space-y-3">
             {bankPayouts.map((payout) => (
-              <div key={payout.id} className="rounded-lg bg-[#1a1a2e] p-4">
+              <div key={payout.id} className="rounded-lg bg-opsPanel p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="font-medium text-white">{payout.name}</p>

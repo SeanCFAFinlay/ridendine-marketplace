@@ -64,7 +64,7 @@ export function FinanceActions({
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-3">
           {refunds.map((refund) => (
-            <div key={refund.id} className="rounded-lg bg-[#1a1a2e] p-4">
+            <div key={refund.id} className="rounded-lg bg-opsPanel p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-medium text-white">Order {refund.orderNumber}</p>
@@ -106,7 +106,7 @@ export function FinanceActions({
             </div>
           ))}
           {refunds.length === 0 && (
-            <div className="rounded-lg bg-[#1a1a2e] p-6 text-sm text-gray-500">
+            <div className="rounded-lg bg-opsPanel p-6 text-sm text-gray-500">
               No refund cases awaiting review.
             </div>
           )}
@@ -114,7 +114,7 @@ export function FinanceActions({
 
         <div className="space-y-3">
           {adjustments.map((adjustment) => (
-            <div key={adjustment.id} className="rounded-lg bg-[#1a1a2e] p-4">
+            <div key={adjustment.id} className="rounded-lg bg-opsPanel p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-medium text-white">
@@ -143,7 +143,7 @@ export function FinanceActions({
             </div>
           ))}
           {adjustments.length === 0 && (
-            <div className="rounded-lg bg-[#1a1a2e] p-6 text-sm text-gray-500">
+            <div className="rounded-lg bg-opsPanel p-6 text-sm text-gray-500">
               No payout adjustments are pending release.
             </div>
           )}

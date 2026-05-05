@@ -54,7 +54,7 @@ export default async function CustomerDetailPage({
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="border-gray-800 bg-[#16213e] p-6 lg:col-span-2">
+          <Card className="border-gray-800 bg-opsPanel p-6 lg:col-span-2">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Customer Account Context
             </h2>
@@ -77,7 +77,7 @@ export default async function CustomerDetailPage({
               </div>
             </div>
 
-            <div className="mt-6 rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+            <div className="mt-6 rounded-lg border border-gray-700 bg-opsPanel p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">
                 Customer Actions
               </p>
@@ -88,24 +88,24 @@ export default async function CustomerDetailPage({
             </div>
           </Card>
 
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Order Snapshot
             </h2>
             <div className="space-y-4">
-              <div className="rounded-lg bg-[#1a1a2e] p-4 text-center">
+              <div className="rounded-lg bg-opsPanel p-4 text-center">
                 <p className="text-2xl font-bold text-emerald-400">
                   {formatMoney(customer.stats.totalSpent)}
                 </p>
                 <p className="text-sm text-gray-400">Total Spend</p>
               </div>
-              <div className="rounded-lg bg-[#1a1a2e] p-4 text-center">
+              <div className="rounded-lg bg-opsPanel p-4 text-center">
                 <p className="text-2xl font-bold text-blue-400">
                   {customer.stats.totalOrders}
                 </p>
                 <p className="text-sm text-gray-400">Total Orders</p>
               </div>
-              <div className="rounded-lg bg-[#1a1a2e] p-4 text-center">
+              <div className="rounded-lg bg-opsPanel p-4 text-center">
                 <p className="text-2xl font-bold text-purple-400">
                   {customer.stats.completedOrders}
                 </p>
@@ -116,7 +116,7 @@ export default async function CustomerDetailPage({
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Saved Addresses
             </h2>
@@ -125,7 +125,7 @@ export default async function CustomerDetailPage({
                 {customer.addresses.map((address) => (
                   <div
                     key={address.id}
-                    className="rounded-lg bg-[#1a1a2e] p-4"
+                    className="rounded-lg bg-opsPanel p-4"
                   >
                     <div className="flex items-center justify-between gap-4">
                       <div>
@@ -154,12 +154,12 @@ export default async function CustomerDetailPage({
             )}
           </Card>
 
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Customer Oversight Context
             </h2>
             <div className="space-y-4 text-sm">
-              <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+              <div className="rounded-lg border border-gray-700 bg-opsPanel p-4">
                 <p className="text-gray-400">Last Order</p>
                 <p className="mt-1 text-white">
                   {customer.stats.lastOrderAt
@@ -167,7 +167,7 @@ export default async function CustomerDetailPage({
                     : 'No orders yet'}
                 </p>
               </div>
-              <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+              <div className="rounded-lg border border-gray-700 bg-opsPanel p-4">
                 <p className="text-gray-400">Cancelled Orders</p>
                 <p className="mt-1 text-white">
                   {customer.stats.cancelledOrders}
@@ -183,7 +183,7 @@ export default async function CustomerDetailPage({
           </Card>
         </div>
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">
             Recent Orders
           </h2>

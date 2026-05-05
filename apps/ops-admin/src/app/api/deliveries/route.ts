@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, listOpsDeliveries, type SupabaseClient } from '@ridendine/db';
-import { getOpsActorContext, errorResponse, guardPlatformApi } from '@/lib/engine';
+import { getOpsActorContext, guardPlatformApi } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 

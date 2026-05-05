@@ -3,7 +3,7 @@
 // Shows pending delivery offers for drivers
 // ==========================================
 
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import {
   getEngine,

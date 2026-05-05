@@ -28,21 +28,21 @@ export default async function SettingsPage() {
           </Badge>
         </div>
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <div className="mb-6 grid gap-4 lg:grid-cols-4">
-            <div className="rounded-lg bg-[#1a1a2e] p-4">
+            <div className="rounded-lg bg-opsPanel p-4">
               <p className="text-xs uppercase tracking-wide text-gray-500">Dispatch radius</p>
               <p className="mt-2 text-2xl font-semibold text-white">{rules.dispatchRadiusKm} km</p>
             </div>
-            <div className="rounded-lg bg-[#1a1a2e] p-4">
+            <div className="rounded-lg bg-opsPanel p-4">
               <p className="text-xs uppercase tracking-wide text-gray-500">Offer timeout</p>
               <p className="mt-2 text-2xl font-semibold text-white">{rules.offerTimeoutSeconds}s</p>
             </div>
-            <div className="rounded-lg bg-[#1a1a2e] p-4">
+            <div className="rounded-lg bg-opsPanel p-4">
               <p className="text-xs uppercase tracking-wide text-gray-500">Refund threshold</p>
               <p className="mt-2 text-2xl font-semibold text-white">${(rules.refundAutoReviewThresholdCents / 100).toFixed(2)}</p>
             </div>
-            <div className="rounded-lg bg-[#1a1a2e] p-4">
+            <div className="rounded-lg bg-opsPanel p-4">
               <p className="text-xs uppercase tracking-wide text-gray-500">Last update</p>
               <p className="mt-2 text-lg font-semibold text-white">{new Date(rules.updatedAt).toLocaleString()}</p>
             </div>

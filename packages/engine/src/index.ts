@@ -17,11 +17,33 @@ export * from './orchestrators/delivery-engine';
 export * from './orchestrators/order-state-machine';
 export * from './orchestrators/payout-engine';
 
+// Phase 3 extractions
+export { OrderCreationService, createOrderCreationService, type CreateOrderInput } from './orchestrators/order-creation.service';
+export type { PaymentAdapter } from './types/payment-adapter';
+
+// Phase 2 dispatch split (Stage 2)
+export {
+  DriverMatchingService,
+  createDriverMatchingService,
+  calculateDriverAssignmentScore,
+  computeDriverScores,
+  getRawDriverSupplyData,
+  type EligibleDriver,
+  type RankedCandidate,
+  type CoverageGap,
+} from './orchestrators/driver-matching.service';
+export {
+  OfferManagementService,
+  createOfferManagementService,
+} from './orchestrators/offer-management.service';
+export {
+  DispatchOrchestrator,
+  createDispatchOrchestrator,
+} from './orchestrators/dispatch-orchestrator';
+
 // Domain orchestrators (facades)
-export * from './orchestrators/order.orchestrator';
 export * from './orchestrators/kitchen.engine';
 export * from './orchestrators/kitchen-availability';
-export * from './orchestrators/dispatch.engine';
 export * from './orchestrators/commerce.engine';
 export * from './orchestrators/support.engine';
 export * from './orchestrators/platform.engine';
@@ -81,6 +103,11 @@ export {
   createReconciliationService,
   type ReconciliationRunSummary,
 } from './services/reconciliation.service';
+export {
+  TaxConfigService,
+  createTaxConfigService,
+  type TaxRates,
+} from './services/tax-config.service';
 
 // Constants
 export * from './constants';

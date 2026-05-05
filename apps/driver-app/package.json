@@ -6,7 +6,7 @@
     "dev": "next dev -p 3003",
     "build": "next build",
     "start": "next start -p 3003",
-    "lint": "eslint src/app/api/deliveries src/app/delivery --config ../../packages/config/eslint.config.js --quiet",
+    "lint": "eslint src --config ../../packages/config/eslint.config.js",
     "lint:full": "eslint src --config ../../packages/config/eslint.config.js",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "jest",

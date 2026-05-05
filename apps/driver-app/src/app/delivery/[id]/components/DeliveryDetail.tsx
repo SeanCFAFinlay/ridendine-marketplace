@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, Button } from '@ridendine/ui';
 import type { Delivery } from '@ridendine/db';
 import { useLocationTracker } from '@/hooks/use-location-tracker';
+import { RouteMap } from '@/components/map/route-map';
 
 type DeliveryStatus = 'accepted' | 'en_route_to_pickup' | 'arrived_at_pickup' | 'picked_up' | 'en_route_to_dropoff' | 'arrived_at_dropoff';
 
@@ -29,12 +30,15 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
   const router = useRouter();
   const [status, setStatus] = useState<DeliveryStatus>(delivery.status as DeliveryStatus);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [showPickupModal, setShowPickupModal] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
+  const [pickupPhoto, setPickupPhoto] = useState<string | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pickupFileInputRef = useRef<HTMLInputElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
   // Location tracking
@@ -108,6 +112,12 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
     if (!action) return;
     setErrorMessage(null);
 
+    // Intercept pickup confirmation to require photo
+    if (action.nextStatus === 'picked_up') {
+      setShowPickupModal(true);
+      return;
+    }
+
     // If starting navigation, open maps first
     if (action.nextStatus === 'en_route_to_pickup') {
       openNavigation(delivery.pickup_address, delivery.pickup_lat, delivery.pickup_lng);
@@ -115,11 +125,15 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
       openNavigation(delivery.dropoff_address, delivery.dropoff_lat, delivery.dropoff_lng);
     }
 
+    await advanceStatus(action.nextStatus);
+  };
+
+  const advanceStatus = async (nextStatus: DeliveryStatus) => {
     try {
       const response = await fetch(`/api/deliveries/${delivery.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: action.nextStatus }),
+        body: JSON.stringify({ status: nextStatus }),
       });
 
       if (!response.ok) {
@@ -127,13 +141,40 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
         throw new Error(json.error || 'Failed to update delivery status');
       }
 
-      setStatus(action.nextStatus);
+      setStatus(nextStatus);
       router.refresh();
     } catch (error) {
       console.error('Error updating delivery:', error);
       setErrorMessage(
         error instanceof Error ? error.message : 'Failed to update delivery status'
       );
+    }
+  };
+
+  const handlePickupConfirm = async () => {
+    if (!pickupPhoto) return;
+    setIsUploading(true);
+    setErrorMessage(null);
+
+    try {
+      // Upload photo
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataUrl: pickupPhoto, context: 'pickup', deliveryId: delivery.id }),
+      });
+      if (!uploadRes.ok) {
+        const json = await uploadRes.json();
+        throw new Error(json.error || 'Upload failed');
+      }
+
+      await advanceStatus('picked_up');
+      setShowPickupModal(false);
+      setPickupPhoto(null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to confirm pickup');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -144,13 +185,18 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhoto(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => { setPhoto(reader.result as string); };
+    reader.readAsDataURL(file);
+  };
+
+  const handlePickupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => { setPickupPhoto(reader.result as string); };
+    reader.readAsDataURL(file);
   };
 
   // Signature canvas
@@ -241,14 +287,42 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
     setErrorMessage(null);
 
     try {
+      // Upload photo proof if provided
+      let proofUrl: string | undefined;
+      if (photo) {
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataUrl: photo, context: 'dropoff', deliveryId: delivery.id }),
+        });
+        if (uploadRes.ok) {
+          const uploadJson = await uploadRes.json();
+          proofUrl = uploadJson.url ?? undefined;
+        }
+      }
+
+      // Upload signature if provided
+      let signatureUrl: string | undefined;
+      if (signature) {
+        const sigRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataUrl: signature, context: 'signature', deliveryId: delivery.id }),
+        });
+        if (sigRes.ok) {
+          const sigJson = await sigRes.json();
+          signatureUrl = sigJson.url ?? undefined;
+        }
+      }
+
       const response = await fetch(`/api/deliveries/${delivery.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'update_status',
           status: 'delivered',
-          proofUrl: photo,
-          notes: signature ? 'Signature captured' : undefined,
+          proofUrl: proofUrl ?? photo,
+          notes: signatureUrl ? `Signature: ${signatureUrl}` : signature ? 'Signature captured' : undefined,
         }),
       });
 
@@ -339,6 +413,19 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
           </svg>
           Open in Google Maps
         </Button>
+      </div>
+
+      {/* Route Map */}
+      <div className="p-4 pt-0">
+        <RouteMap
+          pickupLat={delivery.pickup_lat}
+          pickupLng={delivery.pickup_lng}
+          pickupAddress={delivery.pickup_address}
+          dropoffLat={delivery.dropoff_lat}
+          dropoffLng={delivery.dropoff_lng}
+          dropoffAddress={delivery.dropoff_address}
+          className="h-52 w-full rounded-2xl overflow-hidden border border-gray-100 shadow-sm"
+        />
       </div>
 
       {/* Destination Card */}
@@ -444,6 +531,65 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
           </Button>
         ) : null}
       </div>
+
+      {/* Pickup Confirmation Modal */}
+      {showPickupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6">
+            <h2 className="text-xl font-bold text-gray-900">Confirm Pickup</h2>
+            <p className="mt-1 text-sm text-gray-600">Take a photo of the order to confirm pickup</p>
+
+            <input
+              ref={pickupFileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handlePickupFileChange}
+              className="hidden"
+            />
+
+            <div className="mt-4">
+              {pickupPhoto ? (
+                <div className="relative">
+                  <img src={pickupPhoto} alt="Pickup proof" className="w-full rounded-lg" />
+                  <button
+                    onClick={() => setPickupPhoto(null)}
+                    className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => pickupFileInputRef.current?.click()}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-6 text-gray-600 hover:border-gray-400"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Take Photo
+                </button>
+              )}
+            </div>
+
+            <div className="mt-5 flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => { setShowPickupModal(false); setPickupPhoto(null); }}>
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-[#E85D26] hover:bg-[#d44e1e]"
+                onClick={handlePickupConfirm}
+                disabled={!pickupPhoto || isUploading}
+              >
+                {isUploading ? 'Confirming...' : 'Confirm Pickup'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Completion Modal */}
       {showCompletionModal && (

@@ -240,7 +240,7 @@ export default function AnalyticsPage() {
         <Card>
           <h3 className="font-semibold text-gray-900">Daily Revenue (Last 30 Days)</h3>
           <div className="mt-4 h-48 flex items-end gap-1">
-            {data.dailyRevenue.map((day, i) => (
+            {data.dailyRevenue.map((day, _i) => (
               <div
                 key={day.date}
                 className="flex-1 bg-[#E85D26] rounded-t opacity-70 hover:opacity-100 transition-opacity"

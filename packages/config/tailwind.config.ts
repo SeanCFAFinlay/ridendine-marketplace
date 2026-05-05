@@ -37,6 +37,15 @@ const config: Config = {
           500: '#ef4444',
           700: '#b91c1c',
         },
+        // Design token semantic colors
+        opsCanvas: '#0b1220',
+        opsPanel: '#111827',
+        opsPanelElevated: '#1f2937',
+        opsSubtle: '#1f2937',
+        opsDefault: '#374151',
+        opsPrimary: '#f9fafb',
+        opsSecondary: '#cbd5e1',
+        opsMuted: '#64748b',
       },
       fontFamily: {
         sans: ['-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Segoe UI', 'Roboto', 'sans-serif'],

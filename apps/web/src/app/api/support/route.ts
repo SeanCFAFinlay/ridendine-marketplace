@@ -1,11 +1,9 @@
-import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import {
   createAdminClient,
-  createServerClient,
   createSupportTicket,
-  getCustomerByUserId,
   type SupabaseClient,
 } from '@ridendine/db';
 import { supportRequestSchema } from '@ridendine/validation';
@@ -14,6 +12,7 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
+import { getCustomerActorContext } from '@ridendine/engine/server';
 
 function buildDescription(
   name: string,
@@ -26,6 +25,10 @@ function buildDescription(
 }
 
 export async function POST(request: NextRequest) {
+  // Support is intentionally semi-public: anonymous ticket submission is allowed.
+  // getCustomerActorContext is called to attach customerId when the user is authenticated.
+  const customerCtx = await getCustomerActorContext();
+
   const limit = await evaluateRateLimit({
     request,
     policy: RATE_LIMIT_POLICIES.supportWrite,
@@ -38,18 +41,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validated = supportRequestSchema.parse(body);
 
-    const cookieStore = await cookies();
-    const sessionClient = createServerClient(cookieStore);
     const adminClient = createAdminClient() as unknown as SupabaseClient;
 
-    let customerId: string | null = null;
-    const {
-      data: { user },
-    } = await sessionClient.auth.getUser();
-    if (user) {
-      const customer = await getCustomerByUserId(sessionClient as unknown as SupabaseClient, user.id);
-      customerId = customer?.id ?? null;
-    }
+    const customerId: string | null = customerCtx?.customerId ?? null;
 
     const ticket = await createSupportTicket(adminClient, {
       customer_id: customerId,

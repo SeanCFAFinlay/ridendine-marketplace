@@ -9,9 +9,11 @@ import { AuditLogger, createAuditLogger } from './audit-logger';
 import { SLAManager, createSLAManager } from './sla-manager';
 import { NotificationSender, createNotificationSender } from './notification-sender';
 import { createResendProvider } from './email-provider';
-import { OrderOrchestrator, createOrderOrchestrator, type PaymentAdapter } from '../orchestrators/order.orchestrator';
+import { createTwilioProvider } from './sms-provider';
+import { NotificationTriggers, createNotificationTriggers } from './notification-triggers';
+import type { PaymentAdapter } from '../types/payment-adapter';
+import { OrderCreationService, createOrderCreationService } from '../orchestrators/order-creation.service';
 import { KitchenEngine, createKitchenEngine } from '../orchestrators/kitchen.engine';
-import { DispatchEngine, createDispatchEngine } from '../orchestrators/dispatch.engine';
 import { CommerceLedgerEngine, createCommerceLedgerEngine } from '../orchestrators/commerce.engine';
 import { SupportExceptionEngine, createSupportExceptionEngine } from '../orchestrators/support.engine';
 import { PlatformWorkflowEngine, createPlatformWorkflowEngine } from '../orchestrators/platform.engine';
@@ -22,6 +24,9 @@ import {
 } from '../orchestrators/operations-command.gateway';
 import { MasterOrderEngine, createMasterOrderEngine } from '../orchestrators/master-order-engine';
 import { DeliveryEngine as MasterDeliveryEngine, createDeliveryEngine } from '../orchestrators/delivery-engine';
+import { DriverMatchingService, createDriverMatchingService } from '../orchestrators/driver-matching.service';
+import { OfferManagementService, createOfferManagementService } from '../orchestrators/offer-management.service';
+import { DispatchOrchestrator, createDispatchOrchestrator } from '../orchestrators/dispatch-orchestrator';
 import { BusinessRulesEngine, createBusinessRulesEngine } from './business-rules-engine';
 import { PayoutEngine, createPayoutEngine } from '../orchestrators/payout-engine';
 import { createEtaService } from '../services/eta.service';
@@ -29,6 +34,7 @@ import type { EtaService } from '@ridendine/routing';
 import { createLedgerService, type LedgerService } from '../services/ledger.service';
 import { createPayoutService, type PayoutService } from '../services/payout.service';
 import { createReconciliationService, type ReconciliationService } from '../services/reconciliation.service';
+import { createTaxConfigService, type TaxConfigService } from '../services/tax-config.service';
 import { getStripeClient } from '../services/stripe.service';
 
 /**
@@ -41,6 +47,7 @@ export interface CentralEngine {
   audit: AuditLogger;
   sla: SLAManager;
   notifications: NotificationSender;
+  triggers: NotificationTriggers;
   /** Phase 1+ routing / ETA (server-side; use for refreshFromDriverPing, etc.). */
   eta: EtaService;
 
@@ -57,11 +64,21 @@ export interface CentralEngine {
   payoutAutomation: PayoutService;
   /** Stripe ↔ ledger reconciliation (Phase 5). */
   reconciliation: ReconciliationService;
+  /** Runtime tax/fee configuration from platform_settings (Phase 6). */
+  taxConfig: TaxConfigService;
+
+  // Order creation (Phase 3 extraction — createOrder, authorizePayment, submitToKitchen)
+  orderCreation: OrderCreationService;
+
+  // Phase 2 dispatch split (Stage 2)
+  driverMatching: DriverMatchingService;
+  offerManagement: OfferManagementService;
+  dispatchOrchestrator: DispatchOrchestrator;
 
   // Domain orchestrators (facades that delegate to canonical engines)
-  orders: OrderOrchestrator;
+  orders: MasterOrderEngine;
   kitchen: KitchenEngine;
-  dispatch: DispatchEngine;
+  dispatch: DispatchOrchestrator;
   commerce: CommerceLedgerEngine;
   support: SupportExceptionEngine;
   platform: PlatformWorkflowEngine;
@@ -85,12 +102,16 @@ export function createCentralEngine(
 
   // Register email provider (only active when RESEND_API_KEY is set)
   notifications.registerProvider(createResendProvider());
+  // Register SMS provider (only active when TWILIO_* env vars are set)
+  notifications.registerProvider(createTwilioProvider());
+
+  const triggers = createNotificationTriggers(client, notifications);
 
   // Create business rules engine (validation layer)
   const rules = createBusinessRulesEngine(client);
 
   // Create canonical engines (single authority for lifecycle transitions)
-  const masterOrder = createMasterOrderEngine(client, audit, events);
+  const masterOrder = createMasterOrderEngine(client, audit, events, paymentAdapter);
   const masterDelivery = createDeliveryEngine(client, audit, events, masterOrder);
   const payouts = createPayoutEngine(client, audit, events);
   const ledger = createLedgerService(client);
@@ -105,23 +126,32 @@ export function createCentralEngine(
     },
   });
   const reconciliation = createReconciliationService(client);
+  const taxConfig = createTaxConfigService(client);
 
   const eta = createEtaService(client);
 
+  const orderCreation = createOrderCreationService(client, events, audit, sla, masterOrder, eta, taxConfig);
+
+  // Phase 2 dispatch split
+  const driverMatching = createDriverMatchingService(client, eta);
+  const offerManagement = createOfferManagementService(client, events, audit, sla, driverMatching, eta);
+  const dispatchOrchestrator = createDispatchOrchestrator(
+    client, events, audit, sla, eta,
+    masterOrder, masterDelivery, offerManagement, driverMatching
+  );
+
   // Create domain orchestrators (facades that delegate to canonical engines)
-  const orders = createOrderOrchestrator(client, events, audit, sla, undefined, paymentAdapter, eta);
   const kitchen = createKitchenEngine(client, events, audit);
-  const dispatch = createDispatchEngine(client, events, audit, sla, eta);
   const commerce = createCommerceLedgerEngine(client, events, audit);
   const support = createSupportExceptionEngine(client, events, audit);
-  const platform = createPlatformWorkflowEngine(client, events, audit, orders, dispatch, support);
-  const ops = createOpsControlEngine(client, events, audit, dispatch, support, commerce);
+  const platform = createPlatformWorkflowEngine(client, events, audit, masterOrder, dispatchOrchestrator, support);
+  const ops = createOpsControlEngine(client, events, audit, dispatchOrchestrator, support, commerce);
   const operations = createOperationsCommandGateway({
     client,
     audit,
-    orders,
+    orders: masterOrder,
     platform,
-    dispatch,
+    dispatch: dispatchOrchestrator,
     ops,
     commerce,
     support,
@@ -134,6 +164,7 @@ export function createCentralEngine(
     audit,
     sla,
     notifications,
+    triggers,
     eta,
     rules,
     masterOrder,
@@ -142,9 +173,14 @@ export function createCentralEngine(
     ledger,
     payoutAutomation,
     reconciliation,
-    orders,
+    taxConfig,
+    orderCreation,
+    driverMatching,
+    offerManagement,
+    dispatchOrchestrator,
+    orders: masterOrder,
     kitchen,
-    dispatch,
+    dispatch: dispatchOrchestrator,
     commerce,
     support,
     platform,
@@ -154,20 +190,8 @@ export function createCentralEngine(
 }
 
 /**
- * Singleton pattern for server-side usage
+ * Per-request engine factory (no singleton — avoids stale client references).
  */
-let engineInstance: CentralEngine | null = null;
-
 export function getEngine(client: SupabaseClient): CentralEngine {
-  if (!engineInstance) {
-    engineInstance = createCentralEngine(client);
-  }
-  return engineInstance;
-}
-
-/**
- * Reset engine instance (useful for testing)
- */
-export function resetEngine(): void {
-  engineInstance = null;
+  return createCentralEngine(client);
 }

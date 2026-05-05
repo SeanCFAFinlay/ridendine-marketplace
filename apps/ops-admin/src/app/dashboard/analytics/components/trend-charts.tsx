@@ -70,19 +70,19 @@ function BarChart({
 function SummaryKPIs({ summary }: { summary: TrendSummary }) {
   return (
     <div className="grid gap-4 sm:grid-cols-4">
-      <Card className="border-gray-800 bg-[#16213e] p-4">
+      <Card className="border-gray-800 bg-opsPanel p-4">
         <p className="text-xs text-gray-500 uppercase tracking-wide">Total Orders</p>
         <p className="mt-1 text-2xl font-bold text-white">{summary.totalOrders}</p>
       </Card>
-      <Card className="border-gray-800 bg-[#16213e] p-4">
+      <Card className="border-gray-800 bg-opsPanel p-4">
         <p className="text-xs text-gray-500 uppercase tracking-wide">Revenue</p>
         <p className="mt-1 text-2xl font-bold text-emerald-400">${summary.totalRevenue.toFixed(2)}</p>
       </Card>
-      <Card className="border-gray-800 bg-[#16213e] p-4">
+      <Card className="border-gray-800 bg-opsPanel p-4">
         <p className="text-xs text-gray-500 uppercase tracking-wide">Avg Daily Orders</p>
         <p className="mt-1 text-2xl font-bold text-blue-400">{summary.avgDailyOrders}</p>
       </Card>
-      <Card className="border-gray-800 bg-[#16213e] p-4">
+      <Card className="border-gray-800 bg-opsPanel p-4">
         <p className="text-xs text-gray-500 uppercase tracking-wide">Completion Rate</p>
         <p className="mt-1 text-2xl font-bold text-white">{summary.completionRate}%</p>
       </Card>
@@ -168,7 +168,7 @@ export function TrendCharts() {
 
       <SummaryKPIs summary={data.summary} />
 
-      <Card className="border-gray-800 bg-[#16213e] p-6">
+      <Card className="border-gray-800 bg-opsPanel p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Daily Order Volume</h3>
         <BarChart
           bars={data.trend.map(d => d.orders)}
@@ -182,7 +182,7 @@ export function TrendCharts() {
         </div>
       </Card>
 
-      <Card className="border-gray-800 bg-[#16213e] p-6">
+      <Card className="border-gray-800 bg-opsPanel p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Daily Revenue</h3>
         <BarChart
           bars={data.trend.map(d => d.revenue)}
@@ -197,12 +197,12 @@ export function TrendCharts() {
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Top Chefs by Revenue</h3>
           <TopChefsChart chefs={data.topChefs} />
         </Card>
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Order Volume by Hour</h3>
           <div className="flex items-end gap-1 h-32">
             {data.peakHours.map(h => (

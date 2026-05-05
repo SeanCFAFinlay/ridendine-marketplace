@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import type * as LeafletNS from 'leaflet';
 import { DEFAULT_SERVICE_REGION_CENTER } from '@ridendine/engine';
 
 // Dynamically import Leaflet components to avoid SSR issues
@@ -51,7 +52,7 @@ export function RouteMap({
   className,
 }: RouteMapProps) {
   const [isMounted, setIsMounted] = useState(false);
-  const [L, setL] = useState<typeof import('leaflet') | null>(null);
+  const [L, setL] = useState<typeof LeafletNS | null>(null);
 
   useEffect(() => {
     setIsMounted(true);

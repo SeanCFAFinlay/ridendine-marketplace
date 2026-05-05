@@ -2,6 +2,10 @@
  * Repair Validation Tests
  * Tests for all fixes applied in the 2026-04-28 repair sprint.
  * Covers: FND-004, FND-017, FND-018, FND-019, FND-013
+ *
+ * Updated (Stage 3): references point to canonical engine files.
+ * - dispatch.engine.ts → delivery-engine.ts (FND-004)
+ * - order.orchestrator.ts → master-order-engine.ts (FND-017) and order-creation.service.ts (FND-018)
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -18,17 +22,16 @@ import {
 // FND-004: delivery_events column name
 // ==========================================
 describe('FND-004: delivery_events uses event_data column', () => {
-  it('dispatch engine source uses event_data not data for delivery_events insert', async () => {
-    // Read the dispatch engine source and verify the fix
+  it('delivery engine source uses event_data not data for delivery_events insert', async () => {
     const fs = await import('fs');
     const path = await import('path');
-    const dispatchSource = fs.readFileSync(
-      path.resolve(__dirname, './dispatch.engine.ts'),
+    const deliverySource = fs.readFileSync(
+      path.resolve(__dirname, './delivery-engine.ts'),
       'utf-8'
     );
 
     // Find the delivery_events insert block
-    const insertMatch = dispatchSource.match(
+    const insertMatch = deliverySource.match(
       /from\('delivery_events'\)\.insert\(\{[\s\S]*?\}\)/
     );
     expect(insertMatch).toBeTruthy();
@@ -47,44 +50,40 @@ describe('FND-004: delivery_events uses event_data column', () => {
 // FND-017: PaymentAdapter interface
 // ==========================================
 describe('FND-017: PaymentAdapter exists and is used', () => {
-  it('OrderOrchestrator exports PaymentAdapter interface', async () => {
-    const mod = await import('./order.orchestrator');
-    // The interface exists as a type — we verify by checking the factory accepts it
-    expect(typeof mod.createOrderOrchestrator).toBe('function');
-    // Factory should accept 6 params (client, events, audit, sla, notifications?, paymentAdapter?)
-    expect(mod.createOrderOrchestrator.length).toBeGreaterThanOrEqual(4);
+  it('MasterOrderEngine factory accepts PaymentAdapter', async () => {
+    const mod = await import('./master-order-engine');
+    expect(typeof mod.createMasterOrderEngine).toBe('function');
+    expect(mod.createMasterOrderEngine.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('rejectOrder void logic references paymentAdapter in source', async () => {
+  it('rejectOrder void logic references paymentAdapter in master-order-engine source', async () => {
     const fs = await import('fs');
     const path = await import('path');
     const source = fs.readFileSync(
-      path.resolve(__dirname, './order.orchestrator.ts'),
+      path.resolve(__dirname, './master-order-engine.ts'),
       'utf-8'
     );
 
-    // rejectOrder should reference paymentAdapter
+    // rejectOrder alias should reference paymentAdapter or voidPaymentIntent
     const rejectSection = source.slice(
       source.indexOf('async rejectOrder('),
       source.indexOf('async startPreparing(')
     );
-    expect(rejectSection).toContain('this.paymentAdapter');
-    expect(rejectSection).toContain('cancelPaymentIntent');
+    expect(rejectSection).toContain('voidPaymentIntent');
 
     // cancelOrder should also reference paymentAdapter
     const cancelSection = source.slice(
       source.indexOf('async cancelOrder('),
-      source.indexOf('async completeOrder(')
+      source.indexOf('async refundOrder(')
     );
-    expect(cancelSection).toContain('this.paymentAdapter');
-    expect(cancelSection).toContain('cancelPaymentIntent');
+    expect(cancelSection).toContain('voidPaymentIntent');
   });
 
   it('ledger entries distinguish void completed vs pending', async () => {
     const fs = await import('fs');
     const path = await import('path');
     const source = fs.readFileSync(
-      path.resolve(__dirname, './order.orchestrator.ts'),
+      path.resolve(__dirname, './master-order-engine.ts'),
       'utf-8'
     );
 
@@ -102,15 +101,13 @@ describe('FND-018: submitToKitchen guards null chefUserId', () => {
     const fs = await import('fs');
     const path = await import('path');
     const source = fs.readFileSync(
-      path.resolve(__dirname, './order.orchestrator.ts'),
+      path.resolve(__dirname, './order-creation.service.ts'),
       'utf-8'
     );
 
-    // Find the submitToKitchen method
-    const submitSection = source.slice(
-      source.indexOf('async submitToKitchen('),
-      source.indexOf('async acceptOrder(')
-    );
+    // Find the submitToKitchen method (last method in the file)
+    const submitStart = source.indexOf('async submitToKitchen(');
+    const submitSection = source.slice(submitStart);
 
     // Must have the guard
     expect(submitSection).toContain('if (chefUserId)');
@@ -160,10 +157,10 @@ describe('FND-013: Hamilton coordinates extracted to constants', () => {
 });
 
 // ==========================================
-// FND-019: BYPASS_AUTH production guard
+// FND-019: ALLOW_DEV_AUTOLOGIN (Phase 5 — replaces BYPASS_AUTH)
 // ==========================================
-describe('FND-019: BYPASS_AUTH production guard', () => {
-  it('middleware source contains production crash guard', async () => {
+describe('FND-019: ALLOW_DEV_AUTOLOGIN dev shortcut guard', () => {
+  it('middleware source uses ALLOW_DEV_AUTOLOGIN for dev autologin', async () => {
     const fs = await import('fs');
     const path = await import('path');
     const source = fs.readFileSync(
@@ -171,8 +168,19 @@ describe('FND-019: BYPASS_AUTH production guard', () => {
       'utf-8'
     );
 
-    expect(source).toContain("process.env.NODE_ENV === 'production'");
-    expect(source).toContain('BYPASS_AUTH=true is not allowed in production');
+    expect(source).toContain('ALLOW_DEV_AUTOLOGIN');
+    expect(source).toContain("process.env.NODE_ENV !== 'production'");
+  });
+
+  it('regression: middleware source does not contain BYPASS_AUTH (removed in Phase 5)', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../../auth/src/middleware.ts'),
+      'utf-8'
+    );
+
+    expect(source).not.toContain('BYPASS_AUTH');
   });
 });
 

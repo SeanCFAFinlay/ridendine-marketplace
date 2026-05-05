@@ -6,7 +6,7 @@ test.describe('web smoke', () => {
     test.skip(testInfo.project.name !== 'web-smoke', 'web-only test');
     await page.goto('/');
     await expect(page.getByRole('button', { name: 'Browse Chefs' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Home-Cooked Meals/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /Home-Cooked Meals/i })).toBeVisible();
   });
 
   test('chefs browse page loads @smoke', async ({ page }, testInfo) => {

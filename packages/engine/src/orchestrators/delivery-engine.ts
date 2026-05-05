@@ -5,11 +5,13 @@
 // ==========================================
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { ActorContext, DomainEventType } from '@ridendine/types';
+import type { ActorContext, DomainEventType, SLAType } from '@ridendine/types';
 import { EngineOrderStatus, EngineDeliveryStatus } from '@ridendine/types';
 import type { AuditLogger } from '../core/audit-logger';
 import type { DomainEventEmitter } from '../core/event-emitter';
+import type { SLAManager } from '../core/sla-manager';
 import type { MasterOrderEngine } from './master-order-engine';
+import type { EtaService } from '@ridendine/routing';
 import {
   assertValidDeliveryTransition,
   isValidDeliveryTransition,
@@ -143,6 +145,8 @@ export class DeliveryEngine {
     private audit: AuditLogger,
     private events: DomainEventEmitter,
     private masterOrderEngine: MasterOrderEngine,
+    private sla?: SLAManager,
+    private eta?: EtaService
   ) {}
 
   // ==========================================
@@ -427,6 +431,148 @@ export class DeliveryEngine {
   }
 
   // ==========================================
+  // UPDATE DELIVERY STATUS (canonical home for delivery_events writes)
+  // ==========================================
+
+  /**
+   * Write delivery status, insert delivery_events (FND-004: event_data: key preserved verbatim),
+   * sync orders.engine_status via MasterOrderEngine, complete SLAs, recompute ETA,
+   * release driver on delivered, emit events.
+   */
+  async updateDeliveryStatus(
+    deliveryId: string,
+    status: string,
+    actor: ActorContext,
+    metadata?: { proofUrl?: string; notes?: string }
+  ): Promise<{ success: boolean; data?: { id: string; status: string }; error?: { code: string; message: string } }> {
+    const { data: delivery, error: deliveryError } = await this.client
+      .from('deliveries')
+      .select('*')
+      .eq('id', deliveryId)
+      .single();
+
+    if (deliveryError || !delivery) {
+      return { success: false, error: { code: 'NOT_FOUND', message: 'Delivery not found' } };
+    }
+
+    if (actor.role === 'driver') {
+      const { data: driver } = await this.client
+        .from('drivers')
+        .select('id')
+        .eq('user_id', actor.userId)
+        .single();
+      if (!driver || driver.id !== delivery.driver_id) {
+        return { success: false, error: { code: 'FORBIDDEN', message: 'This delivery is not assigned to you' } };
+      }
+    }
+
+    try {
+      const currentEngine = this.mapDeliveryStatusForValidation(delivery.status as string);
+      const targetEngine = this.mapDeliveryStatusForValidation(status);
+      assertValidDeliveryTransition(currentEngine, targetEngine);
+    } catch {
+      return {
+        success: false,
+        error: { code: 'INVALID_TRANSITION', message: `Cannot transition delivery from ${delivery.status} to ${status}` },
+      };
+    }
+
+    const now = new Date().toISOString();
+    const previousStatus = delivery.status as string;
+
+    const updateData: Record<string, unknown> = { status, updated_at: now };
+
+    if (status === 'picked_up') {
+      updateData.actual_pickup_time = now;
+      if (metadata?.proofUrl) updateData.pickup_proof_url = metadata.proofUrl;
+      if (this.sla) {
+        await this.sla.startTimer({
+          type: 'driver_delivery' as SLAType,
+          entityType: 'delivery',
+          entityId: deliveryId,
+          customDurationMinutes: (delivery.estimated_duration_minutes as number | undefined) || 30,
+        });
+      }
+    }
+
+    if (status === 'delivered') {
+      updateData.actual_dropoff_time = now;
+      if (metadata?.proofUrl) updateData.dropoff_proof_url = metadata.proofUrl;
+      if (this.sla) {
+        await this.sla.completeTimer('delivery', deliveryId, 'driver_delivery' as SLAType);
+      }
+    }
+
+    if (metadata?.notes) updateData.delivery_notes = metadata.notes;
+
+    const { data: updated, error } = await this.client
+      .from('deliveries')
+      .update(updateData)
+      .eq('id', deliveryId)
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: { code: 'UPDATE_FAILED', message: error.message } };
+    }
+
+    if (status === 'picked_up' && this.eta) {
+      try { await this.eta.computeDropLegOnPickup(deliveryId); } catch { /* optional */ }
+    }
+
+    // Sync order engine_status
+    const orderStatusMap: Record<string, string> = {
+      en_route_to_pickup: 'driver_en_route_pickup',
+      picked_up: 'picked_up',
+      en_route_to_dropoff: 'driver_en_route_dropoff',
+      delivered: 'delivered',
+    };
+
+    if (orderStatusMap[status]) {
+      await this.client
+        .from('orders')
+        .update({
+          engine_status: orderStatusMap[status],
+          status: status === 'delivered' ? 'delivered' : delivery.status,
+          updated_at: now,
+        })
+        .eq('id', delivery.order_id as string);
+    }
+
+    // FND-004: event_data: key — preserved verbatim
+    await this.client.from('delivery_events').insert({
+      delivery_id: deliveryId,
+      event_type: `status_${status}`,
+      event_data: { previousStatus, newStatus: status, ...metadata },
+      actor_type: actor.role === 'driver' ? 'driver' : actor.role === 'system' ? 'system' : 'ops',
+      actor_id: actor.userId !== 'system' ? actor.userId : undefined,
+    });
+
+    const eventType = `delivery.${status.replace(/_/g, '_')}` as DomainEventType;
+    this.events.emit(eventType, 'delivery', deliveryId, { previousStatus, newStatus: status }, actor);
+
+    await this.audit.logStatusChange({
+      entityType: 'delivery',
+      entityId: deliveryId,
+      actor,
+      previousStatus,
+      newStatus: status,
+      metadata,
+    });
+
+    await this.events.flush();
+
+    if (status === 'delivered') {
+      await this.client
+        .from('driver_presence')
+        .update({ status: 'online', updated_at: new Date().toISOString() })
+        .eq('driver_id', delivery.driver_id as string);
+    }
+
+    return { success: true, data: updated as { id: string; status: string } };
+  }
+
+  // ==========================================
   // HELPERS
   // ==========================================
 
@@ -452,6 +598,25 @@ export class DeliveryEngine {
     };
     return map[legacyStatus] || legacyStatus;
   }
+
+  private mapDeliveryStatusForValidation(legacyStatus: string): string {
+    const map: Record<string, string> = {
+      pending: 'unassigned',
+      assigned: 'accepted',
+      accepted: 'accepted',
+      en_route_to_pickup: 'en_route_to_pickup',
+      arrived_at_pickup: 'arrived_at_pickup',
+      picked_up: 'picked_up',
+      en_route_to_dropoff: 'en_route_to_customer',
+      en_route_to_customer: 'en_route_to_customer',
+      arrived_at_dropoff: 'arrived_at_customer',
+      arrived_at_customer: 'arrived_at_customer',
+      delivered: 'delivered',
+      failed: 'failed',
+      cancelled: 'cancelled',
+    };
+    return map[legacyStatus] || legacyStatus;
+  }
 }
 
 // Factory function
@@ -460,6 +625,8 @@ export function createDeliveryEngine(
   audit: AuditLogger,
   events: DomainEventEmitter,
   masterOrderEngine: MasterOrderEngine,
+  sla?: SLAManager,
+  eta?: EtaService
 ): DeliveryEngine {
-  return new DeliveryEngine(client, audit, events, masterOrderEngine);
+  return new DeliveryEngine(client, audit, events, masterOrderEngine, sla, eta);
 }

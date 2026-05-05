@@ -6,7 +6,7 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "lint": "eslint src/app/api/checkout src/app/api/orders src/app/api/webhooks/stripe src/app/cart src/app/checkout src/app/order-confirmation src/app/account/orders src/app/orders/[id]/confirmation src/contexts/cart-context.tsx src/lib/orders src/components/tracking --config ../../packages/config/eslint.config.js --quiet",
+    "lint": "eslint src --config ../../packages/config/eslint.config.js",
     "lint:full": "eslint src --config ../../packages/config/eslint.config.js",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "jest",

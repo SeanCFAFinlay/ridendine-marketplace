@@ -118,23 +118,30 @@ export async function PATCH(
           return NextResponse.json({ data: result.data });
         }
         case 'cancel': {
-          const result = await engine.orders.cancelOrder(
-            id,
-            (mapped.extra?.reason as OrderCancelReason | undefined) || 'ops_override',
-            mapped.extra?.notes as string | undefined,
-            opsActor
-          );
+          const result = await engine.orders.cancelOrder({
+            orderId: id,
+            actorId: opsActor.userId,
+            actorType: opsActor.role,
+            actorRole: opsActor.role,
+            reason: (mapped.extra?.reason as OrderCancelReason | undefined) || 'ops_override',
+            notes: mapped.extra?.notes as string | undefined,
+            actor: opsActor,
+          });
           if (!result.success) {
-            return NextResponse.json({ error: result.error?.message || 'Failed to cancel order' }, { status: 400 });
+            return NextResponse.json({ error: result.error || 'Failed to cancel order' }, { status: 400 });
           }
-          return NextResponse.json({ data: result.data });
+          return NextResponse.json({ data: result.order });
         }
         case 'complete': {
-          const result = await engine.orders.completeOrder(id, opsActor);
+          const result = await engine.orders.completeOrder({
+            orderId: id,
+            actorId: opsActor.userId,
+            actorRole: opsActor.role,
+          });
           if (!result.success) {
-            return NextResponse.json({ error: result.error?.message || 'Failed to complete order' }, { status: 400 });
+            return NextResponse.json({ error: result.error || 'Failed to complete order' }, { status: 400 });
           }
-          return NextResponse.json({ data: result.data });
+          return NextResponse.json({ data: result.order });
         }
       }
     }

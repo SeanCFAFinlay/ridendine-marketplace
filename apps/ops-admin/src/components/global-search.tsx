@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { Search, Package, User, ChefHat, Truck, MapPin } from 'lucide-react';
 import { createBrowserClient } from '@ridendine/db';
 
 interface SearchResult {
@@ -12,12 +13,12 @@ interface SearchResult {
   href: string;
 }
 
-const TYPE_ICONS: Record<string, string> = {
-  order: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
-  customer: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
-  chef: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4',
-  driver: 'M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0',
-  delivery: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z',
+const TYPE_ICON_COMPONENTS: Record<string, React.ComponentType<{ className?: string }>> = {
+  order: Package,
+  customer: User,
+  chef: ChefHat,
+  driver: Truck,
+  delivery: MapPin,
 };
 
 async function searchOrders(supabase: any, q: string): Promise<SearchResult[]> {
@@ -160,9 +161,7 @@ export function GlobalSearch() {
         className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-sm text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
         aria-label="Open search"
       >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+        <Search className="h-4 w-4" />
         <span className="hidden sm:inline">Search</span>
         <kbd className="hidden sm:inline rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-mono text-gray-500">⌘K</kbd>
       </button>
@@ -174,13 +173,11 @@ export function GlobalSearch() {
         >
           <div className="fixed inset-0 bg-black/60" />
           <div
-            className="relative w-full max-w-lg rounded-xl border border-gray-700 bg-[#0d1520] shadow-2xl"
+            className="relative w-full max-w-lg rounded-xl border border-gray-700 bg-opsCanvas shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 border-b border-gray-700 px-4 py-3">
-              <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <Search className="h-5 w-5 text-gray-400 flex-shrink-0" />
               <input
                 ref={inputRef}
                 value={query}
@@ -203,24 +200,25 @@ export function GlobalSearch() {
                   Type at least 2 characters to search
                 </div>
               )}
-              {results.map((result, idx) => (
-                <button
-                  key={`${result.type}-${result.id}`}
-                  onClick={() => { router.push(result.href); setIsOpen(false); }}
-                  className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                    idx === selectedIndex ? 'bg-[#E85D26]/20' : 'hover:bg-white/5'
-                  }`}
-                >
-                  <svg className="h-4 w-4 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={TYPE_ICONS[result.type]} />
-                  </svg>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{result.title}</p>
-                    <p className="text-xs text-gray-500 truncate">{result.subtitle}</p>
-                  </div>
-                  <span className="text-[10px] uppercase tracking-wider text-gray-600">{result.type}</span>
-                </button>
-              ))}
+              {results.map((result, idx) => {
+                const IconComp = TYPE_ICON_COMPONENTS[result.type] ?? Package;
+                return (
+                  <button
+                    key={`${result.type}-${result.id}`}
+                    onClick={() => { router.push(result.href); setIsOpen(false); }}
+                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                      idx === selectedIndex ? 'bg-[#E85D26]/20' : 'hover:bg-white/5'
+                    }`}
+                  >
+                    <IconComp className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{result.title}</p>
+                      <p className="text-xs text-gray-500 truncate">{result.subtitle}</p>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wider text-gray-600">{result.type}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

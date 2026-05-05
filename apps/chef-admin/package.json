@@ -6,7 +6,7 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start -p 3001",
-    "lint": "eslint src/app/api/menu src/app/api/orders/[id]/route.ts src/app/api/storefront/route.ts src/components/layout/header.tsx --config ../../packages/config/eslint.config.js --quiet",
+    "lint": "eslint src --config ../../packages/config/eslint.config.js",
     "lint:full": "eslint src --config ../../packages/config/eslint.config.js",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "jest",
@@ -26,7 +26,8 @@
     "next": "^14.2.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "stripe": "^20.4.1"
+    "stripe": "^20.4.1",
+    "lucide-react": "^0.454.0"
   },
   "devDependencies": {
     "@ridendine/config": "workspace:*",

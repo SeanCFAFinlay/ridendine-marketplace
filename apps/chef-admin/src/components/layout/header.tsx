@@ -94,7 +94,7 @@ export function Header() {
           />
 
           {/* Menu Panel */}
-          <div className="fixed inset-y-0 left-0 w-72 bg-[#0f1923] shadow-xl">
+          <div className="fixed inset-y-0 left-0 w-72 bg-opsCanvas shadow-xl">
             {/* Header */}
             <div className="flex h-16 items-center justify-between border-b border-white/10 px-5">
               <div className="flex items-center gap-3">

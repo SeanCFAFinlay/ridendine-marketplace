@@ -12,12 +12,20 @@
 |---|------|-------|----------------------------|
 | T1 | CI green on release branch (`pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` per [`docs/QA_TESTING_PLAN.md`](QA_TESTING_PLAN.md)) | Eng | |
 | T2 | Staging deploy matches production config class (keys **mode**, not values) | Eng | |
-| T3 | `BYPASS_AUTH` **not** set in production; `NODE_ENV=production` verified | Eng | |
+| T3 | `ALLOW_DEV_AUTOLOGIN` **not** set in production; `NODE_ENV=production` verified | Eng | |
 | T4 | Stripe **live** vs **test** keys match intended environment | Eng + Finance | |
 | T5 | Webhook endpoint URL + `STRIPE_WEBHOOK_SECRET` match **only** prod web URL | Eng | |
 | T6 | Supabase backup / PITR status confirmed for prod project | Ops | |
 | T7 | `pnpm verify:prod-data-hygiene` (or equivalent) — no seed in prod pipelines | Eng | |
 | T8 | Synthetic monitors for `GET /api/health` on all four apps ([`docs/HEALTHCHECKS_AND_MONITORING.md`](HEALTHCHECKS_AND_MONITORING.md)) | Ops | |
+| T9 | Stripe live keys provisioned in production Vercel env (never committed to VCS) | Eng + Finance | |
+| T10 | Domain DNS records pointing to deploy target (A/CNAME verified) | Eng + Ops | |
+| T11 | SSL/TLS certificate provisioned and auto-renewal configured | Eng | |
+| T12 | `pnpm test:e2e:lifecycle` runs green against staging before production promote | Eng | |
+| T13 | `ENGINE_PROCESSOR_TOKEN` / `CRON_SECRET` set in production — required by SLA and offer processors | Eng | |
+| T14 | Distributed rate limiter (Upstash Redis) configured in production (`UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`). Per-instance in-memory rate limiter is dev-only. | Eng | |
+| T15 | Notification preferences DB migration `00026_notification_preferences.sql` applied before launch (Phase 10 deferred — currently localStorage only) | Eng | |
+| T16 | Local cron runner (`scripts/local-cron.mjs`) replaced by Vercel Cron config in `vercel.json` for production | Eng | |
 
 ---
 
@@ -46,11 +54,15 @@ Canonical list: **Part 14** in [`21_FULL_CORRECTION_AND_UPGRADE_EXECUTION_PLAN.m
 
 | # | Item | Owner | Sign-off |
 |---|------|-------|----------|
-| L1 | Terms of Service published and versioned; in-app links updated | Legal | |
-| L2 | Privacy Policy (incl. cookies, analytics, location) published | Legal | |
+| L1 | **[BLOCKER]** Terms of Service: replace auto-generated placeholder with legally reviewed text (or use Termly/Iubenda/lawyer). Current placeholder in `apps/web/src/app/terms/page.tsx` contains unreviewed fee figures and arbitration clauses. | Legal | |
+| L2 | **[BLOCKER]** Privacy Policy: replace auto-generated placeholder with legally reviewed text. Current placeholder in `apps/web/src/app/privacy/page.tsx` has NOT been reviewed by counsel. | Legal | |
 | L3 | Refund / cancellation policy matches checkout copy and ops runbook | Legal + Ops | |
 | L4 | Food-handler / marketplace obligations for your jurisdiction reviewed | Legal | |
 | L5 | Insurance / liability (chef, platform, delivery) — **placeholders resolved** | Legal + Ops | |
+| L6 | First real chef onboarded and approved through production flow before public launch | Ops | |
+| L7 | First real driver onboarded and vehicle verified through production flow before public launch | Ops | |
+| L8 | Payment processor agreement (Stripe ToS + Connect ToS) signed by business owner | Finance + Legal | |
+| L9 | Customer support contact path (email/phone/chat) documented and live before traffic | Ops | |
 
 ---
 

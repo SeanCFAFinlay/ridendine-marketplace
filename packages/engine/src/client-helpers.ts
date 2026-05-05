@@ -6,10 +6,9 @@
 
 import { createAdminClient } from '@ridendine/db';
 import { createCentralEngine, type CentralEngine } from './core/engine.factory';
-import type { PaymentAdapter } from './orchestrators/order.orchestrator';
+import type { PaymentAdapter } from './types/payment-adapter';
 
-// Singleton engine instance (shared across all server-side callers)
-let engineInstance: CentralEngine | null = null;
+// Payment adapter registered once at app startup
 let registeredPaymentAdapter: PaymentAdapter | undefined;
 
 /**
@@ -18,28 +17,23 @@ let registeredPaymentAdapter: PaymentAdapter | undefined;
  */
 export function registerPaymentAdapter(adapter: PaymentAdapter): void {
   registeredPaymentAdapter = adapter;
-  // Force re-creation on next getAdminEngine() call if engine already exists
-  engineInstance = null;
 }
 
 /**
- * Get the central engine instance (singleton).
+ * Get a fresh central engine instance per request.
  * Uses admin client for full database access.
  * Named getAdminEngine to avoid conflict with core getEngine(client).
  */
 export function getAdminEngine(): CentralEngine {
-  if (!engineInstance) {
-    const client = createAdminClient();
-    engineInstance = createCentralEngine(client, registeredPaymentAdapter);
-  }
-  return engineInstance;
+  const client = createAdminClient();
+  return createCentralEngine(client, registeredPaymentAdapter);
 }
 
 /**
- * Reset the engine instance (for testing)
+ * Reset the payment adapter (for testing)
  */
 export function resetEngineClient(): void {
-  engineInstance = null;
+  registeredPaymentAdapter = undefined;
 }
 
 /**

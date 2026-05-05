@@ -1,24 +1,28 @@
 // ==========================================
-// DISPATCH ENGINE — driver ownership / transition guards
+// DELIVERY ENGINE — driver ownership / transition guards
+// Updated (Stage 3): DispatchEngine removed; tests now use DeliveryEngine.
 // ==========================================
 
 import { describe, expect, it, vi } from 'vitest';
-import { DispatchEngine } from './dispatch.engine';
+import { DeliveryEngine } from './delivery-engine';
 
-function createDispatchDeps() {
+function createDeliveryDeps() {
   return {
+    audit: { logStatusChange: vi.fn().mockResolvedValue(undefined), log: vi.fn().mockResolvedValue(undefined) },
     events: { emit: vi.fn(), flush: vi.fn().mockResolvedValue(undefined) },
-    audit: { logStatusChange: vi.fn().mockResolvedValue(undefined) },
     sla: {
       startTimer: vi.fn().mockResolvedValue(undefined),
       completeTimer: vi.fn().mockResolvedValue(undefined),
     },
+    masterOrder: {
+      syncFromDelivery: vi.fn().mockResolvedValue({ success: true }),
+    },
   };
 }
 
-describe('DispatchEngine driver guards', () => {
+describe('DeliveryEngine driver guards', () => {
   it('updateDeliveryStatus returns FORBIDDEN when driver user does not own delivery', async () => {
-    const deps = createDispatchDeps();
+    const deps = createDeliveryDeps();
     const client = {
       from: vi.fn((table: string) => {
         if (table === 'deliveries') {
@@ -54,10 +58,11 @@ describe('DispatchEngine driver guards', () => {
       }),
     };
 
-    const engine = new DispatchEngine(
+    const engine = new DeliveryEngine(
       client as any,
-      deps.events as any,
       deps.audit as any,
+      deps.events as any,
+      deps.masterOrder as any,
       deps.sla as any
     );
 

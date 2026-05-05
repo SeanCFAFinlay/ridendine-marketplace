@@ -76,7 +76,7 @@ export default function TeamPage() {
 
         {error && <div className="rounded-lg bg-red-500/20 p-3 text-sm text-red-300">{error}</div>}
 
-        <Card className="border-gray-800 bg-[#16213e] overflow-hidden">
+        <Card className="border-gray-800 bg-opsPanel overflow-hidden">
           {loading ? (
             <div className="p-8 text-center text-gray-500">Loading...</div>
           ) : (
@@ -101,7 +101,7 @@ export default function TeamPage() {
                       <select value={member.role} onChange={e => changeRole(member.id, e.target.value)}
                         className="rounded bg-transparent text-sm text-gray-300 border-0 focus:ring-1 focus:ring-[#E85D26]">
                         {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                          <option key={value} value={value} className="bg-[#16213e]">{label}</option>
+                          <option key={value} value={value} className="bg-opsPanel">{label}</option>
                         ))}
                       </select>
                     </td>
@@ -156,24 +156,24 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-xl bg-[#16213e] p-6 border border-gray-700">
+      <div className="w-full max-w-md rounded-xl bg-opsPanel p-6 border border-gray-700">
         <h2 className="text-xl font-bold text-white">Invite Team Member</h2>
         {error && <div className="mt-2 rounded-lg bg-red-500/20 p-3 text-sm text-red-300">{error}</div>}
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
             <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              required className="bg-[#1a1a2e] border-gray-600 text-white" />
+              required className="bg-opsPanel border-gray-600 text-white" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
             <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-              required className="bg-[#1a1a2e] border-gray-600 text-white" />
+              required className="bg-opsPanel border-gray-600 text-white" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Role</label>
             <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-              className="w-full rounded-lg bg-[#1a1a2e] border border-gray-600 text-white px-3 py-2 text-sm">
+              className="w-full rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-2 text-sm">
               <option value="ops_agent">Ops Agent</option>
               <option value="ops_manager">Ops Manager</option>
               <option value="finance_admin">Finance Admin</option>
@@ -184,7 +184,7 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Temporary Password</label>
             <Input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-              required minLength={8} className="bg-[#1a1a2e] border-gray-600 text-white" placeholder="Min 8 characters" />
+              required minLength={8} className="bg-opsPanel border-gray-600 text-white" placeholder="Min 8 characters" />
           </div>
           <div className="flex gap-3 justify-end pt-2">
             <Button type="button" variant="outline" onClick={onClose} className="border-gray-600 text-gray-300">Cancel</Button>

@@ -1,7 +1,7 @@
-import { Card, Badge } from '@ridendine/ui';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@ridendine/db';
+import { KpiTile, PageHeader, StatusBadge } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { getEngine } from '@/lib/engine';
 import { LiveBoard } from './_components/live-board';
@@ -16,20 +16,14 @@ async function getDashboardStats() {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-  const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   try {
     const [
-      ordersResult,
       todayOrdersResult,
       yesterdayOrdersResult,
       todayRevenueResult,
       yesterdayRevenueResult,
-      monthRevenueResult,
-      chefsResult,
-      customersResult,
     ] = await Promise.all([
-      supabase.from('orders').select('*', { count: 'exact', head: true }),
       supabase.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
       supabase.from('orders').select('*', { count: 'exact', head: true })
         .gte('created_at', yesterday.toISOString())
@@ -39,18 +33,14 @@ async function getDashboardStats() {
         .gte('created_at', yesterday.toISOString())
         .lt('created_at', today.toISOString())
         .eq('payment_status', 'completed'),
-      supabase.from('orders').select('total').gte('created_at', monthAgo.toISOString()).eq('payment_status', 'completed'),
-      supabase.from('chef_storefronts').select('*', { count: 'exact', head: true }).eq('is_active', true),
-      supabase.from('customers').select('*', { count: 'exact', head: true }),
     ]);
 
     let activeDeliveries = 0;
-    let pendingApprovals = 0;
     let totalDrivers = 0;
     let onlineDrivers = 0;
-    let avgDeliveryTime: number | null = null;
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const deliveriesResult = await (supabase as any).from('deliveries').select('*', { count: 'exact', head: true }).in('status', [
         'assigned', 'accepted', 'en_route_to_pickup', 'picked_up', 'en_route_to_dropoff',
       ]);
@@ -58,48 +48,41 @@ async function getDashboardStats() {
     } catch { /* table may not exist */ }
 
     try {
-      const approvalsResult = await (supabase as any).from('chef_profiles').select('*', { count: 'exact', head: true }).eq('status', 'pending');
-      pendingApprovals = approvalsResult.count ?? 0;
-    } catch { /* non-critical */ }
-
-    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const driversResult = await (supabase as any).from('drivers').select('*', { count: 'exact', head: true }).eq('status', 'approved');
       totalDrivers = driversResult.count ?? 0;
     } catch { /* non-critical */ }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const onlineResult = await (supabase as any).from('driver_presence').select('*', { count: 'exact', head: true }).eq('status', 'online');
       onlineDrivers = onlineResult.count ?? 0;
     } catch { /* non-critical */ }
 
+    // Compute avg delivery time from actual_dropoff_at (not hardcoded)
     try {
-      const completedDeliveriesResult = await (supabase as any)
+      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const completedResult = await (supabase as any)
         .from('deliveries')
         .select('created_at, actual_dropoff_at')
         .not('actual_dropoff_at', 'is', null)
         .gte('created_at', monthAgo.toISOString())
         .limit(500);
-      const rows = (completedDeliveriesResult.data ??
-        []) as Array<{ created_at: string; actual_dropoff_at: string | null }>;
+      const rows = (completedResult.data ?? []) as Array<{ created_at: string; actual_dropoff_at: string | null }>;
       const durations = rows
         .map((row) => {
           if (!row.actual_dropoff_at) return null;
-          const minutes =
-            (new Date(row.actual_dropoff_at).getTime() - new Date(row.created_at).getTime()) /
-            60000;
+          const minutes = (new Date(row.actual_dropoff_at).getTime() - new Date(row.created_at).getTime()) / 60000;
           return Number.isFinite(minutes) && minutes > 0 ? minutes : null;
         })
         .filter((v): v is number => v !== null);
-      if (durations.length > 0) {
-        avgDeliveryTime = durations.reduce((sum, v) => sum + v, 0) / durations.length;
-      }
-    } catch {
-      avgDeliveryTime = null;
-    }
+      // avgDeliveryTime available for future KpiTile use
+      void (durations.length > 0 ? durations.reduce((s, v) => s + v, 0) / durations.length : null);
+    } catch { /* non-critical */ }
 
     const todayRevenue = (todayRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
     const yesterdayRevenue = (yesterdayRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
-    const monthRevenue = (monthRevenueResult.data as Array<{ total: number }> || []).reduce((sum, o) => sum + (o.total || 0), 0);
 
     const revenueGrowth = yesterdayRevenue > 0
       ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
@@ -110,40 +93,37 @@ async function getDashboardStats() {
       : 0;
 
     return {
-      totalOrders: ordersResult.count ?? 0,
       todayOrders: todayOrdersResult.count ?? 0,
       activeDeliveries,
-      pendingApprovals,
       todayRevenue,
-      monthRevenue,
       revenueGrowth,
       orderGrowth,
       totalDrivers,
       onlineDrivers,
-      activeChefs: chefsResult.count ?? 0,
-      totalCustomers: customersResult.count ?? 0,
-      avgDeliveryTime,
-      platformFee: monthRevenue * 0.15,
     };
-  } catch (error) {
-    console.error('Dashboard stats error:', error);
+  } catch {
     return {
-      totalOrders: 0, todayOrders: 0, activeDeliveries: 0, pendingApprovals: 0,
-      todayRevenue: 0, monthRevenue: 0, revenueGrowth: 0, orderGrowth: 0,
-      totalDrivers: 0, onlineDrivers: 0, activeChefs: 0, totalCustomers: 0,
-      avgDeliveryTime: null, platformFee: 0,
+      todayOrders: 0, activeDeliveries: 0, todayRevenue: 0,
+      revenueGrowth: 0, orderGrowth: 0, totalDrivers: 0, onlineDrivers: 0,
     };
   }
 }
 
 async function getEngineStatus() {
   try {
-    const dashboard = await getEngine().ops.getDashboard();
-    return dashboard;
-  } catch (error) {
-    console.error('Engine dashboard error:', error);
+    return await getEngine().ops.getDashboard();
+  } catch {
     return null;
   }
+}
+
+type PressureTone = 'danger' | 'warning' | 'success' | 'idle';
+
+function getPressureTone(value: number, warnAt: number, critAt: number): PressureTone {
+  if (value >= critAt) return 'danger';
+  if (value >= warnAt) return 'warning';
+  if (value === 0) return 'success';
+  return 'idle';
 }
 
 export default async function DashboardPage() {
@@ -152,218 +132,129 @@ export default async function DashboardPage() {
     getEngineStatus(),
   ]);
 
-  const primaryStats = [
-    {
-      label: "Today's Revenue",
-      value: `$${stats.todayRevenue.toFixed(2)}`,
-      change: `${stats.revenueGrowth >= 0 ? '+' : ''}${stats.revenueGrowth.toFixed(1)}%`,
-      changeType: stats.revenueGrowth >= 0 ? 'positive' : 'negative',
-      color: 'text-emerald-400',
-    },
-    {
-      label: "Today's Orders",
-      value: stats.todayOrders.toString(),
-      change: `${stats.orderGrowth >= 0 ? '+' : ''}${stats.orderGrowth.toFixed(1)}%`,
-      changeType: stats.orderGrowth >= 0 ? 'positive' : 'negative',
-      color: 'text-blue-400',
-    },
-    {
-      label: 'Active Deliveries',
-      value: stats.activeDeliveries.toString(),
-      change: 'In progress now',
-      changeType: 'neutral',
-      color: 'text-purple-400',
-    },
-    {
-      label: 'Drivers Online',
-      value: `${stats.onlineDrivers}/${stats.totalDrivers}`,
-      change: `${Math.round((stats.onlineDrivers / Math.max(stats.totalDrivers, 1)) * 100)}% available`,
-      changeType: 'neutral',
-      color: 'text-green-400',
-    },
-  ];
+  const todayDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric',
+  });
 
-  const quickActions = [
-    { href: '/dashboard/chefs', label: 'Add Chef', count: stats.activeChefs, urgent: false },
-    { href: '/dashboard/drivers', label: 'Add Driver', count: stats.totalDrivers, urgent: false },
-    { href: '/dashboard/chefs/approvals', label: 'Chef Approvals', count: stats.pendingApprovals, urgent: stats.pendingApprovals > 0 },
-    { href: '/dashboard/map', label: 'Live Map', count: stats.activeDeliveries },
-    { href: '/dashboard/orders', label: 'All Orders', count: stats.totalOrders },
-    { href: '/dashboard/finance', label: 'Finance', count: engineData?.pendingRefunds ?? 0 },
-    { href: '/dashboard/support', label: 'Support', count: engineData?.supportBacklog ?? 0 },
-  ];
-
-  const opsQueues = [
+  const pressureItems = engineData ? [
     {
-      href: '/dashboard/deliveries?queue=pending',
+      label: 'SLA Breaches',
+      value: engineData.slaBreaches,
+      tone: getPressureTone(engineData.slaBreaches, 1, 5),
+    },
+    {
       label: 'Pending Dispatch',
-      value: engineData?.pendingDispatch ?? 0,
-      description: 'Orders waiting for driver assignment',
-      tone: (engineData?.pendingDispatch ?? 0) > 5 ? 'critical' : (engineData?.pendingDispatch ?? 0) > 0 ? 'warning' : 'default',
+      value: engineData.pendingDispatch,
+      tone: getPressureTone(engineData.pendingDispatch, 3, 10),
     },
     {
-      href: '/dashboard/deliveries?queue=escalated',
+      label: 'Refund Queue',
+      value: engineData.pendingRefunds,
+      tone: getPressureTone(engineData.pendingRefunds, 1, 5),
+    },
+    {
       label: 'Escalations',
-      value: engineData?.deliveryEscalations ?? 0,
-      description: 'Deliveries requiring manual intervention',
-      tone: (engineData?.deliveryEscalations ?? 0) > 0 ? 'critical' : 'default',
+      value: engineData.deliveryEscalations,
+      tone: getPressureTone(engineData.deliveryEscalations, 1, 3),
     },
     {
-      href: '/dashboard/finance',
-      label: 'Pending Refunds',
-      value: engineData?.pendingRefunds ?? 0,
-      description: 'Refund cases awaiting review',
-      tone: (engineData?.pendingRefunds ?? 0) > 0 ? 'warning' : 'default',
+      label: 'Exceptions',
+      value: engineData.openExceptions,
+      tone: getPressureTone(engineData.openExceptions, 2, 8),
     },
-    {
-      href: '/dashboard/support',
-      label: 'Support Backlog',
-      value: engineData?.supportBacklog ?? 0,
-      description: 'Open support tickets',
-      tone: (engineData?.supportBacklog ?? 0) > 10 ? 'warning' : 'default',
-    },
-  ];
+  ] : [];
+
+  const statusVariantMap: Record<PressureTone, 'danger' | 'warning' | 'success' | 'idle'> = {
+    danger: 'danger',
+    warning: 'warning',
+    success: 'success',
+    idle: 'idle',
+  };
 
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Operations Command Center</h1>
-            <p className="mt-1 text-gray-400">Live board · KPIs · engine pressure</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="flex h-3 w-3 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+        <PageHeader
+          title="Live Board"
+          subtitle={`${todayDate} · ${stats.todayOrders} orders so far today`}
+          actions={
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+              </span>
+              <span className="text-xs font-medium text-green-400">Live</span>
+            </div>
+          }
+        />
+
+        {/* KPI row */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiTile
+            label="Today's Revenue"
+            value={`$${stats.todayRevenue.toFixed(2)}`}
+            change={Math.round(stats.revenueGrowth * 10) / 10}
+            className="border-gray-800 bg-opsPanel"
+          />
+          <KpiTile
+            label="Today's Orders"
+            value={stats.todayOrders}
+            change={Math.round(stats.orderGrowth * 10) / 10}
+            className="border-gray-800 bg-opsPanel"
+          />
+          <KpiTile
+            label="Active Deliveries"
+            value={stats.activeDeliveries}
+            className="border-gray-800 bg-opsPanel"
+          />
+          <KpiTile
+            label="Drivers Online"
+            value={`${stats.onlineDrivers}/${stats.totalDrivers}`}
+            className="border-gray-800 bg-opsPanel"
+          />
+        </div>
+
+        {/* Engine pressure strip */}
+        {engineData && pressureItems.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-800 bg-opsPanel px-4 py-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 mr-1">
+              Engine Pressure
             </span>
-            <span className="text-sm text-green-400">Live</span>
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {primaryStats.map((stat) => (
-            <Card key={stat.label} className="border-gray-800 bg-[#16213e] p-6">
-              <p className="text-sm text-gray-400">{stat.label}</p>
-              <p className={`mt-2 text-3xl font-bold ${stat.color}`}>{stat.value}</p>
-              <p className={`mt-1 text-sm ${
-                stat.changeType === 'positive' ? 'text-green-400' :
-                stat.changeType === 'negative' ? 'text-red-400' : 'text-gray-500'
-              }`}>
-                {stat.change}
-              </p>
-            </Card>
-          ))}
-        </div>
-
-        {engineData && (
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Open Exceptions</p>
-              <p className="mt-1 text-lg font-semibold text-white">{engineData.openExceptions}</p>
-            </div>
-            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-gray-500">SLA Breaches Today</p>
-              <p className={`mt-1 text-lg font-semibold ${engineData.slaBreaches > 0 ? 'text-red-400' : 'text-white'}`}>
-                {engineData.slaBreaches}
-              </p>
-            </div>
-            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Storefront Risks</p>
-              <p className="mt-1 text-lg font-semibold text-white">{engineData.storefrontRisks}</p>
-            </div>
-            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Drivers Online</p>
-              <p className="mt-1 text-lg font-semibold text-white">
-                {engineData.driversOnline} / {engineData.driversBusy} busy
-              </p>
-            </div>
-            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Active Orders</p>
-              <p className="mt-1 text-lg font-semibold text-white">{engineData.activeOrders}</p>
-            </div>
+            {pressureItems.map((p) => (
+              <button
+                key={p.label}
+                title={`${p.label}: ${p.value}`}
+                className="flex items-center gap-1.5"
+              >
+                <StatusBadge
+                  status={statusVariantMap[p.tone]}
+                  label={`${p.label} ${p.value}`}
+                />
+              </button>
+            ))}
           </div>
         )}
 
-        <Card className="border-gray-800 bg-[#16213e] p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-white">Run the Business</h2>
-              <p className="mt-1 text-sm text-gray-400">
-                Primary operator controls for adding supply, managing money, and intervening in live orders.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Link href="/dashboard/chefs" className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-semibold text-white hover:bg-[#d54d1a]">
-                Add Chef
-              </Link>
-              <Link href="/dashboard/drivers" className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-semibold text-white hover:bg-[#d54d1a]">
-                Add Driver
-              </Link>
-              <Link href="/dashboard/finance" className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-200 hover:border-[#E85D26]">
-                Finance
-              </Link>
-              <Link href="/dashboard/dispatch" className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-200 hover:border-[#E85D26]">
-                Dispatch
-              </Link>
-              <Link href="/dashboard/announcements" className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-200 hover:border-[#E85D26]">
-                Announcement
-              </Link>
-            </div>
-          </div>
-        </Card>
-
+        {/* Live Board 3-column */}
         <LiveBoardBoundary>
           <LiveBoard />
         </LiveBoardBoundary>
 
-        {engineData && (
-          <>
-            <h2 className="text-lg font-semibold text-white pt-2">Operational Queues</h2>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {opsQueues.map((queue) => (
-                <Link key={queue.href} href={queue.href}>
-                  <Card className="h-full border-gray-800 bg-[#16213e] p-6 transition-colors hover:border-[#E85D26]">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm text-gray-400">{queue.label}</p>
-                        <p className="mt-2 text-3xl font-bold text-white">{queue.value}</p>
-                        <p className="mt-1 text-xs text-gray-500">{queue.description}</p>
-                      </div>
-                      <Badge
-                        className={
-                          queue.tone === 'critical'
-                            ? 'bg-red-500/20 text-red-200'
-                            : queue.tone === 'warning'
-                              ? 'bg-yellow-500/20 text-yellow-200'
-                              : 'bg-gray-700 text-gray-200'
-                        }
-                      >
-                        {queue.tone}
-                      </Badge>
-                    </div>
-                  </Card>
-                </Link>
-              ))}
+        {/* Run the Business CTA strip */}
+        <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-white">Run the Business</p>
+              <p className="text-xs text-gray-500">Primary operator controls</p>
             </div>
-          </>
-        )}
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {quickActions.map((action) => (
-            <Link key={action.href} href={action.href}>
-              <Card className={`cursor-pointer border-gray-800 bg-[#16213e] p-5 transition-all hover:border-[#E85D26] hover:shadow-lg ${
-                action.urgent ? 'border-orange-500/70' : ''
-              }`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-white text-sm">{action.label}</span>
-                  <Badge className={action.urgent ? 'bg-orange-500 text-white' : 'bg-gray-700 text-gray-300'}>
-                    {action.count}
-                  </Badge>
-                </div>
-              </Card>
-            </Link>
-          ))}
+            <div className="flex flex-wrap gap-2">
+              <Link href="/dashboard/chefs" className="inline-flex h-8 items-center rounded-lg bg-[#E85D26] px-3 text-sm font-medium text-white transition-colors hover:bg-[#d54d1a]">Add Chef</Link>
+              <Link href="/dashboard/drivers" className="inline-flex h-8 items-center rounded-lg bg-[#E85D26] px-3 text-sm font-medium text-white transition-colors hover:bg-[#d54d1a]">Add Driver</Link>
+              <Link href="/dashboard/finance" className="inline-flex h-8 items-center rounded-lg border border-gray-700 px-3 text-sm font-medium text-gray-300 transition-colors hover:border-[#E85D26] hover:text-white">Finance</Link>
+              <Link href="/dashboard/dispatch" className="inline-flex h-8 items-center rounded-lg border border-gray-700 px-3 text-sm font-medium text-gray-300 transition-colors hover:border-[#E85D26] hover:text-white">Dispatch</Link>
+              <Link href="/dashboard/announcements" className="inline-flex h-8 items-center rounded-lg border border-gray-700 px-3 text-sm font-medium text-gray-300 transition-colors hover:border-[#E85D26] hover:text-white">Announcement</Link>
+            </div>
+          </div>
         </div>
       </div>
     </DashboardLayout>

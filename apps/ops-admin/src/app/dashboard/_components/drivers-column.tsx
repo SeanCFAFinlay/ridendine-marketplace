@@ -29,7 +29,7 @@ export function DriversColumn({ drivers }: { drivers: OpsLiveDriverView[] }) {
           return (
             <Card
               key={d.id}
-              className={`border-gray-700 bg-[#16213e] p-3 ${
+              className={`border-gray-700 bg-opsPanel p-3 ${
                 stale ? 'border-amber-600/60' : ''
               } ${overloaded ? 'border-red-500/50' : ''}`}
             >

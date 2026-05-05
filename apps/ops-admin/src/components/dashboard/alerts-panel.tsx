@@ -168,7 +168,7 @@ export function AlertsPanel({ pendingApprovals }: AlertsPanelProps) {
   };
 
   return (
-    <Card className="border-gray-800 bg-[#16213e] p-6 h-full">
+    <Card className="border-gray-800 bg-opsPanel p-6 h-full">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">System Alerts</h3>
         {alerts.filter((a) => a.type === 'urgent').length > 0 && (

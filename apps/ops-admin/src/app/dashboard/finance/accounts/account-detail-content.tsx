@@ -58,31 +58,31 @@ export async function FinanceAccountDetailContent({ type, id }: { type: AccountD
         </div>
 
         {acctErr || !account ? (
-          <Card className="border-gray-800 bg-[#16213e] p-6 text-gray-300">
+          <Card className="border-gray-800 bg-opsPanel p-6 text-gray-300">
             No platform_accounts row yet (balance may be zero until ledger activity).
           </Card>
         ) : (
           <div className="grid gap-4 sm:grid-cols-3">
-            <Card className="border-gray-800 bg-[#16213e] p-4">
+            <Card className="border-gray-800 bg-opsPanel p-4">
               <p className="text-sm text-gray-400">Balance</p>
               <p className="mt-1 text-2xl font-bold text-emerald-300">
                 {fmtCents(account.balance_cents as number)}
               </p>
             </Card>
-            <Card className="border-gray-800 bg-[#16213e] p-4">
+            <Card className="border-gray-800 bg-opsPanel p-4">
               <p className="text-sm text-gray-400">Pending payout</p>
               <p className="mt-1 text-2xl font-bold text-yellow-200">
                 {fmtCents((account.pending_payout_cents as number) ?? 0)}
               </p>
             </Card>
-            <Card className="border-gray-800 bg-[#16213e] p-4">
+            <Card className="border-gray-800 bg-opsPanel p-4">
               <p className="text-sm text-gray-400">Currency</p>
               <p className="mt-1 text-2xl font-bold text-white">{(account.currency as string) ?? 'CAD'}</p>
             </Card>
           </div>
         )}
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Ledger lines (entity scoped)</h2>
             <Badge className="bg-gray-700 text-gray-200">{(entries ?? []).length}</Badge>

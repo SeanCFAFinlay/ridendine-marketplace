@@ -52,13 +52,13 @@ export function CustomerActions({ customerId, customerName }: CustomerActionsPro
         </a>
       </div>
       {showMessage && (
-        <div className="rounded-lg bg-[#1a1a2e] p-4">
+        <div className="rounded-lg bg-opsPanel p-4">
           <textarea
             value={message}
             onChange={e => setMessage(e.target.value)}
             placeholder={`Send a notification to ${customerName}...`}
             rows={3}
-            className="w-full rounded-lg bg-[#0d1520] border border-gray-600 text-white px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-opsCanvas border border-gray-600 text-white px-3 py-2 text-sm"
           />
           <div className="mt-2 flex gap-2 justify-end">
             <Button

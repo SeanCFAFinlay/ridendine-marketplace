@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { createAdminClient, getOpsSupportQueue, createSupportTicket, type SupabaseClient } from '@ridendine/db';
 import {
   getOpsActorContext,
-  errorResponse,
   guardPlatformApi,
   finalizeOpsActor,
 } from '@/lib/engine';

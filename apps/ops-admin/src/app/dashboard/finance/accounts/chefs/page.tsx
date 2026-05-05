@@ -45,9 +45,9 @@ export default async function FinanceChefAccountsPage() {
           <p className="mt-1 text-gray-400">Balances derived from ledger_entries (chef_payable).</p>
         </div>
         {error ? (
-          <Card className="border-red-900/50 bg-[#16213e] p-6 text-red-200">Failed to load accounts.</Card>
+          <Card className="border-red-900/50 bg-opsPanel p-6 text-red-200">Failed to load accounts.</Card>
         ) : (
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Storefronts</h2>
               <Badge className="bg-purple-500/20 text-purple-200">{(rows ?? []).length}</Badge>

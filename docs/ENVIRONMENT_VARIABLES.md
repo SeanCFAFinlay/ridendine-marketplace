@@ -9,7 +9,7 @@ Related: `docs/RUNBOOK_DEPLOY.md`, `docs/HEALTHCHECKS_AND_MONITORING.md`, `docs/
 
 - **Development / local:** test Stripe keys only, memory rate limiter allowed, health may be `degraded` without distributed provider.
 - **Staging:** test Stripe keys only, distributed rate-limit provider required for production-like readiness, checkout idempotency migration must be applied before launch gating.
-- **Production:** live Stripe secret required, distributed rate-limit provider required, `BYPASS_AUTH` forbidden, no preview/test-only values.
+- **Production:** live Stripe secret required, distributed rate-limit provider required, `ALLOW_DEV_AUTOLOGIN` must be absent or false, no preview/test-only values.
 
 ## Variable matrix
 
@@ -32,7 +32,14 @@ Related: `docs/RUNBOOK_DEPLOY.md`, `docs/HEALTHCHECKS_AND_MONITORING.md`, `docs/
 | `UPSTASH_REDIS_REST_TOKEN` | server APIs | O | R | R | Server | `upstash_token_example` | Secret; never public. |
 | `ENGINE_PROCESSOR_TOKEN` | ops processor APIs | O | R | R | Server | `hex_or_uuid_example` | Secret. |
 | `CRON_SECRET` | Vercel cron auth | O | R | R | Server | `cron_secret_example` | Secret bearer token for processor calls. |
-| `BYPASS_AUTH` | auth middleware | O | Forbidden | Forbidden | Server | `false` | Must never be true in staging/prod. |
+| `ALLOW_DEV_AUTOLOGIN` | auth middleware | O | Forbidden | Forbidden | Server | `false` | Local dev only. Never honored in production regardless of value. Replaces removed `BYPASS_AUTH`. |
+| `RESEND_API_KEY` | email delivery | O | O | O | Server | `re_example...` | Resend API key. Falls back to DB-only notifications when unset. |
+| `TWILIO_ACCOUNT_SID` | SMS delivery | O | O | O | Server | `ACexample...` | Twilio account SID for SMS notifications. Falls back to DB-only when unset. |
+| `TWILIO_AUTH_TOKEN` | SMS delivery | O | O | O | Server | `twilio_token_example` | Secret; never `NEXT_PUBLIC_*`. |
+| `TWILIO_FROM_NUMBER` | SMS delivery | O | O | O | Server | `+15005550006` | E.164 format Twilio sending number. |
+| `NEXT_PUBLIC_SENTRY_DSN` | error monitoring | O | O | O | Public | `https://key@o123.ingest.sentry.io/456` | Per-app Sentry DSN. Sentry no-ops when unset. |
+| `SENTRY_AUTH_TOKEN` | source maps | O | O | O | Server | `sntrys_example...` | Used by `@sentry/nextjs` Webpack plugin to upload source maps at build time. Optional. |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | maps UI | O | O | O | Public | `AIzaSyExample...` | Used by web app delivery tracking map. Optional — map degrades gracefully when unset. |
 
 ## Stripe mode guardrails (Phase A/C)
 
@@ -68,7 +75,7 @@ Related: `docs/RUNBOOK_DEPLOY.md`, `docs/HEALTHCHECKS_AND_MONITORING.md`, `docs/
 
 ## Pre-deploy validation checklist
 
-1. Confirm `BYPASS_AUTH` is absent or false.
+1. Confirm `ALLOW_DEV_AUTOLOGIN` is absent or false.
 2. Confirm Stripe key mode matches environment policy above.
 3. Confirm distributed rate-limit env vars are set in staging/prod.
 4. Confirm `CHECKOUT_IDEMPOTENCY_MIGRATION_APPLIED=true` only after migration evidence.

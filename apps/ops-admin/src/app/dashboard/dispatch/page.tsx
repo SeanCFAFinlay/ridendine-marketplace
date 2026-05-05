@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { DispatchCommandCenterReadModel, DispatchQueueItem } from '@ridendine/types';
-import { Button, Card } from '@ridendine/ui';
+import { Button, Card, Modal, PageHeader, DataTable, EmptyState, StatusBadge } from '@ridendine/ui';
+import type { ColumnDef } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { DeliveryMap } from '@/components/map/delivery-map';
+import { Clock, Truck, Users } from 'lucide-react';
 
 function formatEtaMinutes(distanceKm: number | null | undefined) {
   if (distanceKm == null || !Number.isFinite(distanceKm)) return '—';
@@ -16,6 +18,7 @@ function formatEtaMinutes(distanceKm: number | null | undefined) {
 type OfferHistoryRow = {
   id: string;
   driver_id: string;
+  driver_name?: string;
   response: string;
   offered_at: string;
   responded_at?: string | null;
@@ -23,16 +26,18 @@ type OfferHistoryRow = {
   successRate?: number;
 };
 
+type PendingAction = {
+  type: 'force_assign' | 'add_ops_note';
+  deliveryId: string;
+  driverId?: string;
+};
+
 export default function DispatchConsolePage() {
   const [board, setBoard] = useState<DispatchCommandCenterReadModel | undefined>(undefined);
   const [history, setHistory] = useState<OfferHistoryRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<{
-    type: 'force_assign' | 'add_ops_note';
-    deliveryId: string;
-    driverId?: string;
-  } | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [actionReason, setActionReason] = useState('');
 
   const load = useCallback(async () => {
@@ -88,12 +93,7 @@ export default function DispatchConsolePage() {
       const res = await fetch('/api/engine/dispatch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'force_assign',
-          deliveryId,
-          driverId,
-          reason: reason.trim(),
-        }),
+        body: JSON.stringify({ action: 'force_assign', deliveryId, driverId, reason: reason.trim() }),
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
@@ -115,11 +115,7 @@ export default function DispatchConsolePage() {
       await fetch('/api/engine/dispatch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'add_ops_note',
-          deliveryId,
-          note: note.trim(),
-        }),
+        body: JSON.stringify({ action: 'add_ops_note', deliveryId, note: note.trim() }),
       });
       setPendingAction(null);
       setActionReason('');
@@ -129,10 +125,75 @@ export default function DispatchConsolePage() {
     }
   }
 
+  const historyColumns: ColumnDef<OfferHistoryRow>[] = [
+    {
+      key: 'offered_at',
+      header: 'Time',
+      sortable: true,
+      cell: (row) => (
+        <span className="text-xs text-gray-400">
+          {new Date(row.offered_at).toLocaleTimeString()}
+        </span>
+      ),
+    },
+    {
+      key: 'driver_name',
+      header: 'Driver',
+      cell: (row) => (
+        <span className="font-medium text-gray-200">
+          {row.driver_name ?? row.driver_id.slice(0, 8) + '…'}
+        </span>
+      ),
+    },
+    {
+      key: 'response',
+      header: 'Response',
+      cell: (row) => (
+        <StatusBadge
+          status={row.response === 'accepted' ? 'success' : row.response === 'rejected' ? 'danger' : 'warning'}
+          label={row.response}
+        />
+      ),
+    },
+    {
+      key: 'responseTimeMs',
+      header: 'Latency (ms)',
+      sortable: true,
+      cell: (row) => (
+        <span className="text-gray-400">
+          {row.responseTimeMs != null ? row.responseTimeMs : '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'successRate',
+      header: 'Win %',
+      sortable: true,
+      cell: (row) => (
+        <span className="text-gray-400">
+          {row.successRate != null ? `${Math.round(row.successRate * 100)}%` : '—'}
+        </span>
+      ),
+    },
+  ];
+
+  const isModalOpen = pendingAction !== null;
+
+  const handleModalConfirm = () => {
+    if (!pendingAction) return;
+    if (pendingAction.type === 'force_assign' && pendingAction.driverId) {
+      void forceAssign(pendingAction.deliveryId, pendingAction.driverId, actionReason);
+    } else {
+      void holdDelivery(pendingAction.deliveryId, actionReason);
+    }
+  };
+
   if (board === undefined && !error) {
     return (
       <DashboardLayout>
-        <div className="flex min-h-[40vh] items-center justify-center text-gray-400">Loading dispatch…</div>
+        <div className="flex min-h-[40vh] items-center justify-center text-gray-400">
+          Loading dispatch…
+        </div>
       </DashboardLayout>
     );
   }
@@ -145,26 +206,29 @@ export default function DispatchConsolePage() {
     );
   }
 
-  if (!board) {
-    return null;
-  }
+  if (!board) return null;
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-[1600px] space-y-6 p-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Dispatch console</h1>
-          <p className="mt-1 text-sm text-gray-400">
-            Auto-dispatch queue, active routes, and last 24h offer outcomes. Refreshes every 30s.
-          </p>
-          {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
-        </div>
+      <div className="mx-auto max-w-[1600px] space-y-6">
+        <PageHeader
+          title="Dispatch Console"
+          subtitle="Auto-dispatch queue, active routes, and last 24h offer outcomes. Refreshes every 30s."
+        />
+        {error && <p className="text-sm text-red-400">{error}</p>}
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="border-gray-800 bg-[#16213e] p-4 text-gray-100 lg:col-span-1">
-            <h2 className="mb-3 text-lg font-semibold text-white">Awaiting driver</h2>
-            <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
-              {board?.pendingQueue?.length ? (
+        <div className="grid gap-4 lg:grid-cols-3">
+          {/* Pending queue */}
+          <Card className="border-gray-800 bg-opsPanel p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-gray-400" />
+              <h2 className="text-sm font-semibold text-white">Awaiting Driver</h2>
+              <span className="ml-auto rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
+                {board.pendingQueue?.length ?? 0}
+              </span>
+            </div>
+            <div className="max-h-[70vh] space-y-3 overflow-y-auto pr-1">
+              {board.pendingQueue?.length ? (
                 board.pendingQueue.map((item) => (
                   <div key={item.deliveryId} className="rounded-lg border border-gray-700 p-3 text-sm">
                     <div className="font-medium text-white">
@@ -188,7 +252,7 @@ export default function DispatchConsolePage() {
                       {item.topCandidates[0] && (
                         <Button
                           size="sm"
-                          className="bg-[#E85D26] text-white"
+                          className="bg-[#E85D26] text-white hover:bg-[#d54d1a]"
                           disabled={busyId === item.deliveryId}
                           onClick={() => {
                             setActionReason('Manual dispatch override');
@@ -222,44 +286,24 @@ export default function DispatchConsolePage() {
                         </Link>
                       )}
                     </div>
-                    {pendingAction?.deliveryId === item.deliveryId && (
-                      <div className="mt-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3">
-                        <p className="text-xs font-semibold text-yellow-100">
-                          {pendingAction.type === 'force_assign' ? 'Force assign requires a reason' : 'Hold requires an ops note'}
-                        </p>
-                        <textarea
-                          value={actionReason}
-                          onChange={(event) => setActionReason(event.target.value)}
-                          className="mt-2 min-h-20 w-full rounded border border-gray-700 bg-gray-950 px-2 py-1 text-xs text-white"
-                        />
-                        <div className="mt-2 flex gap-2">
-                          <Button
-                            size="sm"
-                            disabled={Boolean(busyId)}
-                            onClick={() =>
-                              pendingAction.type === 'force_assign' && pendingAction.driverId
-                                ? forceAssign(pendingAction.deliveryId, pendingAction.driverId, actionReason)
-                                : holdDelivery(pendingAction.deliveryId, actionReason)
-                            }
-                          >
-                            Confirm
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => setPendingAction(null)}>
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500">No deliveries pending assignment.</p>
+                <EmptyState
+                  icon={<Truck className="h-8 w-8" />}
+                  title="No pending dispatches"
+                  description="All deliveries have been assigned."
+                />
               )}
             </div>
           </Card>
 
-          <Card className="border-gray-800 bg-[#16213e] p-4 text-gray-100 lg:col-span-1">
-            <h2 className="mb-3 text-lg font-semibold text-white">Active deliveries</h2>
+          {/* Map */}
+          <Card className="border-gray-800 bg-opsPanel p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Truck className="h-4 w-4 text-gray-400" />
+              <h2 className="text-sm font-semibold text-white">Active Deliveries</h2>
+            </div>
             <div className="h-[420px] overflow-hidden rounded-lg border border-gray-800">
               {mapDeliveries.length ? (
                 <DeliveryMap deliveries={mapDeliveries} className="h-full w-full" />
@@ -271,37 +315,64 @@ export default function DispatchConsolePage() {
             </div>
           </Card>
 
-          <Card className="border-gray-800 bg-[#16213e] p-4 text-gray-100 lg:col-span-1">
-            <h2 className="mb-3 text-lg font-semibold text-white">Offer history (24h)</h2>
-            <div className="max-h-[70vh] overflow-x-auto overflow-y-auto text-xs">
-              <table className="w-full border-collapse text-left">
-                <thead className="sticky top-0 bg-[#16213e] text-gray-400">
-                  <tr>
-                    <th className="p-2">Driver</th>
-                    <th className="p-2">Response</th>
-                    <th className="p-2">Δ ms</th>
-                    <th className="p-2">Win %</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((row) => (
-                    <tr key={row.id} className="border-t border-gray-800">
-                      <td className="p-2 font-mono text-[11px] text-gray-300">{row.driver_id.slice(0, 8)}…</td>
-                      <td className="p-2">{row.response}</td>
-                      <td className="p-2 text-gray-400">
-                        {row.responseTimeMs != null ? row.responseTimeMs : '—'}
-                      </td>
-                      <td className="p-2 text-gray-400">
-                        {row.successRate != null ? `${Math.round(row.successRate * 100)}%` : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {!history.length && <p className="p-3 text-gray-500">No attempts in the last 24 hours.</p>}
+          {/* Offer history */}
+          <Card className="border-gray-800 bg-opsPanel p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Users className="h-4 w-4 text-gray-400" />
+              <h2 className="text-sm font-semibold text-white">Offer History (24h)</h2>
             </div>
+            <DataTable
+              columns={historyColumns}
+              data={history}
+              keyExtractor={(r) => r.id}
+              emptyState={
+                <EmptyState
+                  title="No offers in the last 24 hours"
+                  description="Dispatch activity will appear here."
+                />
+              }
+              className="border-gray-800 bg-transparent"
+            />
           </Card>
         </div>
+
+        {/* Force assign / Hold modal */}
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => { setPendingAction(null); setActionReason(''); }}
+          title={pendingAction?.type === 'force_assign' ? 'Force Assign Driver' : 'Hold Delivery'}
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-gray-400">
+              {pendingAction?.type === 'force_assign'
+                ? 'Provide a reason for the manual override. This is audit-logged.'
+                : 'Add an ops note explaining the hold reason.'}
+            </p>
+            <textarea
+              value={actionReason}
+              onChange={(e) => setActionReason(e.target.value)}
+              className="min-h-24 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[#E85D26] focus:outline-none"
+              placeholder="Enter reason (min 3 chars)…"
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => { setPendingAction(null); setActionReason(''); }}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className="bg-[#E85D26] text-white hover:bg-[#d54d1a]"
+                disabled={Boolean(busyId) || actionReason.trim().length < 3}
+                onClick={handleModalConfirm}
+              >
+                Confirm
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </DashboardLayout>
   );

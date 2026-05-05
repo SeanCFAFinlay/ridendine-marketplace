@@ -22,6 +22,7 @@ interface DeliveryRow {
   route_progress_pct: number | null;
   route_to_dropoff_seconds: number | null;
   route_to_dropoff_polyline: string | null;
+  drivers: { first_name: string } | null;
 }
 
 interface OrderWithDetails {
@@ -74,7 +75,8 @@ export default async function OrderConfirmationPage({ params }: Props) {
         eta_dropoff_at,
         route_progress_pct,
         route_to_dropoff_seconds,
-        route_to_dropoff_polyline
+        route_to_dropoff_polyline,
+        drivers ( first_name )
       )
     `)
     .eq('id', id)
@@ -104,6 +106,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
   const estimatedDeliveryMinutes = delivery
     ? calcEstimatedMinutes(delivery.estimated_dropoff_at)
     : null;
+  const driverFirstName = delivery?.drivers?.first_name ?? null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -154,6 +157,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
                 : null
             }
             initialRoutePolyline={delivery?.route_to_dropoff_polyline ?? null}
+            driverFirstName={driverFirstName}
           />
 
           {/* Review form for delivered/completed orders */}

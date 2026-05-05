@@ -26,6 +26,8 @@ export interface LiveOrderTrackerProps {
   initialProgressPct?: number | null;
   initialRemainingSeconds?: number | null;
   initialRoutePolyline?: string | null;
+  /** Driver first name only — no last name, no photo, no coords */
+  driverFirstName?: string | null;
 }
 
 const PUBLIC_STEPS = [
@@ -215,6 +217,7 @@ export function LiveOrderTracker({
   initialProgressPct,
   initialRemainingSeconds,
   initialRoutePolyline,
+  driverFirstName,
 }: LiveOrderTrackerProps) {
   const {
     stage,
@@ -274,6 +277,12 @@ export function LiveOrderTracker({
             {isDelivered ? 'Delivered!' : heading}
           </h2>
           <p className="mt-1 text-sm opacity-80">From {storefrontName}</p>
+          {onTheWay && driverFirstName && (
+            <p className="mt-2 text-sm font-medium bg-white/10 inline-flex items-center gap-1.5 rounded-full px-3 py-1">
+              <span className="opacity-80">Your driver:</span>
+              <span>{driverFirstName}</span>
+            </p>
+          )}
         </div>
         <StepIndicator currentIndex={currentStepIndex} terminal={terminal} />
       </Card>

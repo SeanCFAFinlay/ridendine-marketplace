@@ -11,7 +11,7 @@ export default async function ActivityPage() {
     return (
       <DashboardLayout>
         <div className="mx-auto max-w-4xl">
-          <Card className="border-gray-800 bg-[#16213e] p-8">
+          <Card className="border-gray-800 bg-opsPanel p-8">
             <h1 className="text-2xl font-bold text-white">Access restricted</h1>
             <p className="mt-2 text-gray-400">
               Activity and audit views require ops admin, ops manager, or super admin.
@@ -84,7 +84,7 @@ export default async function ActivityPage() {
           <p className="mt-1 text-gray-400">Who did what, when — all ops team actions and overrides</p>
         </div>
 
-        <Card className="border-gray-800 bg-[#16213e] overflow-hidden">
+        <Card className="border-gray-800 bg-opsPanel overflow-hidden">
           {activity.length === 0 ? (
             <div className="p-8 text-center text-gray-500">No activity recorded yet.</div>
           ) : (

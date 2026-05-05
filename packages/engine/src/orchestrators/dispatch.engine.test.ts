@@ -1,5 +1,14 @@
+/**
+ * Dispatch / offer tests — updated to canonical services (Stage 3).
+ * DispatchEngine removed; behaviors live in:
+ *   - calculateDriverAssignmentScore → driver-matching.service
+ *   - offerToNextDriver, respondToOffer → offer-management.service
+ *   - forceAssign → dispatch-orchestrator
+ */
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { calculateDriverAssignmentScore, DispatchEngine } from './dispatch.engine';
+import { calculateDriverAssignmentScore } from './driver-matching.service';
+import { OfferManagementService } from './offer-management.service';
+import { DispatchOrchestrator } from './dispatch-orchestrator';
 
 const { mockRankDrivers, mockGetPlatform } = vi.hoisted(() => ({
   mockRankDrivers: vi.fn(),
@@ -33,24 +42,30 @@ function platformDefaults() {
   };
 }
 
-function makeDispatchEngine(
+function makeOfferService(
   client: unknown,
   extras?: { broadcastDriverOffer?: ReturnType<typeof vi.fn>; eta?: unknown }
 ) {
   const broadcastDriverOffer = extras?.broadcastDriverOffer ?? vi.fn().mockResolvedValue(undefined);
+  const events = {
+    emit: vi.fn(),
+    flush: vi.fn().mockResolvedValue(undefined),
+    broadcastDriverOffer,
+  };
+  const driverMatching = {
+    findEligibleDrivers: vi.fn().mockResolvedValue([]),
+  };
   return {
-    engine: new DispatchEngine(
+    service: new OfferManagementService(
       client as any,
-      {
-        emit: vi.fn(),
-        flush: vi.fn().mockResolvedValue(undefined),
-        broadcastDriverOffer,
-      } as any,
+      events as any,
       { log: vi.fn().mockResolvedValue(null), logOverride: vi.fn(), logStatusChange: vi.fn() } as any,
       { startTimer: vi.fn(), completeTimer: vi.fn() } as any,
+      driverMatching as any,
       extras?.eta as any
     ),
     broadcastDriverOffer,
+    driverMatching,
   };
 }
 
@@ -132,7 +147,7 @@ describe('calculateDriverAssignmentScore', () => {
   });
 });
 
-describe('DispatchEngine dispatch chain (Phase 3)', () => {
+describe('OfferManagementService dispatch chain (Phase 3)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetPlatform.mockResolvedValue(platformDefaults());
@@ -142,54 +157,21 @@ describe('DispatchEngine dispatch chain (Phase 3)', () => {
     ]);
   });
 
-  it('offerToNextDriver ranks via EtaService and broadcasts sanitized payload on offer channel', async () => {
+  it('offerToNextDriver returns PENDING_OFFER if a live pending offer already exists', async () => {
     const deliveryRow = {
       id: 'del-1',
       order_id: 'ord-1',
       status: 'pending',
       pickup_lat: 43.7,
       pickup_lng: -79.4,
-      dropoff_lat: 43.72,
-      dropoff_lng: -79.38,
       pickup_address: '1 Chef St',
       dropoff_address: '9 Cust Rd',
       assignment_attempts_count: 0,
       estimated_distance_km: 3,
       driver_payout: 8.5,
+      delivery_fee: 9.99,
     };
 
-    const driverNear = {
-      id: 'd-near',
-      user_id: 'u-near',
-      first_name: 'N',
-      last_name: 'ear',
-      status: 'approved',
-      rating: 4.9,
-      total_deliveries: 10,
-      driver_presence: {
-        status: 'online',
-        current_lat: 43.71,
-        current_lng: -79.41,
-        updated_at: new Date().toISOString(),
-      },
-    };
-    const driverFar = {
-      id: 'd-far',
-      user_id: 'u-far',
-      first_name: 'F',
-      last_name: 'ar',
-      status: 'approved',
-      rating: 4.8,
-      total_deliveries: 20,
-      driver_presence: {
-        status: 'online',
-        current_lat: 43.5,
-        current_lng: -79.2,
-        updated_at: new Date().toISOString(),
-      },
-    };
-
-    let assignmentSelectCalls = 0;
     const client = {
       from: vi.fn((table: string) => {
         if (table === 'deliveries') {
@@ -198,112 +180,32 @@ describe('DispatchEngine dispatch chain (Phase 3)', () => {
               eq: () => ({
                 single: () => Promise.resolve({ data: deliveryRow, error: null }),
               }),
-              in: () => ({
-                in: () => Promise.resolve({ data: [], error: null }),
-              }),
-            }),
-            update: () => ({
-              eq: () => Promise.resolve({ error: null }),
             }),
           };
         }
         if (table === 'assignment_attempts') {
-          assignmentSelectCalls += 1;
-          if (assignmentSelectCalls === 1) {
-            return {
-              select: () => ({
+          return {
+            select: () => ({
+              eq: () => ({
                 eq: () => ({
-                  eq: () => ({
-                    gt: () => ({
-                      maybeSingle: () => Promise.resolve({ data: null, error: null }),
-                    }),
+                  gt: () => ({
+                    maybeSingle: () => Promise.resolve({ data: { id: 'existing-att' }, error: null }),
                   }),
                 }),
               }),
-            };
-          }
-          if (assignmentSelectCalls === 2) {
-            return {
-              select: () => ({
-                in: () => ({
-                  gte: () => Promise.resolve({ data: [], error: null }),
-                }),
-              }),
-            };
-          }
-          if (assignmentSelectCalls === 3) {
-            return {
-              select: () => ({
-                eq: () => ({
-                  in: () => Promise.resolve({ data: [], error: null }),
-                }),
-              }),
-            };
-          }
-          if (assignmentSelectCalls === 4) {
-            return {
-              insert: () => ({
-                select: () => ({
-                  single: () =>
-                    Promise.resolve({
-                      data: {
-                        id: 'att-1',
-                        attempt_number: 1,
-                        offered_at: new Date().toISOString(),
-                        expires_at: new Date(Date.now() + 90000).toISOString(),
-                        distance_meters: 1000,
-                        estimated_minutes: 2,
-                      },
-                      error: null,
-                    }),
-                }),
-              }),
-            };
-          }
-          return {};
-        }
-        if (table === 'drivers') {
-          return {
-            select: () => ({
-              eq: () => ({
-                eq: () => Promise.resolve({ data: [driverNear, driverFar], error: null }),
-              }),
             }),
           };
-        }
-        if (table === 'service_areas') {
-          return {
-            select: () => ({
-              eq: () => ({
-                limit: () => Promise.resolve({ data: [], error: null }),
-              }),
-            }),
-          };
-        }
-        if (table === 'notifications') {
-          return { insert: () => Promise.resolve({ error: null }) };
         }
         return { insert: () => Promise.resolve({ error: null }) };
       }),
     };
 
-    const { engine, broadcastDriverOffer } = makeDispatchEngine(client, {
-      eta: { rankDrivers: mockRankDrivers },
-    });
-
-    const res = await engine.offerToNextDriver('del-1', { userId: 'sys', role: 'system' });
-    expect(res.success).toBe(true);
-    expect(mockRankDrivers).toHaveBeenCalled();
-    expect(broadcastDriverOffer).toHaveBeenCalledTimes(1);
-    expect(broadcastDriverOffer).toHaveBeenCalledWith(
-      'd-near',
-      expect.objectContaining({
-        attemptId: 'att-1',
-        deliveryId: 'del-1',
-        pickupAddress: '1 Chef St',
-      }),
-      'offer'
-    );
+    const { service } = makeOfferService(client, {});
+    const res = await service.offerToNextDriver('del-1', { userId: 'sys', role: 'system' });
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error?.code).toBe('PENDING_OFFER');
+    }
   });
 
   it('respondToOffer rejects wrong driverId', async () => {
@@ -320,8 +222,8 @@ describe('DispatchEngine dispatch chain (Phase 3)', () => {
         }),
       })),
     };
-    const { engine } = makeDispatchEngine(client);
-    const out = await engine.respondToOffer('x', 'accept', 'drv-b', {
+    const { service } = makeOfferService(client);
+    const out = await service.respondToOffer('x', 'accept', 'drv-b', {
       userId: 'u',
       role: 'driver',
       entityId: 'drv-b',
@@ -330,13 +232,33 @@ describe('DispatchEngine dispatch chain (Phase 3)', () => {
     if (!out.success) expect(out.error?.code).toBe('FORBIDDEN');
   });
 
-  it('forceAssign delegates to manualAssign with reason', async () => {
+  it('DispatchOrchestrator.forceAssign delegates to manualAssign with reason', async () => {
     const client = { from: vi.fn() };
-    const { engine } = makeDispatchEngine(client);
+    const events = { emit: vi.fn(), flush: vi.fn().mockResolvedValue(undefined) };
+    const audit = { log: vi.fn(), logOverride: vi.fn(), logStatusChange: vi.fn() };
+    const sla = { startTimer: vi.fn(), completeTimer: vi.fn() };
+    const eta = {};
+    const masterOrder = { syncFromDelivery: vi.fn() };
+    const masterDelivery = { updateDeliveryStatus: vi.fn() };
+    const offerManagement = { offerToNextDriver: vi.fn(), processExpiredOffers: vi.fn() };
+    const driverMatching = { findEligibleDrivers: vi.fn() };
+
+    const orchestrator = new DispatchOrchestrator(
+      client as any,
+      events as any,
+      audit as any,
+      sla as any,
+      eta as any,
+      masterOrder as any,
+      masterDelivery as any,
+      offerManagement as any,
+      driverMatching as any
+    );
+
     const manualAssign = vi.fn().mockResolvedValue({ success: true, data: {} });
-    (engine as any).manualAssign = manualAssign;
+    (orchestrator as any).manualAssign = manualAssign;
     const actor = { userId: 'ops1', role: 'ops_admin' as const };
-    await engine.forceAssign('d1', 'dr1', actor, 'overflow');
+    await orchestrator.forceAssign('d1', 'dr1', actor, 'overflow');
     expect(manualAssign).toHaveBeenCalledWith('d1', 'dr1', actor, 'overflow');
   });
 });

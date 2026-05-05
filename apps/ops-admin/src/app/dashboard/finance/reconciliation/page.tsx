@@ -1,12 +1,86 @@
-import { Badge, Card } from '@ridendine/ui';
 import { createAdminClient } from '@ridendine/db';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { getOpsActorContext, hasRequiredRole } from '@/lib/engine';
+import { PageHeader, StatusBadge, DataTable, EmptyState } from '@ridendine/ui';
+import type { ColumnDef } from '@ridendine/ui';
 import { FinanceSubnav } from '../_components/FinanceSubnav';
 import { FinanceAccessDenied } from '../_components/FinanceAccessDenied';
 import { FINANCE_PAGE_ROLES } from '../_lib/roles';
 
 export const dynamic = 'force-dynamic';
+
+type ReconciliationRow = {
+  id: string;
+  created_at: string;
+  stripe_event_id: string;
+  status: string;
+  variance_cents: number;
+  ledger_entry_ids: string[];
+  notes: string | null;
+};
+
+function getReconciliationStatus(status: string): 'success' | 'danger' | 'warning' | 'idle' {
+  if (status === 'matched') return 'success';
+  if (status === 'unmatched') return 'danger';
+  if (status === 'partial') return 'warning';
+  return 'idle';
+}
+
+const columns: ColumnDef<ReconciliationRow>[] = [
+  {
+    key: 'created_at',
+    header: 'Created',
+    sortable: true,
+    cell: (row) => (
+      <span className="whitespace-nowrap text-xs text-gray-300">
+        {new Date(row.created_at).toLocaleString()}
+      </span>
+    ),
+  },
+  {
+    key: 'stripe_event_id',
+    header: 'Stripe Event',
+    cell: (row) => (
+      <span className="font-mono text-xs text-gray-400">
+        {row.stripe_event_id?.slice(0, 24)}…
+      </span>
+    ),
+  },
+  {
+    key: 'status',
+    header: 'Status',
+    sortable: true,
+    cell: (row) => (
+      <StatusBadge status={getReconciliationStatus(row.status)} label={row.status} />
+    ),
+  },
+  {
+    key: 'variance_cents',
+    header: 'Variance (¢)',
+    sortable: true,
+    cell: (row) => (
+      <span className={`font-mono text-sm ${row.variance_cents !== 0 ? 'text-red-400' : 'text-gray-400'}`}>
+        {row.variance_cents}
+      </span>
+    ),
+  },
+  {
+    key: 'ledger_entry_ids',
+    header: 'Ledger IDs',
+    cell: (row) => (
+      <span className="text-xs text-gray-500">
+        {Array.isArray(row.ledger_entry_ids) ? row.ledger_entry_ids.length : 0}
+      </span>
+    ),
+  },
+  {
+    key: 'notes',
+    header: 'Notes',
+    cell: (row) => (
+      <span className="max-w-xs truncate text-xs text-gray-400">{row.notes ?? '—'}</span>
+    ),
+  },
+];
 
 export default async function FinanceReconciliationPage() {
   const actor = await getOpsActorContext();
@@ -27,71 +101,48 @@ export default async function FinanceReconciliationPage() {
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-6">
         <FinanceSubnav />
-        <div>
-          <h1 className="text-3xl font-bold text-white">Stripe reconciliation</h1>
-          <p className="mt-1 text-gray-400">
-            Daily job matches stripe_events_processed to ledger. Unmatched rows are never silent — review notes
-            below.
-          </p>
-        </div>
 
-        <Card className="border-amber-900/40 bg-[#16213e] p-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-amber-100">Unmatched variance</h2>
-            <Badge className="bg-amber-600/30 text-amber-50">{unmatched.length}</Badge>
+        <PageHeader
+          title="Stripe Reconciliation"
+          subtitle="Daily job matches stripe_events_processed to ledger. Unmatched rows require review."
+        />
+
+        {unmatched.length > 0 && (
+          <div className="flex items-center justify-between rounded-lg border border-amber-900/40 bg-amber-950/20 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-amber-100">
+                Unmatched variance — {unmatched.length} rows
+              </p>
+              <p className="text-xs text-amber-200/70">
+                Resolve in DB or POST <code>/api/engine/reconciliation</code> with{' '}
+                <code>resolve_manual</code>
+              </p>
+            </div>
+            <StatusBadge status="danger" label={String(unmatched.length)} />
           </div>
-          <p className="mt-2 text-sm text-amber-100/90">
-            Resolve in DB or POST <span className="font-mono">/api/engine/reconciliation</span> with{' '}
-            <span className="font-mono">resolve_manual</span> (finance_engine capability).
-          </p>
-        </Card>
+        )}
 
         {error ? (
-          <Card className="border-red-900/50 bg-[#16213e] p-6 text-red-200">Failed to load reconciliation.</Card>
+          <EmptyState
+            title="Failed to load reconciliation"
+            description="Unable to fetch reconciliation data. Check your database connection."
+          />
         ) : (
-          <Card className="border-gray-800 bg-[#16213e] p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Rows</h2>
-              <Badge className="bg-gray-700 text-gray-200">{(rows ?? []).length}</Badge>
+          <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white">Rows</h2>
+              <span className="rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
+                {(rows ?? []).length}
+              </span>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-700 text-gray-400">
-                    <th className="py-2">Created</th>
-                    <th className="py-2">Stripe event</th>
-                    <th className="py-2">Status</th>
-                    <th className="py-2">Variance (¢)</th>
-                    <th className="py-2">Ledger IDs</th>
-                    <th className="py-2">Notes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(rows ?? []).map((r: Record<string, unknown>) => (
-                    <tr
-                      key={r.id as string}
-                      className={`border-b border-gray-800 ${
-                        r.status === 'unmatched' ? 'bg-red-950/20' : ''
-                      }`}
-                    >
-                      <td className="py-3 whitespace-nowrap text-gray-200">
-                        {new Date(r.created_at as string).toLocaleString()}
-                      </td>
-                      <td className="py-3 font-mono text-xs text-gray-300">
-                        {(r.stripe_event_id as string)?.slice(0, 24)}…
-                      </td>
-                      <td className="py-3 text-gray-200">{r.status as string}</td>
-                      <td className="py-3 font-mono text-gray-200">{String(r.variance_cents)}</td>
-                      <td className="py-3 text-xs text-gray-400">
-                        {Array.isArray(r.ledger_entry_ids) ? (r.ledger_entry_ids as string[]).length : 0}
-                      </td>
-                      <td className="py-3 text-xs text-gray-400 max-w-md">{(r.notes as string) ?? '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+            <DataTable
+              columns={columns}
+              data={(rows ?? []) as ReconciliationRow[]}
+              keyExtractor={(r) => r.id}
+              emptyState={<EmptyState title="No reconciliation rows" description="No data to display." />}
+              className="border-gray-800 bg-transparent"
+            />
+          </div>
         )}
       </div>
     </DashboardLayout>
