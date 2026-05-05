@@ -35,9 +35,11 @@ jest.mock('@ridendine/engine', () => ({
 jest.mock('@/lib/engine', () => ({
   getEngine: () => ({
     kitchen: { validateCustomerCheckoutReadiness: (...args: unknown[]) => mockValidateReadiness(...args) },
-    orders: {
+    orderCreation: {
       createOrder: (...args: unknown[]) => mockCreateOrder(...args),
       authorizePayment: (...args: unknown[]) => mockAuthorizePayment(...args),
+    },
+    orders: {
       cancelOrder: (...args: unknown[]) => mockCancelOrder(...args),
     },
     audit: { log: (...args: unknown[]) => mockAuditLog(...args) },

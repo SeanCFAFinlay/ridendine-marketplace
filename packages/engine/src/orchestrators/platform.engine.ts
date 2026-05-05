@@ -2,8 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ActorContext, DomainEventType, OperationResult } from '@ridendine/types';
 import type { DomainEventEmitter } from '../core/event-emitter';
 import type { AuditLogger } from '../core/audit-logger';
-import type { OrderOrchestrator } from './order.orchestrator';
-import type { DispatchEngine } from './dispatch.engine';
+import type { MasterOrderEngine } from './master-order-engine';
+import type { DispatchOrchestrator } from './dispatch-orchestrator';
 import type { SupportExceptionEngine } from './support.engine';
 import {
   getChefById,
@@ -38,15 +38,19 @@ export class PlatformWorkflowEngine {
     private client: SupabaseClient,
     private eventEmitter: DomainEventEmitter,
     private auditLogger: AuditLogger,
-    private orders: OrderOrchestrator,
-    private dispatch: DispatchEngine,
+    private orders: MasterOrderEngine,
+    private dispatch: DispatchOrchestrator,
     private support: SupportExceptionEngine
   ) {}
 
   async markOrderReady(orderId: string, actor: ActorContext): Promise<OperationResult> {
-    const readyResult = await this.orders.markReady(orderId, actor);
+    const readyResult = await this.orders.markReadyForPickup({
+      orderId,
+      actorId: actor.userId,
+      actorRole: actor.role,
+    });
     if (!readyResult.success) {
-      return readyResult;
+      return { success: false, error: { code: 'TRANSITION_FAILED', message: readyResult.error ?? 'Mark ready failed' } };
     }
 
     const dispatchResult = await this.dispatch.requestDispatch(orderId, this.getSystemActor());
@@ -65,7 +69,7 @@ export class PlatformWorkflowEngine {
       );
     }
 
-    return readyResult;
+    return { success: true, data: readyResult.order };
   }
 
   async completeDeliveredOrder(
@@ -78,26 +82,33 @@ export class PlatformWorkflowEngine {
       return deliveryResult;
     }
 
-    const completionResult = await this.orders.completeOrder(
-      deliveryResult.data.order_id,
-      this.getSystemActor()
-    );
+    const orderId = deliveryResult.data.order_id;
+    if (!orderId) {
+      return { success: false, error: { code: 'MISSING_ORDER_ID', message: 'Delivery has no associated order' } };
+    }
+
+    const systemActor = this.getSystemActor();
+    const completionResult = await this.orders.completeOrder({
+      orderId,
+      actorId: systemActor.userId,
+      actorRole: systemActor.role,
+    });
 
     if (!completionResult.success) {
       await this.support.createException(
         {
           type: 'system_error',
           severity: 'high',
-          orderId: deliveryResult.data.order_id,
+          orderId,
           deliveryId,
           title: 'Order Completion Failed After Delivery',
-          description: completionResult.error?.message || 'Delivery was marked complete but order finalization failed.',
+          description: completionResult.error || 'Delivery was marked complete but order finalization failed.',
           recommendedActions: ['Review order state', 'Run ops override if needed', 'Verify payout state'],
           slaMinutes: 15,
         },
         this.getSystemActor()
       );
-      return completionResult;
+      return { success: false, error: { code: 'COMPLETION_FAILED', message: completionResult.error || 'Order completion failed' } };
     }
 
     return deliveryResult;
@@ -662,8 +673,8 @@ export function createPlatformWorkflowEngine(
   client: SupabaseClient,
   eventEmitter: DomainEventEmitter,
   auditLogger: AuditLogger,
-  orders: OrderOrchestrator,
-  dispatch: DispatchEngine,
+  orders: MasterOrderEngine,
+  dispatch: DispatchOrchestrator,
   support: SupportExceptionEngine
 ): PlatformWorkflowEngine {
   return new PlatformWorkflowEngine(client, eventEmitter, auditLogger, orders, dispatch, support);

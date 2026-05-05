@@ -5,8 +5,8 @@
 // ==========================================
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { ActorContext, DomainEventType } from '@ridendine/types';
-import { EngineOrderStatus } from '@ridendine/types';
+import type { ActorContext, DomainEventType, OperationResult } from '@ridendine/types';
+import { EngineOrderStatus, getAllowedActions } from '@ridendine/types';
 import type { AuditLogger } from '../core/audit-logger';
 import type { DomainEventEmitter } from '../core/event-emitter';
 import {
@@ -16,6 +16,9 @@ import {
   ENGINE_TO_LEGACY_ORDER_STATUS,
   InvalidTransitionError,
 } from './order-state-machine';
+import type { PaymentAdapter } from '../types/payment-adapter';
+import { createLedgerService } from '../services/ledger.service';
+import { PLATFORM_FEE_PERCENT, DRIVER_PAYOUT_PERCENT } from '../constants';
 
 // ==========================================
 // TYPES
@@ -176,12 +179,42 @@ const ACTION_EVENT_MAP: Record<string, string> = {
 // MASTER ORDER ENGINE
 // ==========================================
 
+// Shared order data shape used by legacy-alias methods
+interface OrderData {
+  id: string;
+  order_number: string;
+  customer_id: string;
+  storefront_id: string;
+  status: string;
+  engine_status: EngineOrderStatus;
+  subtotal: number;
+  delivery_fee: number;
+  service_fee: number;
+  tax: number;
+  tip: number;
+  total: number;
+  payment_status: string;
+  payment_intent_id?: string | null;
+  estimated_prep_minutes?: number;
+  actual_prep_minutes?: number;
+  prep_started_at?: string;
+  ready_at?: string;
+  special_instructions?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export class MasterOrderEngine {
+  private paymentAdapter?: PaymentAdapter;
+
   constructor(
     private client: SupabaseClient,
     private audit: AuditLogger,
     private events: DomainEventEmitter,
-  ) {}
+    paymentAdapter?: PaymentAdapter,
+  ) {
+    this.paymentAdapter = paymentAdapter;
+  }
 
   // ==========================================
   // CORE TRANSITION METHOD
@@ -450,7 +483,7 @@ export class MasterOrderEngine {
   }
 
   async completeOrder(input: { orderId: string; actorId: string; actorRole?: string }) {
-    return this.transitionOrder({
+    const result = await this.transitionOrder({
       orderId: input.orderId,
       action: 'complete_order',
       targetStatus: EngineOrderStatus.COMPLETED,
@@ -459,10 +492,74 @@ export class MasterOrderEngine {
       actorRole: input.actorRole || 'system',
       metadata: { completed_at: new Date().toISOString() },
     });
+
+    if (!result.success) return result;
+
+    const { data: orderRow } = await this.client
+      .from('orders')
+      .select('*')
+      .eq('id', input.orderId)
+      .single();
+
+    if (!orderRow) return result;
+
+    const order = orderRow as OrderData;
+    const { data: deliveryRow } = await this.client
+      .from('deliveries')
+      .select('driver_id')
+      .eq('order_id', input.orderId)
+      .maybeSingle();
+    const driverId = (deliveryRow?.driver_id as string | null) ?? null;
+
+    const ledger = createLedgerService(this.client);
+
+    const captureResult = await ledger.recordCustomerCapture({
+      orderId: input.orderId,
+      orderNumber: order.order_number,
+      totalCents: Math.round(order.total * 100),
+      taxCents: Math.round(order.tax * 100),
+      currency: 'CAD',
+      stripePaymentIntentId: order.payment_intent_id ?? null,
+    });
+    if (captureResult.errors.length > 0) {
+      console.error('[completeOrder] ledger capture', captureResult.errors);
+    }
+
+    const payResult = await ledger.recordOrderPayment({
+      orderId: input.orderId,
+      storefrontId: order.storefront_id,
+      driverId,
+      subtotalCents: Math.round(order.subtotal * 100),
+      deliveryFeeCents: Math.round(order.delivery_fee * 100),
+      currency: 'CAD',
+    });
+    if (payResult.errors.length > 0) {
+      console.error('[completeOrder] ledger payables', payResult.errors);
+    }
+
+    if (order.tip > 0) {
+      const tipRes = await ledger.recordTipPayable({
+        orderId: input.orderId,
+        driverId,
+        tipCents: Math.round(order.tip * 100),
+        currency: 'CAD',
+      });
+      if (tipRes.error) console.error('[completeOrder] ledger tip', tipRes.error);
+    }
+
+    return result;
   }
 
-  async cancelOrder(input: { orderId: string; actorId: string; actorType: string; actorRole?: string; reason: string; notes?: string }) {
-    return this.transitionOrder({
+  async cancelOrder(input: {
+    orderId: string;
+    actorId: string;
+    actorType: string;
+    actorRole?: string;
+    reason: string;
+    notes?: string;
+    actor?: ActorContext;
+  }) {
+    const result = await this.transitionOrder({
       orderId: input.orderId,
       action: 'cancel_order',
       targetStatus: EngineOrderStatus.CANCELLED,
@@ -472,6 +569,34 @@ export class MasterOrderEngine {
       reason: input.reason,
       metadata: input.notes ? { cancellation_notes: input.notes } : undefined,
     });
+
+    if (!result.success) return result;
+
+    // FND-017: void payment intent if present and in processing state
+    const { data: orderRow } = await this.client
+      .from('orders')
+      .select('payment_intent_id, payment_status, total, order_number')
+      .eq('id', input.orderId)
+      .single();
+
+    const actor: ActorContext = input.actor ?? {
+      userId: input.actorId,
+      role: (input.actorRole || input.actorType) as ActorContext['role'],
+    };
+
+    if (orderRow?.payment_intent_id && orderRow.payment_status === 'processing') {
+      await this.voidPaymentIntent({
+        orderId: input.orderId,
+        orderNumber: orderRow.order_number as string,
+        orderTotal: orderRow.total as number,
+        paymentIntentId: orderRow.payment_intent_id as string,
+        reason: input.reason,
+        context: 'cancellation',
+        actor,
+      });
+    }
+
+    return result;
   }
 
   async refundOrder(input: { orderId: string; actorId: string; actorRole?: string; reason?: string }) {
@@ -535,6 +660,237 @@ export class MasterOrderEngine {
       actorRole: 'system',
     });
   }
+
+  // ==========================================
+  // LEGACY-NAME ALIASES
+  // One-liners so app callsites keep working without changes.
+  // ==========================================
+
+  /** Legacy alias: delegates to chefAccept */
+  async acceptOrder(
+    orderId: string,
+    estimatedPrepMinutes: number,
+    actor: ActorContext,
+  ): Promise<OperationResult<{ id: string; engine_status: string; status: string; previous_engine_status: string }>> {
+    const result = await this.chefAccept({
+      orderId,
+      actorId: actor.userId,
+      actorRole: actor.role,
+      estimatedPrepMinutes,
+    });
+    if (!result.success) {
+      return { success: false, error: { code: 'TRANSITION_FAILED', message: result.error ?? 'Accept failed' } };
+    }
+    return { success: true, data: result.order };
+  }
+
+  /** Legacy alias: delegates to chefReject + FND-017 void logic */
+  async rejectOrder(
+    orderId: string,
+    reason: string,
+    notes: string | undefined,
+    actor: ActorContext,
+  ): Promise<OperationResult<{ id: string; engine_status: string; status: string; previous_engine_status: string }>> {
+    const result = await this.chefReject({
+      orderId,
+      actorId: actor.userId,
+      actorRole: actor.role,
+      reason,
+      notes,
+    });
+
+    if (!result.success) {
+      return { success: false, error: { code: 'TRANSITION_FAILED', message: result.error ?? 'Reject failed' } };
+    }
+
+    // FND-017: void payment intent if present
+    const { data: orderRow } = await this.client
+      .from('orders')
+      .select('payment_intent_id, payment_status, total, order_number')
+      .eq('id', orderId)
+      .single();
+
+    if (orderRow?.payment_intent_id) {
+      await this.voidPaymentIntent({
+        orderId,
+        orderNumber: orderRow.order_number as string,
+        orderTotal: orderRow.total as number,
+        paymentIntentId: orderRow.payment_intent_id as string,
+        reason,
+        context: 'rejection',
+        actor,
+      });
+    }
+
+    return { success: true, data: result.order };
+  }
+
+  /** Legacy alias: delegates to markPreparing */
+  async startPreparing(
+    orderId: string,
+    actor: ActorContext,
+  ): Promise<OperationResult<{ id: string; engine_status: string; status: string; previous_engine_status: string }>> {
+    const result = await this.markPreparing({
+      orderId,
+      actorId: actor.userId,
+      actorRole: actor.role,
+    });
+    if (!result.success) {
+      return { success: false, error: { code: 'TRANSITION_FAILED', message: result.error ?? 'Start preparing failed' } };
+    }
+    return { success: true, data: result.order };
+  }
+
+  /** Get allowed actions for a given order state and actor role */
+  async getAllowedActions(orderId: string, actorRole: string): Promise<string[]> {
+    const { data, error } = await this.client
+      .from('orders')
+      .select('engine_status')
+      .eq('id', orderId)
+      .single();
+
+    if (error || !data) return [];
+
+    const actions = getAllowedActions(
+      (data as { engine_status: EngineOrderStatus }).engine_status,
+      actorRole as ActorContext['role'],
+    );
+
+    return actions.map((a) => a.action);
+  }
+
+  /** Ops force status change that bypasses state machine validation */
+  async opsOverride(
+    orderId: string,
+    targetStatus: EngineOrderStatus,
+    reason: string,
+    actor: ActorContext,
+  ): Promise<OperationResult<OrderData>> {
+    if (!['ops_admin', 'ops_manager', 'super_admin'].includes(actor.role)) {
+      return {
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Only ops managers can perform overrides' },
+      };
+    }
+
+    const { data: orderRow, error: loadError } = await this.client
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+
+    if (loadError || !orderRow) {
+      return { success: false, error: { code: 'NOT_FOUND', message: 'Order not found' } };
+    }
+
+    const order = orderRow as OrderData;
+    const previousStatus = order.engine_status;
+    const now = new Date().toISOString();
+
+    await this.audit.logOverride({
+      action: 'force_status_change',
+      entityType: 'order',
+      entityId: orderId,
+      actor,
+      beforeState: { status: previousStatus },
+      afterState: { status: targetStatus },
+      reason,
+    });
+
+    const legacyStatus = ENGINE_TO_LEGACY_ORDER_STATUS[targetStatus] || order.status;
+
+    const { data: updated, error: updateError } = await this.client
+      .from('orders')
+      .update({ status: legacyStatus, engine_status: targetStatus, updated_at: now })
+      .eq('id', orderId)
+      .select()
+      .single();
+
+    if (updateError) {
+      return { success: false, error: { code: 'UPDATE_FAILED', message: updateError.message } };
+    }
+
+    await this.client.from('order_status_history').insert({
+      order_id: orderId,
+      previous_status: previousStatus,
+      new_status: targetStatus,
+      changed_by: actor.userId,
+      notes: `OPS OVERRIDE: ${reason}`,
+    });
+
+    this.events.emit(
+      'ops.override.executed' as DomainEventType,
+      'order',
+      orderId,
+      { previousStatus, newStatus: targetStatus, reason },
+      actor,
+    );
+
+    await this.events.flush();
+
+    return { success: true, data: updated as OrderData };
+  }
+
+  // ==========================================
+  // PRIVATE HELPERS
+  // ==========================================
+
+  /** FND-017: attempt Stripe void then write ledger entry + optional exception */
+  private async voidPaymentIntent(params: {
+    orderId: string;
+    orderNumber: string;
+    orderTotal: number;
+    paymentIntentId: string;
+    reason: string;
+    context: 'rejection' | 'cancellation';
+    actor: ActorContext;
+  }): Promise<void> {
+    let stripeVoidSucceeded = false;
+    let stripeStatus = 'unknown';
+
+    if (this.paymentAdapter) {
+      try {
+        const result = await this.paymentAdapter.cancelPaymentIntent(params.paymentIntentId);
+        stripeVoidSucceeded = result.cancelled;
+        stripeStatus = result.status;
+      } catch (err) {
+        stripeStatus = 'stripe_error';
+        await this.audit.log({
+          action: 'override',
+          entityType: 'order',
+          entityId: params.orderId,
+          actor: params.actor,
+          metadata: {
+            warning: 'stripe_void_failed',
+            paymentIntentId: params.paymentIntentId,
+            error: err instanceof Error ? err.message : String(err),
+          },
+        });
+      }
+    }
+
+    await this.client.from('ledger_entries').insert({
+      order_id: params.orderId,
+      entry_type: stripeVoidSucceeded ? 'customer_charge_void' : 'customer_charge_void_pending',
+      amount_cents: -Math.round(params.orderTotal * 100),
+      currency: 'CAD',
+      description: `Payment void ${stripeVoidSucceeded ? 'completed' : 'pending'} due to ${params.context}: ${params.reason} (stripe: ${stripeStatus})`,
+      stripe_id: params.paymentIntentId,
+      metadata: { stripeStatus, voidAttempted: !!this.paymentAdapter },
+    });
+
+    if (!stripeVoidSucceeded && this.paymentAdapter) {
+      await this.client.from('order_exceptions').insert({
+        exception_type: 'payment_void_failed',
+        severity: 'high',
+        status: 'open',
+        order_id: params.orderId,
+        title: `Payment Void Failed on ${params.context === 'rejection' ? 'Rejection' : 'Cancellation'}`,
+        description: `Failed to void Stripe PaymentIntent ${params.paymentIntentId} for ${params.context === 'rejection' ? 'rejected' : 'cancelled'} order ${params.orderNumber}. Status: ${stripeStatus}`,
+        recommended_actions: ['Check Stripe dashboard', 'Manual void or refund may be required'],
+      });
+    }
+  }
 }
 
 // Factory function
@@ -542,6 +898,7 @@ export function createMasterOrderEngine(
   client: SupabaseClient,
   audit: AuditLogger,
   events: DomainEventEmitter,
+  paymentAdapter?: PaymentAdapter,
 ): MasterOrderEngine {
-  return new MasterOrderEngine(client, audit, events);
+  return new MasterOrderEngine(client, audit, events, paymentAdapter);
 }

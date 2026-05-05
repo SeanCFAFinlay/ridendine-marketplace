@@ -53,7 +53,8 @@ describe('POST /api/webhooks/stripe', () => {
       policy: 'webhook_stripe',
     });
     jest.mocked(getEngine).mockReturnValue({
-      orders: { submitToKitchen: jest.fn().mockResolvedValue({ success: true }) },
+      orderCreation: { submitToKitchen: jest.fn().mockResolvedValue({ success: true }) },
+      orders: {},
       platform: {
         handlePaymentFailure: jest.fn().mockResolvedValue({ success: true }),
         handleExternalRefund: jest.fn().mockResolvedValue({ success: true }),
@@ -148,7 +149,8 @@ describe('POST /api/webhooks/stripe', () => {
     const events = { emit: jest.fn(), flush: jest.fn().mockResolvedValue(undefined) };
     const audit = { log: jest.fn().mockResolvedValue(undefined) };
     jest.mocked(getEngine).mockReturnValue({
-      orders: { submitToKitchen },
+      orderCreation: { submitToKitchen },
+      orders: {},
       platform: {
         handlePaymentFailure: jest.fn().mockResolvedValue({ success: true }),
         handleExternalRefund: jest.fn().mockResolvedValue({ success: true }),
@@ -188,7 +190,8 @@ describe('POST /api/webhooks/stripe', () => {
     const submitToKitchen = jest.fn().mockResolvedValue({ success: true });
     const handlePaymentFailure = jest.fn().mockResolvedValue({ success: true });
     jest.mocked(getEngine).mockReturnValue({
-      orders: { submitToKitchen },
+      orderCreation: { submitToKitchen },
+      orders: {},
       platform: {
         handlePaymentFailure,
         handleExternalRefund: jest.fn().mockResolvedValue({ success: true }),

@@ -425,7 +425,7 @@ export async function POST(request: Request): Promise<Response> {
     let createdOrderId: string | null = null;
     try {
       // Create order via engine
-      const orderResult = await engine.orders.createOrder(
+      const orderResult = await engine.orderCreation.createOrder(
         {
           customerId: customerContext.customerId,
           storefrontId,
@@ -483,7 +483,7 @@ export async function POST(request: Request): Promise<Response> {
       );
 
       // Authorize payment via engine
-      const authResult = await engine.orders.authorizePayment(
+      const authResult = await engine.orderCreation.authorizePayment(
         order.id,
         paymentIntent.id,
         customerContext.actor
@@ -530,12 +530,15 @@ export async function POST(request: Request): Promise<Response> {
       return successResponse(responsePayload);
     } catch (paymentError) {
       if (createdOrderId) {
-        await engine.orders.cancelOrder(
-          createdOrderId,
-          'payment_failed',
-          'Checkout payment initialization failed',
-          customerContext.actor
-        );
+        await engine.orders.cancelOrder({
+          orderId: createdOrderId,
+          actorId: customerContext.actor.userId,
+          actorType: customerContext.actor.role,
+          actorRole: customerContext.actor.role,
+          reason: 'payment_failed',
+          notes: 'Checkout payment initialization failed',
+          actor: customerContext.actor,
+        });
       }
       await (adminClient as any)
         .from('checkout_idempotency_keys')

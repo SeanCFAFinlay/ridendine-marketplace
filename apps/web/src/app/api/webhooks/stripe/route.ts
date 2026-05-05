@@ -156,7 +156,7 @@ export async function POST(request: Request): Promise<Response> {
         const orderId = orderIdFromPaymentIntent(paymentIntent);
 
         if (orderId) {
-          const submitResult = await engine.orders.submitToKitchen(
+          const submitResult = await engine.orderCreation.submitToKitchen(
             orderId,
             systemActor
           );

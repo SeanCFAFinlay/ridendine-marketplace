@@ -19,7 +19,7 @@ import {
 } from '@ridendine/db';
 import { DomainEventEmitter } from '../core/event-emitter';
 import { AuditLogger } from '../core/audit-logger';
-import type { DispatchEngine } from './dispatch.engine';
+import type { DispatchOrchestrator } from './dispatch-orchestrator';
 import type { SupportExceptionEngine } from './support.engine';
 import type { CommerceLedgerEngine } from './commerce.engine';
 
@@ -42,7 +42,7 @@ export class OpsControlEngine {
     private readonly client: SupabaseClient,
     private readonly eventEmitter: DomainEventEmitter,
     private readonly auditLogger: AuditLogger,
-    private readonly dispatchEngine: DispatchEngine,
+    private readonly dispatchEngine: DispatchOrchestrator,
     private readonly supportEngine: SupportExceptionEngine,
     private readonly commerceEngine: CommerceLedgerEngine
   ) {}
@@ -357,7 +357,7 @@ export function createOpsControlEngine(
   client: SupabaseClient,
   eventEmitter: DomainEventEmitter,
   auditLogger: AuditLogger,
-  dispatchEngine: DispatchEngine,
+  dispatchEngine: DispatchOrchestrator,
   supportEngine: SupportExceptionEngine,
   commerceEngine: CommerceLedgerEngine
 ): OpsControlEngine {
