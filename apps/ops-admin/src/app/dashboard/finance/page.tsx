@@ -1,6 +1,7 @@
-import { Badge, Card } from '@ridendine/ui';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { getEngine, getOpsActorContext, hasRequiredRole } from '@/lib/engine';
+import { KpiTile, PageHeader, DataTable, EmptyState } from '@ridendine/ui';
+import type { ColumnDef } from '@ridendine/ui';
 import { FinanceActions } from './finance-actions';
 import { PayoutActions } from './payout-actions';
 import { FinanceSubnav } from './_components/FinanceSubnav';
@@ -12,6 +13,78 @@ export const dynamic = 'force-dynamic';
 function formatCurrency(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
+
+type LedgerEntry = {
+  id: string;
+  createdAt: string;
+  entryType: string;
+  entityType?: string | null;
+  entityId?: string | null;
+  description?: string | null;
+  amountCents: number;
+};
+
+type LiabilityItem = {
+  id: string;
+  name: string;
+  amount: number;
+};
+
+const ledgerColumns: ColumnDef<LedgerEntry>[] = [
+  {
+    key: 'createdAt',
+    header: 'Date',
+    sortable: true,
+    cell: (row) => (
+      <span className="text-xs text-gray-400">
+        {new Date(row.createdAt).toLocaleString()}
+      </span>
+    ),
+  },
+  {
+    key: 'entryType',
+    header: 'Type',
+    cell: (row) => <span className="text-gray-300">{row.entryType}</span>,
+  },
+  {
+    key: 'entityType',
+    header: 'Entity',
+    cell: (row) => (
+      <span className="text-gray-400 text-xs">
+        {row.entityType ? `${row.entityType}:${row.entityId ?? 'n/a'}` : 'platform'}
+      </span>
+    ),
+  },
+  {
+    key: 'description',
+    header: 'Description',
+    cell: (row) => (
+      <span className="text-gray-300 text-xs">{row.description ?? 'No description'}</span>
+    ),
+  },
+  {
+    key: 'amountCents',
+    header: 'Amount',
+    sortable: true,
+    cell: (row) => (
+      <span className="font-medium text-emerald-400">{formatCurrency(row.amountCents / 100)}</span>
+    ),
+  },
+];
+
+const liabilityColumns: ColumnDef<LiabilityItem>[] = [
+  {
+    key: 'name',
+    header: 'Name',
+    cell: (row) => <span className="font-medium text-white">{row.name}</span>,
+  },
+  {
+    key: 'amount',
+    header: 'Amount',
+    sortable: true,
+    cell: (row) => <span className="text-emerald-400 font-medium">{formatCurrency(row.amount)}</span>,
+  },
+];
 
 export default async function FinancePage() {
   const actor = await getOpsActorContext();
@@ -33,22 +106,13 @@ export default async function FinancePage() {
       success: true,
       data: {
         summary: {
-          totalRevenue: 0,
-          totalRefunds: 0,
-          platformFees: 0,
-          chefPayouts: 0,
-          driverPayouts: 0,
-          taxCollected: 0,
-          orderCount: 0,
+          totalRevenue: 0, totalRefunds: 0, platformFees: 0,
+          chefPayouts: 0, driverPayouts: 0, taxCollected: 0, orderCount: 0,
         },
-        pendingRefundAmount: 0,
-        pendingAdjustmentAmount: 0,
+        pendingRefundAmount: 0, pendingAdjustmentAmount: 0,
         refundAutoReviewThresholdCents: 2500,
-        pendingRefunds: [],
-        pendingAdjustments: [],
-        recentLedger: [],
-        chefLiabilities: [],
-        driverLiabilities: [],
+        pendingRefunds: [], pendingAdjustments: [],
+        recentLedger: [], chefLiabilities: [], driverLiabilities: [],
       },
     };
   }
@@ -56,11 +120,7 @@ export default async function FinancePage() {
   if (!result.success || !result.data) {
     return (
       <DashboardLayout>
-        <div className="mx-auto max-w-4xl">
-          <Card className="border-gray-800 bg-opsPanel p-8">
-            <h1 className="text-2xl font-bold text-white">Finance data unavailable</h1>
-          </Card>
-        </div>
+        <div className="mx-auto max-w-4xl p-8 text-white">Finance data unavailable</div>
       </DashboardLayout>
     );
   }
@@ -71,120 +131,107 @@ export default async function FinancePage() {
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-6">
         <FinanceSubnav />
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Finance Operations</h1>
-            <p className="mt-1 text-gray-400">
-              Review and action workflows for refunds, payout holds, liabilities, and ledger activity.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <a href="/api/export?type=orders" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export Orders CSV</a>
-            <a href="/api/export?type=ledger" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export Ledger CSV</a>
-            <a href="/api/export?type=bank_payouts" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export BANK CSV</a>
-            <a href="/api/export?type=stripe_events" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export Stripe Webhook CSV</a>
-          </div>
+
+        <PageHeader
+          title="Finance Operations"
+          subtitle="Review and action workflows for refunds, payout holds, liabilities, and ledger activity."
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <a href="/api/export?type=orders" className="rounded-md border border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:border-gray-500">Export Orders</a>
+              <a href="/api/export?type=ledger" className="rounded-md border border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:border-gray-500">Export Ledger</a>
+              <a href="/api/export?type=bank_payouts" className="rounded-md border border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:border-gray-500">Export Bank</a>
+            </div>
+          }
+        />
+
+        {/* KPI row */}
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiTile
+            label="Captured Revenue (30d)"
+            value={formatCurrency(data.summary.totalRevenue)}
+            className="border-gray-800 bg-opsPanel"
+          />
+          <KpiTile
+            label="Pending Refund Review"
+            value={formatCurrency(data.pendingRefundAmount)}
+            className="border-gray-800 bg-opsPanel"
+          />
+          <KpiTile
+            label="Pending Payout Adjustments"
+            value={formatCurrency(data.pendingAdjustmentAmount)}
+            className="border-gray-800 bg-opsPanel"
+          />
+          <KpiTile
+            label="Tax Collected"
+            value={formatCurrency(data.summary.taxCollected)}
+            className="border-gray-800 bg-opsPanel"
+          />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="border-gray-800 bg-opsPanel p-6">
-            <p className="text-sm text-gray-400">Captured Revenue</p>
-            <p className="mt-2 text-3xl font-bold text-emerald-400">{formatCurrency(data.summary.totalRevenue)}</p>
-          </Card>
-          <Card className="border-gray-800 bg-opsPanel p-6">
-            <p className="text-sm text-gray-400">Pending Refund Review</p>
-            <p className="mt-2 text-3xl font-bold text-red-200">{formatCurrency(data.pendingRefundAmount)}</p>
-            <p className="mt-1 text-xs text-gray-500">
-              Above ${(data.refundAutoReviewThresholdCents / 100).toFixed(2)} requires manual review
-            </p>
-          </Card>
-          <Card className="border-gray-800 bg-opsPanel p-6">
-            <p className="text-sm text-gray-400">Pending Payout Adjustments</p>
-            <p className="mt-2 text-3xl font-bold text-yellow-200">{formatCurrency(data.pendingAdjustmentAmount)}</p>
-          </Card>
-          <Card className="border-gray-800 bg-opsPanel p-6">
-            <p className="text-sm text-gray-400">Tax Collected</p>
-            <p className="mt-2 text-3xl font-bold text-cyan-300">{formatCurrency(data.summary.taxCollected)}</p>
-          </Card>
-        </div>
-
+        {/* Payables grid */}
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="border-gray-800 bg-opsPanel p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Chef Payables</h2>
-              <Badge className="bg-purple-500/20 text-purple-200">{data.chefLiabilities.length}</Badge>
+          <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white">Chef Payables</h2>
+              <span className="rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
+                {data.chefLiabilities.length}
+              </span>
             </div>
-            <div className="space-y-3">
-              {data.chefLiabilities.map((chef) => (
-                <div key={chef.id} className="flex items-center justify-between rounded-lg bg-opsPanel p-4">
-                  <span className="text-white">{chef.name}</span>
-                  <span className="text-emerald-300">{formatCurrency(chef.amount)}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="border-gray-800 bg-opsPanel p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Driver Payables</h2>
-              <Badge className="bg-blue-500/20 text-blue-200">{data.driverLiabilities.length}</Badge>
-            </div>
-            <div className="space-y-3">
-              {data.driverLiabilities.map((driver) => (
-                <div key={driver.id} className="flex items-center justify-between rounded-lg bg-opsPanel p-4">
-                  <span className="text-white">{driver.name}</span>
-                  <span className="text-emerald-300">{formatCurrency(driver.amount)}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        <Card className="border-gray-800 bg-opsPanel p-6">
-          <h2 className="text-lg font-semibold text-white">Review Queues</h2>
-          <p className="mt-1 text-sm text-gray-400">
-            Refunds and payout adjustments below are actionable from ops-admin and write audit logs through the engine.
-          </p>
-          <div className="mt-6">
-            <FinanceActions
-              refunds={data.pendingRefunds}
-              adjustments={data.pendingAdjustments}
+            <DataTable
+              columns={liabilityColumns}
+              data={data.chefLiabilities}
+              keyExtractor={(r) => r.id}
+              emptyState={<EmptyState title="No chef payables" description="No outstanding chef liabilities." />}
+              className="border-gray-800 bg-transparent"
             />
           </div>
-        </Card>
 
-        <Card className="border-gray-800 bg-opsPanel p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Recent Ledger Activity</h2>
-            <Badge className="bg-gray-700 text-gray-200">{data.recentLedger.length}</Badge>
+          <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white">Driver Payables</h2>
+              <span className="rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
+                {data.driverLiabilities.length}
+              </span>
+            </div>
+            <DataTable
+              columns={liabilityColumns}
+              data={data.driverLiabilities}
+              keyExtractor={(r) => r.id}
+              emptyState={<EmptyState title="No driver payables" description="No outstanding driver liabilities." />}
+              className="border-gray-800 bg-transparent"
+            />
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-700 text-left text-sm text-gray-400">
-                  <th className="py-3 font-medium">Date</th>
-                  <th className="py-3 font-medium">Type</th>
-                  <th className="py-3 font-medium">Entity</th>
-                  <th className="py-3 font-medium">Description</th>
-                  <th className="py-3 font-medium">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.recentLedger.map((entry) => (
-                  <tr key={entry.id} className="border-b border-gray-800 text-sm">
-                    <td className="py-3 text-gray-300">{new Date(entry.createdAt).toLocaleString()}</td>
-                    <td className="py-3 text-gray-300">{entry.entryType}</td>
-                    <td className="py-3 text-gray-300">
-                      {entry.entityType ? `${entry.entityType}:${entry.entityId ?? 'n/a'}` : 'platform'}
-                    </td>
-                    <td className="py-3 text-gray-300">{entry.description ?? 'No description'}</td>
-                    <td className="py-3 text-emerald-300">{formatCurrency(entry.amountCents / 100)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        </div>
+
+        {/* Review queues */}
+        <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+          <h2 className="mb-1 text-sm font-semibold text-white">Review Queues</h2>
+          <p className="mb-4 text-xs text-gray-500">
+            Refunds and payout adjustments are actionable here and write audit logs through the engine.
+          </p>
+          <FinanceActions
+            refunds={data.pendingRefunds}
+            adjustments={data.pendingAdjustments}
+          />
+        </div>
+
+        {/* Ledger */}
+        <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-white">Recent Ledger Activity</h2>
+            <span className="rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
+              {data.recentLedger.length}
+            </span>
           </div>
-        </Card>
+          <DataTable
+            columns={ledgerColumns}
+            data={data.recentLedger as LedgerEntry[]}
+            keyExtractor={(r) => r.id}
+            emptyState={<EmptyState title="No ledger entries" description="Ledger activity will appear here." />}
+            className="border-gray-800 bg-transparent"
+          />
+        </div>
+
         <PayoutActions />
       </div>
     </DashboardLayout>

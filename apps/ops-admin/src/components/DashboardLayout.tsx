@@ -3,123 +3,254 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
+import {
+  Activity,
+  Package,
+  Users,
+  DollarSign,
+  Settings2,
+  LayoutDashboard,
+  Zap,
+  Map,
+  ClipboardList,
+  Truck,
+  RefreshCcw,
+  ChevronDown,
+  CreditCard,
+  Wallet,
+  Banknote,
+  Tag,
+  Megaphone,
+  Bot,
+  BarChart3,
+  LineChart,
+  Wrench,
+  Puzzle,
+  UserCog,
+  HeadphonesIcon,
+  UserCheck,
+  Plus,
+  X,
+  Menu,
+} from 'lucide-react';
 import { OpsAlerts } from './ops-alerts';
 import { GlobalSearch } from './global-search';
 
 interface NavItem {
   href: string;
   label: string;
-  iconPath: string;
-  section?: string;
+  Icon: React.ComponentType<{ className?: string }>;
 }
 
-const navItems: NavItem[] = [
+interface NavGroup {
+  id: string;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  items: NavItem[];
+  defaultOpen?: boolean;
+}
+
+const NAV_GROUPS: NavGroup[] = [
   {
-    href: '/dashboard',
-    label: 'Overview',
-    iconPath: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
-    section: 'Main',
+    id: 'operate',
+    label: 'Operate',
+    Icon: Activity,
+    defaultOpen: true,
+    items: [
+      { href: '/dashboard', label: 'Live Board', Icon: LayoutDashboard },
+      { href: '/dashboard/dispatch', label: 'Dispatch', Icon: Zap },
+      { href: '/dashboard/map', label: 'Live Map', Icon: Map },
+      { href: '/dashboard/activity', label: 'Activity Log', Icon: ClipboardList },
+    ],
   },
   {
-    href: '/dashboard/map',
-    label: 'Live Map',
-    iconPath: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
+    id: 'orders',
+    label: 'Orders & Deliveries',
+    Icon: Package,
+    items: [
+      { href: '/dashboard/orders', label: 'All Orders', Icon: Package },
+      { href: '/dashboard/deliveries', label: 'Deliveries', Icon: Truck },
+      { href: '/dashboard/finance/refunds', label: 'Refunds & Disputes', Icon: RefreshCcw },
+    ],
   },
   {
-    href: '/dashboard/dispatch',
-    label: 'Dispatch',
-    iconPath: 'M13 10V3L4 14h7v7l9-11h-7z',
+    id: 'people',
+    label: 'People',
+    Icon: Users,
+    items: [
+      { href: '/dashboard/chefs', label: 'Chefs', Icon: UserCog },
+      { href: '/dashboard/chefs/approvals', label: 'Chef Approvals', Icon: UserCheck },
+      { href: '/dashboard/drivers', label: 'Drivers', Icon: Truck },
+      { href: '/dashboard/customers', label: 'Customers', Icon: Users },
+    ],
   },
   {
-    href: '/dashboard/orders',
-    label: 'Orders',
-    iconPath: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
+    id: 'money',
+    label: 'Money',
+    Icon: DollarSign,
+    items: [
+      { href: '/dashboard/finance', label: 'Finance Overview', Icon: DollarSign },
+      { href: '/dashboard/finance/reconciliation', label: 'Reconciliation', Icon: CreditCard },
+      { href: '/dashboard/finance/payouts', label: 'Payouts', Icon: Wallet },
+      { href: '/dashboard/finance/instant-payouts', label: 'Instant Payouts', Icon: Banknote },
+      { href: '/dashboard/promos', label: 'Promos', Icon: Tag },
+    ],
   },
   {
-    href: '/dashboard/deliveries',
-    label: 'Deliveries',
-    iconPath: 'M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0',
-    section: 'Operations',
-  },
-  {
-    href: '/dashboard/chefs',
-    label: 'Chefs',
-    iconPath: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
-  },
-  {
-    href: '/dashboard/chefs/approvals',
-    label: 'Chef Approvals',
-    iconPath: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-  },
-  {
-    href: '/dashboard/drivers',
-    label: 'Drivers',
-    iconPath: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
-  },
-  {
-    href: '/dashboard/customers',
-    label: 'Customers',
-    iconPath: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
-    section: 'Business',
-  },
-  {
-    href: '/dashboard/finance',
-    label: 'Finance',
-    iconPath: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-  },
-  {
-    href: '/dashboard/promos',
-    label: 'Promos',
-    iconPath: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z',
-  },
-  {
-    href: '/dashboard/analytics',
-    label: 'Analytics',
-    iconPath: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-  },
-  {
-    href: '/dashboard/reports',
-    label: 'Reports',
-    iconPath: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-  },
-  {
-    href: '/dashboard/support',
-    label: 'Support',
-    iconPath: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z',
-    section: 'System',
-  },
-  {
-    href: '/dashboard/team',
-    label: 'Team',
-    iconPath: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
-  },
-  {
-    href: '/dashboard/activity',
-    label: 'Activity Log',
-    iconPath: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-  },
-  {
-    href: '/dashboard/announcements',
-    label: 'Announcements',
-    iconPath: 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z',
-  },
-  {
-    href: '/dashboard/automation',
-    label: 'Automation',
-    iconPath: 'M13 10V3L4 14h7v7l9-11h-7z',
-  },
-  {
-    href: '/dashboard/settings',
-    label: 'Settings',
-    iconPath: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
-  },
-  {
-    href: '/dashboard/integrations',
-    label: 'Integrations',
-    iconPath: 'M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z',
+    id: 'platform',
+    label: 'Platform',
+    Icon: Settings2,
+    items: [
+      { href: '/dashboard/announcements', label: 'Announcements', Icon: Megaphone },
+      { href: '/dashboard/automation', label: 'Automation Rules', Icon: Bot },
+      { href: '/dashboard/reports', label: 'Reports', Icon: BarChart3 },
+      { href: '/dashboard/analytics', label: 'Analytics', Icon: LineChart },
+      { href: '/dashboard/settings', label: 'Settings', Icon: Wrench },
+      { href: '/dashboard/integrations', label: 'Integrations', Icon: Puzzle },
+      { href: '/dashboard/team', label: 'Team', Icon: UserCog },
+      { href: '/dashboard/support', label: 'Support', Icon: HeadphonesIcon },
+    ],
   },
 ];
+
+const QUICK_CREATES = [
+  { href: '/dashboard/chefs', label: 'Add Chef' },
+  { href: '/dashboard/drivers', label: 'Add Driver' },
+  { href: '/dashboard/promos', label: 'Add Promo' },
+  { href: '/dashboard/announcements', label: 'Send Announcement' },
+];
+
+function useGroupOpen(groupId: string, defaultOpen = false) {
+  const key = `opsadmin.nav.${groupId}`;
+  const [isOpen, setIsOpen] = useState(() => {
+    if (typeof window === 'undefined') return defaultOpen;
+    const stored = localStorage.getItem(key);
+    return stored !== null ? stored === 'true' : defaultOpen;
+  });
+
+  const toggle = useCallback(() => {
+    setIsOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem(key, String(next));
+      return next;
+    });
+  }, [key]);
+
+  return [isOpen, toggle] as const;
+}
+
+function NavGroupItem({ group, pathname, collapsed }: {
+  group: NavGroup;
+  pathname: string;
+  collapsed: boolean;
+}) {
+  const [isOpen, toggle] = useGroupOpen(group.id, group.defaultOpen);
+  const { Icon } = group;
+
+  const isGroupActive = group.items.some(
+    (item) =>
+      pathname === item.href ||
+      (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
+  );
+
+  if (collapsed) {
+    return (
+      <div className="relative group/group">
+        <button
+          onClick={toggle}
+          className={`flex w-full items-center justify-center rounded-md p-2 transition-colors ${
+            isGroupActive
+              ? 'text-[#E85D26]'
+              : 'text-gray-500 hover:text-gray-300'
+          }`}
+          aria-label={group.label}
+          title={group.label}
+        >
+          <Icon className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-1">
+      <button
+        onClick={toggle}
+        className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-widest transition-colors ${
+          isGroupActive ? 'text-gray-300' : 'text-gray-600 hover:text-gray-400'
+        }`}
+      >
+        <span className="flex items-center gap-2">
+          <Icon className="h-3.5 w-3.5" />
+          {group.label}
+        </span>
+        <ChevronDown
+          className={`h-3 w-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      <div
+        className={`overflow-hidden transition-all duration-200 ${
+          isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <ul className="mt-0.5 space-y-0.5 pb-1">
+          {group.items.map((item) => {
+            const isActive =
+              pathname === item.href ||
+              (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'));
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={`flex items-center gap-2.5 rounded-md py-2 pl-3 pr-3 text-sm transition-all ${
+                    isActive
+                      ? 'border-l-2 border-[#E85D26] bg-white/5 pl-[10px] font-medium text-white'
+                      : 'border-l-2 border-transparent text-gray-500 hover:bg-white/5 hover:text-gray-300'
+                  }`}
+                >
+                  <item.Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                  {item.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function QuickCreateMenu() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 rounded-md bg-[#E85D26] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#d54d1a]"
+      >
+        <Plus className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">Add</span>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1.5 w-48 overflow-hidden rounded-lg border border-gray-700 bg-opsPanel shadow-xl">
+          {QUICK_CREATES.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -127,112 +258,134 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Group nav items by section
-  const sections: Record<string, NavItem[]> = {};
-  let currentSection = 'Main';
-  for (const item of navItems) {
-    if (item.section) currentSection = item.section;
-    if (!sections[currentSection]) sections[currentSection] = [];
-    sections[currentSection]!.push(item);
-  }
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  const sidebarContent = (collapsed: boolean) => (
+    <>
+      {/* Logo */}
+      <div className={`flex h-14 items-center border-b border-white/5 ${collapsed ? 'justify-center px-2' : 'gap-3 px-4'}`}>
+        <Image
+          src="/logo-icon.png"
+          alt="RideNDine"
+          width={28}
+          height={28}
+          className="rounded-md flex-shrink-0"
+        />
+        {!collapsed && (
+          <>
+            <span className="text-base font-bold">
+              <span className="text-[#1a9e8e]">RideN</span>
+              <span className="text-[#E85D26]">Dine</span>
+            </span>
+            <span className="ml-auto rounded-full bg-[#E85D26]/20 px-2 py-0.5 text-[10px] font-semibold text-[#E85D26]">
+              Ops
+            </span>
+          </>
+        )}
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto p-2">
+        {NAV_GROUPS.map((group) => (
+          <NavGroupItem
+            key={group.id}
+            group={group}
+            pathname={pathname}
+            collapsed={collapsed}
+          />
+        ))}
+      </nav>
+
+      {/* Status footer */}
+      <div className={`border-t border-white/5 p-3 ${collapsed ? 'flex justify-center' : ''}`}>
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2 w-2 flex-shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+          </span>
+          {!collapsed && (
+            <span className="text-[11px] text-gray-600">All systems operational</span>
+          )}
+        </div>
+      </div>
+    </>
+  );
 
   return (
     <div className="flex min-h-screen bg-opsCanvas">
-      {/* Sidebar */}
-      <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-white/5 bg-opsCanvas lg:flex">
-        {/* Logo */}
-        <div className="flex h-16 items-center gap-3 border-b border-white/5 px-5">
-          <Image
-            src="/logo-icon.png"
-            alt="RideNDine"
-            width={32}
-            height={32}
-            className="rounded-lg"
-          />
-          <span className="text-lg font-bold">
-            <span className="text-[#1a9e8e]">RideN</span>
-            <span className="text-[#E85D26]">Dine</span>
-          </span>
-          <span className="ml-auto rounded-full bg-[#E85D26]/20 px-2 py-0.5 text-xs font-medium text-[#E85D26]">
-            Ops
-          </span>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-3">
-          {Object.entries(sections).map(([section, items]) => (
-            <div key={section} className="mb-4">
-              <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-gray-600">
-                {section}
-              </p>
-              <ul className="space-y-0.5">
-                {items.map((item) => {
-                  const isActive =
-                    pathname === item.href ||
-                    (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'));
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
-                          isActive
-                            ? 'bg-[#E85D26] text-white'
-                            : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                        }`}
-                      >
-                        <svg
-                          className="h-4 w-4 flex-shrink-0"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d={item.iconPath}
-                          />
-                        </svg>
-                        {item.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </nav>
-
-        {/* Footer */}
-        <div className="border-t border-white/5 p-3">
-          <div className="flex items-center gap-2 rounded-xl px-3 py-2">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-            </span>
-            <span className="text-xs text-gray-500">All systems operational</span>
-          </div>
-        </div>
+      {/* Desktop sidebar — icon-only below lg, full above lg */}
+      <aside className="hidden w-12 flex-shrink-0 flex-col border-r border-white/5 bg-opsPanel md:flex lg:hidden">
+        {sidebarContent(true)}
+      </aside>
+      <aside className="hidden w-56 flex-shrink-0 flex-col border-r border-white/5 bg-opsPanel lg:flex">
+        {sidebarContent(false)}
       </aside>
 
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col min-w-0">
-        {/* Top Bar */}
-        <div className="flex h-16 items-center justify-between border-b border-white/5 bg-opsCanvas px-6">
-          <div className="text-sm font-medium text-gray-400">Operations Command Centre</div>
-          <div className="flex items-center gap-4">
-            <GlobalSearch />
-            <OpsAlerts />
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-            </span>
-            <span className="text-sm text-green-400 font-medium">Live</span>
-          </div>
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="absolute inset-0 bg-black/70"
+            onClick={() => setMobileOpen(false)}
+          />
+          <aside className="absolute left-0 top-0 flex h-full w-64 flex-col border-r border-white/5 bg-opsPanel">
+            <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
+              <span className="text-sm font-semibold text-white">Navigation</span>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="rounded p-1 text-gray-400 hover:text-white"
+                aria-label="Close navigation"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <nav className="flex-1 overflow-y-auto p-2">
+              {NAV_GROUPS.map((group) => (
+                <NavGroupItem
+                  key={group.id}
+                  group={group}
+                  pathname={pathname}
+                  collapsed={false}
+                />
+              ))}
+            </nav>
+          </aside>
         </div>
+      )}
 
-        <main className="flex-1 overflow-auto p-6 lg:p-8">
+      {/* Main content */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Top bar */}
+        <header className="flex h-14 flex-shrink-0 items-center justify-between border-b border-white/5 bg-opsCanvas px-4 md:px-6">
+          <div className="flex items-center gap-3">
+            <button
+              className="rounded p-1.5 text-gray-500 hover:text-gray-300 md:hidden"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open navigation"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <GlobalSearch />
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <QuickCreateMenu />
+            <OpsAlerts />
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+              </span>
+              <span className="hidden text-xs font-medium text-green-400 sm:inline">Live</span>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-auto p-4 lg:p-8">
           {children}
         </main>
       </div>
