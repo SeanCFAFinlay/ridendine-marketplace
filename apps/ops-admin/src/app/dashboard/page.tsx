@@ -184,10 +184,11 @@ export default async function DashboardPage() {
   ];
 
   const quickActions = [
+    { href: '/dashboard/chefs', label: 'Add Chef', count: stats.activeChefs, urgent: false },
+    { href: '/dashboard/drivers', label: 'Add Driver', count: stats.totalDrivers, urgent: false },
     { href: '/dashboard/chefs/approvals', label: 'Chef Approvals', count: stats.pendingApprovals, urgent: stats.pendingApprovals > 0 },
     { href: '/dashboard/map', label: 'Live Map', count: stats.activeDeliveries },
     { href: '/dashboard/orders', label: 'All Orders', count: stats.totalOrders },
-    { href: '/dashboard/drivers', label: 'Manage Drivers', count: stats.totalDrivers },
     { href: '/dashboard/finance', label: 'Finance', count: engineData?.pendingRefunds ?? 0 },
     { href: '/dashboard/support', label: 'Support', count: engineData?.supportBacklog ?? 0 },
   ];
@@ -283,6 +284,34 @@ export default async function DashboardPage() {
             </div>
           </div>
         )}
+
+        <Card className="border-gray-800 bg-[#16213e] p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Run the Business</h2>
+              <p className="mt-1 text-sm text-gray-400">
+                Primary operator controls for adding supply, managing money, and intervening in live orders.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/dashboard/chefs" className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-semibold text-white hover:bg-[#d54d1a]">
+                Add Chef
+              </Link>
+              <Link href="/dashboard/drivers" className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-semibold text-white hover:bg-[#d54d1a]">
+                Add Driver
+              </Link>
+              <Link href="/dashboard/finance" className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-200 hover:border-[#E85D26]">
+                Finance
+              </Link>
+              <Link href="/dashboard/dispatch" className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-200 hover:border-[#E85D26]">
+                Dispatch
+              </Link>
+              <Link href="/dashboard/announcements" className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-200 hover:border-[#E85D26]">
+                Announcement
+              </Link>
+            </div>
+          </div>
+        </Card>
 
         <LiveBoardBoundary>
           <LiveBoard />

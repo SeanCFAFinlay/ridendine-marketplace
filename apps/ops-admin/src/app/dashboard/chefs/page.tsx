@@ -2,6 +2,7 @@
 
 import { Card, Badge } from '@ridendine/ui';
 import Link from 'next/link';
+import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
@@ -40,6 +41,17 @@ function getStatusVariant(
 export default function ChefsPage() {
   const [chefs, setChefs] = useState<ChefProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    status: 'pending',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchChefs();
@@ -49,11 +61,37 @@ export default function ChefsPage() {
     try {
       const response = await fetch('/api/chefs');
       const result = await response.json();
-      setChefs(result.data || []);
+      setChefs(result.data?.items || []);
     } catch (error) {
       console.error('Failed to fetch chefs:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleCreateChef(event: FormEvent) {
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/chefs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          phone: form.phone || undefined,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error?.message || result.error || 'Failed to add chef');
+      setShowCreate(false);
+      setForm({ firstName: '', lastName: '', email: '', phone: '', password: '', status: 'pending' });
+      fetchChefs();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to add chef');
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -89,10 +127,36 @@ export default function ChefsPage() {
             <p className="mt-2 text-gray-400">Govern chef approvals, suspension state, and storefront readiness</p>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowCreate(true)}
+              className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#d54d1a]"
+            >
+              Add Chef
+            </button>
             <a href="/api/export?type=chefs" className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">Export CSV</a>
             <Badge className="bg-[#E85D26] text-white">{chefs.length} Chefs</Badge>
           </div>
         </div>
+
+        <Card className="mb-6 border-gray-800 bg-[#16213e] p-5">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Link href="/dashboard/chefs/approvals" className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4 transition-colors hover:border-[#E85D26]">
+              <p className="text-sm font-semibold text-white">Review approvals</p>
+              <p className="mt-1 text-xs text-gray-400">Approve, reject, or suspend chef access.</p>
+            </Link>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4 text-left transition-colors hover:border-[#E85D26]"
+            >
+              <p className="text-sm font-semibold text-white">Create chef account</p>
+              <p className="mt-1 text-xs text-gray-400">Add a chef directly from operations.</p>
+            </button>
+            <a href="/api/export?type=chefs" className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4 transition-colors hover:border-[#E85D26]">
+              <p className="text-sm font-semibold text-white">Export chef records</p>
+              <p className="mt-1 text-xs text-gray-400">Download the current chef list.</p>
+            </a>
+          </div>
+        </Card>
 
         <Card className="border-gray-800 bg-[#16213e]">
           <div className="overflow-x-auto">
@@ -174,6 +238,62 @@ export default function ChefsPage() {
             )}
           </div>
         </Card>
+
+        {showCreate && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+            <div className="w-full max-w-lg rounded-xl border border-gray-700 bg-[#16213e] p-6 shadow-2xl">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white">Add Chef</h2>
+                  <p className="mt-1 text-sm text-gray-400">Create a login and chef profile for ops review.</p>
+                </div>
+                <button onClick={() => setShowCreate(false)} className="text-sm text-gray-400 hover:text-white">
+                  Close
+                </button>
+              </div>
+              {error && <div className="mt-4 rounded-lg bg-red-500/15 p-3 text-sm text-red-200">{error}</div>}
+              <form onSubmit={handleCreateChef} className="mt-5 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-sm text-gray-300">
+                    First name
+                    <input required value={form.firstName} onChange={(e) => setForm((v) => ({ ...v, firstName: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-[#1a1a2e] px-3 py-2 text-white" />
+                  </label>
+                  <label className="text-sm text-gray-300">
+                    Last name
+                    <input required value={form.lastName} onChange={(e) => setForm((v) => ({ ...v, lastName: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-[#1a1a2e] px-3 py-2 text-white" />
+                  </label>
+                </div>
+                <label className="block text-sm text-gray-300">
+                  Email
+                  <input required type="email" value={form.email} onChange={(e) => setForm((v) => ({ ...v, email: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-[#1a1a2e] px-3 py-2 text-white" />
+                </label>
+                <label className="block text-sm text-gray-300">
+                  Phone
+                  <input value={form.phone} onChange={(e) => setForm((v) => ({ ...v, phone: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-[#1a1a2e] px-3 py-2 text-white" />
+                </label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-sm text-gray-300">
+                    Temporary password
+                    <input required minLength={8} type="password" value={form.password} onChange={(e) => setForm((v) => ({ ...v, password: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-[#1a1a2e] px-3 py-2 text-white" />
+                  </label>
+                  <label className="text-sm text-gray-300">
+                    Starting status
+                    <select value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-[#1a1a2e] px-3 py-2 text-white">
+                      <option value="pending">Pending review</option>
+                      <option value="approved">Approved</option>
+                    </select>
+                  </label>
+                </div>
+                <div className="flex justify-end gap-3 pt-2">
+                  <button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-300 hover:bg-white/5">Cancel</button>
+                  <button disabled={saving} type="submit" className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-semibold text-white hover:bg-[#d54d1a] disabled:opacity-60">
+                    {saving ? 'Creating...' : 'Create Chef'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient, listChefsWithStorefronts, type SupabaseClient } from '@ridendine/db';
-import { paginationSchema } from '@ridendine/validation';
+import {
+  createAdminClient,
+  createChefProfile,
+  listChefsWithStorefronts,
+  type SupabaseClient,
+} from '@ridendine/db';
+import { paginationSchema, signupSchema } from '@ridendine/validation';
 import { getOpsActorContext, errorResponse, guardPlatformApi } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
@@ -39,22 +44,65 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(_request: Request) {
+function normalizeChefStatus(status: unknown): 'pending' | 'approved' {
+  return status === 'approved' ? 'approved' : 'pending';
+}
+
+export async function POST(request: Request) {
   try {
     const actor = await getOpsActorContext();
     const denied = guardPlatformApi(actor, 'chefs_governance');
     if (denied) return denied;
 
-    return errorResponse(
-      'NOT_SUPPORTED',
-      'Chef profiles must be created through chef signup, not manually in ops-admin.',
-      400
-    );
+    const body = await request.json();
+    const validated = signupSchema.parse(body);
+    const status = normalizeChefStatus((body as Record<string, unknown>).status);
+
+    const supabase = createAdminClient() as unknown as SupabaseClient;
+    const { data: authData, error: authError } = await (supabase as any).auth.admin.createUser({
+      email: validated.email,
+      password: validated.password,
+      email_confirm: true,
+      user_metadata: {
+        first_name: validated.firstName,
+        last_name: validated.lastName,
+        phone: validated.phone ?? null,
+        role: 'chef',
+        created_by_ops: true,
+        created_by: actor?.userId ?? null,
+      },
+    });
+
+    if (authError || !authData?.user) {
+      return errorResponse('AUTH_CREATE_FAILED', authError?.message || 'Unable to create chef auth user', 400);
+    }
+
+    const chef = await createChefProfile(supabase, {
+      user_id: authData.user.id,
+      display_name: `${validated.firstName} ${validated.lastName}`.trim(),
+      bio: null,
+      profile_image_url: null,
+      phone: validated.phone ?? null,
+      status,
+    });
+
+    await (supabase as any).from('audit_logs').insert({
+      action: 'ops_create',
+      actor_type: 'platform_user',
+      entity_type: 'chef',
+      entity_id: chef.id,
+      actor_id: actor?.userId ?? null,
+      actor_role: actor?.role ?? null,
+      new_data: { status, email: validated.email },
+      reason: 'Chef account created from ops-admin',
+    });
+
+    return NextResponse.json({ success: true, data: chef });
   } catch (error) {
     console.error('Failed to create chef:', error);
     return NextResponse.json(
-      { error: 'Failed to create chef' },
-      { status: 500 }
+      { error: error instanceof Error ? error.message : 'Failed to create chef' },
+      { status: error instanceof Error && error.name === 'ZodError' ? 400 : 500 }
     );
   }
 }
