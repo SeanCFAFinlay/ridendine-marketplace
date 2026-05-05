@@ -1,7 +1,7 @@
 import { createAuthMiddleware } from '@ridendine/auth/middleware';
 
 export const middleware = createAuthMiddleware({
-  publicRoutes: ['/auth/login', '/auth/signup'],
+  publicRoutes: ['/auth/login', '/auth/signup', '/api/auth/login', '/api/auth/signup'],
   loginRoute: '/auth/login',
   authenticatedRedirect: '/',
 });

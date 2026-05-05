@@ -30,6 +30,7 @@
     "test:load": "node scripts/load/run-load-smoke.mjs",
     "test:load:dry-run": "node scripts/load/run-load-smoke.mjs --dry-run",
     "test:load:staging": "node scripts/load/run-load-smoke.mjs",
+    "admin:bootstrap-super": "node scripts/bootstrap-super-admin.mjs",
     "ui:screenshots": "tsx scripts/ui/generate-ui-screenshots.ts",
     "ui:registry": "tsx scripts/ui/build-page-registry.ts",
     "ui:screenshots:sync": "tsx scripts/ui/sync-ui-screenshots.ts",

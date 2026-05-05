@@ -11,7 +11,10 @@ function read(relativePath: string): string {
 describe('driver-app smoke wiring', () => {
   it('middleware preserves login/signup as public routes', () => {
     const src = read('middleware.ts');
-    expect(src).toContain("publicRoutes: ['/auth/login', '/auth/signup']");
+    expect(src).toContain("'/auth/login'");
+    expect(src).toContain("'/auth/signup'");
+    expect(src).toContain("'/api/auth/login'");
+    expect(src).toContain("'/api/auth/signup'");
     expect(src).toContain("loginRoute: '/auth/login'");
   });
 

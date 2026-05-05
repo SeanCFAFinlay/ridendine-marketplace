@@ -6,6 +6,7 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
+import { getDriverAppPlatformRole } from '@/lib/platform-access';
 
 export async function POST(request: Request) {
   const limit = await evaluateRateLimit({
@@ -43,7 +44,22 @@ export async function POST(request: Request) {
       );
     }
 
-    const driver = await getDriverByUserId(supabase, authData.user.id);
+    const [driver, platformRole] = await Promise.all([
+      getDriverByUserId(supabase, authData.user.id),
+      getDriverAppPlatformRole(authData.user.id),
+    ]);
+
+    if (platformRole) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          user: authData.user,
+          driver: driver ?? null,
+          platformRole,
+          session: authData.session,
+        },
+      });
+    }
 
     if (!driver) {
       await supabase.auth.signOut();
