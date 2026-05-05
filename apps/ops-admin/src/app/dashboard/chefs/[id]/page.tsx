@@ -86,7 +86,7 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Profile Info */}
-          <Card className="border-gray-800 bg-[#16213e] p-6 lg:col-span-2">
+          <Card className="border-gray-800 bg-opsPanel p-6 lg:col-span-2">
             <h2 className="text-lg font-semibold text-white mb-4">Profile Information</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -115,18 +115,18 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
           </Card>
 
           {/* Stats */}
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <h2 className="text-lg font-semibold text-white mb-4">Performance</h2>
             <div className="space-y-4">
-              <div className="text-center p-4 bg-[#1a1a2e] rounded-lg">
+              <div className="text-center p-4 bg-opsPanel rounded-lg">
                 <p className="text-2xl font-bold text-emerald-400">${chef.total_revenue.toFixed(2)}</p>
                 <p className="text-sm text-gray-400">Total Revenue</p>
               </div>
-              <div className="text-center p-4 bg-[#1a1a2e] rounded-lg">
+              <div className="text-center p-4 bg-opsPanel rounded-lg">
                 <p className="text-2xl font-bold text-blue-400">{chef.order_count}</p>
                 <p className="text-sm text-gray-400">Completed Orders</p>
               </div>
-              <div className="text-center p-4 bg-[#1a1a2e] rounded-lg">
+              <div className="text-center p-4 bg-opsPanel rounded-lg">
                 <p className="text-2xl font-bold text-purple-400">{storefronts?.length || 0}</p>
                 <p className="text-sm text-gray-400">Storefronts</p>
               </div>
@@ -135,12 +135,12 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
         </div>
 
         {/* Storefronts */}
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h2 className="text-lg font-semibold text-white mb-4">Storefronts</h2>
           {storefronts && storefronts.length > 0 ? (
             <div className="space-y-4">
               {storefronts.map((storefront) => (
-                <div key={storefront.id} className="p-4 bg-[#1a1a2e] rounded-lg">
+                <div key={storefront.id} className="p-4 bg-opsPanel rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-medium text-white">{storefront.name}</h3>
@@ -174,7 +174,7 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
         </Card>
 
         {/* Delivery Zones */}
-        <Card className="border-gray-800 bg-[#16213e] p-6 mt-6">
+        <Card className="border-gray-800 bg-opsPanel p-6 mt-6">
           <h3 className="text-lg font-semibold text-white mb-4">Delivery Zones</h3>
           {zones.length > 0 ? (
             <div className="overflow-x-auto">
@@ -220,7 +220,7 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
         </Card>
 
         {/* Actions */}
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h2 className="text-lg font-semibold text-white mb-4">Actions</h2>
           <p className="mb-4 text-sm text-gray-400">
             Ops owns chef approval and storefront publication. Suspension removes storefront visibility until ops republishes it.

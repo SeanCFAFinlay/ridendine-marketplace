@@ -71,7 +71,7 @@ export default function IntegrationsPage() {
         <div className="space-y-3">
           {integrations.map((integration) => (
             <Card key={integration.name} className={`p-5 ${
-              integration.configured ? 'border-gray-800 bg-[#16213e]' : 'border-yellow-500/30 bg-yellow-950/10'
+              integration.configured ? 'border-gray-800 bg-opsPanel' : 'border-yellow-500/30 bg-yellow-950/10'
             }`}>
               <div className="flex items-center justify-between">
                 <div>
@@ -93,7 +93,7 @@ export default function IntegrationsPage() {
           ))}
         </div>
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h3 className="text-sm font-semibold text-white mb-2">Configuration</h3>
           <p className="text-xs text-gray-400">
             Integrations are configured via environment variables in the Vercel dashboard.

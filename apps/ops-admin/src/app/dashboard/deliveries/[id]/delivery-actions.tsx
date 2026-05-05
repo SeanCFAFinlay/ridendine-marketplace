@@ -67,7 +67,7 @@ export function DeliveryActions({
   return (
     <>
       <div className="space-y-4">
-        <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+        <div className="rounded-lg border border-gray-700 bg-opsPanel p-4">
           <p className="text-sm text-gray-300">
             All interventions on this page are engine-backed and audit logged. Delivery execution status remains owned by the live workflow.
           </p>

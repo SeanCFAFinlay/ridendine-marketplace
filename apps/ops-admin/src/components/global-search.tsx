@@ -174,7 +174,7 @@ export function GlobalSearch() {
         >
           <div className="fixed inset-0 bg-black/60" />
           <div
-            className="relative w-full max-w-lg rounded-xl border border-gray-700 bg-[#0d1520] shadow-2xl"
+            className="relative w-full max-w-lg rounded-xl border border-gray-700 bg-opsCanvas shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 border-b border-gray-700 px-4 py-3">

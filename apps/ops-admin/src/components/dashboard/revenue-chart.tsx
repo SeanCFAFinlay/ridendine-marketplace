@@ -73,7 +73,7 @@ export function RevenueChart() {
   const avgDaily = data.length > 0 ? totalRevenue / data.length : 0;
 
   return (
-    <Card className="border-gray-800 bg-[#16213e] p-6">
+    <Card className="border-gray-800 bg-opsPanel p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">Revenue Trend</h3>
         <div className="flex gap-2">

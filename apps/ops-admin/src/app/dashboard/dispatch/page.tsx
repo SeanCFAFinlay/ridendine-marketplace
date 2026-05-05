@@ -161,7 +161,7 @@ export default function DispatchConsolePage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="border-gray-800 bg-[#16213e] p-4 text-gray-100 lg:col-span-1">
+          <Card className="border-gray-800 bg-opsPanel p-4 text-gray-100 lg:col-span-1">
             <h2 className="mb-3 text-lg font-semibold text-white">Awaiting driver</h2>
             <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
               {board?.pendingQueue?.length ? (
@@ -258,7 +258,7 @@ export default function DispatchConsolePage() {
             </div>
           </Card>
 
-          <Card className="border-gray-800 bg-[#16213e] p-4 text-gray-100 lg:col-span-1">
+          <Card className="border-gray-800 bg-opsPanel p-4 text-gray-100 lg:col-span-1">
             <h2 className="mb-3 text-lg font-semibold text-white">Active deliveries</h2>
             <div className="h-[420px] overflow-hidden rounded-lg border border-gray-800">
               {mapDeliveries.length ? (
@@ -271,11 +271,11 @@ export default function DispatchConsolePage() {
             </div>
           </Card>
 
-          <Card className="border-gray-800 bg-[#16213e] p-4 text-gray-100 lg:col-span-1">
+          <Card className="border-gray-800 bg-opsPanel p-4 text-gray-100 lg:col-span-1">
             <h2 className="mb-3 text-lg font-semibold text-white">Offer history (24h)</h2>
             <div className="max-h-[70vh] overflow-x-auto overflow-y-auto text-xs">
               <table className="w-full border-collapse text-left">
-                <thead className="sticky top-0 bg-[#16213e] text-gray-400">
+                <thead className="sticky top-0 bg-opsPanel text-gray-400">
                   <tr>
                     <th className="p-2">Driver</th>
                     <th className="p-2">Response</th>

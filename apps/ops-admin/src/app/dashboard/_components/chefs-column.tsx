@@ -11,7 +11,7 @@ export function ChefsColumn({ chefs }: { chefs: OpsLiveChefView[] }) {
       <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400">Chefs / storefronts</h3>
       <div className="flex max-h-[70vh] flex-col gap-2 overflow-y-auto">
         {sorted.map((c) => (
-          <Card key={c.id} className="border-gray-700 bg-[#16213e] p-3">
+          <Card key={c.id} className="border-gray-700 bg-opsPanel p-3">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="font-medium text-white text-sm">{c.name}</p>

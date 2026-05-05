@@ -138,27 +138,27 @@ export default function ChefsPage() {
           </div>
         </div>
 
-        <Card className="mb-6 border-gray-800 bg-[#16213e] p-5">
+        <Card className="mb-6 border-gray-800 bg-opsPanel p-5">
           <div className="grid gap-4 md:grid-cols-3">
-            <Link href="/dashboard/chefs/approvals" className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4 transition-colors hover:border-[#E85D26]">
+            <Link href="/dashboard/chefs/approvals" className="rounded-lg border border-gray-700 bg-opsPanel p-4 transition-colors hover:border-[#E85D26]">
               <p className="text-sm font-semibold text-white">Review approvals</p>
               <p className="mt-1 text-xs text-gray-400">Approve, reject, or suspend chef access.</p>
             </Link>
             <button
               onClick={() => setShowCreate(true)}
-              className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4 text-left transition-colors hover:border-[#E85D26]"
+              className="rounded-lg border border-gray-700 bg-opsPanel p-4 text-left transition-colors hover:border-[#E85D26]"
             >
               <p className="text-sm font-semibold text-white">Create chef account</p>
               <p className="mt-1 text-xs text-gray-400">Add a chef directly from operations.</p>
             </button>
-            <a href="/api/export?type=chefs" className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4 transition-colors hover:border-[#E85D26]">
+            <a href="/api/export?type=chefs" className="rounded-lg border border-gray-700 bg-opsPanel p-4 transition-colors hover:border-[#E85D26]">
               <p className="text-sm font-semibold text-white">Export chef records</p>
               <p className="mt-1 text-xs text-gray-400">Download the current chef list.</p>
             </a>
           </div>
         </Card>
 
-        <Card className="border-gray-800 bg-[#16213e]">
+        <Card className="border-gray-800 bg-opsPanel">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -241,7 +241,7 @@ export default function ChefsPage() {
 
         {showCreate && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-            <div className="w-full max-w-lg rounded-xl border border-gray-700 bg-[#16213e] p-6 shadow-2xl">
+            <div className="w-full max-w-lg rounded-xl border border-gray-700 bg-opsPanel p-6 shadow-2xl">
               <div className="flex items-start justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-white">Add Chef</h2>
@@ -256,29 +256,29 @@ export default function ChefsPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="text-sm text-gray-300">
                     First name
-                    <input required value={form.firstName} onChange={(e) => setForm((v) => ({ ...v, firstName: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-[#1a1a2e] px-3 py-2 text-white" />
+                    <input required value={form.firstName} onChange={(e) => setForm((v) => ({ ...v, firstName: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-opsPanel px-3 py-2 text-white" />
                   </label>
                   <label className="text-sm text-gray-300">
                     Last name
-                    <input required value={form.lastName} onChange={(e) => setForm((v) => ({ ...v, lastName: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-[#1a1a2e] px-3 py-2 text-white" />
+                    <input required value={form.lastName} onChange={(e) => setForm((v) => ({ ...v, lastName: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-opsPanel px-3 py-2 text-white" />
                   </label>
                 </div>
                 <label className="block text-sm text-gray-300">
                   Email
-                  <input required type="email" value={form.email} onChange={(e) => setForm((v) => ({ ...v, email: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-[#1a1a2e] px-3 py-2 text-white" />
+                  <input required type="email" value={form.email} onChange={(e) => setForm((v) => ({ ...v, email: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-opsPanel px-3 py-2 text-white" />
                 </label>
                 <label className="block text-sm text-gray-300">
                   Phone
-                  <input value={form.phone} onChange={(e) => setForm((v) => ({ ...v, phone: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-[#1a1a2e] px-3 py-2 text-white" />
+                  <input value={form.phone} onChange={(e) => setForm((v) => ({ ...v, phone: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-opsPanel px-3 py-2 text-white" />
                 </label>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="text-sm text-gray-300">
                     Temporary password
-                    <input required minLength={8} type="password" value={form.password} onChange={(e) => setForm((v) => ({ ...v, password: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-[#1a1a2e] px-3 py-2 text-white" />
+                    <input required minLength={8} type="password" value={form.password} onChange={(e) => setForm((v) => ({ ...v, password: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-opsPanel px-3 py-2 text-white" />
                   </label>
                   <label className="text-sm text-gray-300">
                     Starting status
-                    <select value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-[#1a1a2e] px-3 py-2 text-white">
+                    <select value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-600 bg-opsPanel px-3 py-2 text-white">
                       <option value="pending">Pending review</option>
                       <option value="approved">Approved</option>
                     </select>

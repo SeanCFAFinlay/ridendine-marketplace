@@ -93,7 +93,7 @@ export default function ChefApprovalsPage() {
 
       <div className="space-y-4">
         {pendingChefs.map((chef) => (
-          <Card key={chef.id} className="border-gray-800 bg-[#16213e] p-6">
+          <Card key={chef.id} className="border-gray-800 bg-opsPanel p-6">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
               <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-[#E85D26] text-xl font-bold text-white">
                 {getInitials(chef.display_name)}
@@ -134,7 +134,7 @@ export default function ChefApprovalsPage() {
           </Card>
         ))}
         {pendingChefs.length === 0 && (
-          <div className="rounded-lg border border-gray-800 bg-[#16213e] py-16 text-center">
+          <div className="rounded-lg border border-gray-800 bg-opsPanel py-16 text-center">
             <p className="text-gray-400">No pending chef approvals</p>
           </div>
         )}

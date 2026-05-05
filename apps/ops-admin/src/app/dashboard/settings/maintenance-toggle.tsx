@@ -45,12 +45,12 @@ export function MaintenanceToggle() {
     finally { setToggling(false); }
   };
 
-  if (loading) return <Card className="border-gray-800 bg-[#16213e] p-6"><div className="h-20 bg-gray-700/30 rounded animate-pulse" /></Card>;
+  if (loading) return <Card className="border-gray-800 bg-opsPanel p-6"><div className="h-20 bg-gray-700/30 rounded animate-pulse" /></Card>;
 
   const isActive = state?.maintenanceMode;
 
   return (
-    <Card className={`p-6 ${isActive ? 'border-red-500/50 bg-red-950/20' : 'border-gray-800 bg-[#16213e]'}`}>
+    <Card className={`p-6 ${isActive ? 'border-red-500/50 bg-red-950/20' : 'border-gray-800 bg-opsPanel'}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
@@ -80,7 +80,7 @@ export function MaintenanceToggle() {
             <div className="space-y-2">
               <input value={message} onChange={e => setMessage(e.target.value)}
                 placeholder="Reason (optional)"
-                className="w-full rounded-lg bg-[#1a1a2e] border border-gray-600 text-white px-3 py-1.5 text-sm" />
+                className="w-full rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-1.5 text-sm" />
               <Button onClick={() => setPendingAction('activate_maintenance')} disabled={toggling} variant="destructive" className="w-full">
                 {toggling ? 'Activating...' : 'Activate Maintenance'}
               </Button>

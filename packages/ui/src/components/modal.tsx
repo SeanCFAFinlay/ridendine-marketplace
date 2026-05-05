@@ -38,7 +38,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
       />
       <div
         className={cn(
-          'relative z-10 w-full max-w-lg rounded-xl bg-[#16213e] p-6 shadow-2xl border border-gray-700',
+          'relative z-10 w-full max-w-lg rounded-xl bg-opsPanel p-6 shadow-2xl border border-gray-700',
           className
         )}
       >

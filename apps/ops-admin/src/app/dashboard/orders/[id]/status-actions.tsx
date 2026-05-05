@@ -89,7 +89,7 @@ export function OrderStatusActions({
   );
 
   return (
-    <Card className="border-gray-800 bg-[#16213e] p-6">
+    <Card className="border-gray-800 bg-opsPanel p-6">
       <h2 className="text-lg font-semibold text-white mb-4">Order Actions</h2>
 
       {error && (

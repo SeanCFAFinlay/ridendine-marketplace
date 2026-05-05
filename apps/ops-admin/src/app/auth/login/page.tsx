@@ -46,7 +46,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1a1a2e] to-[#16213e] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-opsPanel to-opsPanel flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -72,7 +72,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <Card className="border-gray-700/50 bg-[#16213e]/80 backdrop-blur-sm p-8 shadow-2xl">
+        <Card className="border-gray-700/50 bg-opsPanel/80 backdrop-blur-sm p-8 shadow-2xl">
           <h2 className="text-xl font-semibold text-white text-center mb-6">
             Sign In
           </h2>

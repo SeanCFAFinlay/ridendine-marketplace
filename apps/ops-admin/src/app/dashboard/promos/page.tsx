@@ -61,7 +61,7 @@ export default function PromosPage() {
 
         {error && <div className="rounded-lg bg-red-500/20 p-3 text-sm text-red-300">{error}</div>}
 
-        <Card className="border-gray-800 bg-[#16213e] overflow-hidden">
+        <Card className="border-gray-800 bg-opsPanel overflow-hidden">
           {loading ? (
             <div className="p-8 text-center text-gray-500">Loading...</div>
           ) : promos.length === 0 ? (
@@ -166,20 +166,20 @@ function CreatePromoModal({ onClose, onSuccess }: { onClose: () => void; onSucce
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-xl bg-[#16213e] p-6 border border-gray-700">
+      <div className="w-full max-w-md rounded-xl bg-opsPanel p-6 border border-gray-700">
         <h2 className="text-xl font-bold text-white">Create Promo Code</h2>
         {error && <div className="mt-2 rounded-lg bg-red-500/20 p-3 text-sm text-red-300">{error}</div>}
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Code</label>
             <Input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))}
-              placeholder="SUMMER25" required className="bg-[#1a1a2e] border-gray-600 text-white" />
+              placeholder="SUMMER25" required className="bg-opsPanel border-gray-600 text-white" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Type</label>
               <select value={form.discountType} onChange={e => setForm(f => ({ ...f, discountType: e.target.value as any }))}
-                className="w-full rounded-lg bg-[#1a1a2e] border border-gray-600 text-white px-3 py-2 text-sm">
+                className="w-full rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-2 text-sm">
                 <option value="percentage">Percentage (%)</option>
                 <option value="fixed">Fixed ($)</option>
               </select>
@@ -189,7 +189,7 @@ function CreatePromoModal({ onClose, onSuccess }: { onClose: () => void; onSucce
               <Input type="number" step="0.01" value={form.discountValue}
                 onChange={e => setForm(f => ({ ...f, discountValue: e.target.value }))}
                 placeholder={form.discountType === 'percentage' ? '25' : '5.00'} required
-                className="bg-[#1a1a2e] border-gray-600 text-white" />
+                className="bg-opsPanel border-gray-600 text-white" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -197,20 +197,20 @@ function CreatePromoModal({ onClose, onSuccess }: { onClose: () => void; onSucce
               <label className="block text-sm font-medium text-gray-300 mb-1">Min Order ($)</label>
               <Input type="number" step="0.01" value={form.minOrderAmount}
                 onChange={e => setForm(f => ({ ...f, minOrderAmount: e.target.value }))}
-                placeholder="0.00" className="bg-[#1a1a2e] border-gray-600 text-white" />
+                placeholder="0.00" className="bg-opsPanel border-gray-600 text-white" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Usage Limit</label>
               <Input type="number" value={form.usageLimit}
                 onChange={e => setForm(f => ({ ...f, usageLimit: e.target.value }))}
-                placeholder="Unlimited" className="bg-[#1a1a2e] border-gray-600 text-white" />
+                placeholder="Unlimited" className="bg-opsPanel border-gray-600 text-white" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Expires At</label>
             <Input type="datetime-local" value={form.expiresAt}
               onChange={e => setForm(f => ({ ...f, expiresAt: e.target.value }))}
-              className="bg-[#1a1a2e] border-gray-600 text-white" />
+              className="bg-opsPanel border-gray-600 text-white" />
           </div>
           <div className="flex gap-3 justify-end pt-2">
             <Button type="button" variant="outline" onClick={onClose} className="border-gray-600 text-gray-300">Cancel</Button>

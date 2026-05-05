@@ -174,7 +174,7 @@ export default async function AnalyticsPage() {
 
         <TrendCharts />
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">Order Metrics</h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {metrics.map((metric) => (
@@ -186,7 +186,7 @@ export default async function AnalyticsPage() {
           </div>
         </Card>
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">
             Financial Overview
           </h2>
@@ -194,7 +194,7 @@ export default async function AnalyticsPage() {
             {financials.map((item) => (
               <div
                 key={item.label}
-                className="rounded-lg bg-[#1a1a2e] p-4 text-center"
+                className="rounded-lg bg-opsPanel p-4 text-center"
               >
                 <p className="text-2xl font-bold text-emerald-400">{item.value}</p>
                 <p className="mt-1 text-sm text-gray-400">{item.label}</p>
@@ -203,7 +203,7 @@ export default async function AnalyticsPage() {
           </div>
         </Card>
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">
             Platform Statistics
           </h2>
@@ -211,7 +211,7 @@ export default async function AnalyticsPage() {
             {platformStats.map((stat) => (
               <div
                 key={stat.label}
-                className="rounded-lg bg-[#1a1a2e] p-4 text-center"
+                className="rounded-lg bg-opsPanel p-4 text-center"
               >
                 <p className="text-2xl font-bold text-white">
                   {stat.value.toLocaleString()}
@@ -224,11 +224,11 @@ export default async function AnalyticsPage() {
 
         <EventMetrics />
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">
             Reporting Scope
           </h2>
-          <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4 text-sm text-gray-300">
+          <div className="rounded-lg border border-gray-700 bg-opsPanel p-4 text-sm text-gray-300">
             This analytics surface reports live operational counts, recent
             financial totals, and historical trend charts. Cohort analysis and
             deep forecasting are not yet implemented.

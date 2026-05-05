@@ -168,7 +168,7 @@ export function OpsAlerts() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-gray-700 bg-[#16213e] shadow-2xl z-50">
+        <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-gray-700 bg-opsPanel shadow-2xl z-50">
           <div className="border-b border-gray-700 px-4 py-3">
             <h3 className="text-sm font-semibold text-white">Alerts ({alerts.length})</h3>
           </div>

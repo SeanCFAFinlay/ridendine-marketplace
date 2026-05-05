@@ -35,7 +35,7 @@ export default async function FinanceReconciliationPage() {
           </p>
         </div>
 
-        <Card className="border-amber-900/40 bg-[#16213e] p-6">
+        <Card className="border-amber-900/40 bg-opsPanel p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-amber-100">Unmatched variance</h2>
             <Badge className="bg-amber-600/30 text-amber-50">{unmatched.length}</Badge>
@@ -47,9 +47,9 @@ export default async function FinanceReconciliationPage() {
         </Card>
 
         {error ? (
-          <Card className="border-red-900/50 bg-[#16213e] p-6 text-red-200">Failed to load reconciliation.</Card>
+          <Card className="border-red-900/50 bg-opsPanel p-6 text-red-200">Failed to load reconciliation.</Card>
         ) : (
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Rows</h2>
               <Badge className="bg-gray-700 text-gray-200">{(rows ?? []).length}</Badge>

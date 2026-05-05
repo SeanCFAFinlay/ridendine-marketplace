@@ -123,7 +123,7 @@ export default async function OrderDetailPage({
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Order Oversight
             </h2>
@@ -162,7 +162,7 @@ export default async function OrderDetailPage({
             </div>
 
             {order.special_instructions && (
-              <div className="mt-4 rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+              <div className="mt-4 rounded-lg border border-gray-700 bg-opsPanel p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                   Special Instructions
                 </p>
@@ -192,7 +192,7 @@ export default async function OrderDetailPage({
             </div>
           </Card>
 
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Customer & Delivery Context
             </h2>
@@ -229,7 +229,7 @@ export default async function OrderDetailPage({
               <p className="text-gray-400">Customer information not available.</p>
             )}
 
-            <div className="mt-6 rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+            <div className="mt-6 rounded-lg border border-gray-700 bg-opsPanel p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                 Delivery Oversight
               </p>
@@ -253,7 +253,7 @@ export default async function OrderDetailPage({
           </Card>
         </div>
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">
             Order Items & Financial Breakdown
           </h2>
@@ -329,7 +329,7 @@ export default async function OrderDetailPage({
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+            <div className="rounded-lg border border-gray-700 bg-opsPanel p-4">
               <h3 className="text-sm font-semibold text-white">
                 Ledger Context
               </h3>
@@ -374,7 +374,7 @@ export default async function OrderDetailPage({
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Exception Review
             </h2>
@@ -409,7 +409,7 @@ export default async function OrderDetailPage({
             )}
           </Card>
 
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Audit Timeline
             </h2>
@@ -426,7 +426,7 @@ export default async function OrderDetailPage({
                         {formatTimestamp(entry.createdAt)}
                       </p>
                       {entry.metadata && (
-                        <pre className="mt-2 overflow-x-auto rounded bg-[#1a1a2e] p-2 text-xs text-gray-300">
+                        <pre className="mt-2 overflow-x-auto rounded bg-opsPanel p-2 text-xs text-gray-300">
                           {JSON.stringify(entry.metadata, null, 2)}
                         </pre>
                       )}

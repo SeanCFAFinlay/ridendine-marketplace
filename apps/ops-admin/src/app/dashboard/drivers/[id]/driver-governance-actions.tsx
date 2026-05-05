@@ -44,7 +44,7 @@ export function DriverGovernanceActions({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+      <div className="rounded-lg border border-gray-700 bg-opsPanel p-4">
         <p className="text-sm text-gray-300">
           Driver governance on this page is real and ops-auth gated. In the
           current implementation it still terminates in the ops driver API rather

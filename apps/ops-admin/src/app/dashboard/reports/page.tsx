@@ -71,7 +71,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Date Range Controls */}
-        <Card className="border-gray-800 bg-[#16213e] p-4">
+        <Card className="border-gray-800 bg-opsPanel p-4">
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex gap-2">
               {quickRanges.map(r => (
@@ -83,10 +83,10 @@ export default function ReportsPage() {
             </div>
             <div className="flex items-center gap-2">
               <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-                className="rounded-lg bg-[#1a1a2e] border border-gray-600 text-white px-3 py-1.5 text-sm" />
+                className="rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-1.5 text-sm" />
               <span className="text-gray-500">to</span>
               <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-                className="rounded-lg bg-[#1a1a2e] border border-gray-600 text-white px-3 py-1.5 text-sm" />
+                className="rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-1.5 text-sm" />
             </div>
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={showCompare} onChange={e => setShowCompare(e.target.checked)}
@@ -96,10 +96,10 @@ export default function ReportsPage() {
             {showCompare && (
               <div className="flex items-center gap-2">
                 <input type="date" value={compareStartDate} onChange={e => setCompareStartDate(e.target.value)}
-                  className="rounded-lg bg-[#1a1a2e] border border-gray-600 text-white px-3 py-1.5 text-sm" />
+                  className="rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-1.5 text-sm" />
                 <span className="text-gray-500">to</span>
                 <input type="date" value={compareEndDate} onChange={e => setCompareEndDate(e.target.value)}
-                  className="rounded-lg bg-[#1a1a2e] border border-gray-600 text-white px-3 py-1.5 text-sm" />
+                  className="rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-1.5 text-sm" />
               </div>
             )}
             <Button onClick={fetchReport} disabled={loading} className="bg-[#E85D26]">
@@ -112,7 +112,7 @@ export default function ReportsPage() {
         {data && (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Card className="border-gray-800 bg-[#16213e] p-4">
+              <Card className="border-gray-800 bg-opsPanel p-4">
                 <p className="text-xs text-gray-500 uppercase">Total Orders</p>
                 <p className="mt-1 text-2xl font-bold text-white">{data.summary.totalOrders}</p>
                 {compareData && (
@@ -121,7 +121,7 @@ export default function ReportsPage() {
                   </p>
                 )}
               </Card>
-              <Card className="border-gray-800 bg-[#16213e] p-4">
+              <Card className="border-gray-800 bg-opsPanel p-4">
                 <p className="text-xs text-gray-500 uppercase">Revenue</p>
                 <p className="mt-1 text-2xl font-bold text-emerald-400">${data.summary.totalRevenue.toFixed(2)}</p>
                 {compareData && (
@@ -130,24 +130,24 @@ export default function ReportsPage() {
                   </p>
                 )}
               </Card>
-              <Card className="border-gray-800 bg-[#16213e] p-4">
+              <Card className="border-gray-800 bg-opsPanel p-4">
                 <p className="text-xs text-gray-500 uppercase">Avg Daily Orders</p>
                 <p className="mt-1 text-2xl font-bold text-blue-400">{data.summary.avgDailyOrders}</p>
               </Card>
-              <Card className="border-gray-800 bg-[#16213e] p-4">
+              <Card className="border-gray-800 bg-opsPanel p-4">
                 <p className="text-xs text-gray-500 uppercase">Completion Rate</p>
                 <p className="mt-1 text-2xl font-bold text-white">{data.summary.completionRate}%</p>
               </Card>
             </div>
 
             {/* Daily breakdown table */}
-            <Card className="border-gray-800 bg-[#16213e] overflow-hidden">
+            <Card className="border-gray-800 bg-opsPanel overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-700">
                 <h3 className="font-semibold text-white">Daily Breakdown</h3>
               </div>
               <div className="max-h-96 overflow-y-auto">
                 <table className="w-full">
-                  <thead className="sticky top-0 bg-[#16213e]">
+                  <thead className="sticky top-0 bg-opsPanel">
                     <tr className="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-gray-700">
                       <th className="px-4 py-2">Date</th>
                       <th className="px-4 py-2">Orders</th>
@@ -173,11 +173,11 @@ export default function ReportsPage() {
 
             {/* Top chefs */}
             {data.topChefs.length > 0 && (
-              <Card className="border-gray-800 bg-[#16213e] p-6">
+              <Card className="border-gray-800 bg-opsPanel p-6">
                 <h3 className="font-semibold text-white mb-4">Top Performing Chefs</h3>
                 <div className="space-y-2">
                   {data.topChefs.map((chef: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between rounded-lg bg-[#1a1a2e] px-4 py-2">
+                    <div key={i} className="flex items-center justify-between rounded-lg bg-opsPanel px-4 py-2">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-bold text-gray-500 w-6">{i + 1}</span>
                         <span className="text-sm font-medium text-white">{chef.name}</span>
@@ -192,7 +192,7 @@ export default function ReportsPage() {
         )}
 
         {!data && !loading && (
-          <Card className="border-gray-800 bg-[#16213e] p-8 text-center">
+          <Card className="border-gray-800 bg-opsPanel p-8 text-center">
             <p className="text-gray-500">Select a date range and click Generate Report to view data.</p>
           </Card>
         )}

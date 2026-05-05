@@ -36,9 +36,9 @@ export default async function FinanceInstantPayoutsPage() {
           </p>
         </div>
         {error ? (
-          <Card className="border-red-900/50 bg-[#16213e] p-6 text-red-200">Failed to load queue.</Card>
+          <Card className="border-red-900/50 bg-opsPanel p-6 text-red-200">Failed to load queue.</Card>
         ) : (
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Requests</h2>
               <Badge className="bg-amber-500/20 text-amber-100">{(rows ?? []).length}</Badge>

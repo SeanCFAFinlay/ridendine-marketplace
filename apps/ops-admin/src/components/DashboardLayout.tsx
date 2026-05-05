@@ -138,9 +138,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#0f1923]">
+    <div className="flex min-h-screen bg-opsCanvas">
       {/* Sidebar */}
-      <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-white/5 bg-[#0d1520] lg:flex">
+      <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-white/5 bg-opsCanvas lg:flex">
         {/* Logo */}
         <div className="flex h-16 items-center gap-3 border-b border-white/5 px-5">
           <Image
@@ -219,7 +219,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* Top Bar */}
-        <div className="flex h-16 items-center justify-between border-b border-white/5 bg-[#0d1520] px-6">
+        <div className="flex h-16 items-center justify-between border-b border-white/5 bg-opsCanvas px-6">
           <div className="text-sm font-medium text-gray-400">Operations Command Centre</div>
           <div className="flex items-center gap-4">
             <GlobalSearch />

@@ -243,7 +243,7 @@ export default async function DashboardPage() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {primaryStats.map((stat) => (
-            <Card key={stat.label} className="border-gray-800 bg-[#16213e] p-6">
+            <Card key={stat.label} className="border-gray-800 bg-opsPanel p-6">
               <p className="text-sm text-gray-400">{stat.label}</p>
               <p className={`mt-2 text-3xl font-bold ${stat.color}`}>{stat.value}</p>
               <p className={`mt-1 text-sm ${
@@ -258,34 +258,34 @@ export default async function DashboardPage() {
 
         {engineData && (
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
+            <div className="rounded-lg border border-gray-800 bg-opsPanel px-4 py-3">
               <p className="text-xs uppercase tracking-wide text-gray-500">Open Exceptions</p>
               <p className="mt-1 text-lg font-semibold text-white">{engineData.openExceptions}</p>
             </div>
-            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
+            <div className="rounded-lg border border-gray-800 bg-opsPanel px-4 py-3">
               <p className="text-xs uppercase tracking-wide text-gray-500">SLA Breaches Today</p>
               <p className={`mt-1 text-lg font-semibold ${engineData.slaBreaches > 0 ? 'text-red-400' : 'text-white'}`}>
                 {engineData.slaBreaches}
               </p>
             </div>
-            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
+            <div className="rounded-lg border border-gray-800 bg-opsPanel px-4 py-3">
               <p className="text-xs uppercase tracking-wide text-gray-500">Storefront Risks</p>
               <p className="mt-1 text-lg font-semibold text-white">{engineData.storefrontRisks}</p>
             </div>
-            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
+            <div className="rounded-lg border border-gray-800 bg-opsPanel px-4 py-3">
               <p className="text-xs uppercase tracking-wide text-gray-500">Drivers Online</p>
               <p className="mt-1 text-lg font-semibold text-white">
                 {engineData.driversOnline} / {engineData.driversBusy} busy
               </p>
             </div>
-            <div className="rounded-lg border border-gray-800 bg-[#16213e] px-4 py-3">
+            <div className="rounded-lg border border-gray-800 bg-opsPanel px-4 py-3">
               <p className="text-xs uppercase tracking-wide text-gray-500">Active Orders</p>
               <p className="mt-1 text-lg font-semibold text-white">{engineData.activeOrders}</p>
             </div>
           </div>
         )}
 
-        <Card className="border-gray-800 bg-[#16213e] p-5">
+        <Card className="border-gray-800 bg-opsPanel p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-white">Run the Business</h2>
@@ -323,7 +323,7 @@ export default async function DashboardPage() {
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {opsQueues.map((queue) => (
                 <Link key={queue.href} href={queue.href}>
-                  <Card className="h-full border-gray-800 bg-[#16213e] p-6 transition-colors hover:border-[#E85D26]">
+                  <Card className="h-full border-gray-800 bg-opsPanel p-6 transition-colors hover:border-[#E85D26]">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm text-gray-400">{queue.label}</p>
@@ -352,7 +352,7 @@ export default async function DashboardPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {quickActions.map((action) => (
             <Link key={action.href} href={action.href}>
-              <Card className={`cursor-pointer border-gray-800 bg-[#16213e] p-5 transition-all hover:border-[#E85D26] hover:shadow-lg ${
+              <Card className={`cursor-pointer border-gray-800 bg-opsPanel p-5 transition-all hover:border-[#E85D26] hover:shadow-lg ${
                 action.urgent ? 'border-orange-500/70' : ''
               }`}>
                 <div className="flex items-center justify-between">

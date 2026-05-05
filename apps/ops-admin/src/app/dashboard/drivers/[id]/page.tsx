@@ -88,7 +88,7 @@ export default async function DriverDetailPage({
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="border-gray-800 bg-[#16213e] p-6 lg:col-span-2">
+          <Card className="border-gray-800 bg-opsPanel p-6 lg:col-span-2">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Driver Profile & Operations Context
             </h2>
@@ -123,7 +123,7 @@ export default async function DriverDetailPage({
               </div>
             </div>
 
-            <div className="mt-6 rounded-lg border border-gray-700 bg-[#1a1a2e] p-4">
+            <div className="mt-6 rounded-lg border border-gray-700 bg-opsPanel p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                 Active Operations
               </p>
@@ -144,18 +144,18 @@ export default async function DriverDetailPage({
             </div>
           </Card>
 
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Earnings Snapshot
             </h2>
             <div className="space-y-4">
-              <div className="rounded-lg bg-[#1a1a2e] p-4 text-center">
+              <div className="rounded-lg bg-opsPanel p-4 text-center">
                 <p className="text-2xl font-bold text-emerald-400">
                   {formatMoney(driver.stats.totalEarnings)}
                 </p>
                 <p className="text-sm text-gray-400">Delivered Payouts</p>
               </div>
-              <div className="rounded-lg bg-[#1a1a2e] p-4 text-center">
+              <div className="rounded-lg bg-opsPanel p-4 text-center">
                 <p className="text-2xl font-bold text-blue-400">
                   {driver.recent_deliveries.length}
                 </p>
@@ -166,7 +166,7 @@ export default async function DriverDetailPage({
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Last Known Location
             </h2>
@@ -205,7 +205,7 @@ export default async function DriverDetailPage({
             </Link>
           </Card>
 
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Recent Delivery Context
             </h2>
@@ -214,7 +214,7 @@ export default async function DriverDetailPage({
                 {driver.recent_deliveries.map((delivery) => (
                   <div
                     key={delivery.id}
-                    className="rounded-lg border border-gray-700 bg-[#1a1a2e] p-4"
+                    className="rounded-lg border border-gray-700 bg-opsPanel p-4"
                   >
                     <div className="flex items-center justify-between gap-4">
                       <div>
@@ -261,7 +261,7 @@ export default async function DriverDetailPage({
           </Card>
         </div>
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">
             Driver Governance
           </h2>

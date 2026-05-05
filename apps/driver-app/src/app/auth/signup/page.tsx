@@ -34,7 +34,7 @@ const INITIAL_FORM: FormData = {
 
 function SuccessScreen() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0f1923] to-[#1a2d3d] px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-opsCanvas to-[#1a2d3d] px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl">
         <div className="text-5xl mb-4">✅</div>
         <h2 className="text-2xl font-bold text-gray-900">Application Submitted!</h2>
@@ -98,7 +98,7 @@ export default function DriverSignupPage() {
   if (success) return <SuccessScreen />;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0f1923] to-[#1a2d3d] px-4 py-8">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-opsCanvas to-[#1a2d3d] px-4 py-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
           <Image

@@ -57,7 +57,7 @@ export default async function FinancePage() {
     return (
       <DashboardLayout>
         <div className="mx-auto max-w-4xl">
-          <Card className="border-gray-800 bg-[#16213e] p-8">
+          <Card className="border-gray-800 bg-opsPanel p-8">
             <h1 className="text-2xl font-bold text-white">Finance data unavailable</h1>
           </Card>
         </div>
@@ -87,36 +87,36 @@ export default async function FinancePage() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <p className="text-sm text-gray-400">Captured Revenue</p>
             <p className="mt-2 text-3xl font-bold text-emerald-400">{formatCurrency(data.summary.totalRevenue)}</p>
           </Card>
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <p className="text-sm text-gray-400">Pending Refund Review</p>
             <p className="mt-2 text-3xl font-bold text-red-200">{formatCurrency(data.pendingRefundAmount)}</p>
             <p className="mt-1 text-xs text-gray-500">
               Above ${(data.refundAutoReviewThresholdCents / 100).toFixed(2)} requires manual review
             </p>
           </Card>
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <p className="text-sm text-gray-400">Pending Payout Adjustments</p>
             <p className="mt-2 text-3xl font-bold text-yellow-200">{formatCurrency(data.pendingAdjustmentAmount)}</p>
           </Card>
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <p className="text-sm text-gray-400">Tax Collected</p>
             <p className="mt-2 text-3xl font-bold text-cyan-300">{formatCurrency(data.summary.taxCollected)}</p>
           </Card>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Chef Payables</h2>
               <Badge className="bg-purple-500/20 text-purple-200">{data.chefLiabilities.length}</Badge>
             </div>
             <div className="space-y-3">
               {data.chefLiabilities.map((chef) => (
-                <div key={chef.id} className="flex items-center justify-between rounded-lg bg-[#1a1a2e] p-4">
+                <div key={chef.id} className="flex items-center justify-between rounded-lg bg-opsPanel p-4">
                   <span className="text-white">{chef.name}</span>
                   <span className="text-emerald-300">{formatCurrency(chef.amount)}</span>
                 </div>
@@ -124,14 +124,14 @@ export default async function FinancePage() {
             </div>
           </Card>
 
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Driver Payables</h2>
               <Badge className="bg-blue-500/20 text-blue-200">{data.driverLiabilities.length}</Badge>
             </div>
             <div className="space-y-3">
               {data.driverLiabilities.map((driver) => (
-                <div key={driver.id} className="flex items-center justify-between rounded-lg bg-[#1a1a2e] p-4">
+                <div key={driver.id} className="flex items-center justify-between rounded-lg bg-opsPanel p-4">
                   <span className="text-white">{driver.name}</span>
                   <span className="text-emerald-300">{formatCurrency(driver.amount)}</span>
                 </div>
@@ -140,7 +140,7 @@ export default async function FinancePage() {
           </Card>
         </div>
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <h2 className="text-lg font-semibold text-white">Review Queues</h2>
           <p className="mt-1 text-sm text-gray-400">
             Refunds and payout adjustments below are actionable from ops-admin and write audit logs through the engine.
@@ -153,7 +153,7 @@ export default async function FinancePage() {
           </div>
         </Card>
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Recent Ledger Activity</h2>
             <Badge className="bg-gray-700 text-gray-200">{data.recentLedger.length}</Badge>

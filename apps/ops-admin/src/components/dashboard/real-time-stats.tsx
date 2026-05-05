@@ -104,7 +104,7 @@ export function RealTimeStats() {
 
   if (!isConnected && !supabase) {
     return (
-      <Card className="border-gray-800 bg-[#16213e] p-6">
+      <Card className="border-gray-800 bg-opsPanel p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">Real-Time Activity</h3>
           <div className="flex items-center gap-2 text-sm">
@@ -121,7 +121,7 @@ export function RealTimeStats() {
   }
 
   return (
-    <Card className="border-gray-800 bg-[#16213e] p-6">
+    <Card className="border-gray-800 bg-opsPanel p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">Real-Time Activity</h3>
         <div className="flex items-center gap-4 text-sm">
@@ -143,7 +143,7 @@ export function RealTimeStats() {
           recentOrders.map((order, index) => (
             <div
               key={order.id}
-              className={`flex items-center justify-between p-3 rounded-lg bg-[#1a1a2e] ${
+              className={`flex items-center justify-between p-3 rounded-lg bg-opsPanel ${
                 index === 0 ? 'animate-pulse ring-1 ring-green-500' : ''
               }`}
             >

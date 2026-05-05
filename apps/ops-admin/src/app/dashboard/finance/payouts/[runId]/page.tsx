@@ -45,7 +45,7 @@ export default async function FinancePayoutRunDetailPage({ params }: PageProps) 
           ← All payout runs
         </Link>
         {error || !run ? (
-          <Card className="border-gray-800 bg-[#16213e] p-6 text-gray-300">Run not found.</Card>
+          <Card className="border-gray-800 bg-opsPanel p-6 text-gray-300">Run not found.</Card>
         ) : (
           <>
             <div>
@@ -56,7 +56,7 @@ export default async function FinancePayoutRunDetailPage({ params }: PageProps) 
                 <span className="text-white">{run.status as string}</span>
               </p>
             </div>
-            <Card className="border-gray-800 bg-[#16213e] p-6">
+            <Card className="border-gray-800 bg-opsPanel p-6">
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-sm">
                 <div>
                   <p className="text-gray-400">Period</p>
@@ -79,7 +79,7 @@ export default async function FinancePayoutRunDetailPage({ params }: PageProps) 
               </div>
             </Card>
 
-            <Card className="border-gray-800 bg-[#16213e] p-6">
+            <Card className="border-gray-800 bg-opsPanel p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-white">Ledger (payout_run_id)</h2>
                 <Badge className="bg-gray-700 text-gray-200">{(ledgerLines ?? []).length}</Badge>
@@ -115,7 +115,7 @@ export default async function FinancePayoutRunDetailPage({ params }: PageProps) 
             </Card>
 
             {(run.run_type as string) === 'driver' && (driverLines?.length ?? 0) > 0 ? (
-              <Card className="border-gray-800 bg-[#16213e] p-6">
+              <Card className="border-gray-800 bg-opsPanel p-6">
                 <h2 className="text-lg font-semibold text-white">driver_payouts rows</h2>
                 <ul className="mt-4 space-y-2 text-sm text-gray-300">
                   {(driverLines ?? []).map((d: Record<string, unknown>) => (

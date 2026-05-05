@@ -59,14 +59,14 @@ export default function AnnouncementsPage() {
           </div>
         )}
 
-        <Card className="border-gray-800 bg-[#16213e] p-6 space-y-5">
+        <Card className="border-gray-800 bg-opsPanel p-6 space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Audience</label>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {AUDIENCES.map((a) => (
                 <button key={a.value} onClick={() => setAudience(a.value)}
                   className={`rounded-xl p-3 text-center transition-all border ${
-                    audience === a.value ? 'border-[#E85D26] bg-[#E85D26]/10' : 'border-gray-700 bg-[#1a1a2e] hover:border-gray-600'
+                    audience === a.value ? 'border-[#E85D26] bg-[#E85D26]/10' : 'border-gray-700 bg-opsPanel hover:border-gray-600'
                   }`}>
                   <div className="text-2xl">{a.icon}</div>
                   <p className={`mt-1 text-xs font-medium ${audience === a.value ? 'text-white' : 'text-gray-400'}`}>{a.label}</p>
@@ -79,7 +79,7 @@ export default function AnnouncementsPage() {
             <label className="block text-sm font-medium text-gray-300 mb-1">Title</label>
             <input value={title} onChange={e => setTitle(e.target.value)}
               placeholder="e.g. Holiday Hours Update"
-              className="w-full rounded-lg bg-[#1a1a2e] border border-gray-600 text-white px-3 py-2 text-sm focus:border-[#E85D26] focus:outline-none" />
+              className="w-full rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-2 text-sm focus:border-[#E85D26] focus:outline-none" />
           </div>
 
           <div>
@@ -87,7 +87,7 @@ export default function AnnouncementsPage() {
             <textarea value={body} onChange={e => setBody(e.target.value)}
               placeholder="Write your announcement..."
               rows={4} maxLength={1000}
-              className="w-full rounded-lg bg-[#1a1a2e] border border-gray-600 text-white px-3 py-2 text-sm focus:border-[#E85D26] focus:outline-none" />
+              className="w-full rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-2 text-sm focus:border-[#E85D26] focus:outline-none" />
             <p className="mt-1 text-xs text-gray-500">{body.length}/1000</p>
           </div>
 

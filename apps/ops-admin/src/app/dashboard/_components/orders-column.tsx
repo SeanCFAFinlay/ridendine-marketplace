@@ -80,7 +80,7 @@ export function OrdersColumn({
               const activeRing = highlightedOrderId === order.id ? 'ring-2 ring-[#E85D26]' : '';
               return (
                 <Link key={order.id} href={`/dashboard/orders/${order.id}`}>
-                  <Card className={`cursor-pointer border-gray-700 bg-[#16213e] p-3 transition hover:border-[#E85D26] ${activeRing}`}>
+                  <Card className={`cursor-pointer border-gray-700 bg-opsPanel p-3 transition hover:border-[#E85D26] ${activeRing}`}>
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-mono text-sm text-white">#{order.order_number}</span>
                       <span className="text-xs text-gray-500">{formatAge(order.created_at)}</span>

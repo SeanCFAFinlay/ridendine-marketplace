@@ -47,11 +47,11 @@ export default async function FinanceRefundsPage() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <p className="text-sm text-gray-400">Pending refund exposure</p>
             <p className="mt-2 text-3xl font-bold text-red-200">{formatCurrency(pendingAmount)}</p>
           </Card>
-          <Card className="border-gray-800 bg-[#16213e] p-6">
+          <Card className="border-gray-800 bg-opsPanel p-6">
             <p className="text-sm text-gray-400">Auto-review threshold</p>
             <p className="mt-2 text-3xl font-bold text-gray-100">
               {formatCurrency(threshold / 100)}
@@ -59,7 +59,7 @@ export default async function FinanceRefundsPage() {
           </Card>
         </div>
 
-        <Card className="border-gray-800 bg-[#16213e] p-6">
+        <Card className="border-gray-800 bg-opsPanel p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Cases</h2>
             <Badge className="bg-red-500/20 text-red-100">{pendingRefunds.length}</Badge>

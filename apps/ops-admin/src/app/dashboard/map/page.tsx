@@ -7,7 +7,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 const LiveMap = dynamic(() => import('@/components/map/live-map'), {
   ssr: false,
   loading: () => (
-    <div className="h-[600px] bg-[#16213e] animate-pulse rounded-lg flex items-center justify-center">
+    <div className="h-[600px] bg-opsPanel animate-pulse rounded-lg flex items-center justify-center">
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#E85D26] border-t-transparent" />
     </div>
   ),
@@ -25,13 +25,13 @@ export default function MapPage() {
           </p>
         </div>
 
-        <Card className="mb-6 border-gray-800 bg-[#16213e] p-4 text-sm text-gray-300">
+        <Card className="mb-6 border-gray-800 bg-opsPanel p-4 text-sm text-gray-300">
           The map reflects current presence pings and active delivery coordinates.
           It is useful for live oversight, but it is not yet a full dispatch
           command workstation with route optimization or playback history.
         </Card>
 
-        <div className="bg-[#16213e] rounded-lg border border-gray-800 overflow-hidden" style={{ height: '70vh' }}>
+        <div className="bg-opsPanel rounded-lg border border-gray-800 overflow-hidden" style={{ height: '70vh' }}>
           <LiveMap />
         </div>
       </div>

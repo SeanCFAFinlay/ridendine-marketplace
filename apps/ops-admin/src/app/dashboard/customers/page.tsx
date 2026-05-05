@@ -59,7 +59,7 @@ export default function CustomersPage() {
           </div>
         </div>
 
-        <Card className="border-gray-800 bg-[#16213e]">
+        <Card className="border-gray-800 bg-opsPanel">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
