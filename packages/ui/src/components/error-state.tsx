@@ -20,12 +20,12 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-12 text-center',
-        className
+        'flex flex-col items-center justify-center rounded-2xl border border-dangerSoft bg-dangerSoft/40 px-6 py-12 text-center',
+        className,
       )}
       {...props}
     >
-      <div className="mb-4 text-red-400">
+      <div className="mb-4 text-danger">
         <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
             strokeLinecap="round"
@@ -35,10 +35,10 @@ export function ErrorState({
           />
         </svg>
       </div>
-      <h3 className="text-lg font-medium text-red-100">{title}</h3>
-      <p className="mt-1 text-sm text-red-100/75">{description ?? message}</p>
+      <h3 className="text-lg font-semibold text-text">{title}</h3>
+      <p className="mt-1 text-sm text-textMuted">{description ?? message}</p>
       {onRetry && (
-        <Button onClick={onRetry} variant="outline" className="mt-4">
+        <Button onClick={onRetry} variant="primary" className="mt-4">
           Try again
         </Button>
       )}
@@ -68,7 +68,7 @@ export function FullPageError({
   onRetry?: () => void;
 }) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-white">
+    <div className="fixed inset-0 flex items-center justify-center bg-background">
       <ErrorState message={message} onRetry={onRetry} />
     </div>
   );

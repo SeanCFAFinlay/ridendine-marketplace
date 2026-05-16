@@ -10,6 +10,13 @@ export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
+const SIZE_CLASS = {
+  sm: 'h-8 w-8 text-xs',
+  md: 'h-10 w-10 text-sm',
+  lg: 'h-12 w-12 text-base',
+  xl: 'h-16 w-16 text-lg',
+} as const;
+
 export function Avatar({
   className,
   src,
@@ -19,13 +26,6 @@ export function Avatar({
   ...props
 }: AvatarProps) {
   const [hasError, setHasError] = React.useState(false);
-
-  const sizeClasses = {
-    sm: 'h-8 w-8 text-xs',
-    md: 'h-10 w-10 text-sm',
-    lg: 'h-12 w-12 text-base',
-    xl: 'h-16 w-16 text-lg',
-  };
 
   const getFallbackText = () => {
     if (fallback) return fallback.slice(0, 2).toUpperCase();
@@ -44,14 +44,14 @@ export function Avatar({
   return (
     <div
       className={cn(
-        'relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100',
-        sizeClasses[size],
-        className
+        'relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-surfaceMuted',
+        SIZE_CLASS[size],
+        className,
       )}
       {...props}
     >
       {showFallback ? (
-        <span className="font-medium text-gray-600">{getFallbackText()}</span>
+        <span className="font-medium text-textMuted">{getFallbackText()}</span>
       ) : (
         <img
           src={src}

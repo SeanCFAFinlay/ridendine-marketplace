@@ -1,48 +1,75 @@
 import * as React from 'react';
-import { Badge } from './badge';
 import { cn } from '../utils';
+import { ridendineTokens } from '../tokens';
 
-export type StatusVariant = 'idle' | 'active' | 'success' | 'warning' | 'danger' | 'info';
+// Canonical status taxonomy comes from tokens.status. Legacy variants
+// (idle/active/success/warning/danger/info) are mapped onto the canonical
+// taxonomy so existing call-sites continue to work.
+export type StatusVariant =
+  | 'live'
+  | 'fresh'
+  | 'pending'
+  | 'stale'
+  | 'offline'
+  | 'error'
+  // ── Legacy aliases ──
+  | 'idle'
+  | 'active'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'info';
+
+type CanonicalStatus = keyof typeof ridendineTokens.status;
+
+const LEGACY_TO_CANONICAL: Record<string, CanonicalStatus> = {
+  idle: 'offline',
+  active: 'fresh',
+  success: 'live',
+  warning: 'pending',
+  danger: 'error',
+  info: 'fresh',
+};
+
+function resolveStatus(status: StatusVariant): CanonicalStatus {
+  if (status in ridendineTokens.status) return status as CanonicalStatus;
+  return LEGACY_TO_CANONICAL[status] ?? 'offline';
+}
 
 interface StatusBadgeProps {
   status: StatusVariant;
+  /** Override the default token label (e.g. "Live"). */
   label?: string;
+  /** Show the pulsing dot. Defaults to true. */
+  withDot?: boolean;
   className?: string;
 }
 
-const statusConfig: Record<StatusVariant, { label: string; className: string }> = {
-  idle: { label: 'Idle', className: 'bg-gray-100 text-gray-600' },
-  active: { label: 'Active', className: 'bg-blue-100 text-blue-700' },
-  success: { label: 'Success', className: 'bg-emerald-100 text-emerald-700' },
-  warning: { label: 'Warning', className: 'bg-amber-100 text-amber-700' },
-  danger: { label: 'Danger', className: 'bg-red-100 text-red-700' },
-  info: { label: 'Info', className: 'bg-sky-100 text-sky-700' },
-};
-
-export function StatusBadge({ status, label, className }: StatusBadgeProps) {
-  const config = statusConfig[status];
+export function StatusBadge({
+  status,
+  label,
+  withDot = true,
+  className,
+}: StatusBadgeProps) {
+  const canonical = resolveStatus(status);
+  const config = ridendineTokens.status[canonical];
   const displayLabel = label ?? config.label;
 
   return (
     <span
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
-        config.className,
-        className
+        className,
       )}
+      style={{ backgroundColor: config.bg, color: config.fg }}
     >
-      <span
-        className={cn(
-          'h-1.5 w-1.5 rounded-full',
-          status === 'idle' && 'bg-gray-400',
-          status === 'active' && 'bg-blue-500',
-          status === 'success' && 'bg-emerald-500',
-          status === 'warning' && 'bg-amber-500',
-          status === 'danger' && 'bg-red-500',
-          status === 'info' && 'bg-sky-500'
-        )}
-        aria-hidden="true"
-      />
+      {withDot && (
+        <span
+          className="h-1.5 w-1.5 rounded-full"
+          style={{ backgroundColor: config.fg }}
+          aria-hidden="true"
+        />
+      )}
       {displayLabel}
     </span>
   );

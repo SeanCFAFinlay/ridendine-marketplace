@@ -61,48 +61,43 @@ function getTrend(change?: number): TrendDirection {
   return change > 0 ? 'up' : 'down';
 }
 
+function trendTextClass(trend: TrendDirection) {
+  if (trend === 'up') return 'text-success';
+  if (trend === 'down') return 'text-danger';
+  return 'text-textSubtle';
+}
+
 export function KpiTile({ label, value, change, sparklineData, className }: KpiTileProps) {
   const trend = getTrend(change);
+  const trendColor = trendTextClass(trend);
 
   return (
     <div
       className={cn(
-        'rounded-lg border border-gray-200 bg-white p-4 shadow-sm',
-        className
+        'rounded-lg border border-border bg-surface p-4 shadow-sm',
+        className,
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-medium uppercase tracking-wider text-gray-500">
+          <p className="truncate text-xs font-medium uppercase tracking-wide text-textMuted">
             {label}
           </p>
-          <p className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">
+          <p className="mt-1 text-2xl font-semibold tracking-tight text-text">
             {value}
           </p>
           {change !== undefined && (
             <div className="mt-1 flex items-center gap-1">
-              <TrendArrow direction={trend} />
-              <span
-                className={cn(
-                  'text-xs font-medium',
-                  trend === 'up' && 'text-emerald-600',
-                  trend === 'down' && 'text-red-500',
-                  trend === 'neutral' && 'text-gray-400'
-                )}
-              >
-                {change > 0 ? '+' : ''}{change}%
+              <TrendArrow direction={trend} colorClass={trendColor} />
+              <span className={cn('text-xs font-medium', trendColor)}>
+                {change > 0 ? '+' : ''}
+                {change}%
               </span>
             </div>
           )}
         </div>
         {sparklineData && sparklineData.length > 0 && (
-          <div
-            className={cn(
-              trend === 'up' && 'text-emerald-500',
-              trend === 'down' && 'text-red-400',
-              trend === 'neutral' && 'text-gray-400'
-            )}
-          >
+          <div className={trendColor}>
             <Sparkline data={sparklineData} />
           </div>
         )}
@@ -111,23 +106,44 @@ export function KpiTile({ label, value, change, sparklineData, className }: KpiT
   );
 }
 
-function TrendArrow({ direction }: { direction: TrendDirection }) {
+function TrendArrow({
+  direction,
+  colorClass,
+}: {
+  direction: TrendDirection;
+  colorClass: string;
+}) {
   if (direction === 'up') {
     return (
-      <svg className="h-3 w-3 text-emerald-600" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+      <svg
+        className={cn('h-3 w-3', colorClass)}
+        viewBox="0 0 12 12"
+        fill="currentColor"
+        aria-hidden="true"
+      >
         <path d="M6 2l4 5H2l4-5z" />
       </svg>
     );
   }
   if (direction === 'down') {
     return (
-      <svg className="h-3 w-3 text-red-500" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+      <svg
+        className={cn('h-3 w-3', colorClass)}
+        viewBox="0 0 12 12"
+        fill="currentColor"
+        aria-hidden="true"
+      >
         <path d="M6 10L2 5h8l-4 5z" />
       </svg>
     );
   }
   return (
-    <svg className="h-3 w-3 text-gray-400" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+    <svg
+      className={cn('h-3 w-3', colorClass)}
+      viewBox="0 0 12 12"
+      fill="currentColor"
+      aria-hidden="true"
+    >
       <rect x="2" y="5.5" width="8" height="1.5" rx="0.75" />
     </svg>
   );

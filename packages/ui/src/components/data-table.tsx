@@ -3,9 +3,7 @@
 import * as React from 'react';
 import { cn } from '../utils';
 
-// ==========================================
-// TYPES
-// ==========================================
+// ── Types ─────────────────────────────────────────────────────────────────
 
 type SortDirection = 'asc' | 'desc';
 
@@ -22,28 +20,37 @@ export interface ColumnDef<TRow> {
   className?: string;
 }
 
-interface DataTableProps<TRow> {
+export interface DataTableProps<TRow> {
   columns: ColumnDef<TRow>[];
   data: TRow[];
   keyExtractor: (row: TRow) => string;
   isLoading?: boolean;
   emptyState?: React.ReactNode;
   pageSize?: number;
+  pageSizeOptions?: number[];
+  /** "default" gives breathing room; "compact" is for dense ops-admin lists. */
+  size?: 'default' | 'compact';
   className?: string;
 }
 
-// ==========================================
-// SKELETON
-// ==========================================
+// ── Skeleton ──────────────────────────────────────────────────────────────
 
-function TableSkeleton({ columns, rows = 5 }: { columns: number; rows?: number }) {
+function TableSkeleton({
+  columns,
+  rows = 5,
+  rowPadding,
+}: {
+  columns: number;
+  rows?: number;
+  rowPadding: string;
+}) {
   return (
     <>
       {Array.from({ length: rows }).map((_, rowIdx) => (
-        <tr key={rowIdx} className="animate-pulse border-b border-gray-100 dark:border-gray-800">
+        <tr key={rowIdx} className="animate-pulse border-b border-divider">
           {Array.from({ length: columns }).map((_, colIdx) => (
-            <td key={colIdx} className="px-4 py-3">
-              <div className="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-700" />
+            <td key={colIdx} className={cn(rowPadding)}>
+              <div className="h-4 w-3/4 rounded bg-surfaceMuted" />
             </td>
           ))}
         </tr>
@@ -52,14 +59,15 @@ function TableSkeleton({ columns, rows = 5 }: { columns: number; rows?: number }
   );
 }
 
-// ==========================================
-// SORT ICON
-// ==========================================
+// ── Sort icon ─────────────────────────────────────────────────────────────
 
 function SortIcon({ direction }: { direction?: SortDirection }) {
   return (
     <svg
-      className={cn('ml-1 h-3.5 w-3.5 transition-transform', direction === 'desc' && 'rotate-180')}
+      className={cn(
+        'ml-1 h-3.5 w-3.5 transition-transform',
+        direction === 'desc' && 'rotate-180',
+      )}
       viewBox="0 0 12 12"
       fill="currentColor"
       aria-hidden="true"
@@ -69,47 +77,86 @@ function SortIcon({ direction }: { direction?: SortDirection }) {
   );
 }
 
-// ==========================================
-// PAGINATION
-// ==========================================
+// ── Pagination ────────────────────────────────────────────────────────────
 
 interface PaginationProps {
   page: number;
   totalPages: number;
+  totalRows: number;
+  pageSize: number;
+  pageSizeOptions: number[];
   onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
-function Pagination({ page, totalPages, onPageChange }: PaginationProps) {
-  if (totalPages <= 1) return null;
+function Pagination({
+  page,
+  totalPages,
+  totalRows,
+  pageSize,
+  pageSizeOptions,
+  onPageChange,
+  onPageSizeChange,
+}: PaginationProps) {
+  if (totalRows === 0) return null;
+
+  const from = (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, totalRows);
 
   return (
-    <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-4 py-3 dark:border-gray-800">
-      <button
-        onClick={() => onPageChange(page - 1)}
-        disabled={page <= 1}
-        className="rounded px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-400 dark:hover:bg-gray-800"
-        aria-label="Previous page"
-      >
-        Prev
-      </button>
-      <span className="text-xs text-gray-500">
-        {page} / {totalPages}
-      </span>
-      <button
-        onClick={() => onPageChange(page + 1)}
-        disabled={page >= totalPages}
-        className="rounded px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-400 dark:hover:bg-gray-800"
-        aria-label="Next page"
-      >
-        Next
-      </button>
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-divider bg-surface px-6 py-3 text-xs text-textMuted">
+      <div>
+        Showing <span className="font-semibold text-text">{from}</span>–
+        <span className="font-semibold text-text">{to}</span> of{' '}
+        <span className="font-semibold text-text">{totalRows}</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <label className="flex items-center gap-2">
+          <span>Rows</span>
+          <select
+            value={pageSize}
+            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+            className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-text focus:outline-none focus-visible:shadow-focus"
+            aria-label="Rows per page"
+          >
+            {pageSizeOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onPageChange(page - 1)}
+            disabled={page <= 1}
+            className="rounded-md px-2 py-1 font-medium text-textMuted transition-colors hover:bg-surfaceMuted disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Previous page"
+          >
+            Prev
+          </button>
+          <span className="px-2 font-medium text-text">
+            {page} / {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= totalPages}
+            className="rounded-md px-2 py-1 font-medium text-textMuted transition-colors hover:bg-surfaceMuted disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Next page"
+          >
+            Next
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
-// ==========================================
-// MAIN COMPONENT
-// ==========================================
+// ── Main component ────────────────────────────────────────────────────────
+
+const DEFAULT_PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 export function DataTable<TRow>({
   columns,
@@ -117,11 +164,16 @@ export function DataTable<TRow>({
   keyExtractor,
   isLoading = false,
   emptyState,
-  pageSize = 20,
+  pageSize: initialPageSize = 25,
+  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
+  size = 'default',
   className,
 }: DataTableProps<TRow>) {
   const [sort, setSort] = React.useState<SortState | null>(null);
   const [page, setPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(initialPageSize);
+
+  const cellPadding = size === 'compact' ? 'px-6 py-2' : 'px-6 py-4';
 
   const handleSort = (key: string) => {
     setSort((prev) => {
@@ -149,24 +201,31 @@ export function DataTable<TRow>({
   const isEmpty = !isLoading && data.length === 0;
 
   return (
-    <div className={cn('overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900', className)}>
+    <div
+      className={cn(
+        'overflow-hidden rounded-lg border border-border bg-surface',
+        className,
+      )}
+    >
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-100 text-sm dark:divide-gray-800">
+        <table className="min-w-full text-sm">
           <thead>
-            <tr className="bg-gray-50 dark:bg-gray-800/60">
+            <tr className="bg-surfaceMuted">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   scope="col"
                   className={cn(
-                    'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400',
-                    col.sortable && 'cursor-pointer select-none hover:text-gray-900 dark:hover:text-gray-100',
-                    col.className
+                    'px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-textMuted',
+                    col.sortable && 'cursor-pointer select-none hover:text-text',
+                    col.className,
                   )}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
                   aria-sort={
                     sort?.key === col.key
-                      ? sort.direction === 'asc' ? 'ascending' : 'descending'
+                      ? sort.direction === 'asc'
+                        ? 'ascending'
+                        : 'descending'
                       : undefined
                   }
                 >
@@ -180,33 +239,50 @@ export function DataTable<TRow>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50 dark:divide-gray-800/60">
-            {isLoading && <TableSkeleton columns={columns.length} />}
+          <tbody>
+            {isLoading && (
+              <TableSkeleton columns={columns.length} rowPadding={cellPadding} />
+            )}
             {isEmpty && (
               <tr>
                 <td colSpan={columns.length} className="py-12 text-center">
                   {emptyState ?? (
-                    <p className="text-sm text-gray-400">No data available</p>
+                    <p className="text-sm text-textMuted">No data available</p>
                   )}
                 </td>
               </tr>
             )}
-            {!isLoading && !isEmpty && paginatedData.map((row) => (
-              <tr
-                key={keyExtractor(row)}
-                className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40"
-              >
-                {columns.map((col) => (
-                  <td key={col.key} className={cn('px-4 py-3 text-gray-700 dark:text-gray-300', col.className)}>
-                    {col.cell(row)}
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {!isLoading && !isEmpty &&
+              paginatedData.map((row) => (
+                <tr
+                  key={keyExtractor(row)}
+                  className="border-b border-divider transition-colors hover:bg-surfaceMuted/50 last:border-b-0"
+                >
+                  {columns.map((col) => (
+                    <td
+                      key={col.key}
+                      className={cn(cellPadding, 'text-text', col.className)}
+                    >
+                      {col.cell(row)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        totalRows={sortedData.length}
+        pageSize={pageSize}
+        pageSizeOptions={pageSizeOptions}
+        onPageChange={setPage}
+        onPageSizeChange={(newSize) => {
+          setPageSize(newSize);
+          setPage(1);
+        }}
+      />
     </div>
   );
 }

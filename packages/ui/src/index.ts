@@ -30,9 +30,21 @@ export { KpiTile } from './components/kpi-tile';
 export { StatusBadge } from './components/status-badge';
 export type { StatusVariant } from './components/status-badge';
 export { DataTable } from './components/data-table';
-export type { ColumnDef } from './components/data-table';
+export type { ColumnDef, DataTableProps } from './components/data-table';
 export { PageHeader } from './components/page-header';
 export { ToastProvider, useToast } from './components/toast';
 export type { ToastOptions, ToastVariant } from './components/toast';
 export { LiveIndicator } from './components/live-indicator';
 export type { LiveIndicatorProps, LiveIndicatorStatus } from './components/live-indicator';
+
+// Layout shells — every app's chrome lives in one of these
+export { MarketingShell } from './layouts/marketing-shell';
+export type { MarketingShellProps, MarketingNavItem } from './layouts/marketing-shell';
+export { AppShell } from './layouts/app-shell';
+export type {
+  AppShellProps,
+  AppShellNavItem,
+  AppShellNavGroup,
+} from './layouts/app-shell';
+export { MobileShell } from './layouts/mobile-shell';
+export type { MobileShellProps, MobileTab } from './layouts/mobile-shell';

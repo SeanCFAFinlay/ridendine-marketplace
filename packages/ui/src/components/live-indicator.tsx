@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '../utils';
+import { ridendineTokens } from '../tokens';
 
 export type LiveIndicatorStatus = 'connected' | 'connecting' | 'disconnected';
 
@@ -8,26 +9,20 @@ export interface LiveIndicatorProps {
   className?: string;
 }
 
-const STATUS_CONFIG = {
-  connected: {
-    dotClass: 'bg-green-500 animate-pulse',
-    label: 'Live',
-    textClass: 'text-green-700',
-  },
-  connecting: {
-    dotClass: 'bg-yellow-400',
-    label: 'Connecting...',
-    textClass: 'text-yellow-700',
-  },
-  disconnected: {
-    dotClass: 'bg-red-500',
-    label: 'Offline',
-    textClass: 'text-red-600',
-  },
-} as const;
+const STATUS_TO_TOKEN: Record<LiveIndicatorStatus, keyof typeof ridendineTokens.status> = {
+  connected: 'live',
+  connecting: 'pending',
+  disconnected: 'error',
+};
+
+const LABEL: Record<LiveIndicatorStatus, string> = {
+  connected: 'Live',
+  connecting: 'Connecting…',
+  disconnected: 'Offline',
+};
 
 export function LiveIndicator({ status, className }: LiveIndicatorProps) {
-  const config = STATUS_CONFIG[status];
+  const config = ridendineTokens.status[STATUS_TO_TOKEN[status]];
 
   return (
     <span
@@ -36,10 +31,14 @@ export function LiveIndicator({ status, className }: LiveIndicatorProps) {
     >
       <span
         data-testid="live-indicator-dot"
-        className={cn('h-2 w-2 rounded-full flex-shrink-0', config.dotClass)}
+        className={cn(
+          'h-2 w-2 flex-shrink-0 rounded-full',
+          status === 'connected' && 'animate-pulse',
+        )}
+        style={{ backgroundColor: config.fg }}
       />
-      <span className={cn('text-xs font-medium', config.textClass)}>
-        {config.label}
+      <span className="text-xs font-medium" style={{ color: config.fg }}>
+        {LABEL[status]}
       </span>
     </span>
   );
