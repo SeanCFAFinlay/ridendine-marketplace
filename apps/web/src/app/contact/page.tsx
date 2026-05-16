@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Header } from '@/components/layout/header';
-import { Card, Button, Input } from '@ridendine/ui';
+import { Card, Button, Input, Textarea } from '@ridendine/ui';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -47,18 +47,18 @@ export default function ContactPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="container py-12">
           <div className="mx-auto max-w-lg">
-            <Card className="p-8 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <Card padding="lg" elevated className="text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-successSoft">
+                <svg className="h-8 w-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h1 className="mt-6 text-2xl font-bold text-gray-900">Message Sent!</h1>
-              <p className="mt-2 text-gray-600">
+              <h1 className="mt-6 text-2xl font-bold text-text">Message Sent!</h1>
+              <p className="mt-2 text-textMuted">
                 Thank you for contacting us. We'll get back to you within 24 hours.
               </p>
             </Card>
@@ -69,95 +69,82 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container py-12">
         <div className="mx-auto max-w-2xl">
-          <h1 className="text-4xl font-bold text-gray-900">Contact Us</h1>
-          <p className="mt-4 text-gray-600">
+          <h1 className="font-display text-4xl font-bold tracking-tight text-text">
+            Contact Us
+          </h1>
+          <p className="mt-4 text-textMuted">
             Have a question or need help with an order? We're here to help.
           </p>
 
           <div className="mt-8 grid gap-8 lg:grid-cols-2">
-            <Card className="p-6">
-              <h2 className="font-semibold text-gray-900">Get in Touch</h2>
+            <Card padding="lg">
+              <h2 className="font-semibold text-text">Get in Touch</h2>
               <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
-                  <Input
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Your name"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <Input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="you@example.com"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Order Number (optional)</label>
-                  <Input
-                    value={formData.orderNumber}
-                    onChange={(e) => setFormData({ ...formData, orderNumber: e.target.value })}
-                    placeholder="RD-XXXXXX"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Subject</label>
-                  <Input
-                    required
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    placeholder="How can we help?"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Message</label>
-                  <textarea
-                    required
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    placeholder="Tell us more..."
-                    rows={4}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
-                  />
-                </div>
+                <Input
+                  label="Name"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Your name"
+                />
+                <Input
+                  label="Email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="you@example.com"
+                />
+                <Input
+                  label="Order Number (optional)"
+                  value={formData.orderNumber}
+                  onChange={(e) => setFormData({ ...formData, orderNumber: e.target.value })}
+                  placeholder="RD-XXXXXX"
+                />
+                <Input
+                  label="Subject"
+                  required
+                  value={formData.subject}
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  placeholder="How can we help?"
+                />
+                <Textarea
+                  label="Message"
+                  required
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  placeholder="Tell us more..."
+                  rows={4}
+                />
 
-                {error && <p className="text-sm text-red-600">{error}</p>}
+                {error && <p className="text-sm text-danger">{error}</p>}
 
-                <Button type="submit" disabled={submitting} className="w-full">
+                <Button type="submit" loading={submitting} fullWidth>
                   {submitting ? 'Sending...' : 'Send Message'}
                 </Button>
               </form>
             </Card>
 
             <div className="space-y-6">
-              <Card className="p-6">
-                <h3 className="font-semibold text-gray-900">Email Support</h3>
-                <p className="mt-2 text-gray-600">support@ridendine.ca</p>
-                <p className="mt-1 text-sm text-gray-500">Response within 24 hours</p>
+              <Card padding="lg">
+                <h3 className="font-semibold text-text">Email Support</h3>
+                <p className="mt-2 text-textMuted">support@ridendine.ca</p>
+                <p className="mt-1 text-sm text-textSubtle">Response within 24 hours</p>
               </Card>
 
-              <Card className="p-6">
-                <h3 className="font-semibold text-gray-900">Phone Support</h3>
-                <p className="mt-2 text-gray-600">1-800-RIDENDINE</p>
-                <p className="mt-1 text-sm text-gray-500">Mon-Fri, 9am-9pm EST</p>
+              <Card padding="lg">
+                <h3 className="font-semibold text-text">Phone Support</h3>
+                <p className="mt-2 text-textMuted">1-800-RIDENDINE</p>
+                <p className="mt-1 text-sm text-textSubtle">Mon-Fri, 9am-9pm EST</p>
               </Card>
 
-              <Card className="p-6">
-                <h3 className="font-semibold text-gray-900">Headquarters</h3>
-                <p className="mt-2 text-gray-600">
+              <Card padding="lg">
+                <h3 className="font-semibold text-text">Headquarters</h3>
+                <p className="mt-2 text-textMuted">
                   123 Main Street<br />
                   Hamilton, ON L8P 1A1<br />
                   Canada

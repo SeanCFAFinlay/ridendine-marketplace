@@ -1,9 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useAuthContext } from '@ridendine/auth';
-import { Button, Avatar } from '@ridendine/ui';
+import { Button, Avatar, Logo } from '@ridendine/ui';
 import { useCart } from '@/contexts/cart-context';
 import { useState, useRef, useEffect } from 'react';
 
@@ -24,57 +23,53 @@ export function Header() {
   }, [itemCount]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
+    <header className="sticky top-0 z-sticky border-b border-border bg-surface shadow-sm">
       <div className="container flex h-16 items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/logo-icon.png"
-            alt="RideNDine"
-            width={40}
-            height={40}
-            className="rounded-xl"
-          />
-          <span className="hidden text-xl font-bold sm:block">
-            <span className="text-[#1a7a6e]">RideN</span>
-            <span className="text-[#E85D26]">Dine</span>
-          </span>
+        <Link
+          href="/"
+          className="inline-flex items-center rounded-sm focus-visible:outline-none focus-visible:shadow-focus"
+          aria-label="RideNDine — home"
+        >
+          <Logo height={30} />
         </Link>
 
-        {/* Desktop Navigation */}
         <nav className="hidden items-center gap-6 md:flex">
           <Link
             href="/chefs"
-            className="text-sm font-medium text-gray-600 transition-colors hover:text-[#E85D26]"
+            className="text-sm font-medium text-textMuted transition-colors hover:text-primary"
           >
             Browse Chefs
           </Link>
           <Link
             href="/how-it-works"
-            className="text-sm font-medium text-gray-600 transition-colors hover:text-[#E85D26]"
+            className="text-sm font-medium text-textMuted transition-colors hover:text-primary"
           >
             How It Works
           </Link>
           <Link
             href="/about"
-            className="text-sm font-medium text-gray-600 transition-colors hover:text-[#E85D26]"
+            className="text-sm font-medium text-textMuted transition-colors hover:text-primary"
           >
             About
           </Link>
         </nav>
 
-        {/* Auth / User Menu */}
         <div className="flex items-center gap-3">
           {loading ? (
-            <div className="h-10 w-20 animate-pulse rounded-lg bg-gray-100" />
+            <div className="h-10 w-20 animate-pulse rounded-md bg-surfaceMuted" />
           ) : user ? (
             <>
-              <Link href="/cart" className="relative p-2">
+              <Link
+                href="/cart"
+                className="relative rounded-md p-2 transition-colors hover:bg-surfaceMuted focus-visible:outline-none focus-visible:shadow-focus"
+                aria-label="Cart"
+              >
                 <svg
-                  className="h-6 w-6 text-gray-600 hover:text-[#E85D26] transition-colors"
+                  className="h-6 w-6 text-textMuted"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -86,13 +81,17 @@ export function Header() {
                 {itemCount > 0 && (
                   <span
                     key={badgeKey}
-                    className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#E85D26] text-xs font-bold text-white animate-badge-bounce"
+                    className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primaryFg animate-badge-bounce"
                   >
                     {itemCount > 9 ? '9+' : itemCount}
                   </span>
                 )}
               </Link>
-              <Link href="/account">
+              <Link
+                href="/account"
+                className="rounded-full focus-visible:outline-none focus-visible:shadow-focus"
+                aria-label="Account"
+              >
                 <Avatar
                   src={user.user_metadata?.avatar_url}
                   alt={user.email || 'User'}
@@ -109,20 +108,21 @@ export function Header() {
                 </Button>
               </Link>
               <Link href="/auth/signup">
-                <Button size="sm" className="bg-[#E85D26] hover:bg-[#d44e1e] text-white">
+                <Button variant="primary" size="sm">
                   Sign up
                 </Button>
               </Link>
             </>
           )}
 
-          {/* Mobile menu button */}
           <button
-            className="ml-1 rounded-md p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+            type="button"
+            className="ml-1 rounded-md p-2 text-textMuted transition-colors hover:bg-surfaceMuted focus-visible:outline-none focus-visible:shadow-focus md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               {mobileMenuOpen ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               ) : (
@@ -133,27 +133,26 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="border-t border-gray-100 bg-white px-4 py-3 md:hidden">
-          <nav className="flex flex-col gap-3">
+        <div className="border-t border-border bg-surface px-4 py-3 md:hidden">
+          <nav className="flex flex-col gap-1" aria-label="Mobile">
             <Link
               href="/chefs"
-              className="text-sm font-medium text-gray-700 hover:text-[#E85D26]"
+              className="rounded-md px-3 py-2 text-base font-medium text-text transition-colors hover:bg-surfaceMuted"
               onClick={() => setMobileMenuOpen(false)}
             >
               Browse Chefs
             </Link>
             <Link
               href="/how-it-works"
-              className="text-sm font-medium text-gray-700 hover:text-[#E85D26]"
+              className="rounded-md px-3 py-2 text-base font-medium text-text transition-colors hover:bg-surfaceMuted"
               onClick={() => setMobileMenuOpen(false)}
             >
               How It Works
             </Link>
             <Link
               href="/about"
-              className="text-sm font-medium text-gray-700 hover:text-[#E85D26]"
+              className="rounded-md px-3 py-2 text-base font-medium text-text transition-colors hover:bg-surfaceMuted"
               onClick={() => setMobileMenuOpen(false)}
             >
               About
@@ -161,7 +160,7 @@ export function Header() {
             {!user && (
               <Link
                 href="/auth/login"
-                className="text-sm font-medium text-gray-700 hover:text-[#E85D26]"
+                className="rounded-md px-3 py-2 text-base font-medium text-text transition-colors hover:bg-surfaceMuted"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Log in

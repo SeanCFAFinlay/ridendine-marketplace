@@ -22,18 +22,18 @@ function ChefsLoadingSkeleton() {
   return (
     <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="h-44 animate-pulse bg-gray-100" />
+        <div key={i} className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
+          <div className="h-44 animate-pulse bg-surfaceMuted" />
           <div className="p-5">
             <div className="-mt-10 mb-4 flex items-end justify-between">
-              <div className="h-14 w-14 animate-pulse rounded-xl bg-gray-200" />
-              <div className="h-6 w-16 animate-pulse rounded-full bg-gray-100" />
+              <div className="h-14 w-14 animate-pulse rounded-xl bg-surfaceMuted" />
+              <div className="h-6 w-16 animate-pulse rounded-full bg-surfaceMuted" />
             </div>
-            <div className="h-5 w-3/4 animate-pulse rounded bg-gray-100 mb-2" />
-            <div className="h-4 w-1/2 animate-pulse rounded bg-gray-100 mb-3" />
+            <div className="mb-2 h-5 w-3/4 animate-pulse rounded bg-surfaceMuted" />
+            <div className="mb-3 h-4 w-1/2 animate-pulse rounded bg-surfaceMuted" />
             <div className="flex gap-2">
-              <div className="h-5 w-20 animate-pulse rounded-full bg-gray-100" />
-              <div className="h-5 w-16 animate-pulse rounded-full bg-gray-100" />
+              <div className="h-5 w-20 animate-pulse rounded-full bg-surfaceMuted" />
+              <div className="h-5 w-16 animate-pulse rounded-full bg-surfaceMuted" />
             </div>
           </div>
         </div>
@@ -55,21 +55,23 @@ export default async function ChefsPage({
   const sortBy = params.sort || 'default';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header />
 
       {/* Closed-beta test-mode banner */}
-      <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-center text-sm text-amber-900">
+      <div className="bg-warningSoft border-b border-warning/20 px-4 py-2.5 text-center text-sm text-warning">
         <span className="font-semibold">Closed Beta</span> — Test card{' '}
-        <span className="rounded bg-white/70 px-1.5 py-0.5 font-mono text-xs">4242 4242 4242 4242</span>{' '}
+        <span className="rounded bg-surface/70 px-1.5 py-0.5 font-mono text-xs">4242 4242 4242 4242</span>{' '}
         (any future expiry, any CVC). No real money will be charged.
       </div>
 
       {/* Page Header */}
-      <div className="bg-white border-b border-gray-100">
+      <div className="border-b border-border bg-surface">
         <div className="container py-8">
-          <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">Browse Chefs</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="font-display text-3xl font-bold tracking-tight text-text sm:text-4xl">
+            Browse Chefs
+          </h1>
+          <p className="mt-2 text-textMuted">
             Discover talented home chefs in Hamilton — order fresh, authentic meals delivered to your door.
           </p>
         </div>
@@ -77,15 +79,13 @@ export default async function ChefsPage({
 
       <main className="container py-8">
         <div className="flex flex-col gap-8 lg:flex-row">
-          {/* Filters Sidebar */}
-          <aside className="w-full lg:w-64 flex-shrink-0">
+          <aside className="w-full flex-shrink-0 lg:w-64">
             <Suspense fallback={<div />}>
               <ChefsFilters />
             </Suspense>
           </aside>
 
-          {/* Chefs Grid */}
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <Suspense fallback={<ChefsLoadingSkeleton />}>
               <ChefsList search={params.search} cuisines={cuisines} minRating={minRating} sortBy={sortBy} />
             </Suspense>

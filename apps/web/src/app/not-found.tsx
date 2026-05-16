@@ -1,51 +1,52 @@
 import { Header } from '@/components/layout/header';
 import Link from 'next/link';
+import { Button } from '@ridendine/ui';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container py-24">
         <div className="mx-auto max-w-lg text-center">
           <div className="text-8xl">🍽️</div>
-          <h1 className="mt-8 text-4xl font-bold text-gray-900">Page Not Found</h1>
-          <p className="mt-4 text-xl text-gray-600">
+          <h1 className="mt-8 font-display text-4xl font-bold tracking-tight text-text">
+            Page Not Found
+          </h1>
+          <p className="mt-4 text-xl text-textMuted">
             Oops! This page seems to have been eaten already.
           </p>
-          <p className="mt-2 text-gray-500">
+          <p className="mt-2 text-textSubtle">
             The page you're looking for doesn't exist or has been moved.
           </p>
 
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <Link
-              href="/"
-              className="inline-block rounded-lg bg-[#E85D26] px-8 py-4 font-semibold text-white hover:bg-[#D04D16] transition-colors"
-            >
-              Go Home
+            <Link href="/">
+              <Button variant="primary" size="lg">
+                Go Home
+              </Button>
             </Link>
-            <Link
-              href="/chefs"
-              className="inline-block rounded-lg border-2 border-[#E85D26] px-8 py-4 font-semibold text-[#E85D26] hover:bg-orange-50 transition-colors"
-            >
-              Browse Chefs
+            <Link href="/chefs">
+              <Button variant="secondary" size="lg">
+                Browse Chefs
+              </Button>
             </Link>
           </div>
 
-          <div className="mt-12 rounded-lg bg-gray-100 p-6">
-            <h2 className="font-semibold text-gray-900">Looking for something specific?</h2>
-            <ul className="mt-4 space-y-2 text-gray-600">
+          <div className="mt-12 rounded-lg bg-surfaceMuted p-6 text-left">
+            <h2 className="font-semibold text-text">Looking for something specific?</h2>
+            <ul className="mt-4 space-y-2 text-textMuted">
               <li>
-                <Link href="/how-it-works" className="text-[#E85D26] hover:underline">
-                  How Ridendine Works
+                <Link href="/how-it-works" className="text-primary transition-colors hover:underline">
+                  How RideNDine Works
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-[#E85D26] hover:underline">
+                <Link href="/about" className="text-primary transition-colors hover:underline">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-[#E85D26] hover:underline">
+                <Link href="/contact" className="text-primary transition-colors hover:underline">
                   Contact Support
                 </Link>
               </li>

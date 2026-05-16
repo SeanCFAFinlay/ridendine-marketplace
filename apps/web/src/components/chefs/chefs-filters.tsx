@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, Input, Button } from '@ridendine/ui';
+import { Card, Input, Button, Select } from '@ridendine/ui';
 
 const cuisineTypes = [
   'Mexican', 'Italian', 'Thai', 'Indian', 'Chinese',
@@ -52,12 +52,11 @@ export function ChefsFilters() {
 
   return (
     <Card>
-      <h3 className="font-semibold text-gray-900">Filters</h3>
+      <h3 className="font-semibold text-text">Filters</h3>
 
       <div className="mt-4">
         <Input
           placeholder="Search chefs, cuisines..."
-          className="w-full"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
@@ -65,62 +64,59 @@ export function ChefsFilters() {
       </div>
 
       <div className="mt-6">
-        <h4 className="text-sm font-medium text-gray-700">Sort By</h4>
-        <select
+        <Select
+          label="Sort By"
           value={sortBy}
-          onChange={(e) => {
-            setSortBy(e.target.value);
-          }}
-          className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
+          onChange={(e) => setSortBy(e.target.value)}
         >
           {sortOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div className="mt-6">
-        <h4 className="text-sm font-medium text-gray-700">Cuisine Type</h4>
+        <h4 className="text-sm font-medium text-text">Cuisine Type</h4>
         <div className="mt-2 space-y-2">
           {cuisineTypes.map((cuisine) => (
-            <label key={cuisine} className="flex items-center gap-2">
+            <label key={cuisine} className="flex cursor-pointer items-center gap-2">
               <input
                 type="checkbox"
                 checked={selectedCuisines.includes(cuisine)}
                 onChange={() => toggleCuisine(cuisine)}
-                className="h-4 w-4 rounded border-gray-300 text-[#E85D26] focus:ring-[#E85D26]"
+                className="h-4 w-4 rounded border-border text-primary accent-primary focus-visible:shadow-focus focus-visible:outline-none"
               />
-              <span className="text-sm text-gray-600">{cuisine}</span>
+              <span className="text-sm text-textMuted">{cuisine}</span>
             </label>
           ))}
         </div>
       </div>
 
       <div className="mt-6">
-        <h4 className="text-sm font-medium text-gray-700">Rating</h4>
+        <h4 className="text-sm font-medium text-text">Rating</h4>
         <div className="mt-2 space-y-2">
           {[4.5, 4.0, 3.5].map((rating) => (
-            <label key={rating} className="flex items-center gap-2">
+            <label key={rating} className="flex cursor-pointer items-center gap-2">
               <input
                 type="radio"
                 name="rating"
                 checked={minRating === String(rating)}
                 onChange={() => setMinRating(String(rating))}
-                className="h-4 w-4 border-gray-300 text-[#E85D26] focus:ring-[#E85D26]"
+                className="h-4 w-4 border-border text-primary accent-primary focus-visible:shadow-focus focus-visible:outline-none"
               />
-              <span className="text-sm text-gray-600">{rating}+ stars</span>
+              <span className="text-sm text-textMuted">{rating}+ stars</span>
             </label>
           ))}
         </div>
       </div>
 
       <div className="mt-6 space-y-2">
-        <Button onClick={applyFilters} className="w-full">
+        <Button onClick={applyFilters} fullWidth>
           Apply Filters
         </Button>
-        <Button variant="outline" onClick={clearFilters} className="w-full">
+        <Button variant="secondary" onClick={clearFilters} fullWidth>
           Clear Filters
         </Button>
       </div>

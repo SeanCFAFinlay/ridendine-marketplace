@@ -158,7 +158,7 @@ export default function PrivacyPage() {
           </div>
 
           <div className="mt-12 border-t pt-8">
-            <Link href="/" className="text-[#E85D26] hover:underline">
+            <Link href="/" className="text-primary hover:underline">
               ← Back to Home
             </Link>
           </div>

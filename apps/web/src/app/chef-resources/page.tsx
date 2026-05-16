@@ -81,58 +81,53 @@ const resources = [
 
 export default function ChefResourcesPage() {
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <div className="min-h-screen bg-background">
       <Header />
 
       <main className="container py-16">
         <div className="mx-auto max-w-5xl">
           <div className="mb-12 text-center">
-            <h1 className="text-[40px] font-bold leading-tight tracking-tight text-[#2D3436]">
+            <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-text">
               Chef Resources
             </h1>
-            <p className="mt-4 text-[17px] leading-[1.6] text-[#5F6368]">
-              Everything you need to succeed as a Ridendine chef
+            <p className="mt-4 text-lg leading-relaxed text-textMuted">
+              Everything you need to succeed as a RideNDine chef
             </p>
           </div>
 
-          <div className="mb-12 rounded-lg border border-[#E8E8E8] bg-white p-8">
+          <Card padding="lg" elevated className="mb-12">
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-[20px] font-semibold text-[#2D3436]">
-                  Ready to get started?
-                </h2>
-                <p className="mt-1 text-[15px] leading-[1.6] text-[#5F6368]">
-                  Join hundreds of chefs already earning on Ridendine
+                <h2 className="text-xl font-semibold text-text">Ready to get started?</h2>
+                <p className="mt-1 text-textMuted">
+                  Join hundreds of chefs already earning on RideNDine
                 </p>
               </div>
               <Link href="/chef-signup">
-                <Button size="lg" className="bg-[#FF6B6B] hover:bg-[#FF5252]">
+                <Button variant="primary" size="lg">
                   Apply Now
                 </Button>
               </Link>
             </div>
-          </div>
+          </Card>
 
           <div className="space-y-12">
             {resources.map((section) => (
               <div key={section.category}>
-                <h2 className="mb-6 text-[24px] font-semibold tracking-tight text-[#2D3436]">
+                <h2 className="mb-6 text-2xl font-semibold tracking-tight text-text">
                   {section.category}
                 </h2>
                 <div className="grid gap-6 md:grid-cols-2">
                   {section.items.map((resource) => (
-                    <Card
-                      key={resource.title}
-                      className="transition-shadow hover:shadow-md"
-                      padding="lg"
-                    >
+                    <Card key={resource.title} padding="lg" interactive>
                       <CardHeader>
-                        <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[#FFF8F0]">
+                        <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primarySoft">
                           <svg
-                            className="h-6 w-6 text-[#FF6B6B]"
+                            className="h-6 w-6 text-primary"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
+                            aria-hidden="true"
                           >
                             <path
                               strokeLinecap="round"
@@ -142,10 +137,8 @@ export default function ChefResourcesPage() {
                             />
                           </svg>
                         </div>
-                        <CardTitle className="text-[18px]">
-                          {resource.title}
-                        </CardTitle>
-                        <CardDescription className="mt-2 text-[15px] leading-[1.6]">
+                        <CardTitle>{resource.title}</CardTitle>
+                        <CardDescription className="mt-2 leading-relaxed">
                           {resource.description}
                         </CardDescription>
                       </CardHeader>
@@ -156,22 +149,20 @@ export default function ChefResourcesPage() {
             ))}
           </div>
 
-          <div className="mt-16 rounded-lg border border-[#E8E8E8] bg-white p-8 text-center">
-            <h2 className="text-[24px] font-semibold text-[#2D3436]">
-              Need Help?
-            </h2>
-            <p className="mt-2 text-[15px] leading-[1.6] text-[#5F6368]">
+          <Card padding="lg" elevated className="mt-16 text-center">
+            <h2 className="text-2xl font-semibold text-text">Need Help?</h2>
+            <p className="mt-2 text-textMuted">
               Our support team is here to help you succeed
             </p>
             <div className="mt-6 flex justify-center gap-4">
               <Link href="/contact">
-                <Button variant="outline">Contact Support</Button>
+                <Button variant="secondary">Contact Support</Button>
               </Link>
               <Link href="/auth/login">
-                <Button>Chef Dashboard</Button>
+                <Button variant="primary">Chef Dashboard</Button>
               </Link>
             </div>
-          </div>
+          </Card>
         </div>
       </main>
     </div>
