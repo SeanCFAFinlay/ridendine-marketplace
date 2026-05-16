@@ -1,47 +1,157 @@
+// RideNDine canonical design tokens.
+// Single source of truth — Tailwind preset and all components must consume from here.
+// Light, warm, orange-on-cream. Brand-anchored to the customer marketplace.
+
 export const ridendineTokens = {
   colors: {
-    background: '#080b10',
-    surface: '#111827',
-    surfaceRaised: '#172033',
-    border: '#263244',
-    primary: '#f59e0b',
-    primarySoft: '#451f06',
-    text: '#f8fafc',
-    muted: '#94a3b8',
-    success: '#22c55e',
-    danger: '#ef4444',
-    warning: '#f59e0b',
-    info: '#38bdf8',
+    // Brand
+    primary: '#EA5B26',
+    primaryHover: '#D24A18',
+    primaryActive: '#B83E13',
+    primarySoft: '#FFE8DC',
+    primaryFg: '#FFFFFF',
+
+    accent: '#0E8A8A',
+    accentSoft: '#D6F0EF',
+
+    // Surfaces — layered cream → white → muted bands
+    background: '#FEF8F3',
+    surface: '#FFFFFF',
+    surfaceMuted: '#F4F1ED',
+    surfaceSubtle: '#EEF2F7',
+
+    // Borders & dividers
+    border: '#E5E0D9',
+    borderStrong: '#D6CFC5',
+    divider: '#F0EAE1',
+
+    // Text
+    text: '#0F172A',
+    textMuted: '#475569',
+    textSubtle: '#94A3B8',
+
+    // Semantic
+    success: '#16A34A',
+    successSoft: '#DCFCE7',
+    danger: '#DC2626',
+    dangerSoft: '#FEE2E2',
+    warning: '#D97706',
+    warningSoft: '#FEF3C7',
+    info: '#0284C7',
+    infoSoft: '#E0F2FE',
+
+    focusRing: '#EA5B26',
   },
-  spacing: {
-    pageX: 'clamp(1rem, 3vw, 2rem)',
-    pageY: 'clamp(1rem, 2vw, 1.5rem)',
-    section: '1.5rem',
+
+  // Status pills — the ONLY way to render order/delivery/driver status.
+  status: {
+    live: { label: 'Live', fg: '#16A34A', bg: '#DCFCE7' },
+    fresh: { label: 'Fresh', fg: '#0284C7', bg: '#E0F2FE' },
+    pending: { label: 'Pending', fg: '#D97706', bg: '#FEF3C7' },
+    stale: { label: 'Stale', fg: '#D97706', bg: '#FEF3C7' },
+    offline: { label: 'Offline', fg: '#64748B', bg: '#F1F5F9' },
+    error: { label: 'Error', fg: '#DC2626', bg: '#FEE2E2' },
   },
-  radius: {
-    card: '1rem',
-    control: '0.75rem',
-    pill: '999px',
-  },
-  shadows: {
-    card: '0 18px 50px rgb(0 0 0 / 0.28)',
-    glow: '0 0 0 1px rgb(245 158 11 / 0.18), 0 18px 60px rgb(245 158 11 / 0.12)',
-  },
+
   typography: {
     sans: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    display: '"Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif',
     mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
   },
-  status: {
-    live: { label: 'Live', color: '#22c55e' },
-    fresh: { label: 'Fresh', color: '#38bdf8' },
-    stale: { label: 'Stale', color: '#f59e0b' },
-    offline: { label: 'Offline', color: '#64748b' },
-    error: { label: 'Error', color: '#ef4444' },
+
+  fontSize: {
+    xs: '0.75rem',
+    sm: '0.875rem',
+    base: '1rem',
+    lg: '1.125rem',
+    xl: '1.25rem',
+    '2xl': '1.5rem',
+    '3xl': '1.875rem',
+    '4xl': '2.25rem',
+    '5xl': '3rem',
+    '6xl': '3.75rem',
   },
+
+  fontWeight: {
+    normal: '400',
+    medium: '500',
+    semibold: '600',
+    bold: '700',
+    extra: '800',
+  },
+
+  lineHeight: {
+    tight: '1.15',
+    snug: '1.3',
+    normal: '1.5',
+    relaxed: '1.65',
+  },
+
+  // 4px-base spacing scale. Tailwind classes p-4 / mt-6 / gap-8 etc. map onto this.
+  spacing: {
+    px: '1px',
+    0: '0',
+    0.5: '0.125rem',
+    1: '0.25rem',
+    2: '0.5rem',
+    3: '0.75rem',
+    4: '1rem',
+    5: '1.25rem',
+    6: '1.5rem',
+    8: '2rem',
+    10: '2.5rem',
+    12: '3rem',
+    16: '4rem',
+    20: '5rem',
+    24: '6rem',
+    32: '8rem',
+  },
+
+  radius: {
+    none: '0',
+    sm: '0.375rem',
+    DEFAULT: '0.5rem',
+    md: '0.625rem',
+    lg: '0.875rem',
+    xl: '1.25rem',
+    '2xl': '1.5rem',
+    full: '9999px',
+  },
+
+  shadows: {
+    none: 'none',
+    sm: '0 1px 2px rgba(15, 23, 42, 0.04)',
+    DEFAULT: '0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04)',
+    md: '0 4px 12px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04)',
+    lg: '0 12px 24px rgba(15, 23, 42, 0.08), 0 4px 8px rgba(15, 23, 42, 0.04)',
+    xl: '0 24px 48px rgba(15, 23, 42, 0.10), 0 8px 16px rgba(15, 23, 42, 0.04)',
+    focus: '0 0 0 3px rgba(234, 91, 38, 0.35)',
+  },
+
   shell: {
-    sidebar: '17rem',
-    topbar: '4.5rem',
-    maxContent: '90rem',
+    sidebar: '16rem',
+    sidebarWide: '17rem',
+    topbar: '4rem',
+    maxContent: '80rem',
+    maxNarrow: '40rem',
+  },
+
+  motion: {
+    fast: '120ms',
+    DEFAULT: '180ms',
+    slow: '320ms',
+    easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+  },
+
+  z: {
+    base: 0,
+    raised: 10,
+    dropdown: 1000,
+    sticky: 1020,
+    overlay: 1030,
+    modal: 1040,
+    toast: 1050,
+    tooltip: 1060,
   },
 } as const;
 

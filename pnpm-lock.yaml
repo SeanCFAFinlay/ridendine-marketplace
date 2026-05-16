@@ -460,6 +460,10 @@ importers:
         version: 1.6.1(@types/node@20.19.37)(jsdom@20.0.3)(terser@5.46.2)
 
   packages/config:
+    dependencies:
+      '@ridendine/ui':
+        specifier: workspace:*
+        version: link:../ui
     devDependencies:
       '@types/node':
         specifier: ^20.17.0

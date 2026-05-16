@@ -5,6 +5,11 @@
 // Utilities
 export { cn } from './utils';
 export { ridendineTokens } from './tokens';
+export type { RidendineTokens } from './tokens';
+
+// Brand assets
+export { Logo } from './assets/logo';
+export type { LogoProps } from './assets/logo';
 
 // Components
 export * from './components/button';

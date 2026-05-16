@@ -6,8 +6,10 @@
   "exports": {
     "./eslint": "./eslint.config.js",
     "./typescript": "./tsconfig.json",
-    "./tailwind": "./tailwind.config.ts",
-    "./tokens": "./src/tokens.ts"
+    "./tailwind": "./tailwind.config.ts"
+  },
+  "dependencies": {
+    "@ridendine/ui": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.17.0",
