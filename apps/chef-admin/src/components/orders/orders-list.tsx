@@ -106,11 +106,11 @@ function CountdownTimer({ createdAt, onExpire }: { createdAt: string; onExpire: 
   const isUrgent = timeLeft < 2 * 60 * 1000; // Less than 2 minutes
 
   if (timeLeft <= 0) {
-    return <span className="text-red-600 font-medium">Expired</span>;
+    return <span className="text-danger font-medium">Expired</span>;
   }
 
   return (
-    <span className={`font-mono font-bold ${isUrgent ? 'text-red-600 animate-pulse' : 'text-orange-600'}`}>
+    <span className={`font-mono font-bold ${isUrgent ? 'text-danger animate-pulse' : 'text-primary'}`}>
       {minutes}:{seconds.toString().padStart(2, '0')}
     </span>
   );
@@ -325,8 +325,8 @@ export function OrdersList({ initialOrders, storefrontId }: OrdersListProps) {
     <>
       <OrderToast toasts={toasts} onDismiss={dismissToast} />
       {error && (
-        <div className="mb-4 rounded-lg bg-red-50 p-4">
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="mb-4 rounded-lg bg-dangerSoft p-4">
+          <p className="text-sm text-danger">{error}</p>
         </div>
       )}
 
@@ -350,17 +350,17 @@ export function OrdersList({ initialOrders, storefrontId }: OrdersListProps) {
       <div className="mt-6 space-y-4">
         {filteredOrders.length === 0 ? (
           <Card>
-            <p className="py-8 text-center text-sm text-gray-500">
+            <p className="py-8 text-center text-sm text-textMuted">
               No {filter === 'all' ? '' : filter.replace(/_/g, ' ')} orders
             </p>
           </Card>
         ) : (
           filteredOrders.map((order) => (
-            <Card key={order.id} className={order.status === 'pending' ? 'border-2 border-orange-400 shadow-lg' : ''}>
+            <Card key={order.id} className={order.status === 'pending' ? 'border-2 border-primary/40 shadow-lg' : ''}>
               <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-gray-900">{order.order_number}</span>
+                    <span className="font-semibold text-text">{order.order_number}</span>
                     <Badge
                       variant={
                         order.status === 'pending' ? 'warning' :
@@ -373,8 +373,8 @@ export function OrdersList({ initialOrders, storefrontId }: OrdersListProps) {
                       {order.status.replace(/_/g, ' ')}
                     </Badge>
                     {order.status === 'pending' && (
-                      <div className="flex items-center gap-1 rounded-full bg-orange-100 px-2 py-1 text-xs">
-                        <span className="text-orange-800">Accept in:</span>
+                      <div className="flex items-center gap-1 rounded-full bg-primarySoft px-2 py-1 text-xs">
+                        <span className="text-primary">Accept in:</span>
                         <CountdownTimer
                           createdAt={order.created_at}
                           onExpire={() => handleOrderExpire(order.id)}
@@ -383,73 +383,73 @@ export function OrdersList({ initialOrders, storefrontId }: OrdersListProps) {
                     )}
                   </div>
                   <div className="mt-3 grid gap-3 lg:grid-cols-3">
-                    <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Customer</p>
+                    <div className="rounded-lg border border-divider bg-surfaceMuted p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-textMuted">Customer</p>
                       {order.customer ? (
-                        <div className="mt-1 text-sm text-gray-700">
-                          <p className="font-medium text-gray-900">{order.customer.first_name} {order.customer.last_name}</p>
+                        <div className="mt-1 text-sm text-text">
+                          <p className="font-medium text-text">{order.customer.first_name} {order.customer.last_name}</p>
                           <p>{order.customer.phone || 'No phone'}</p>
                           {order.customer.email ? <p>{order.customer.email}</p> : null}
                         </div>
                       ) : (
-                        <p className="mt-1 text-sm text-gray-500">Customer not linked</p>
+                        <p className="mt-1 text-sm text-textMuted">Customer not linked</p>
                       )}
                     </div>
-                    <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Delivery</p>
+                    <div className="rounded-lg border border-divider bg-surfaceMuted p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-textMuted">Delivery</p>
                       {order.address ? (
-                        <div className="mt-1 text-sm text-gray-700">
-                          <p className="font-medium text-gray-900">{order.address.address_line1}</p>
+                        <div className="mt-1 text-sm text-text">
+                          <p className="font-medium text-text">{order.address.address_line1}</p>
                           {order.address.address_line2 ? <p>{order.address.address_line2}</p> : null}
                           <p>{order.address.city}, {order.address.state} {order.address.postal_code}</p>
                           {order.address.delivery_instructions ? <p className="mt-1 italic">{order.address.delivery_instructions}</p> : null}
                         </div>
                       ) : (
-                        <p className="mt-1 text-sm text-gray-500">Delivery address not linked</p>
+                        <p className="mt-1 text-sm text-textMuted">Delivery address not linked</p>
                       )}
                     </div>
-                    <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment & Ops</p>
-                      <div className="mt-1 text-sm text-gray-700">
-                        <p><span className="font-medium text-gray-900">{money(order.total)}</span> total</p>
+                    <div className="rounded-lg border border-divider bg-surfaceMuted p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-textMuted">Payment & Ops</p>
+                      <div className="mt-1 text-sm text-text">
+                        <p><span className="font-medium text-text">{money(order.total)}</span> total</p>
                         <p>Payment: {formatStatus(order.payment_status)}</p>
                         <p>Delivery: {formatStatus(order.delivery?.status)}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-3 overflow-hidden rounded-lg border border-gray-100">
-                    <div className="grid grid-cols-[1fr_54px_80px] bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <div className="mt-3 overflow-hidden rounded-lg border border-divider">
+                    <div className="grid grid-cols-[1fr_54px_80px] bg-surfaceMuted px-3 py-2 text-xs font-semibold uppercase tracking-wide text-textMuted">
                       <span>Kitchen ticket</span>
                       <span className="text-center">Qty</span>
                       <span className="text-right">Line</span>
                     </div>
                     {(order.items ?? []).length > 0 ? (
                       (order.items ?? []).map((item) => (
-                        <div key={item.id} className="grid grid-cols-[1fr_54px_80px] border-t border-gray-100 px-3 py-2 text-sm">
+                        <div key={item.id} className="grid grid-cols-[1fr_54px_80px] border-t border-divider px-3 py-2 text-sm">
                           <div>
-                            <p className="font-medium text-gray-900">{item.menu_item?.name || 'Unknown item'}</p>
+                            <p className="font-medium text-text">{item.menu_item?.name || 'Unknown item'}</p>
                             {item.special_instructions ? (
-                              <p className="mt-0.5 text-xs italic text-orange-700">Item note: {item.special_instructions}</p>
+                              <p className="mt-0.5 text-xs italic text-primary">Item note: {item.special_instructions}</p>
                             ) : null}
                           </div>
-                          <span className="text-center font-semibold text-gray-900">{item.quantity}</span>
-                          <span className="text-right text-gray-700">{money(item.total_price)}</span>
+                          <span className="text-center font-semibold text-text">{item.quantity}</span>
+                          <span className="text-right text-text">{money(item.total_price)}</span>
                         </div>
                       ))
                     ) : (
-                      <div className="border-t border-gray-100 px-3 py-3 text-sm text-gray-500">
+                      <div className="border-t border-divider px-3 py-3 text-sm text-textMuted">
                         No line items are attached to this order yet.
                       </div>
                     )}
                   </div>
 
                   {order.special_instructions && (
-                    <p className="mt-2 text-sm italic text-gray-600">
+                    <p className="mt-2 text-sm italic text-textMuted">
                       Note: {order.special_instructions}
                     </p>
                   )}
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-textMuted">
                     <span>Subtotal {money(order.subtotal)}</span>
                     <span>Delivery {money(order.delivery_fee)}</span>
                     <span>Service {money(order.service_fee)}</span>
@@ -463,7 +463,7 @@ export function OrdersList({ initialOrders, storefrontId }: OrdersListProps) {
                 <div className="flex gap-2 flex-wrap justify-end">
                   <Link
                     href={`/dashboard/orders/${order.id}`}
-                    className="inline-flex min-h-9 items-center rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="inline-flex min-h-9 items-center rounded-lg border border-borderStrong px-3 text-sm font-medium text-text hover:bg-surfaceMuted"
                   >
                     Full Details
                   </Link>

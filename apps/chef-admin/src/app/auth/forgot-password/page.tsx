@@ -36,17 +36,17 @@ export default function ChefForgotPasswordPage() {
     return (
       <AuthLayout title="Check your email" subtitle="Password reset instructions are on the way">
         <div className="space-y-6">
-          <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+          <div className="rounded-lg border border-success/30 bg-successSoft p-4 text-sm text-success">
             We sent reset instructions to <span className="font-semibold">{email}</span>. Check your inbox and spam folder, then return here to sign in.
           </div>
           <div className="flex flex-col gap-3">
             <Link href="/auth/login">
-              <Button className="w-full bg-[#E85D26] hover:bg-[#D04D16]">Back to sign in</Button>
+              <Button className="w-full bg-primary hover:bg-[#D04D16]">Back to sign in</Button>
             </Link>
             <button
               type="button"
               onClick={() => setIsSubmitted(false)}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+              className="text-sm font-medium text-textMuted hover:text-text"
             >
               Send another reset email
             </button>
@@ -60,7 +60,7 @@ export default function ChefForgotPasswordPage() {
     <AuthLayout title="Reset your password" subtitle="Enter your chef account email">
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-lg border border-danger/30 bg-dangerSoft p-3 text-sm text-danger">
             {error}
           </div>
         )}
@@ -78,7 +78,7 @@ export default function ChefForgotPasswordPage() {
 
         <Button
           type="submit"
-          className="w-full bg-[#E85D26] hover:bg-[#D04D16]"
+          className="w-full bg-primary hover:bg-[#D04D16]"
           size="lg"
           loading={isSubmitting}
         >
@@ -89,7 +89,7 @@ export default function ChefForgotPasswordPage() {
       <div className="mt-6 text-center">
         <Link
           href="/auth/login"
-          className="text-sm font-medium text-[#E85D26] hover:text-[#D04D16]"
+          className="text-sm font-medium text-primary hover:text-[#D04D16]"
         >
           Back to sign in
         </Link>

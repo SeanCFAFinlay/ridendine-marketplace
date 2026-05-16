@@ -31,13 +31,13 @@ export default function LoginPage() {
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {searchParams.get('signup') === 'success' && (
-          <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+          <div className="rounded-lg border border-success/30 bg-successSoft p-3 text-sm text-success">
             Chef account created. Sign in to continue your storefront setup.
           </div>
         )}
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-lg border border-danger/30 bg-dangerSoft p-3 text-sm text-danger">
             {error}
           </div>
         )}
@@ -68,13 +68,13 @@ export default function LoginPage() {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-[#E85D26] focus:ring-[#E85D26] focus:ring-offset-0"
+              className="h-4 w-4 rounded border-borderStrong text-primary focus:ring-primary focus:ring-offset-0"
             />
-            <span className="text-sm text-slate-600">Remember me</span>
+            <span className="text-sm text-textMuted">Remember me</span>
           </label>
           <Link
             href="/auth/forgot-password"
-            className="text-sm font-medium text-[#E85D26] hover:text-[#D04D16] transition-colors"
+            className="text-sm font-medium text-primary hover:text-[#D04D16] transition-colors"
           >
             Forgot password?
           </Link>
@@ -82,7 +82,7 @@ export default function LoginPage() {
 
         <Button
           type="submit"
-          className="w-full bg-[#E85D26] hover:bg-[#D04D16]"
+          className="w-full bg-primary hover:bg-[#D04D16]"
           size="lg"
           loading={loading}
         >
@@ -90,11 +90,11 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-600">
+      <p className="mt-6 text-center text-sm text-textMuted">
         Don&apos;t have a chef account?{' '}
         <Link
           href="/auth/signup"
-          className="font-medium text-[#E85D26] hover:text-[#D04D16] transition-colors"
+          className="font-medium text-primary hover:text-[#D04D16] transition-colors"
         >
           Apply to become a chef
         </Link>

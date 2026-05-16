@@ -100,14 +100,14 @@ export function WeeklyAvailabilityForm() {
 
   if (loading) {
     return (
-      <Card className="p-6 text-sm text-gray-500">Loading availability…</Card>
+      <Card className="p-6 text-sm text-textMuted">Loading availability…</Card>
     );
   }
 
   return (
     <Card className="p-6">
-      <h2 className="text-lg font-semibold text-gray-900">Weekly hours</h2>
-      <p className="mt-1 text-sm text-gray-500">
+      <h2 className="text-lg font-semibold text-text">Weekly hours</h2>
+      <p className="mt-1 text-sm text-textMuted">
         Set open hours per day. Times use your browser&apos;s local timezone; saved as
         HH:MM in the database. Customers are blocked outside these windows when rows exist.
       </p>
@@ -116,9 +116,9 @@ export function WeeklyAvailabilityForm() {
         {slots.map((slot, idx) => (
           <div
             key={slot.day_of_week}
-            className="flex flex-wrap items-end gap-4 border-b border-gray-100 pb-4 last:border-0"
+            className="flex flex-wrap items-end gap-4 border-b border-divider pb-4 last:border-0"
           >
-            <div className="w-14 text-sm font-medium text-gray-700">{LABELS[idx]}</div>
+            <div className="w-14 text-sm font-medium text-text">{LABELS[idx]}</div>
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -132,7 +132,7 @@ export function WeeklyAvailabilityForm() {
               Open
             </label>
             <div>
-              <span className="text-xs text-gray-500">From</span>
+              <span className="text-xs text-textMuted">From</span>
               <Input
                 type="time"
                 value={slot.start_time}
@@ -145,7 +145,7 @@ export function WeeklyAvailabilityForm() {
               />
             </div>
             <div>
-              <span className="text-xs text-gray-500">To</span>
+              <span className="text-xs text-textMuted">To</span>
               <Input
                 type="time"
                 value={slot.end_time}
@@ -161,8 +161,8 @@ export function WeeklyAvailabilityForm() {
         ))}
       </div>
 
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-      {message && <p className="mt-4 text-sm text-green-700">{message}</p>}
+      {error && <p className="mt-4 text-sm text-danger">{error}</p>}
+      {message && <p className="mt-4 text-sm text-success">{message}</p>}
 
       <Button className="mt-6" onClick={save} disabled={saving}>
         {saving ? 'Saving…' : 'Save hours'}

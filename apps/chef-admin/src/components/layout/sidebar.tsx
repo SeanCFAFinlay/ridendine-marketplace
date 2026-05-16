@@ -1,9 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { cn } from '@ridendine/ui';
+import { cn, Logo } from '@ridendine/ui';
 
 const navItems = [
   {
@@ -57,28 +56,24 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 flex-shrink-0 bg-opsCanvas lg:flex lg:flex-col">
+    <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-border bg-surface lg:flex">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-        <Image
-          src="/logo-icon.png"
-          alt="RideNDine"
-          width={32}
-          height={32}
-          className="rounded-lg"
-        />
-        <span className="text-lg font-bold">
-          <span className="text-[#1a9e8e]">RideN</span>
-          <span className="text-[#E85D26]">Dine</span>
-        </span>
-        <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-gray-400">
+      <div className="flex h-16 items-center gap-3 border-b border-border px-5">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center rounded-sm focus-visible:outline-none focus-visible:shadow-focus"
+          aria-label="Chef dashboard — home"
+        >
+          <Logo height={28} />
+        </Link>
+        <span className="ml-auto rounded-full bg-primarySoft px-2 py-0.5 text-xs font-medium text-primary">
           Chef
         </span>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-4">
-        <ul className="space-y-1">
+      <nav className="flex-1 overflow-y-auto p-3" aria-label="Primary">
+        <ul className="flex flex-col gap-0.5">
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -87,14 +82,21 @@ export function Sidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  aria-current={isActive ? 'page' : undefined}
                   className={cn(
-                    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all',
+                    'group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-[#E85D26] text-white shadow-sm'
-                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                      ? 'bg-primarySoft text-primary'
+                      : 'text-textMuted hover:bg-surfaceMuted hover:text-text',
                   )}
                 >
-                  <svg className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {isActive && (
+                    <span
+                      className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r bg-primary"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <svg className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                   </svg>
                   {item.label}
@@ -106,13 +108,13 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-white/10 p-4">
+      <div className="border-t border-border p-3">
         <Link
           href="/"
-          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
           target="_blank"
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text focus-visible:outline-none focus-visible:shadow-focus"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
           View Storefront

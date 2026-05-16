@@ -48,7 +48,7 @@ function ApprovalBanner({ chefStatus }: { chefStatus: string | null }) {
 
   if (chefStatus === 'pending') {
     return (
-      <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+      <div className="mb-6 rounded-xl border border-warning/30 bg-warningSoft p-4 text-sm text-warning">
         Your chef account is pending ops review. You can complete your storefront setup now, but customers will not see it until ops approves your chef profile and publishes your storefront.
       </div>
     );
@@ -56,7 +56,7 @@ function ApprovalBanner({ chefStatus }: { chefStatus: string | null }) {
 
   if (chefStatus === 'rejected') {
     return (
-      <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+      <div className="mb-6 rounded-xl border border-danger/30 bg-dangerSoft p-4 text-sm text-danger">
         Your chef account has been rejected. Your storefront remains private. Contact ops support before making further launch changes.
       </div>
     );
@@ -64,7 +64,7 @@ function ApprovalBanner({ chefStatus }: { chefStatus: string | null }) {
 
   if (chefStatus === 'suspended') {
     return (
-      <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+      <div className="mb-6 rounded-xl border border-danger/30 bg-dangerSoft p-4 text-sm text-danger">
         Your chef account is suspended. Your storefront is not visible to customers until ops restores access.
       </div>
     );
@@ -82,9 +82,9 @@ export default async function StorefrontPage() {
       return (
         <div className="flex h-96 items-center justify-center">
           <EmptyState
-            className="border-amber-200 bg-amber-50"
+            className="border-warning/30 bg-warningSoft"
             icon={
-              <svg className="h-12 w-12 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-12 w-12 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             }
@@ -93,7 +93,7 @@ export default async function StorefrontPage() {
             action={
               <Link
                 href="/auth/login"
-                className="inline-flex rounded-lg bg-[#E85D26] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#d44e1e]"
+                className="inline-flex rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primaryHover"
               >
                 Sign In
               </Link>
@@ -108,9 +108,9 @@ export default async function StorefrontPage() {
       return (
         <div className="flex h-96 items-center justify-center">
           <EmptyState
-            className="border-gray-200 bg-white"
+            className="border-border bg-white"
             icon={
-              <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-12 w-12 text-textSubtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             }
@@ -119,7 +119,7 @@ export default async function StorefrontPage() {
             action={
               <Link
                 href="/dashboard/storefront/setup"
-                className="inline-flex rounded-lg bg-[#E85D26] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#d44e1e]"
+                className="inline-flex rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primaryHover"
               >
                 Complete Setup
               </Link>
@@ -143,8 +143,8 @@ export default async function StorefrontPage() {
       <div>
         <ApprovalBanner chefStatus={chefStatus} />
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Storefront</h1>
-          <p className="mt-1 text-gray-500">Customize how customers see your kitchen</p>
+          <h1 className="text-2xl font-bold text-text">Storefront</h1>
+          <p className="mt-1 text-textMuted">Customize how customers see your kitchen</p>
         </div>
 
         <StorefrontForm
@@ -160,9 +160,9 @@ export default async function StorefrontPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <EmptyState
-          className="border-red-200 bg-red-50"
+          className="border-danger/30 bg-dangerSoft"
           icon={
-            <svg className="h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-12 w-12 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
             </svg>
           }

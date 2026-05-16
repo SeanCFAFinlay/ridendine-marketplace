@@ -87,22 +87,22 @@ function getItemHealth(item: MenuItem) {
   const issues = getSetupIssues(item);
 
   if (item.is_sold_out) {
-    return { label: 'Sold Out', tone: 'bg-red-50 text-red-700 ring-red-200', detail: 'Restock before customers can order' };
+    return { label: 'Sold Out', tone: 'bg-dangerSoft text-danger ring-red-200', detail: 'Restock before customers can order' };
   }
 
   if (!item.is_available) {
-    return { label: 'Hidden', tone: 'bg-slate-100 text-slate-700 ring-slate-200', detail: 'Not visible to customers' };
+    return { label: 'Hidden', tone: 'bg-surfaceMuted text-text ring-slate-200', detail: 'Not visible to customers' };
   }
 
   if (isLowCapacity(item)) {
-    return { label: 'Low capacity', tone: 'bg-amber-50 text-amber-700 ring-amber-200', detail: `${getRemaining(item)} portions left today` };
+    return { label: 'Low capacity', tone: 'bg-warningSoft text-warning ring-amber-200', detail: `${getRemaining(item)} portions left today` };
   }
 
   if (issues.length > 0) {
-    return { label: 'Needs setup', tone: 'bg-orange-50 text-orange-700 ring-orange-200', detail: `Missing ${issues.slice(0, 2).join(', ')}` };
+    return { label: 'Needs setup', tone: 'bg-primarySoft text-primary ring-orange-200', detail: `Missing ${issues.slice(0, 2).join(', ')}` };
   }
 
-  return { label: 'Ready', tone: 'bg-emerald-50 text-emerald-700 ring-emerald-200', detail: 'Customer-ready and operational' };
+  return { label: 'Ready', tone: 'bg-successSoft text-success ring-emerald-200', detail: 'Customer-ready and operational' };
 }
 
 function formatCurrency(value: number) {
@@ -294,17 +294,17 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
   return (
     <>
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-sm font-medium text-red-800">{error}</p>
+        <div className="rounded-lg border border-danger/30 bg-dangerSoft p-4">
+          <p className="text-sm font-medium text-danger">{error}</p>
         </div>
       )}
 
       <section className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-lg border border-border bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="text-sm font-semibold text-slate-950">Today&apos;s menu readiness</p>
-              <p className="mt-1 max-w-2xl text-sm text-slate-600">
+              <p className="mt-1 max-w-2xl text-sm text-textMuted">
                 This is the live operating view for {storefrontName}: what can sell, what is constrained, and what needs chef or admin attention.
               </p>
             </div>
@@ -329,22 +329,22 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
             ].map((metric) => {
               const Icon = metric.icon;
               return (
-                <div key={metric.label} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex items-center gap-2 text-slate-500">
+                <div key={metric.label} className="rounded-lg border border-border bg-surfaceMuted p-4">
+                  <div className="flex items-center gap-2 text-textMuted">
                     <Icon className="h-4 w-4" />
                     <p className="text-xs font-semibold uppercase tracking-wide">{metric.label}</p>
                   </div>
                   <p className="mt-2 text-2xl font-bold text-slate-950">{metric.value}</p>
-                  <p className="mt-1 text-xs text-slate-500">{metric.helper}</p>
+                  <p className="mt-1 text-xs text-textMuted">{metric.helper}</p>
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-lg border border-border bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-amber-600" />
+            <AlertTriangle className="h-5 w-5 text-warning" />
             <p className="font-semibold text-slate-950">Ops watchlist</p>
           </div>
           <div className="mt-4 space-y-3">
@@ -353,10 +353,10 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
               { label: 'Low capacity', value: items.filter(isLowCapacity).length, helper: 'Items near daily cap' },
               { label: 'Hidden from customers', value: items.filter((item) => !item.is_available).length, helper: 'Unavailable menu records' },
             ].map((row) => (
-              <div key={row.label} className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2">
+              <div key={row.label} className="flex items-center justify-between gap-3 rounded-lg border border-divider px-3 py-2">
                 <div>
-                  <p className="text-sm font-medium text-slate-900">{row.label}</p>
-                  <p className="text-xs text-slate-500">{row.helper}</p>
+                  <p className="text-sm font-medium text-text">{row.label}</p>
+                  <p className="text-xs text-textMuted">{row.helper}</p>
                 </div>
                 <span className="text-lg font-bold text-slate-950">{row.value}</span>
               </div>
@@ -365,16 +365,16 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 p-4">
+      <section className="rounded-lg border border-border bg-white shadow-sm">
+        <div className="border-b border-border p-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="relative min-w-0 xl:w-80">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-textSubtle" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search items, categories, tags"
-                className="h-10 w-full rounded-lg border border-slate-300 pl-9 pr-3 text-sm outline-none focus:border-[#E85D26] focus:ring-2 focus:ring-[#E85D26]/20"
+                className="h-10 w-full rounded-lg border border-borderStrong pl-9 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
             <div className="flex flex-wrap gap-2">
@@ -385,8 +385,8 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                   onClick={() => setFilter(entry.id)}
                   className={`h-9 rounded-lg border px-3 text-sm font-medium transition ${
                     filter === entry.id
-                      ? 'border-[#E85D26] bg-[#E85D26] text-white'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-border bg-white text-text hover:border-borderStrong'
                   }`}
                 >
                   {entry.label}
@@ -401,7 +401,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
             <div className="p-10 text-center">
               <ChefHat className="mx-auto h-10 w-10 text-slate-300" />
               <p className="mt-3 font-medium text-slate-950">No matching menu items</p>
-              <p className="mt-1 text-sm text-slate-500">Clear the search or change the filter to see more of the menu.</p>
+              <p className="mt-1 text-sm text-textMuted">Clear the search or change the filter to see more of the menu.</p>
             </div>
           ) : (
             filteredCategories.map((category) => {
@@ -418,7 +418,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                         <Badge variant="default" className="text-xs">{categoryCapacity} capacity left</Badge>
                       </div>
                       {category.description ? (
-                        <p className="mt-1 text-sm text-slate-500">{category.description}</p>
+                        <p className="mt-1 text-sm text-textMuted">{category.description}</p>
                       ) : null}
                     </div>
                     <Button
@@ -435,8 +435,8 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                     </Button>
                   </div>
 
-                  <div className="mt-4 overflow-hidden rounded-lg border border-slate-200">
-                    <div className="hidden grid-cols-[minmax(280px,1.5fr)_120px_150px_140px_180px] bg-slate-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 lg:grid">
+                  <div className="mt-4 overflow-hidden rounded-lg border border-border">
+                    <div className="hidden grid-cols-[minmax(280px,1.5fr)_120px_150px_140px_180px] bg-surfaceMuted px-4 py-2 text-xs font-semibold uppercase tracking-wide text-textMuted lg:grid">
                       <span>Item</span>
                       <span>Price</span>
                       <span>Production</span>
@@ -455,11 +455,11 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                             className="grid gap-4 px-4 py-4 lg:grid-cols-[minmax(280px,1.5fr)_120px_150px_140px_180px] lg:items-center"
                           >
                             <div className="flex min-w-0 gap-3">
-                              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-surfaceMuted">
                                 {item.image_url ? (
                                   <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
                                 ) : (
-                                  <div className="flex h-full w-full items-center justify-center text-slate-400">
+                                  <div className="flex h-full w-full items-center justify-center text-textSubtle">
                                     <Camera className="h-5 w-5" />
                                   </div>
                                 )}
@@ -469,17 +469,17 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                                   <p className="font-semibold text-slate-950">{item.name}</p>
                                   {item.is_featured ? <Badge variant="default" className="text-xs">Featured</Badge> : null}
                                 </div>
-                                <p className="mt-1 line-clamp-2 text-sm text-slate-500">
+                                <p className="mt-1 line-clamp-2 text-sm text-textMuted">
                                   {item.description || 'No customer-facing description yet.'}
                                 </p>
                                 <div className="mt-2 flex flex-wrap gap-1">
                                   {(item.dietary_tags ?? []).slice(0, 4).map((tag) => (
-                                    <span key={tag} className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                                    <span key={tag} className="rounded-md bg-surfaceMuted px-2 py-1 text-xs font-medium text-textMuted">
                                       {tag}
                                     </span>
                                   ))}
                                   {setupIssues.length > 0 ? (
-                                    <span className="rounded-md bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700">
+                                    <span className="rounded-md bg-primarySoft px-2 py-1 text-xs font-medium text-primary">
                                       Missing {setupIssues[0]}
                                     </span>
                                   ) : null}
@@ -489,14 +489,14 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
 
                             <div>
                               <p className="text-sm font-semibold text-slate-950">{formatCurrency(item.price)}</p>
-                              <p className="text-xs text-slate-500">Customer price</p>
+                              <p className="text-xs text-textMuted">Customer price</p>
                             </div>
 
                             <div className="space-y-1 text-sm">
                               <p className="font-medium text-slate-950">
                                 {item.prep_time_minutes ? `${item.prep_time_minutes} min prep` : 'Prep time missing'}
                               </p>
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-textMuted">
                                 {item.daily_limit != null
                                   ? `${item.daily_sold ?? 0}/${item.daily_limit} sold today${remaining != null ? `, ${remaining} left` : ''}`
                                   : 'No daily capacity set'}
@@ -507,7 +507,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                               <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${health.tone}`}>
                                 {health.label}
                               </span>
-                              <p className="mt-1 text-xs text-slate-500">{health.detail}</p>
+                              <p className="mt-1 text-xs text-textMuted">{health.detail}</p>
                             </div>
 
                             <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
@@ -515,7 +515,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                                 type="button"
                                 onClick={() => patchItem(item.id, { is_available: !item.is_available })}
                                 disabled={loading}
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text hover:bg-surfaceMuted disabled:opacity-50"
                                 title={item.is_available ? 'Hide item' : 'Show item'}
                               >
                                 {item.is_available ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -524,7 +524,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                                 type="button"
                                 onClick={() => patchItem(item.id, { is_sold_out: !(item.is_sold_out ?? false), restock_at: null })}
                                 disabled={loading}
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text hover:bg-surfaceMuted disabled:opacity-50"
                                 title={item.is_sold_out ? 'Restock item' : 'Mark sold out'}
                               >
                                 {item.is_sold_out ? <PackageCheck className="h-4 w-4" /> : <PackageX className="h-4 w-4" />}
@@ -533,7 +533,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                                 type="button"
                                 onClick={() => duplicateItem(item)}
                                 disabled={loading}
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text hover:bg-surfaceMuted disabled:opacity-50"
                                 title="Duplicate item"
                               >
                                 <Copy className="h-4 w-4" />
@@ -545,7 +545,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                                   setShowItemModal(true);
                                 }}
                                 disabled={loading}
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-text hover:bg-surfaceMuted disabled:opacity-50"
                                 title="Edit item"
                               >
                                 <Edit3 className="h-4 w-4" />
@@ -554,7 +554,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                                 type="button"
                                 onClick={() => deleteItem(item.id)}
                                 disabled={loading}
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-danger/30 text-danger hover:bg-dangerSoft disabled:opacity-50"
                                 title="Delete item"
                               >
                                 <Trash2 className="h-4 w-4" />

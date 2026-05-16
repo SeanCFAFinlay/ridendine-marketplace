@@ -136,7 +136,7 @@ export default function ReviewsPage() {
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }).map((_, i) => (
-      <span key={i} className={i < rating ? 'text-yellow-400' : 'text-gray-300'}>
+      <span key={i} className={i < rating ? 'text-warning' : 'text-textSubtle'}>
         ★
       </span>
     ));
@@ -145,12 +145,12 @@ export default function ReviewsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Reviews</h1>
+        <h1 className="text-2xl font-bold text-text">Reviews</h1>
         <div className="grid gap-4 sm:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="animate-pulse">
-              <div className="h-4 w-24 bg-gray-200 rounded" />
-              <div className="mt-2 h-8 w-16 bg-gray-200 rounded" />
+              <div className="h-4 w-24 bg-surfaceMuted rounded" />
+              <div className="mt-2 h-8 w-16 bg-surfaceMuted rounded" />
             </Card>
           ))}
         </div>
@@ -161,28 +161,28 @@ export default function ReviewsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Reviews</h1>
-        <p className="mt-1 text-gray-500">See what your customers are saying</p>
+        <h1 className="text-2xl font-bold text-text">Reviews</h1>
+        <p className="mt-1 text-textMuted">See what your customers are saying</p>
       </div>
 
       {/* Stats Overview */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="text-center">
-          <p className="text-4xl font-bold text-[#E85D26]">{stats.average.toFixed(1)}</p>
+          <p className="text-4xl font-bold text-primary">{stats.average.toFixed(1)}</p>
           <div className="mt-1 text-xl">{renderStars(Math.round(stats.average))}</div>
-          <p className="mt-2 text-sm text-gray-500">Average Rating</p>
+          <p className="mt-2 text-sm text-textMuted">Average Rating</p>
         </Card>
         <Card className="text-center">
-          <p className="text-4xl font-bold text-gray-900">{stats.total}</p>
-          <p className="mt-2 text-sm text-gray-500">Total Reviews</p>
+          <p className="text-4xl font-bold text-text">{stats.total}</p>
+          <p className="mt-2 text-sm text-textMuted">Total Reviews</p>
         </Card>
         <Card>
-          <p className="font-medium text-gray-900 mb-3">Rating Distribution</p>
+          <p className="font-medium text-text mb-3">Rating Distribution</p>
           {[5, 4, 3, 2, 1].map((rating) => (
             <div key={rating} className="flex items-center gap-2 mb-1">
               <span className="text-sm w-3">{rating}</span>
-              <span className="text-yellow-400">★</span>
-              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <span className="text-warning">★</span>
+              <div className="flex-1 h-2 bg-surfaceMuted rounded-full overflow-hidden">
                 <div
                   className="h-full bg-yellow-400"
                   style={{
@@ -192,7 +192,7 @@ export default function ReviewsPage() {
                   }}
                 />
               </div>
-              <span className="text-sm text-gray-500 w-8">{stats.distribution[rating - 1] ?? 0}</span>
+              <span className="text-sm text-textMuted w-8">{stats.distribution[rating - 1] ?? 0}</span>
             </div>
           ))}
         </Card>
@@ -216,7 +216,7 @@ export default function ReviewsPage() {
       <div className="space-y-4">
         {filteredReviews.length === 0 ? (
           <Card>
-            <p className="py-8 text-center text-sm text-gray-500">
+            <p className="py-8 text-center text-sm text-textMuted">
               No {filter === 'all' ? '' : `${filter}-star `}reviews yet
             </p>
           </Card>
@@ -231,28 +231,28 @@ export default function ReviewsPage() {
                       {review.rating}/5
                     </Badge>
                   </div>
-                  <p className="mt-1 font-medium text-gray-900">
+                  <p className="mt-1 font-medium text-text">
                     {review.customer
                       ? `${review.customer.first_name} ${review.customer.last_name}`
                       : 'Anonymous'}
                   </p>
                   {review.order && (
-                    <p className="text-sm text-gray-500">Order: {review.order.order_number}</p>
+                    <p className="text-sm text-textMuted">Order: {review.order.order_number}</p>
                   )}
                 </div>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-textMuted">
                   {new Date(review.created_at).toLocaleDateString()}
                 </span>
               </div>
 
               {review.comment && (
-                <p className="mt-3 text-gray-700">{review.comment}</p>
+                <p className="mt-3 text-text">{review.comment}</p>
               )}
 
               {review.chef_response ? (
-                <div className="mt-4 rounded-lg bg-orange-50 p-4">
-                  <p className="text-sm font-medium text-[#E85D26]">Your Response:</p>
-                  <p className="mt-1 text-sm text-gray-700">{review.chef_response}</p>
+                <div className="mt-4 rounded-lg bg-primarySoft p-4">
+                  <p className="text-sm font-medium text-primary">Your Response:</p>
+                  <p className="mt-1 text-sm text-text">{review.chef_response}</p>
                 </div>
               ) : (
                 <div className="mt-4">
@@ -262,7 +262,7 @@ export default function ReviewsPage() {
                         value={response}
                         onChange={(e) => setResponse(e.target.value)}
                         placeholder="Write your response..."
-                        className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
+                        className="w-full rounded-lg border border-borderStrong p-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                         rows={3}
                       />
                       <div className="flex gap-2 justify-end">

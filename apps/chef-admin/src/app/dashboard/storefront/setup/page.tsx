@@ -52,7 +52,7 @@ function ApprovalBanner({ chefStatus }: { chefStatus: string | null }) {
       : 'Your chef account is not currently approved. You can review setup details, but customers will not see the storefront until access is restored.';
 
   return (
-    <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+    <div className="mb-6 rounded-xl border border-warning/30 bg-warningSoft p-4 text-sm text-warning">
       {message}
     </div>
   );
@@ -65,13 +65,13 @@ export default async function StorefrontSetupPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <EmptyState
-          className="border-amber-200 bg-amber-50"
+          className="border-warning/30 bg-warningSoft"
           title="Sign in required"
           description="You need to be signed in to complete storefront setup."
           action={
             <Link
               href="/auth/login?redirect=/dashboard/storefront/setup"
-              className="inline-flex rounded-lg bg-[#E85D26] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#d44e1e]"
+              className="inline-flex rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primaryHover"
             >
               Sign in
             </Link>
@@ -85,13 +85,13 @@ export default async function StorefrontSetupPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <EmptyState
-          className="border-gray-200 bg-white"
+          className="border-border bg-white"
           title="Chef profile required"
           description="Create your chef profile before opening storefront setup."
           action={
             <Link
               href="/auth/signup"
-              className="inline-flex rounded-lg bg-[#E85D26] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#d44e1e]"
+              className="inline-flex rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primaryHover"
             >
               Create chef profile
             </Link>
@@ -109,8 +109,8 @@ export default async function StorefrontSetupPage() {
     <div>
       <ApprovalBanner chefStatus={chefStatus} />
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Storefront setup</h1>
-        <p className="mt-1 text-gray-500">Create the storefront customers will see on RideNDine.</p>
+        <h1 className="text-2xl font-bold text-text">Storefront setup</h1>
+        <p className="mt-1 text-textMuted">Create the storefront customers will see on RideNDine.</p>
       </div>
       <StorefrontSetupForm />
     </div>

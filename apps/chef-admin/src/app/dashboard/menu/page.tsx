@@ -38,7 +38,7 @@ export default async function MenuPage() {
   if (!storefront) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <p className="text-gray-500">No storefront found. Please complete your setup.</p>
+        <p className="text-textMuted">No storefront found. Please complete your setup.</p>
       </div>
     );
   }
@@ -61,19 +61,19 @@ export default async function MenuPage() {
 
   return (
     <div className="min-w-0 max-w-full space-y-6">
-      <div className="flex flex-col gap-3 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#E85D26]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
             Menu Operations
           </p>
-          <h1 className="mt-1 text-2xl font-bold text-gray-950">Production menu control</h1>
-          <p className="mt-1 max-w-3xl text-sm text-slate-600 sm:text-base">
+          <h1 className="mt-1 text-2xl font-bold text-text">Production menu control</h1>
+          <p className="mt-1 max-w-3xl text-sm text-textMuted sm:text-base">
             Manage what customers can order, what the kitchen can produce today, and what ops can trust across storefront, admin, and delivery workflows.
           </p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm">
-          <p className="font-semibold text-slate-900">{storefront.name}</p>
-          <p className="mt-0.5 text-slate-500">/{storefront.slug}</p>
+        <div className="rounded-lg border border-border bg-white px-4 py-3 text-sm shadow-sm">
+          <p className="font-semibold text-text">{storefront.name}</p>
+          <p className="mt-0.5 text-textMuted">/{storefront.slug}</p>
         </div>
       </div>
 
@@ -84,10 +84,10 @@ export default async function MenuPage() {
           { label: 'Low capacity', value: lowCapacityItems, helper: 'Three or fewer portions left' },
           { label: 'Needs setup', value: missingSetupItems, helper: 'Missing photo, prep, limit, or copy' },
         ].map((metric) => (
-          <div key={metric.label} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-medium text-slate-500">{metric.label}</p>
+          <div key={metric.label} className="rounded-lg border border-border bg-white p-4 shadow-sm">
+            <p className="text-sm font-medium text-textMuted">{metric.label}</p>
             <p className="mt-2 text-3xl font-bold text-slate-950">{metric.value}</p>
-            <p className="mt-1 text-xs text-slate-500">{metric.helper}</p>
+            <p className="mt-1 text-xs text-textMuted">{metric.helper}</p>
           </div>
         ))}
       </div>

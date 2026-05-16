@@ -21,7 +21,7 @@ export default async function SettingsPage() {
   if (!profile) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <p className="text-gray-500">No profile found. Please complete your setup.</p>
+        <p className="text-textMuted">No profile found. Please complete your setup.</p>
       </div>
     );
   }
@@ -29,8 +29,8 @@ export default async function SettingsPage() {
   return (
     <div>
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="mt-1 text-gray-500">Manage your chef profile information</p>
+        <h1 className="text-2xl font-bold text-text">Profile Settings</h1>
+        <p className="mt-1 text-textMuted">Manage your chef profile information</p>
       </div>
 
       <ProfileForm profile={profile} />

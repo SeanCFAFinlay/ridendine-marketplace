@@ -75,36 +75,36 @@ export function NotificationPreferences() {
 
   return (
     <div className="mt-8">
-      <h2 className="text-lg font-semibold text-gray-900">Notification Preferences</h2>
-      <p className="mt-1 text-sm text-gray-500">
+      <h2 className="text-lg font-semibold text-text">Notification Preferences</h2>
+      <p className="mt-1 text-sm text-textMuted">
         Choose how you want to be notified for each event.{' '}
-        <span className="text-xs text-amber-600">(Stored locally — production will sync to DB)</span>
+        <span className="text-xs text-warning">(Stored locally — production will sync to DB)</span>
       </p>
 
       <Card className="mt-4">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="pb-3 text-left font-medium text-gray-700">Event</th>
-                <th className="pb-3 text-center font-medium text-gray-700">Email</th>
-                <th className="pb-3 text-center font-medium text-gray-700">SMS</th>
+              <tr className="border-b border-divider">
+                <th className="pb-3 text-left font-medium text-text">Event</th>
+                <th className="pb-3 text-center font-medium text-text">Email</th>
+                <th className="pb-3 text-center font-medium text-text">SMS</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {EVENTS.map(({ key, label, description }) => (
                 <tr key={key}>
                   <td className="py-3 pr-4">
-                    <p className="font-medium text-gray-900">{label}</p>
-                    <p className="text-xs text-gray-400">{description}</p>
+                    <p className="font-medium text-text">{label}</p>
+                    <p className="text-xs text-textSubtle">{description}</p>
                   </td>
                   {(['email', 'sms'] as NotificationChannel[]).map((ch) => (
                     <td key={ch} className="py-3 text-center">
                       <button
                         type="button"
                         onClick={() => toggle(key, ch)}
-                        className={`inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D26] ${
-                          prefs[key][ch] ? 'bg-[#E85D26]' : 'bg-gray-200'
+                        className={`inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:shadow-focus ${
+                          prefs[key][ch] ? 'bg-primary' : 'bg-surfaceMuted'
                         }`}
                         aria-checked={prefs[key][ch]}
                         role="switch"
@@ -125,7 +125,7 @@ export function NotificationPreferences() {
 
         <div className="mt-5 flex items-center gap-3">
           <Button onClick={handleSave}>Save Preferences</Button>
-          {saved && <span className="text-sm text-green-600">Saved!</span>}
+          {saved && <span className="text-sm text-success">Saved!</span>}
         </div>
       </Card>
     </div>

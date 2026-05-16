@@ -61,21 +61,21 @@ export function ProfileForm({ profile: initialProfile }: ProfileFormProps) {
   return (
     <form onSubmit={handleSubmit}>
       {error && (
-        <div className="mb-4 rounded-lg bg-red-50 p-4">
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="mb-4 rounded-lg bg-dangerSoft p-4">
+          <p className="text-sm text-danger">{error}</p>
         </div>
       )}
       {success && (
-        <div className="mb-4 rounded-lg bg-green-50 p-4">
-          <p className="text-sm text-green-800">Profile updated successfully!</p>
+        <div className="mb-4 rounded-lg bg-successSoft p-4">
+          <p className="text-sm text-success">Profile updated successfully!</p>
         </div>
       )}
 
       <div className="mt-6 max-w-2xl space-y-6">
         <Card>
-          <h2 className="font-semibold text-gray-900">Profile Image</h2>
+          <h2 className="font-semibold text-text">Profile Image</h2>
           <div className="mt-4 flex items-center gap-4">
-            <div className="h-24 w-24 overflow-hidden rounded-full bg-gray-100">
+            <div className="h-24 w-24 overflow-hidden rounded-full bg-surfaceMuted">
               {profile.profile_image_url ? (
                 <img
                   src={profile.profile_image_url}
@@ -83,7 +83,7 @@ export function ProfileForm({ profile: initialProfile }: ProfileFormProps) {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-gray-400">
+                <div className="flex h-full w-full items-center justify-center text-textSubtle">
                   <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
@@ -96,7 +96,7 @@ export function ProfileForm({ profile: initialProfile }: ProfileFormProps) {
               )}
             </div>
             <div>
-              <p className="text-sm text-gray-600">Upload a profile photo</p>
+              <p className="text-sm text-textMuted">Upload a profile photo</p>
               <Button variant="outline" size="sm" className="mt-2" type="button">
                 Upload Photo
               </Button>
@@ -105,50 +105,50 @@ export function ProfileForm({ profile: initialProfile }: ProfileFormProps) {
         </Card>
 
         <Card>
-          <h2 className="font-semibold text-gray-900">Personal Information</h2>
+          <h2 className="font-semibold text-text">Personal Information</h2>
           <div className="mt-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Display Name</label>
+              <label className="block text-sm font-medium text-text">Display Name</label>
               <input
                 name="display_name"
                 type="text"
                 defaultValue={profile.display_name}
                 placeholder="Your name"
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Bio</label>
+              <label className="block text-sm font-medium text-text">Bio</label>
               <textarea
                 name="bio"
                 defaultValue={profile.bio || ''}
                 placeholder="Tell customers about yourself and your cooking style..."
                 rows={4}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-textMuted">
                 Share your culinary background, specialties, and what makes your food unique
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+              <label className="block text-sm font-medium text-text">Phone Number</label>
               <input
                 name="phone"
                 type="tel"
                 defaultValue={profile.phone || ''}
                 placeholder="(555) 123-4567"
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2"
               />
             </div>
 
-            <div className="rounded-lg bg-gray-50 p-4">
+            <div className="rounded-lg bg-surfaceMuted p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Account Status</p>
-                  <p className="mt-0.5 text-sm text-gray-500">
+                  <p className="text-sm font-medium text-text">Account Status</p>
+                  <p className="mt-0.5 text-sm text-textMuted">
                     Your account is currently{' '}
                     <span className="font-medium capitalize">{profile.status}</span>
                   </p>
@@ -156,10 +156,10 @@ export function ProfileForm({ profile: initialProfile }: ProfileFormProps) {
                 <div
                   className={`rounded-full px-3 py-1 text-xs font-medium ${
                     profile.status === 'approved'
-                      ? 'bg-green-100 text-green-800'
+                      ? 'bg-successSoft text-success'
                       : profile.status === 'pending'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-warningSoft text-warning'
+                      : 'bg-surfaceMuted text-text'
                   }`}
                 >
                   {profile.status}

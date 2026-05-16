@@ -58,7 +58,7 @@ export default async function OrdersPage() {
   if (!storefront) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <p className="text-gray-500">No storefront found. Please complete your setup.</p>
+        <p className="text-textMuted">No storefront found. Please complete your setup.</p>
       </div>
     );
   }
@@ -69,11 +69,11 @@ export default async function OrdersPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#E85D26]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
             Kitchen Order Log
           </p>
-          <h1 className="mt-1 text-2xl font-bold text-gray-900">Orders</h1>
-          <p className="mt-1 text-gray-500">
+          <h1 className="mt-1 text-2xl font-bold text-text">Orders</h1>
+          <p className="mt-1 text-textMuted">
             Real customer orders with kitchen items, delivery context, payment status, and ops traceability.
           </p>
         </div>

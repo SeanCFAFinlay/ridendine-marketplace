@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthContext } from '@ridendine/auth';
-import { Avatar, Badge, cn } from '@ridendine/ui';
+import { Avatar, Badge, cn, Logo } from '@ridendine/ui';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -30,13 +29,15 @@ export function Header() {
 
   return (
     <>
-      <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm lg:px-6">
-        {/* Mobile menu button */}
+      <header className="sticky top-0 z-sticky flex h-16 items-center justify-between border-b border-border bg-surface px-4 lg:px-6">
         <button
+          type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 lg:hidden"
+          className="rounded-md p-2 text-textMuted transition-colors hover:bg-surfaceMuted focus-visible:outline-none focus-visible:shadow-focus lg:hidden"
+          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={mobileMenuOpen}
         >
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             {mobileMenuOpen ? (
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             ) : (
@@ -46,26 +47,30 @@ export function Header() {
         </button>
 
         {/* Logo for mobile */}
-        <div className="flex items-center gap-2 lg:hidden">
-          <Image src="/logo-icon.png" alt="RideNDine" width={28} height={28} className="rounded-lg" />
-          <span className="font-bold">
-            <span className="text-[#1a9e8e]">RideN</span>
-            <span className="text-[#E85D26]">Dine</span>
-          </span>
-        </div>
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center rounded-sm focus-visible:outline-none focus-visible:shadow-focus lg:hidden"
+          aria-label="Chef dashboard — home"
+        >
+          <Logo height={28} />
+        </Link>
 
         {/* Desktop title */}
         <div className="hidden items-center gap-4 lg:flex">
-          <h2 className="text-lg font-semibold text-gray-900">Chef Dashboard</h2>
-          <Badge variant="success">Online</Badge>
+          <h2 className="font-display text-lg font-semibold text-text">Chef Dashboard</h2>
+          <Badge tone="success">Online</Badge>
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="relative rounded-lg p-2 transition-colors hover:bg-gray-100">
-            <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <button
+            type="button"
+            className="relative rounded-md p-2 transition-colors hover:bg-surfaceMuted focus-visible:outline-none focus-visible:shadow-focus"
+            aria-label="Notifications"
+          >
+            <svg className="h-5 w-5 text-textMuted" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#E85D26]" />
+            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" />
           </button>
 
           <div className="flex items-center gap-3">
@@ -76,10 +81,10 @@ export function Header() {
               size="sm"
             />
             <div className="hidden sm:block">
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-text">
                 {user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Chef'}
               </p>
-              <p className="text-xs text-gray-500">{user?.email}</p>
+              <p className="text-xs text-textMuted">{user?.email}</p>
             </div>
           </div>
 
@@ -88,9 +93,9 @@ export function Header() {
             onClick={handleSignOut}
             title="Sign out"
             aria-label="Sign out"
-            className="hidden items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-red-600 sm:flex"
+            className="hidden items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-textMuted transition-colors hover:bg-surfaceMuted hover:text-danger focus-visible:outline-none focus-visible:shadow-focus sm:flex"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
             <span className="hidden md:inline">Sign out</span>
@@ -100,37 +105,29 @@ export function Header() {
 
       {/* Mobile Navigation Menu */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-modal lg:hidden">
           <div
-            className="fixed inset-0 bg-black/50"
+            className="fixed inset-0 bg-text/40 backdrop-blur-sm"
             onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
           />
-
-          {/* Menu Panel */}
-          <div className="fixed inset-y-0 left-0 w-72 bg-opsCanvas shadow-xl">
-            {/* Header */}
-            <div className="flex h-16 items-center justify-between border-b border-white/10 px-5">
-              <div className="flex items-center gap-3">
-                <Image src="/logo-icon.png" alt="RideNDine" width={32} height={32} className="rounded-lg" />
-                <span className="text-lg font-bold">
-                  <span className="text-[#1a9e8e]">RideN</span>
-                  <span className="text-[#E85D26]">Dine</span>
-                </span>
-              </div>
+          <div className="fixed inset-y-0 left-0 w-72 border-r border-border bg-surface shadow-xl">
+            <div className="flex h-16 items-center justify-between border-b border-border px-5">
+              <Logo height={28} />
               <button
+                type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="rounded-lg p-2 text-gray-400 hover:bg-white/10 hover:text-white"
+                className="rounded-md p-2 text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text focus-visible:outline-none focus-visible:shadow-focus"
+                aria-label="Close menu"
               >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            {/* Navigation */}
-            <nav className="p-4">
-              <ul className="space-y-1">
+            <nav className="p-3" aria-label="Mobile">
+              <ul className="flex flex-col gap-0.5">
                 {navItems.map((item) => {
                   const isActive = pathname === item.href ||
                     (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'));
@@ -139,14 +136,15 @@ export function Header() {
                       <Link
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
+                        aria-current={isActive ? 'page' : undefined}
                         className={cn(
-                          'flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all',
+                          'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
                           isActive
-                            ? 'bg-[#E85D26] text-white shadow-sm'
-                            : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                            ? 'bg-primarySoft text-primary'
+                            : 'text-textMuted hover:bg-surfaceMuted hover:text-text',
                         )}
                       >
-                        <svg className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                         </svg>
                         {item.label}
@@ -157,14 +155,13 @@ export function Header() {
               </ul>
             </nav>
 
-            {/* Footer */}
-            <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 p-4">
+            <div className="absolute bottom-0 left-0 right-0 border-t border-border p-3">
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-red-400 hover:bg-white/5"
+                className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-danger transition-colors hover:bg-dangerSoft focus-visible:outline-none focus-visible:shadow-focus"
               >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
                 Sign Out

@@ -83,9 +83,9 @@ export function StorefrontForm({ storefront: initialStorefront }: StorefrontForm
   }
 
   function fieldClass(field: string) {
-    if (fieldErrors[field]) return 'border-red-500';
-    if (touchedFields[field]) return 'border-green-500';
-    return 'border-gray-300';
+    if (fieldErrors[field]) return 'border-danger';
+    if (touchedFields[field]) return 'border-success';
+    return 'border-borderStrong';
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -144,22 +144,22 @@ export function StorefrontForm({ storefront: initialStorefront }: StorefrontForm
   return (
     <form onSubmit={handleSubmit} ref={formRef} noValidate>
       {error && (
-        <div className="mb-4 rounded-lg bg-red-50 p-4">
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="mb-4 rounded-lg bg-dangerSoft p-4">
+          <p className="text-sm text-danger">{error}</p>
         </div>
       )}
       {success && (
-        <div className="mb-4 rounded-lg bg-green-50 p-4">
-          <p className="text-sm text-green-800">Storefront updated successfully!</p>
+        <div className="mb-4 rounded-lg bg-successSoft p-4">
+          <p className="text-sm text-success">Storefront updated successfully!</p>
         </div>
       )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card>
-          <h2 className="font-semibold text-gray-900">Basic Information</h2>
+          <h2 className="font-semibold text-text">Basic Information</h2>
           <div className="mt-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Storefront Name</label>
+              <label className="block text-sm font-medium text-text">Storefront Name</label>
               <input
                 name="name"
                 type="text"
@@ -171,28 +171,28 @@ export function StorefrontForm({ storefront: initialStorefront }: StorefrontForm
                 }}
                 className={`mt-1 w-full rounded-lg border px-3 py-2 ${fieldClass('name')}`}
               />
-              {fieldErrors.name && <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>}
+              {fieldErrors.name && <p className="mt-1 text-xs text-danger">{fieldErrors.name}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <label className="block text-sm font-medium text-text">Description</label>
               <textarea
                 name="description"
                 defaultValue={storefront.description || ''}
                 placeholder="Tell customers about your kitchen..."
                 rows={4}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Slug</label>
+              <label className="block text-sm font-medium text-text">Slug</label>
               <input
                 type="text"
                 value={storefront.slug}
                 placeholder="your-kitchen-name"
-                className="mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
+                className="mt-1 w-full rounded-lg border border-borderStrong bg-surfaceMuted px-3 py-2"
                 disabled
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-textMuted">
                 This will be your URL: ridendine.com/chefs/{storefront.slug}
               </p>
             </div>
@@ -203,12 +203,12 @@ export function StorefrontForm({ storefront: initialStorefront }: StorefrontForm
         </Card>
 
         <Card>
-          <h2 className="font-semibold text-gray-900">Images</h2>
+          <h2 className="font-semibold text-text">Images</h2>
           <div className="mt-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Logo</label>
+              <label className="block text-sm font-medium text-text">Logo</label>
               <div className="mt-2 flex items-center gap-4">
-                <div className="h-20 w-20 overflow-hidden rounded-full bg-gray-100">
+                <div className="h-20 w-20 overflow-hidden rounded-full bg-surfaceMuted">
                   {storefront.logo_url ? (
                     <img
                       src={storefront.logo_url}
@@ -216,7 +216,7 @@ export function StorefrontForm({ storefront: initialStorefront }: StorefrontForm
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-gray-400">
+                    <div className="flex h-full w-full items-center justify-center text-textSubtle">
                       <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
@@ -227,8 +227,8 @@ export function StorefrontForm({ storefront: initialStorefront }: StorefrontForm
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Cover Image</label>
-              <div className="mt-2 h-32 overflow-hidden rounded-lg bg-gray-100">
+              <label className="block text-sm font-medium text-text">Cover Image</label>
+              <div className="mt-2 h-32 overflow-hidden rounded-lg bg-surfaceMuted">
                 {storefront.cover_image_url ? (
                   <img
                     src={storefront.cover_image_url}
@@ -236,7 +236,7 @@ export function StorefrontForm({ storefront: initialStorefront }: StorefrontForm
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-gray-400">
+                  <div className="flex h-full w-full items-center justify-center text-textSubtle">
                     <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -249,19 +249,19 @@ export function StorefrontForm({ storefront: initialStorefront }: StorefrontForm
         </Card>
 
         <Card>
-          <h2 className="font-semibold text-gray-900">Cuisine Types</h2>
-          <p className="mt-1 text-sm text-gray-500">Help customers find you by selecting your cuisine types</p>
+          <h2 className="font-semibold text-text">Cuisine Types</h2>
+          <p className="mt-1 text-sm text-textMuted">Help customers find you by selecting your cuisine types</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {availableCuisines.map((cuisine) => (
               <label
                 key={cuisine}
-                className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 hover:bg-surfaceMuted cursor-pointer"
               >
                 <input
                   type="checkbox"
                   value={cuisine}
                   defaultChecked={storefront.cuisine_types.includes(cuisine)}
-                  className="rounded border-gray-300 text-[#E85D26] focus:ring-[#E85D26]"
+                  className="rounded border-borderStrong text-primary focus:ring-primary"
                 />
                 <span className="text-sm">{cuisine}</span>
               </label>
@@ -270,10 +270,10 @@ export function StorefrontForm({ storefront: initialStorefront }: StorefrontForm
         </Card>
 
         <Card>
-          <h2 className="font-semibold text-gray-900">Order Settings</h2>
+          <h2 className="font-semibold text-text">Order Settings</h2>
           <div className="mt-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Minimum Order Amount</label>
+              <label className="block text-sm font-medium text-text">Minimum Order Amount</label>
               <input
                 name="min_order_amount"
                 type="number"
@@ -288,12 +288,12 @@ export function StorefrontForm({ storefront: initialStorefront }: StorefrontForm
                 className={`mt-1 w-full rounded-lg border px-3 py-2 ${fieldClass('min_order_amount')}`}
               />
               {fieldErrors.min_order_amount && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.min_order_amount}</p>
+                <p className="mt-1 text-xs text-danger">{fieldErrors.min_order_amount}</p>
               )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Prep Time (min)</label>
+                <label className="block text-sm font-medium text-text">Prep Time (min)</label>
                 <input
                   name="estimated_prep_time_min"
                   type="number"
@@ -310,7 +310,7 @@ export function StorefrontForm({ storefront: initialStorefront }: StorefrontForm
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Prep Time (max)</label>
+                <label className="block text-sm font-medium text-text">Prep Time (max)</label>
                 <input
                   name="estimated_prep_time_max"
                   type="number"
@@ -326,7 +326,7 @@ export function StorefrontForm({ storefront: initialStorefront }: StorefrontForm
                   className={`mt-1 w-full rounded-lg border px-3 py-2 ${fieldClass('estimated_prep_time_max')}`}
                 />
                 {fieldErrors.estimated_prep_time_max && (
-                  <p className="mt-1 text-xs text-red-600">{fieldErrors.estimated_prep_time_max}</p>
+                  <p className="mt-1 text-xs text-danger">{fieldErrors.estimated_prep_time_max}</p>
                 )}
               </div>
             </div>

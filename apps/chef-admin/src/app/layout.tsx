@@ -31,7 +31,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${sans.variable} ${display.variable}`}>
-      <body className="min-h-screen bg-[#FAFAFA] font-sans antialiased">
+      <body className="min-h-screen bg-background font-sans text-text antialiased">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

@@ -94,7 +94,7 @@ export default function SignupPage() {
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {(error || validationError) && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-lg border border-danger/30 bg-dangerSoft p-3 text-sm text-danger">
             {error || validationError}
           </div>
         )}
@@ -174,29 +174,29 @@ export default function SignupPage() {
             id="terms"
             checked={agreedToTerms}
             onChange={(e) => setAgreedToTerms(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#E85D26] focus:ring-[#E85D26] focus:ring-offset-0"
+            className="mt-0.5 h-4 w-4 rounded border-borderStrong text-primary focus:ring-primary focus:ring-offset-0"
           />
-          <label htmlFor="terms" className="text-sm text-slate-600">
+          <label htmlFor="terms" className="text-sm text-textMuted">
             I agree to the{' '}
-            <Link href="/terms" className="font-medium text-[#E85D26] hover:text-[#D04D16]">
+            <Link href="/terms" className="font-medium text-primary hover:text-[#D04D16]">
               Terms of Service
             </Link>{' '}
             and{' '}
-            <Link href="/privacy" className="font-medium text-[#E85D26] hover:text-[#D04D16]">
+            <Link href="/privacy" className="font-medium text-primary hover:text-[#D04D16]">
               Privacy Policy
             </Link>
           </label>
         </div>
 
-        <div className="flex items-start gap-2 rounded-lg border border-orange-100 bg-orange-50 p-3">
+        <div className="flex items-start gap-2 rounded-lg border border-primary/15 bg-primarySoft p-3">
           <input
             type="checkbox"
             id="chefDuties"
             checked={agreedToChefDuties}
             onChange={(e) => setAgreedToChefDuties(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#E85D26] focus:ring-[#E85D26] focus:ring-offset-0"
+            className="mt-0.5 h-4 w-4 rounded border-borderStrong text-primary focus:ring-primary focus:ring-offset-0"
           />
-          <label htmlFor="chefDuties" className="text-sm text-slate-700">
+          <label htmlFor="chefDuties" className="text-sm text-text">
             I confirm I am an <strong>independent contractor</strong>, not an employee of
             RideNDine. I am solely responsible for food safety, hold (or will hold before my
             first order) any required food-handler certifications and municipal permits, and
@@ -207,7 +207,7 @@ export default function SignupPage() {
 
         <Button
           type="submit"
-          className="w-full bg-[#E85D26] hover:bg-[#D04D16]"
+          className="w-full bg-primary hover:bg-[#D04D16]"
           size="lg"
           loading={loading}
         >
@@ -215,11 +215,11 @@ export default function SignupPage() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-600">
+      <p className="mt-6 text-center text-sm text-textMuted">
         Already have an account?{' '}
         <Link
           href="/auth/login"
-          className="font-medium text-[#E85D26] hover:text-[#D04D16] transition-colors"
+          className="font-medium text-primary hover:text-[#D04D16] transition-colors"
         >
           Sign in
         </Link>

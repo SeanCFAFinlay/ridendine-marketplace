@@ -43,29 +43,29 @@ export function CategoryModal({ onClose, onSuccess }: CategoryModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div className="w-full max-w-md rounded-lg bg-white p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Add Category</h2>
+        <h2 className="text-lg font-semibold text-text">Add Category</h2>
         {error && (
-          <div className="mt-2 rounded-lg bg-red-50 p-3">
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="mt-2 rounded-lg bg-dangerSoft p-3">
+            <p className="text-sm text-danger">{error}</p>
           </div>
         )}
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <label className="block text-sm font-medium text-text">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Description (optional)</label>
+            <label className="block text-sm font-medium text-text">Description (optional)</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2"
               rows={3}
             />
           </div>

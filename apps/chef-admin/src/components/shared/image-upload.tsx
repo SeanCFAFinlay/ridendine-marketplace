@@ -68,11 +68,11 @@ export function ImageUpload({ bucket, currentUrl, onUpload, className }: ImageUp
   return (
     <div className={className}>
       <div className="flex items-center gap-4">
-        <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+        <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-border bg-surfaceMuted">
           {preview ? (
             <img src={preview} alt="Upload preview" className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-gray-400">
+            <div className="flex h-full w-full items-center justify-center text-textSubtle">
               <PlaceholderIcon />
             </div>
           )}
@@ -94,7 +94,7 @@ export function ImageUpload({ bucket, currentUrl, onUpload, className }: ImageUp
           >
             {buttonLabel}
           </Button>
-          {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+          {error && <p className="mt-1 text-xs text-danger">{error}</p>}
         </div>
       </div>
     </div>

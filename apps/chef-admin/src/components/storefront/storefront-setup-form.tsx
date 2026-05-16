@@ -73,70 +73,70 @@ export function StorefrontSetupForm() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
-          <svg className="h-8 w-8 text-[#E85D26]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primarySoft">
+          <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Create Your Storefront</h1>
-        <p className="mt-2 text-gray-500">
+        <h1 className="text-2xl font-bold text-text">Create Your Storefront</h1>
+        <p className="mt-2 text-textMuted">
           Set up your kitchen profile so customers can find and order from you
         </p>
       </div>
 
       <form onSubmit={handleSubmit} ref={formRef}>
         {error && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4">
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="mb-6 rounded-lg bg-dangerSoft p-4">
+            <p className="text-sm text-danger">{error}</p>
           </div>
         )}
 
         <div className="space-y-6">
           <Card>
-            <h2 className="font-semibold text-gray-900">Basic Information</h2>
+            <h2 className="font-semibold text-text">Basic Information</h2>
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Storefront Name <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-text">
+                  Storefront Name <span className="text-danger">*</span>
                 </label>
                 <input
                   name="name"
                   type="text"
                   placeholder="e.g., Maria's Kitchen, Thai Delights"
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
+                  className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   required
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-textMuted">
                   This is how customers will see your kitchen in the marketplace
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <label className="block text-sm font-medium text-text">Description</label>
                 <textarea
                   name="description"
                   placeholder="Tell customers what makes your kitchen special..."
                   rows={3}
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
+                  className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
             </div>
           </Card>
 
           <Card>
-            <h2 className="font-semibold text-gray-900">Cuisine Types</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <h2 className="font-semibold text-text">Cuisine Types</h2>
+            <p className="mt-1 text-sm text-textMuted">
               Select all that apply to help customers discover your kitchen
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {availableCuisines.map((cuisine) => (
                 <label
                   key={cuisine}
-                  className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 hover:bg-surfaceMuted cursor-pointer transition-colors"
                 >
                   <input
                     type="checkbox"
                     value={cuisine}
-                    className="rounded border-gray-300 text-[#E85D26] focus:ring-[#E85D26]"
+                    className="rounded border-borderStrong text-primary focus:ring-primary"
                   />
                   <span className="text-sm">{cuisine}</span>
                 </label>
@@ -145,11 +145,11 @@ export function StorefrontSetupForm() {
           </Card>
 
           <Card>
-            <h2 className="font-semibold text-gray-900">Order Settings</h2>
-            <p className="mt-1 text-sm text-gray-500">You can adjust these later</p>
+            <h2 className="font-semibold text-text">Order Settings</h2>
+            <p className="mt-1 text-sm text-textMuted">You can adjust these later</p>
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-text">
                   Minimum Order Amount ($)
                 </label>
                 <input
@@ -159,12 +159,12 @@ export function StorefrontSetupForm() {
                   min="0"
                   defaultValue="0"
                   placeholder="0.00"
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
+                  className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-text">
                     Min Prep Time (minutes)
                   </label>
                   <input
@@ -173,11 +173,11 @@ export function StorefrontSetupForm() {
                     min="5"
                     defaultValue="15"
                     placeholder="15"
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
+                    className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-text">
                     Max Prep Time (minutes)
                   </label>
                   <input
@@ -186,7 +186,7 @@ export function StorefrontSetupForm() {
                     min="5"
                     defaultValue="45"
                     placeholder="45"
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
+                    className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                 </div>
               </div>

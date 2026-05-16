@@ -175,12 +175,12 @@ export default function PayoutsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Payouts</h1>
+        <h1 className="text-2xl font-bold text-text">Payouts</h1>
         <div className="grid gap-4 sm:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="animate-pulse">
-              <div className="h-4 w-24 bg-gray-200 rounded" />
-              <div className="mt-2 h-8 w-20 bg-gray-200 rounded" />
+              <div className="h-4 w-24 bg-surfaceMuted rounded" />
+              <div className="mt-2 h-8 w-20 bg-surfaceMuted rounded" />
             </Card>
           ))}
         </div>
@@ -191,17 +191,17 @@ export default function PayoutsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Payouts</h1>
-        <p className="mt-1 text-gray-500">Manage your earnings and payouts</p>
+        <h1 className="text-2xl font-bold text-text">Payouts</h1>
+        <p className="mt-1 text-textMuted">Manage your earnings and payouts</p>
       </div>
 
       {/* Account Setup Banner */}
       {!account && (
-        <Card className="bg-orange-50 border-orange-200">
+        <Card className="bg-primarySoft border-primary/20">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-orange-900">Setup Required</h3>
-              <p className="text-sm text-orange-700">
+              <h3 className="font-semibold text-primary">Setup Required</h3>
+              <p className="text-sm text-primary">
                 Connect your bank account to receive payouts
               </p>
             </div>
@@ -213,11 +213,11 @@ export default function PayoutsPage() {
       )}
 
       {account && account.status === 'restricted' && (
-        <Card className="bg-yellow-50 border-yellow-200">
+        <Card className="bg-warningSoft border-warning/30">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-yellow-900">Account Restricted</h3>
-              <p className="text-sm text-yellow-700">
+              <h3 className="font-semibold text-warning">Account Restricted</h3>
+              <p className="text-sm text-warning">
                 Additional verification required to continue receiving payouts
               </p>
             </div>
@@ -231,28 +231,28 @@ export default function PayoutsPage() {
       {/* Balance Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
-          <p className="text-sm text-gray-500">Available Balance</p>
-          <p className="mt-1 text-3xl font-bold text-green-600">
+          <p className="text-sm text-textMuted">Available Balance</p>
+          <p className="mt-1 text-3xl font-bold text-success">
             ${availableBalance.toFixed(2)}
           </p>
-          <p className="mt-1 text-xs text-gray-400">Ready to withdraw</p>
+          <p className="mt-1 text-xs text-textSubtle">Ready to withdraw</p>
         </Card>
         <Card>
-          <p className="text-sm text-gray-500">Pending Balance</p>
-          <p className="mt-1 text-3xl font-bold text-orange-600">
+          <p className="text-sm text-textMuted">Pending Balance</p>
+          <p className="mt-1 text-3xl font-bold text-primary">
             ${pendingBalance.toFixed(2)}
           </p>
-          <p className="mt-1 text-xs text-gray-400">Available in 7 days</p>
+          <p className="mt-1 text-xs text-textSubtle">Available in 7 days</p>
         </Card>
         <Card>
-          <p className="text-sm text-gray-500">Total Paid Out</p>
-          <p className="mt-1 text-3xl font-bold text-gray-900">
+          <p className="text-sm text-textMuted">Total Paid Out</p>
+          <p className="mt-1 text-3xl font-bold text-text">
             ${payouts
               .filter((p) => ['paid', 'reconciled'].includes(p.status))
               .reduce((sum, p) => sum + p.amount / 100, 0)
               .toFixed(2)}
           </p>
-          <p className="mt-1 text-xs text-gray-400">Lifetime earnings</p>
+          <p className="mt-1 text-xs text-textSubtle">Lifetime earnings</p>
         </Card>
       </div>
 
@@ -261,8 +261,8 @@ export default function PayoutsPage() {
         <Card>
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-gray-900">Request Payout</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="font-semibold text-text">Request Payout</h3>
+              <p className="text-sm text-textMuted">
                 Transfer ${availableBalance.toFixed(2)} to your bank account
               </p>
             </div>
@@ -275,14 +275,14 @@ export default function PayoutsPage() {
 
       {/* Payout History */}
       <Card>
-        <h3 className="font-semibold text-gray-900">Payout History</h3>
+        <h3 className="font-semibold text-text">Payout History</h3>
         {payouts.length === 0 ? (
-          <p className="mt-4 text-sm text-gray-500">No payouts yet</p>
+          <p className="mt-4 text-sm text-textMuted">No payouts yet</p>
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b text-left text-sm text-gray-500">
+                <tr className="border-b text-left text-sm text-textMuted">
                   <th className="pb-3 font-medium">Date</th>
                   <th className="pb-3 font-medium">Period</th>
                   <th className="pb-3 font-medium">Amount</th>
@@ -292,14 +292,14 @@ export default function PayoutsPage() {
               <tbody className="text-sm">
                 {payouts.map((payout) => (
                   <tr key={payout.id} className="border-b">
-                    <td className="py-3 text-gray-900">
+                    <td className="py-3 text-text">
                       {new Date(payout.created_at).toLocaleDateString()}
                     </td>
-                    <td className="py-3 text-gray-600">
+                    <td className="py-3 text-textMuted">
                       {new Date(payout.period_start).toLocaleDateString()} -{' '}
                       {new Date(payout.period_end).toLocaleDateString()}
                     </td>
-                    <td className="py-3 font-medium text-gray-900">
+                    <td className="py-3 font-medium text-text">
                       ${(payout.amount / 100).toFixed(2)}
                     </td>
                     <td className="py-3">
@@ -322,9 +322,9 @@ export default function PayoutsPage() {
       </Card>
 
       {/* Fee Structure Info */}
-      <Card className="bg-gray-50">
-        <h3 className="font-semibold text-gray-900">Fee Structure</h3>
-        <div className="mt-4 space-y-2 text-sm text-gray-600">
+      <Card className="bg-surfaceMuted">
+        <h3 className="font-semibold text-text">Fee Structure</h3>
+        <div className="mt-4 space-y-2 text-sm text-textMuted">
           <div className="flex justify-between">
             <span>Platform Fee</span>
             <span className="font-medium">15%</span>
@@ -334,11 +334,11 @@ export default function PayoutsPage() {
             <span className="font-medium">2.9% + $0.30</span>
           </div>
           <div className="flex justify-between border-t pt-2">
-            <span className="font-medium text-gray-900">Your Earnings</span>
-            <span className="font-medium text-green-600">~82%</span>
+            <span className="font-medium text-text">Your Earnings</span>
+            <span className="font-medium text-success">~82%</span>
           </div>
         </div>
-        <p className="mt-4 text-xs text-gray-500">
+        <p className="mt-4 text-xs text-textMuted">
           Payouts are processed weekly on Mondays. Funds are held for 7 days before becoming available.
         </p>
       </Card>

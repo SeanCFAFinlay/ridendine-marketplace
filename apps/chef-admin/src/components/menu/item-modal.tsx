@@ -104,65 +104,65 @@ export function ItemModal({ categories, selectedCategoryId, editingItem, onClose
       <div className="my-8 w-full max-w-2xl rounded-lg bg-white p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-text">
               {editingItem ? 'Edit Item' : 'Add Menu Item'}
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-textMuted">
               Keep this item consistent across chef, customer, and ops dashboards.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-md p-2 text-textSubtle hover:bg-surfaceMuted hover:text-textMuted"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
         {error && (
-          <div className="mt-2 rounded-lg bg-red-50 p-3">
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="mt-2 rounded-lg bg-dangerSoft p-3">
+            <p className="text-sm text-danger">{error}</p>
           </div>
         )}
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <label className="block text-sm font-medium text-text">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <label className="block text-sm font-medium text-text">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2"
               rows={3}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Price</label>
+            <label className="block text-sm font-medium text-text">Price</label>
             <input
               type="number"
               step="0.01"
               min="0"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Category</label>
+            <label className="block text-sm font-medium text-text">Category</label>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+              className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2"
               required
             >
               {categories.map((cat) => (
@@ -171,9 +171,9 @@ export function ItemModal({ categories, selectedCategoryId, editingItem, onClose
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Image URL (optional)</label>
-            <div className="mt-1 flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2">
-              <Image className="h-4 w-4 text-gray-400" />
+            <label className="block text-sm font-medium text-text">Image URL (optional)</label>
+            <div className="mt-1 flex items-center gap-2 rounded-lg border border-borderStrong px-3 py-2">
+              <Image className="h-4 w-4 text-textSubtle" />
               <input
                 type="url"
                 value={imageUrl}
@@ -184,9 +184,9 @@ export function ItemModal({ categories, selectedCategoryId, editingItem, onClose
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Daily Limit</label>
-              <div className="mt-1 flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2">
-                <Package className="h-4 w-4 text-gray-400" />
+              <label className="block text-sm font-medium text-text">Daily Limit</label>
+              <div className="mt-1 flex items-center gap-2 rounded-lg border border-borderStrong px-3 py-2">
+                <Package className="h-4 w-4 text-textSubtle" />
                 <input
                   type="number"
                   min="0"
@@ -198,20 +198,20 @@ export function ItemModal({ categories, selectedCategoryId, editingItem, onClose
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Sold Today</label>
+              <label className="block text-sm font-medium text-text">Sold Today</label>
               <input
                 type="number"
                 min="0"
                 value={dailySold}
                 onChange={(e) => setDailySold(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2"
                 placeholder="0"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Prep Minutes</label>
-              <div className="mt-1 flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2">
-                <Clock className="h-4 w-4 text-gray-400" />
+              <label className="block text-sm font-medium text-text">Prep Minutes</label>
+              <div className="mt-1 flex items-center gap-2 rounded-lg border border-borderStrong px-3 py-2">
+                <Clock className="h-4 w-4 text-textSubtle" />
                 <input
                   type="number"
                   min="0"
@@ -225,18 +225,18 @@ export function ItemModal({ categories, selectedCategoryId, editingItem, onClose
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Restock At</label>
+              <label className="block text-sm font-medium text-text">Restock At</label>
               <input
                 type="datetime-local"
                 value={restockAt}
                 onChange={(e) => setRestockAt(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-lg border border-borderStrong px-3 py-2"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Dietary Tags</label>
-              <div className="mt-1 flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2">
-                <Tags className="h-4 w-4 text-gray-400" />
+              <label className="block text-sm font-medium text-text">Dietary Tags</label>
+              <div className="mt-1 flex items-center gap-2 rounded-lg border border-borderStrong px-3 py-2">
+                <Tags className="h-4 w-4 text-textSubtle" />
                 <input
                   type="text"
                   value={dietaryTags}
@@ -253,27 +253,27 @@ export function ItemModal({ categories, selectedCategoryId, editingItem, onClose
                 type="checkbox"
                 checked={isAvailable}
                 onChange={(e) => setIsAvailable(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded border-borderStrong"
               />
-              <span className="text-sm text-gray-700">Available</span>
+              <span className="text-sm text-text">Available</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={isFeatured}
                 onChange={(e) => setIsFeatured(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded border-borderStrong"
               />
-              <span className="text-sm text-gray-700">Featured</span>
+              <span className="text-sm text-text">Featured</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={isSoldOut}
                 onChange={(e) => setIsSoldOut(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded border-borderStrong"
               />
-              <span className="text-sm text-gray-700">Sold out</span>
+              <span className="text-sm text-text">Sold out</span>
             </label>
           </div>
           <div className="flex gap-2 justify-end">

@@ -46,14 +46,14 @@ const ACTIVE_ORDER_STATUSES = ['pending', 'accepted', 'preparing', 'ready_for_pi
 const ACTION_ORDER_STATUSES = ['pending', 'accepted', 'preparing'];
 
 const STATUS_STYLES: Record<string, string> = {
-  pending: 'bg-yellow-50 text-yellow-800 border border-yellow-200',
-  accepted: 'bg-blue-50 text-blue-800 border border-blue-200',
-  preparing: 'bg-purple-50 text-purple-800 border border-purple-200',
-  ready_for_pickup: 'bg-green-50 text-green-800 border border-green-200',
-  picked_up: 'bg-teal-50 text-teal-800 border border-teal-200',
-  delivered: 'bg-gray-50 text-gray-700 border border-gray-200',
-  cancelled: 'bg-red-50 text-red-800 border border-red-200',
-  rejected: 'bg-red-50 text-red-800 border border-red-200',
+  pending: 'bg-warningSoft text-warning border border-warning/30',
+  accepted: 'bg-infoSoft text-info border border-info/30',
+  preparing: 'bg-infoSoft text-info border border-info/30',
+  ready_for_pickup: 'bg-successSoft text-success border border-success/30',
+  picked_up: 'bg-accentSoft text-accent border border-accent/30',
+  delivered: 'bg-surfaceMuted text-text border border-border',
+  cancelled: 'bg-dangerSoft text-danger border border-danger/30',
+  rejected: 'bg-dangerSoft text-danger border border-danger/30',
 };
 
 function money(value: number | null | undefined) {
@@ -306,18 +306,18 @@ function buildReadiness({
 function EmptyStorefront() {
   return (
     <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-50">
-        <Store className="h-8 w-8 text-[#E85D26]" />
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primarySoft">
+        <Store className="h-8 w-8 text-primary" />
       </div>
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Set up your storefront</h2>
-        <p className="mt-1 max-w-md text-gray-500">
+        <h2 className="text-xl font-bold text-text">Set up your storefront</h2>
+        <p className="mt-1 max-w-md text-textMuted">
           Your chef dashboard starts with a storefront. Add your business details, prep times, hours, and menu so ops can review and publish it.
         </p>
       </div>
       <Link
         href="/dashboard/storefront"
-        className="rounded-xl bg-[#E85D26] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#d44e1e]"
+        className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:bg-primaryHover"
       >
         Set Up Storefront
       </Link>
@@ -339,15 +339,15 @@ function StatCard({
   accent: string;
 }) {
   return (
-    <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-divider bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-gray-500">{label}</p>
+        <p className="text-sm font-medium text-textMuted">{label}</p>
         <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${accent}`}>
           <Icon className="h-5 w-5" />
         </span>
       </div>
-      <p className="mt-3 text-2xl font-bold text-gray-950">{value}</p>
-      <p className="mt-1 text-xs text-gray-500">{detail}</p>
+      <p className="mt-3 text-2xl font-bold text-text">{value}</p>
+      <p className="mt-1 text-xs text-textMuted">{detail}</p>
     </div>
   );
 }
@@ -421,45 +421,45 @@ export default async function DashboardPage() {
       value: dashboard.stats.todayOrders,
       detail: `${dashboard.stats.actionOrders} need action`,
       icon: ReceiptText,
-      accent: 'text-blue-700 bg-blue-50',
+      accent: 'text-info bg-infoSoft',
     },
     {
       label: 'Today Revenue',
       value: money(dashboard.stats.todayRevenue),
       detail: `${money(dashboard.stats.averageTicket)} average ticket`,
       icon: DollarSign,
-      accent: 'text-[#E85D26] bg-orange-50',
+      accent: 'text-primary bg-primarySoft',
     },
     {
       label: 'Menu Ready',
       value: `${dashboard.menu.available}/${dashboard.menu.total}`,
       detail: `${dashboard.menu.soldOut} sold out, ${dashboard.menu.lowStockItems.length} low stock`,
       icon: Utensils,
-      accent: 'text-emerald-700 bg-emerald-50',
+      accent: 'text-success bg-successSoft',
     },
     {
       label: 'This Month',
       value: money(dashboard.stats.monthRevenue),
       detail: `${dashboard.stats.monthOrders} orders`,
       icon: TrendingUp,
-      accent: 'text-purple-700 bg-purple-50',
+      accent: 'text-info bg-infoSoft',
     },
   ];
 
   const serviceLabel = storefront.is_paused ? 'Paused' : storefront.is_active ? 'Live and accepting visibility' : 'Draft';
   const serviceTone = storefront.is_paused
-    ? 'border-amber-200 bg-amber-50 text-amber-800'
+    ? 'border-warning/30 bg-warningSoft text-warning'
     : storefront.is_active
-      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-      : 'border-gray-200 bg-gray-50 text-gray-700';
+      ? 'border-success/30 bg-successSoft text-success'
+      : 'border-border bg-surfaceMuted text-text';
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-divider bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-[#E85D26]">
+              <span className="inline-flex items-center gap-2 rounded-full bg-primarySoft px-3 py-1 text-xs font-semibold text-primary">
                 <ChefHat className="h-3.5 w-3.5" />
                 Chef operating dashboard
               </span>
@@ -468,25 +468,25 @@ export default async function DashboardPage() {
                 {serviceLabel}
               </span>
             </div>
-            <h1 className="mt-3 text-2xl font-bold text-gray-950">{storefront.name}</h1>
-            <p className="mt-2 max-w-3xl text-sm text-gray-600">
+            <h1 className="mt-3 text-2xl font-bold text-text">{storefront.name}</h1>
+            <p className="mt-2 max-w-3xl text-sm text-textMuted">
               Start service here: watch orders, protect prep time, manage stock, keep the storefront ready, and jump straight to the work that makes money.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap xl:justify-end">
-            <Link href="/dashboard/orders" className="inline-flex items-center justify-center rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-semibold text-white hover:bg-[#d44e1e]">
+            <Link href="/dashboard/orders" className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primaryHover">
               <BellRing className="mr-2 h-4 w-4" />
               Orders
             </Link>
-            <Link href="/dashboard/menu" className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-800 hover:border-[#E85D26]/40">
+            <Link href="/dashboard/menu" className="inline-flex items-center justify-center rounded-lg border border-border px-4 py-2 text-sm font-semibold text-text hover:border-primary/40">
               <Plus className="mr-2 h-4 w-4" />
               Menu item
             </Link>
-            <Link href="/dashboard/availability" className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-800 hover:border-[#E85D26]/40">
+            <Link href="/dashboard/availability" className="inline-flex items-center justify-center rounded-lg border border-border px-4 py-2 text-sm font-semibold text-text hover:border-primary/40">
               <CalendarClock className="mr-2 h-4 w-4" />
               Hours
             </Link>
-            <Link href={`https://ridendine.ca/chefs/${storefront.slug}`} className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-800 hover:border-[#E85D26]/40">
+            <Link href={`https://ridendine.ca/chefs/${storefront.slug}`} className="inline-flex items-center justify-center rounded-lg border border-border px-4 py-2 text-sm font-semibold text-text hover:border-primary/40">
               <Eye className="mr-2 h-4 w-4" />
               Preview
             </Link>
@@ -500,22 +500,22 @@ export default async function DashboardPage() {
             <Link
               key={alert.label}
               href={alert.href}
-              className={`flex items-start gap-3 rounded-xl border p-4 shadow-sm transition-colors hover:border-[#E85D26]/40 ${
+              className={`flex items-start gap-3 rounded-xl border p-4 shadow-sm transition-colors hover:border-primary/40 ${
                 alert.tone === 'red'
-                  ? 'border-red-200 bg-red-50'
+                  ? 'border-danger/30 bg-dangerSoft'
                   : alert.tone === 'amber'
-                    ? 'border-amber-200 bg-amber-50'
+                    ? 'border-warning/30 bg-warningSoft'
                     : alert.tone === 'orange'
-                      ? 'border-orange-200 bg-orange-50'
-                      : 'border-gray-200 bg-white'
+                      ? 'border-primary/20 bg-primarySoft'
+                      : 'border-border bg-white'
               }`}
             >
-              <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#E85D26]" />
+              <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-gray-950">{alert.label}</p>
-                <p className="mt-1 text-xs text-gray-600">{alert.detail}</p>
+                <p className="text-sm font-semibold text-text">{alert.label}</p>
+                <p className="mt-1 text-xs text-textMuted">{alert.detail}</p>
               </div>
-              <ExternalLink className="mt-1 h-4 w-4 flex-shrink-0 text-gray-400" />
+              <ExternalLink className="mt-1 h-4 w-4 flex-shrink-0 text-textSubtle" />
             </Link>
           ))}
         </section>
@@ -528,47 +528,47 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.25fr,0.75fr]">
-        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="rounded-2xl border border-divider bg-white shadow-sm">
+          <div className="flex flex-col gap-3 border-b border-divider px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="font-bold text-gray-950">Today&apos;s Action Queue</h2>
-              <p className="mt-1 text-xs text-gray-500">The orders that need a chef decision or next state right now.</p>
+              <h2 className="font-bold text-text">Today&apos;s Action Queue</h2>
+              <p className="mt-1 text-xs text-textMuted">The orders that need a chef decision or next state right now.</p>
             </div>
-            <Link href="/dashboard/orders" className="text-sm font-semibold text-[#E85D26] hover:text-[#d44e1e]">
+            <Link href="/dashboard/orders" className="text-sm font-semibold text-primary hover:text-primaryHover">
               Open live orders
             </Link>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-divider">
             {dashboard.actionOrders.length === 0 ? (
               <div className="flex flex-col items-center justify-center px-5 py-14 text-center">
-                <CheckCircle2 className="h-10 w-10 text-emerald-500" />
-                <p className="mt-3 text-sm font-semibold text-gray-900">No orders need action</p>
-                <p className="mt-1 text-xs text-gray-500">New, accepted, and preparing orders will appear here.</p>
+                <CheckCircle2 className="h-10 w-10 text-success" />
+                <p className="mt-3 text-sm font-semibold text-text">No orders need action</p>
+                <p className="mt-1 text-xs text-textMuted">New, accepted, and preparing orders will appear here.</p>
               </div>
             ) : (
               dashboard.actionOrders.map((order) => (
                 <div key={order.id} className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-mono text-sm font-semibold text-gray-950">#{order.order_number}</p>
+                      <p className="font-mono text-sm font-semibold text-text">#{order.order_number}</p>
                       <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[order.status] ?? STATUS_STYLES.pending}`}>
                         {formatStatus(order.status)}
                       </span>
                       {getMinutesSince(order.created_at) >= 8 && order.status === 'pending' ? (
-                        <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">accept late</span>
+                        <span className="rounded-full bg-dangerSoft px-2.5 py-0.5 text-xs font-semibold text-danger">accept late</span>
                       ) : null}
                     </div>
-                    <p className="mt-1 text-sm text-gray-700">{getCustomerName(order)}</p>
-                    <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                    <p className="mt-1 text-sm text-text">{getCustomerName(order)}</p>
+                    <p className="mt-1 flex items-center gap-1 text-xs text-textMuted">
                       <Clock className="h-3.5 w-3.5" />
                       {getOrderAge(order.created_at)} - {getDueLabel(order)}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <p className="text-sm font-semibold text-gray-950">{money(order.total)}</p>
+                    <p className="text-sm font-semibold text-text">{money(order.total)}</p>
                     <Link
                       href="/dashboard/orders"
-                      className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-800 hover:border-[#E85D26]/40"
+                      className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-text hover:border-primary/40"
                     >
                       Manage
                     </Link>
@@ -579,24 +579,24 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="border-b border-gray-100 px-5 py-4">
-            <h2 className="font-bold text-gray-950">Prep Timeline</h2>
-            <p className="mt-1 text-xs text-gray-500">Keep kitchen timing organized for active service.</p>
+        <div className="rounded-2xl border border-divider bg-white shadow-sm">
+          <div className="border-b border-divider px-5 py-4">
+            <h2 className="font-bold text-text">Prep Timeline</h2>
+            <p className="mt-1 text-xs text-textMuted">Keep kitchen timing organized for active service.</p>
           </div>
           <div className="space-y-3 p-5">
             {dashboard.prepOrders.length === 0 ? (
-              <div className="rounded-xl bg-gray-50 p-4 text-sm text-gray-500">No active prep tickets right now.</div>
+              <div className="rounded-xl bg-surfaceMuted p-4 text-sm text-textMuted">No active prep tickets right now.</div>
             ) : (
               dashboard.prepOrders.map((order) => (
-                <Link key={order.id} href="/dashboard/orders" className="flex gap-3 rounded-xl border border-gray-100 p-3 hover:border-[#E85D26]/40">
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#E85D26]" />
+                <Link key={order.id} href="/dashboard/orders" className="flex gap-3 rounded-xl border border-divider p-3 hover:border-primary/40">
+                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-primary" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="truncate font-mono text-sm font-semibold text-gray-950">#{order.order_number}</p>
-                      <span className="text-xs font-semibold text-gray-600">{getDueLabel(order)}</span>
+                      <p className="truncate font-mono text-sm font-semibold text-text">#{order.order_number}</p>
+                      <span className="text-xs font-semibold text-textMuted">{getDueLabel(order)}</span>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">{formatStatus(order.status)} - {getCustomerName(order)}</p>
+                    <p className="mt-1 text-xs text-textMuted">{formatStatus(order.status)} - {getCustomerName(order)}</p>
                   </div>
                 </Link>
               ))
@@ -606,13 +606,13 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-3">
-        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+        <div className="rounded-2xl border border-divider bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-divider px-5 py-4">
             <div>
-              <h2 className="font-bold text-gray-950">Menu Health</h2>
-              <p className="mt-1 text-xs text-gray-500">Stock, content, and sales readiness.</p>
+              <h2 className="font-bold text-text">Menu Health</h2>
+              <p className="mt-1 text-xs text-textMuted">Stock, content, and sales readiness.</p>
             </div>
-            <Package className="h-5 w-5 text-gray-400" />
+            <Package className="h-5 w-5 text-textSubtle" />
           </div>
           <div className="grid grid-cols-2 gap-3 p-5">
             {[
@@ -621,65 +621,65 @@ export default async function DashboardPage() {
               ['Low stock', dashboard.menu.lowStockItems.length],
               ['Featured', dashboard.menu.featured],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-xl bg-gray-50 p-4">
-                <p className="text-xs font-medium text-gray-500">{label}</p>
-                <p className="mt-1 text-xl font-bold text-gray-950">{value}</p>
+              <div key={label} className="rounded-xl bg-surfaceMuted p-4">
+                <p className="text-xs font-medium text-textMuted">{label}</p>
+                <p className="mt-1 text-xl font-bold text-text">{value}</p>
               </div>
             ))}
           </div>
           <div className="space-y-2 px-5 pb-5">
             {dashboard.menu.lowStockItems.slice(0, 3).map((item) => (
-              <Link key={item.id} href="/dashboard/menu" className="flex items-center justify-between rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-sm">
-                <span className="truncate font-medium text-amber-950">{item.name}</span>
-                <span className="text-xs text-amber-700">{Number(item.daily_limit) - Number(item.daily_sold ?? 0)} left</span>
+              <Link key={item.id} href="/dashboard/menu" className="flex items-center justify-between rounded-lg border border-warning/20 bg-warningSoft px-3 py-2 text-sm">
+                <span className="truncate font-medium text-warning">{item.name}</span>
+                <span className="text-xs text-warning">{Number(item.daily_limit) - Number(item.daily_sold ?? 0)} left</span>
               </Link>
             ))}
             {dashboard.menu.soldOutItems.slice(0, 2).map((item) => (
-              <Link key={item.id} href="/dashboard/menu" className="flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-800">
+              <Link key={item.id} href="/dashboard/menu" className="flex items-center gap-2 rounded-lg border border-danger/20 bg-dangerSoft px-3 py-2 text-sm text-danger">
                 <PackageX className="h-4 w-4" />
                 <span className="truncate font-medium">{item.name}</span>
               </Link>
             ))}
-            <Link href="/dashboard/menu" className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-gray-950 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
+            <Link href="/dashboard/menu" className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-text px-4 py-2 text-sm font-semibold text-white hover:bg-text/85">
               Manage Menu
             </Link>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="border-b border-gray-100 px-5 py-4">
+        <div className="rounded-2xl border border-divider bg-white shadow-sm">
+          <div className="border-b border-divider px-5 py-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="font-bold text-gray-950">Storefront Readiness</h2>
-                <p className="mt-1 text-xs text-gray-500">{readinessComplete} of {readiness.length} checks complete</p>
+                <h2 className="font-bold text-text">Storefront Readiness</h2>
+                <p className="mt-1 text-xs text-textMuted">{readinessComplete} of {readiness.length} checks complete</p>
               </div>
-              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
+              <span className="rounded-full bg-surfaceMuted px-3 py-1 text-xs font-semibold text-text">
                 {Math.round((readinessComplete / readiness.length) * 100)}%
               </span>
             </div>
           </div>
           <div className="space-y-3 p-5">
             {readiness.map((item) => (
-              <Link key={item.label} href={item.href} className="flex items-start gap-3 rounded-xl border border-gray-100 p-3 transition-colors hover:border-[#E85D26]/30">
+              <Link key={item.label} href={item.href} className="flex items-start gap-3 rounded-xl border border-divider p-3 transition-colors hover:border-primary/30">
                 {item.ready ? (
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-500" />
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-success" />
                 ) : (
-                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" />
+                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-warning" />
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-gray-950">{item.label}</p>
-                  <p className="mt-0.5 text-xs text-gray-500">{item.detail}</p>
+                  <p className="text-sm font-semibold text-text">{item.label}</p>
+                  <p className="mt-0.5 text-xs text-textMuted">{item.detail}</p>
                 </div>
-                <ExternalLink className="mt-1 h-3.5 w-3.5 flex-shrink-0 text-gray-400" />
+                <ExternalLink className="mt-1 h-3.5 w-3.5 flex-shrink-0 text-textSubtle" />
               </Link>
             ))}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="border-b border-gray-100 px-5 py-4">
-            <h2 className="font-bold text-gray-950">Quick Tools</h2>
-            <p className="mt-1 text-xs text-gray-500">Common tasks without hunting through the app.</p>
+        <div className="rounded-2xl border border-divider bg-white shadow-sm">
+          <div className="border-b border-divider px-5 py-4">
+            <h2 className="font-bold text-text">Quick Tools</h2>
+            <p className="mt-1 text-xs text-textMuted">Common tasks without hunting through the app.</p>
           </div>
           <div className="grid gap-3 p-5">
             {[
@@ -692,8 +692,8 @@ export default async function DashboardPage() {
             ].map((tool) => {
               const Icon = tool.icon;
               return (
-                <Link key={tool.label} href={tool.href} className="flex items-center gap-3 rounded-xl border border-gray-100 p-3 text-sm font-semibold text-gray-800 hover:border-[#E85D26]/40">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-50 text-[#E85D26]">
+                <Link key={tool.label} href={tool.href} className="flex items-center gap-3 rounded-xl border border-divider p-3 text-sm font-semibold text-text hover:border-primary/40">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primarySoft text-primary">
                     <Icon className="h-4 w-4" />
                   </span>
                   <span>{tool.label}</span>
@@ -705,67 +705,67 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[0.85fr,1.15fr]">
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-divider bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="font-bold text-gray-950">Business Snapshot</h2>
-              <p className="mt-1 text-xs text-gray-500">Simple numbers for the chef to make decisions.</p>
+              <h2 className="font-bold text-text">Business Snapshot</h2>
+              <p className="mt-1 text-xs text-textMuted">Simple numbers for the chef to make decisions.</p>
             </div>
-            <Flame className="h-5 w-5 text-[#E85D26]" />
+            <Flame className="h-5 w-5 text-primary" />
           </div>
           <div className="mt-5 space-y-3">
-            <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
-              <span className="text-sm text-gray-600">Today revenue</span>
-              <span className="font-bold text-gray-950">{money(dashboard.stats.todayRevenue)}</span>
+            <div className="flex items-center justify-between rounded-xl bg-surfaceMuted px-4 py-3">
+              <span className="text-sm text-textMuted">Today revenue</span>
+              <span className="font-bold text-text">{money(dashboard.stats.todayRevenue)}</span>
             </div>
-            <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
-              <span className="text-sm text-gray-600">Average ticket</span>
-              <span className="font-bold text-gray-950">{money(dashboard.stats.averageTicket)}</span>
+            <div className="flex items-center justify-between rounded-xl bg-surfaceMuted px-4 py-3">
+              <span className="text-sm text-textMuted">Average ticket</span>
+              <span className="font-bold text-text">{money(dashboard.stats.averageTicket)}</span>
             </div>
-            <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
-              <span className="text-sm text-gray-600">Month revenue</span>
-              <span className="font-bold text-gray-950">{money(dashboard.stats.monthRevenue)}</span>
+            <div className="flex items-center justify-between rounded-xl bg-surfaceMuted px-4 py-3">
+              <span className="text-sm text-textMuted">Month revenue</span>
+              <span className="font-bold text-text">{money(dashboard.stats.monthRevenue)}</span>
             </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+        <div className="rounded-2xl border border-divider bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-divider px-5 py-4">
             <div>
-              <h2 className="font-bold text-gray-950">Recent Orders</h2>
-              <p className="mt-1 text-xs text-gray-500">Latest customer orders for this storefront.</p>
+              <h2 className="font-bold text-text">Recent Orders</h2>
+              <p className="mt-1 text-xs text-textMuted">Latest customer orders for this storefront.</p>
             </div>
-            <Link href="/dashboard/orders" className="text-sm font-semibold text-[#E85D26] hover:text-[#d44e1e]">
+            <Link href="/dashboard/orders" className="text-sm font-semibold text-primary hover:text-primaryHover">
               View all
             </Link>
           </div>
           <div className="overflow-x-auto">
             {dashboard.recentOrders.length === 0 ? (
               <div className="px-5 py-12 text-center">
-                <p className="text-sm font-medium text-gray-700">No orders yet</p>
-                <p className="mt-1 text-xs text-gray-500">Orders will appear here once customers start ordering.</p>
+                <p className="text-sm font-medium text-text">No orders yet</p>
+                <p className="mt-1 text-xs text-textMuted">Orders will appear here once customers start ordering.</p>
               </div>
             ) : (
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-100 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
+                  <tr className="border-b border-divider text-left text-xs font-medium uppercase tracking-wide text-textSubtle">
                     <th className="px-5 py-3">Order</th>
                     <th className="px-5 py-3">Customer</th>
                     <th className="px-5 py-3">Status</th>
                     <th className="px-5 py-3">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-divider">
                   {dashboard.recentOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50/50">
-                      <td className="px-5 py-3.5 font-mono text-sm font-semibold text-gray-950">#{order.order_number}</td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600">{getCustomerName(order)}</td>
+                    <tr key={order.id} className="hover:bg-surfaceMuted/50">
+                      <td className="px-5 py-3.5 font-mono text-sm font-semibold text-text">#{order.order_number}</td>
+                      <td className="px-5 py-3.5 text-sm text-textMuted">{getCustomerName(order)}</td>
                       <td className="px-5 py-3.5">
                         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[order.status] ?? STATUS_STYLES.pending}`}>
                           {formatStatus(order.status)}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 text-sm font-semibold text-gray-950">{money(order.total)}</td>
+                      <td className="px-5 py-3.5 text-sm font-semibold text-text">{money(order.total)}</td>
                     </tr>
                   ))}
                 </tbody>
