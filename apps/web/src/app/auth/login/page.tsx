@@ -90,7 +90,7 @@ export default function LoginPage() {
     <AuthLayout title="Welcome back" subtitle="Sign in to your account">
       <form onSubmit={handleSubmit} className="space-y-5">
         {serverError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-md border border-danger/30 bg-dangerSoft p-3 text-sm text-danger">
             {serverError}
           </div>
         )}
@@ -130,38 +130,33 @@ export default function LoginPage() {
         />
 
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="flex cursor-pointer items-center gap-2">
             <input
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-[#E85D26] focus:ring-[#E85D26] focus:ring-offset-0"
+              className="h-4 w-4 rounded border-border accent-primary focus-visible:shadow-focus focus-visible:outline-none"
             />
-            <span className="text-sm text-slate-600">Remember me</span>
+            <span className="text-sm text-textMuted">Remember me</span>
           </label>
           <Link
             href="/auth/forgot-password"
-            className="text-sm font-medium text-[#E85D26] hover:text-[#D04D16] transition-colors"
+            className="text-sm font-medium text-primary transition-colors hover:underline"
           >
             Forgot password?
           </Link>
         </div>
 
-        <Button
-          type="submit"
-          className="w-full bg-[#E85D26] hover:bg-[#D04D16]"
-          size="lg"
-          loading={loading}
-        >
+        <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
           Sign in
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-600">
+      <p className="mt-6 text-center text-sm text-textMuted">
         Don&apos;t have an account?{' '}
         <Link
           href="/auth/signup"
-          className="font-medium text-[#E85D26] hover:text-[#D04D16] transition-colors"
+          className="font-medium text-primary transition-colors hover:underline"
         >
           Sign up
         </Link>

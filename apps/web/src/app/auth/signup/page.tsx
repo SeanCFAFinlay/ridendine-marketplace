@@ -157,7 +157,7 @@ export default function SignupPage() {
     <AuthLayout title="Create your account" subtitle="Join RideNDine and discover amazing home chefs">
       <form onSubmit={handleSubmit} className="space-y-4">
         {(error || termsError) && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-md border border-danger/30 bg-dangerSoft p-3 text-sm text-danger">
             {error || termsError}
           </div>
         )}
@@ -229,17 +229,15 @@ export default function SignupPage() {
           valid={isFieldValid('confirmPassword')}
         />
 
-        <div>
-          <Input
-            label="Referral Code (optional)"
-            name="referralCode"
-            value={referralCode}
-            onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-            placeholder="e.g. ABC12345"
-            autoComplete="off"
-            error={referralError || undefined}
-          />
-        </div>
+        <Input
+          label="Referral Code (optional)"
+          name="referralCode"
+          value={referralCode}
+          onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+          placeholder="e.g. ABC12345"
+          autoComplete="off"
+          error={referralError || undefined}
+        />
 
         <div className="flex items-start gap-2">
           <input
@@ -247,15 +245,15 @@ export default function SignupPage() {
             id="terms"
             checked={agreedToTerms}
             onChange={(e) => setAgreedToTerms(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#E85D26] focus:ring-[#E85D26] focus:ring-offset-0"
+            className="mt-0.5 h-4 w-4 rounded border-border accent-primary focus-visible:shadow-focus focus-visible:outline-none"
           />
-          <label htmlFor="terms" className="text-sm text-slate-600">
+          <label htmlFor="terms" className="text-sm text-textMuted">
             I am 18 or older. I agree to the{' '}
-            <Link href="/terms" className="font-medium text-[#E85D26] hover:text-[#D04D16]">
+            <Link href="/terms" className="font-medium text-primary hover:underline">
               Terms of Service
             </Link>{' '}
             and{' '}
-            <Link href="/privacy" className="font-medium text-[#E85D26] hover:text-[#D04D16]">
+            <Link href="/privacy" className="font-medium text-primary hover:underline">
               Privacy Policy
             </Link>
             . I understand RideNDine is a marketplace — food is prepared by independent home
@@ -264,21 +262,16 @@ export default function SignupPage() {
           </label>
         </div>
 
-        <Button
-          type="submit"
-          className="w-full bg-[#E85D26] hover:bg-[#D04D16]"
-          size="lg"
-          loading={loading}
-        >
+        <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
           Create account
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-600">
+      <p className="mt-6 text-center text-sm text-textMuted">
         Already have an account?{' '}
         <Link
           href="/auth/login"
-          className="font-medium text-[#E85D26] hover:text-[#D04D16] transition-colors"
+          className="font-medium text-primary transition-colors hover:underline"
         >
           Sign in
         </Link>

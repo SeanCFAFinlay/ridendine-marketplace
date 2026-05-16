@@ -38,16 +38,17 @@ export default function ChefSignupPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-[#FAFAFA]">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="container py-16">
-          <Card className="mx-auto max-w-2xl text-center" padding="lg">
-            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+          <Card className="mx-auto max-w-2xl text-center" padding="lg" elevated>
+            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-successSoft">
               <svg
-                className="h-8 w-8 text-green-600"
+                className="h-8 w-8 text-success"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -57,20 +58,20 @@ export default function ChefSignupPage() {
                 />
               </svg>
             </div>
-            <h2 className="text-[28px] font-semibold leading-tight text-[#2D3436]">
+            <h2 className="font-display text-3xl font-semibold leading-tight tracking-tight text-text">
               Thank you for your interest!
             </h2>
-            <p className="mt-3 text-[17px] leading-[1.6] text-[#5F6368]">
+            <p className="mt-3 text-lg leading-relaxed text-textMuted">
               We&apos;ve received your application and will review it shortly.
               Our team will contact you at {formData.email} within 2-3 business
               days.
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Link href="/chef-resources">
-                <Button variant="outline">View Chef Resources</Button>
+                <Button variant="secondary">View Chef Resources</Button>
               </Link>
               <Link href="/">
-                <Button>Return Home</Button>
+                <Button variant="primary">Return Home</Button>
               </Link>
             </div>
           </Card>
@@ -80,41 +81,41 @@ export default function ChefSignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <div className="min-h-screen bg-background">
       <Header />
 
       <main className="container py-16">
         <div className="mx-auto max-w-3xl">
           <div className="mb-12 text-center">
-            <h1 className="text-[40px] font-bold leading-tight tracking-tight text-[#2D3436]">
-              Become a Ridendine Chef
+            <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-text">
+              Become a RideNDine Chef
             </h1>
-            <p className="mt-4 text-[17px] leading-[1.6] text-[#5F6368]">
+            <p className="mt-4 text-lg leading-relaxed text-textMuted">
               Share your culinary passion with your community. Fill out the form
               below to start your journey.
             </p>
           </div>
 
           {chefPortalSignup ? (
-            <Card padding="md" className="mb-8 border border-[#E8E8E8] bg-white">
-              <p className="text-[15px] font-semibold text-[#2D3436]">
+            <Card padding="md" className="mb-8">
+              <p className="text-sm font-semibold text-text">
                 Ready to create your kitchen account?
               </p>
-              <p className="mt-2 text-[14px] leading-relaxed text-[#5F6368]">
+              <p className="mt-2 text-sm leading-relaxed text-textMuted">
                 Approved vendors manage menus and orders in the chef portal.
-                Use the same email you plan to use on Ridendine.
+                Use the same email you plan to use on RideNDine.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <a
                   href={chefPortalSignup}
-                  className="inline-flex items-center justify-center rounded-md bg-[#FF6B6B] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#FF5252]"
+                  className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primaryFg transition-colors hover:bg-primaryHover focus-visible:outline-none focus-visible:shadow-focus"
                 >
                   Open chef portal signup
                 </a>
                 {chefPortalLogin ? (
                   <a
                     href={chefPortalLogin}
-                    className="inline-flex items-center justify-center rounded-md border border-[#E8E8E8] bg-white px-6 py-3 text-sm font-medium text-[#2D3436] transition-colors hover:bg-[#FAFAFA]"
+                    className="inline-flex items-center justify-center rounded-md border border-border bg-surface px-6 py-3 text-sm font-medium text-text transition-colors hover:bg-surfaceMuted focus-visible:outline-none focus-visible:shadow-focus"
                   >
                     Chef login
                   </a>
@@ -122,8 +123,8 @@ export default function ChefSignupPage() {
               </div>
             </Card>
           ) : (
-            <p className="mb-8 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900">
-              Set <code className="rounded bg-white px-1">NEXT_PUBLIC_CHEF_ADMIN_URL</code> in
+            <p className="mb-8 rounded-lg border border-warning/30 bg-warningSoft px-4 py-3 text-center text-sm text-warning">
+              Set <code className="rounded bg-surface px-1">NEXT_PUBLIC_CHEF_ADMIN_URL</code> in
               environment so the chef portal signup link is available.
             </p>
           )}
@@ -183,25 +184,23 @@ export default function ChefSignupPage() {
                 />
               </div>
 
-              <div className="rounded-lg border border-[#E8E8E8] bg-[#FFF8F0] p-4">
-                <h3 className="text-[15px] font-semibold text-[#2D3436]">
-                  What&apos;s Next?
-                </h3>
-                <ul className="mt-2 space-y-1 text-[15px] leading-[1.6] text-[#5F6368]">
+              <div className="rounded-lg border border-border bg-primarySoft p-4">
+                <h3 className="text-sm font-semibold text-text">What&apos;s Next?</h3>
+                <ul className="mt-2 space-y-1 text-sm leading-relaxed text-textMuted">
                   <li className="flex gap-2">
-                    <span className="text-[#FF6B6B]">1.</span>
+                    <span className="font-semibold text-primary">1.</span>
                     <span>Submit your application</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-[#FF6B6B]">2.</span>
+                    <span className="font-semibold text-primary">2.</span>
                     <span>We&apos;ll review within 2-3 business days</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-[#FF6B6B]">3.</span>
+                    <span className="font-semibold text-primary">3.</span>
                     <span>Complete verification and onboarding</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-[#FF6B6B]">4.</span>
+                    <span className="font-semibold text-primary">4.</span>
                     <span>Start selling your delicious creations!</span>
                   </li>
                 </ul>
@@ -213,30 +212,26 @@ export default function ChefSignupPage() {
                     View Chef Resources
                   </Button>
                 </Link>
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="bg-[#FF6B6B] hover:bg-[#FF5252]"
-                >
+                <Button type="submit" variant="primary" size="lg">
                   Submit Application
                 </Button>
               </div>
             </form>
           </Card>
 
-          <p className="mt-6 text-center text-[15px] text-[#5F6368]">
+          <p className="mt-6 text-center text-sm text-textMuted">
             Already have an account?{' '}
             {chefPortalLogin ? (
               <a
                 href={chefPortalLogin}
-                className="font-medium text-[#FF6B6B] hover:text-[#FF5252]"
+                className="font-medium text-primary transition-colors hover:underline"
               >
                 Chef portal login
               </a>
             ) : (
               <Link
                 href="/auth/login"
-                className="font-medium text-[#FF6B6B] hover:text-[#FF5252]"
+                className="font-medium text-primary transition-colors hover:underline"
               >
                 Customer sign in
               </Link>

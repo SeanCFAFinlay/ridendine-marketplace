@@ -58,8 +58,8 @@ export function SavedCardSelector({ onSelect }: SavedCardSelectorProps) {
   if (loading) {
     return (
       <div className="animate-pulse space-y-2">
-        <div className="h-12 rounded-lg bg-gray-100" />
-        <div className="h-12 rounded-lg bg-gray-100" />
+        <div className="h-12 rounded-md bg-surfaceMuted" />
+        <div className="h-12 rounded-md bg-surfaceMuted" />
       </div>
     );
   }
@@ -89,8 +89,8 @@ export function SavedCardSelector({ onSelect }: SavedCardSelectorProps) {
           key={pm.id}
           className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-4 transition-colors ${
             selected === pm.id
-              ? 'border-[#E85D26] bg-orange-50'
-              : 'border-gray-200 hover:border-gray-300'
+              ? 'border-primary bg-primarySoft'
+              : 'border-border hover:border-borderStrong'
           }`}
         >
           <input
@@ -99,15 +99,15 @@ export function SavedCardSelector({ onSelect }: SavedCardSelectorProps) {
             value={pm.id}
             checked={selected === pm.id}
             onChange={() => handleSelect(pm.id)}
-            className="h-4 w-4 accent-[#E85D26]"
+            className="h-4 w-4 accent-primary"
           />
-          <span className="text-sm font-medium text-gray-700 w-10">
+          <span className="w-10 text-sm font-medium text-text">
             {brandLabel(pm.card.brand)}
           </span>
-          <span className="flex-1 text-sm text-gray-900">
+          <span className="flex-1 text-sm text-text">
             &bull;&bull;&bull;&bull; {pm.card.last4}
           </span>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-textMuted">
             Exp {formatExpiry(pm.card.exp_month, pm.card.exp_year)}
           </span>
         </label>
@@ -116,8 +116,8 @@ export function SavedCardSelector({ onSelect }: SavedCardSelectorProps) {
       <label
         className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-4 transition-colors ${
           selected === 'new'
-            ? 'border-[#E85D26] bg-orange-50'
-            : 'border-gray-200 hover:border-gray-300'
+            ? 'border-primary bg-primarySoft'
+            : 'border-border hover:border-borderStrong'
         }`}
       >
         <input
@@ -126,18 +126,18 @@ export function SavedCardSelector({ onSelect }: SavedCardSelectorProps) {
           value="new"
           checked={selected === 'new'}
           onChange={() => handleSelect('new')}
-          className="h-4 w-4 accent-[#E85D26]"
+          className="h-4 w-4 accent-primary"
         />
-        <span className="text-sm font-medium text-gray-900">Use a new card</span>
+        <span className="text-sm font-medium text-text">Use a new card</span>
       </label>
 
       {selected === 'new' && (
-        <label className="flex cursor-pointer items-center gap-2 pl-2 text-sm text-gray-700">
+        <label className="flex cursor-pointer items-center gap-2 pl-2 text-sm text-text">
           <input
             type="checkbox"
             checked={saveCard}
             onChange={(e) => handleSaveCard(e.target.checked)}
-            className="h-4 w-4 accent-[#E85D26]"
+            className="h-4 w-4 accent-primary"
           />
           Save this card for future orders
         </label>

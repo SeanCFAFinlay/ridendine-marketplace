@@ -85,7 +85,7 @@ export default async function ChefPage({ params }: ChefPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -115,7 +115,7 @@ export default async function ChefPage({ params }: ChefPageProps) {
         </div>
 
         <div className="container py-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Customer Reviews</h2>
+          <h2 className="mb-4 text-xl font-bold text-text">Customer Reviews</h2>
           <ReviewsList storefrontId={storefront.id} />
         </div>
       </main>

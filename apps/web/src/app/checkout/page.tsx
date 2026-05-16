@@ -306,11 +306,11 @@ function CheckoutContent() {
   if (!cart || cart.items.length === 0) {
     return (
       <main className="container py-8">
-        <Card className="p-8 text-center">
-          <h2 className="text-xl font-semibold text-gray-900">Your cart is empty</h2>
-          <p className="mt-2 text-gray-500">Add items to your cart before checking out.</p>
+        <Card className="p-8 text-center" elevated>
+          <h2 className="text-xl font-semibold text-text">Your cart is empty</h2>
+          <p className="mt-2 text-textMuted">Add items to your cart before checking out.</p>
           <Link href="/chefs">
-            <Button className="mt-4">Browse Chefs</Button>
+            <Button variant="primary" className="mt-4">Browse Chefs</Button>
           </Link>
         </Card>
       </main>
@@ -331,23 +331,23 @@ function CheckoutContent() {
   return (
     <>
     <main className="container py-8">
-      <h1 className="text-2xl font-bold text-gray-900">Checkout</h1>
+      <h1 className="font-display text-2xl font-bold tracking-tight text-text">Checkout</h1>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           {checkoutStep === 'details' ? (
             <>
               {/* Delivery Address */}
-              <Card>
-                <h2 className="font-semibold text-gray-900">Delivery Address</h2>
+              <Card padding="lg">
+                <h2 className="font-semibold text-text">Delivery Address</h2>
                 <div className="mt-4 space-y-3">
                   {addresses.map((address) => (
                     <label
                       key={address.id}
                       className={`flex cursor-pointer items-start gap-3 rounded-lg border-2 p-4 transition-colors ${
                         selectedAddress === address.id
-                          ? 'border-[#E85D26] bg-orange-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-primary bg-primarySoft'
+                          : 'border-border hover:border-borderStrong'
                       }`}
                     >
                       <input
@@ -356,29 +356,26 @@ function CheckoutContent() {
                         value={address.id}
                         checked={selectedAddress === address.id}
                         onChange={(e) => setSelectedAddress(e.target.value)}
-                        className="mt-1 h-4 w-4 accent-[#E85D26]"
+                        className="mt-1 h-4 w-4 accent-primary"
                       />
                       <div>
-                        <p className="font-medium text-gray-900">{address.label}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-text">{address.label}</p>
+                        <p className="text-sm text-textMuted">
                           {address.address_line1}{address.address_line2 ? `, ${address.address_line2}` : ''}, {address.city}, {address.state} {address.postal_code}
                         </p>
                       </div>
                     </label>
                   ))}
                   {addresses.length === 0 && (
-                    <p className="text-gray-500">No saved addresses. Please add an address in your account settings.</p>
+                    <p className="text-textMuted">No saved addresses. Please add an address in your account settings.</p>
                   )}
                 </div>
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Delivery Instructions (optional)
-                  </label>
                   <Input
+                    label="Delivery Instructions (optional)"
                     value={deliveryInstructions}
                     onChange={(e) => setDeliveryInstructions(e.target.value)}
                     placeholder="Apartment number, gate code, etc."
-                    className="mt-1"
                   />
                 </div>
               </Card>
@@ -390,9 +387,9 @@ function CheckoutContent() {
               />
 
               {/* Tip */}
-              <Card>
-                <h2 className="font-semibold text-gray-900">Add a Tip for Your Driver</h2>
-                <p className="mt-1 text-xs text-gray-500">Default 18% — 100% goes to your driver</p>
+              <Card padding="lg">
+                <h2 className="font-semibold text-text">Add a Tip for Your Driver</h2>
+                <p className="mt-1 text-xs text-textMuted">Default 18% — 100% goes to your driver</p>
                 <div className="mt-4 grid grid-cols-4 gap-3">
                   {TIP_OPTIONS.map((option) => {
                     const isCustomOption = Boolean(option.isCustom);
@@ -419,15 +416,15 @@ function CheckoutContent() {
                             setCustomTip('');
                           }
                         }}
-                        className={`rounded-lg border-2 py-3 text-center transition-colors ${
+                        className={`rounded-md border-2 py-3 text-center transition-colors focus-visible:outline-none focus-visible:shadow-focus ${
                           isSelected
-                            ? 'border-[#E85D26] bg-orange-50 font-medium'
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? 'border-primary bg-primarySoft font-medium text-text'
+                            : 'border-border text-textMuted hover:border-borderStrong'
                         }`}
                       >
                         <span className="block text-sm">{option.label}</span>
                         {pct && !isCustomOption && (
-                          <span className="block text-xs text-gray-500">
+                          <span className="block text-xs text-textSubtle">
                             ${tipValue.toFixed(2)}
                           </span>
                         )}
@@ -448,20 +445,20 @@ function CheckoutContent() {
                     />
                   </div>
                 )}
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-textMuted">
                   Tip amount:{' '}
-                  <span className="font-semibold text-[#E85D26]">
+                  <span className="font-semibold text-primary">
                     ${tipDollars().toFixed(2)}
                   </span>
                   {!showCustomTip && tipPercent !== null && (
-                    <span className="ml-1 text-xs text-gray-400">({tipPercent}%)</span>
+                    <span className="ml-1 text-xs text-textSubtle">({tipPercent}%)</span>
                   )}
                 </p>
               </Card>
 
               {/* Payment Method */}
-              <Card>
-                <h2 className="font-semibold text-gray-900">Payment Method</h2>
+              <Card padding="lg">
+                <h2 className="font-semibold text-text">Payment Method</h2>
                 <div className="mt-4">
                   <SavedCardSelector
                     onSelect={(pmId, shouldSave) => {
@@ -473,52 +470,40 @@ function CheckoutContent() {
               </Card>
 
               {/* Promo Code */}
-              <Card>
-                <h2 className="font-semibold text-gray-900">Promo Code</h2>
+              <Card padding="lg">
+                <h2 className="font-semibold text-text">Promo Code</h2>
                 <div className="mt-4">
                   <Input
                     value={promoCode}
                     onChange={(e) => handlePromoChange(e.target.value)}
                     placeholder="Enter promo code"
-                    className={
-                      promoStatus === 'valid'
-                        ? 'border-green-500 focus:ring-green-500'
-                        : promoStatus === 'invalid'
-                          ? 'border-red-400 focus:ring-red-400'
-                          : ''
-                    }
+                    valid={promoStatus === 'valid'}
+                    error={promoStatus === 'invalid' ? promoMessage : undefined}
+                    hint={promoStatus === 'valid' ? `✓ ${promoMessage}` : undefined}
                   />
-                  {promoMessage && (
-                    <p className={`mt-1.5 text-sm ${promoStatus === 'valid' ? 'text-green-600' : 'text-red-600'}`}>
-                      {promoStatus === 'valid' && (
-                        <span className="mr-1">✓</span>
-                      )}
-                      {promoMessage}
-                    </p>
-                  )}
                 </div>
               </Card>
 
               {/* Order Items */}
-              <Card>
-                <h2 className="font-semibold text-gray-900">Order Summary</h2>
-                <div className="mt-4 divide-y">
+              <Card padding="lg">
+                <h2 className="font-semibold text-text">Order Summary</h2>
+                <div className="mt-4 divide-y divide-divider">
                   {cart.items.map((item) => (
                     <div key={item.id} className="flex items-center gap-4 py-3">
-                      <div className="h-12 w-12 rounded-lg bg-gray-100 flex-shrink-0">
+                      <div className="h-12 w-12 flex-shrink-0 rounded-md bg-surfaceMuted">
                         {item.image_url && (
                           <img
                             src={item.image_url}
                             alt={item.name}
-                            className="h-full w-full rounded-lg object-cover"
+                            className="h-full w-full rounded-md object-cover"
                           />
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">{item.name}</p>
-                        <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                        <p className="font-medium text-text">{item.name}</p>
+                        <p className="text-sm text-textMuted">Qty: {item.quantity}</p>
                       </div>
-                      <p className="font-medium">${Number(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="font-medium text-text">${Number(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
@@ -526,8 +511,8 @@ function CheckoutContent() {
             </>
           ) : (
             /* Payment Step */
-            <Card>
-              <h2 className="font-semibold text-gray-900 mb-6">Payment Details</h2>
+            <Card padding="lg">
+              <h2 className="mb-6 font-semibold text-text">Payment Details</h2>
               {clientSecret && (
                 <Elements
                   stripe={stripePromise}
@@ -536,7 +521,7 @@ function CheckoutContent() {
                     appearance: {
                       theme: 'stripe',
                       variables: {
-                        colorPrimary: '#E85D26',
+                        colorPrimary: '#EA5B26',
                       },
                     },
                   }}
@@ -549,8 +534,9 @@ function CheckoutContent() {
                 </Elements>
               )}
               <button
+                type="button"
                 onClick={() => setCheckoutStep('details')}
-                className="mt-4 text-sm text-[#E85D26] hover:underline"
+                className="mt-4 text-sm text-primary hover:underline focus-visible:outline-none focus-visible:shadow-focus"
               >
                 ← Back to order details
               </button>
@@ -560,47 +546,47 @@ function CheckoutContent() {
 
         {/* Order Total Sidebar */}
         <div>
-          <Card className="sticky top-24">
-            <h2 className="font-semibold text-gray-900">Payment Summary</h2>
+          <Card className="sticky top-24" padding="lg">
+            <h2 className="font-semibold text-text">Payment Summary</h2>
             {/* Estimated delivery time */}
-            <div className="mt-3 flex items-center gap-2 rounded-lg bg-[#fff8f4] px-3 py-2">
-              <svg className="h-4 w-4 flex-shrink-0 text-[#E85D26]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="mt-3 flex items-center gap-2 rounded-md bg-primarySoft px-3 py-2">
+              <svg className="h-4 w-4 flex-shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               {etaLoading ? (
-                <span className="text-sm text-gray-400">Calculating delivery time...</span>
+                <span className="text-sm text-textSubtle">Calculating delivery time...</span>
               ) : deliveryEta ? (
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-text">
                   Est. delivery: <strong>{deliveryEta.minMinutes}–{deliveryEta.maxMinutes} min</strong>
                 </span>
               ) : (
-                <span className="text-sm text-gray-700">Est. delivery: <strong>~30–45 min</strong></span>
+                <span className="text-sm text-text">Est. delivery: <strong>~30–45 min</strong></span>
               )}
             </div>
             <div className="mt-4 space-y-2">
               {checkoutStep === 'details' && !hasApiBreakdown ? (
                 <>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Subtotal (cart)</span>
-                    <span className="text-gray-900">
+                    <span className="text-textMuted">Subtotal (cart)</span>
+                    <span className="text-text">
                       ${Number(cartSubtotal).toFixed(2)}
                     </span>
                   </div>
                   {tipDollars() > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Tip (your selection)</span>
-                      <span className="text-gray-900">
+                      <span className="text-textMuted">Tip (your selection)</span>
+                      <span className="text-text">
                         ${Number(tipDollars()).toFixed(2)}
                       </span>
                     </div>
                   )}
                   {promoDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-green-600">
+                    <div className="flex justify-between text-sm text-success">
                       <span>Promo ({promoCode})</span>
                       <span>-${promoDiscount.toFixed(2)}</span>
                     </div>
                   )}
-                  <p className="pt-2 text-xs leading-relaxed text-gray-500">
+                  <p className="pt-2 text-xs leading-relaxed text-textMuted">
                     Delivery, service fees, and tax are set by
                     the server when you continue to payment — not shown here as estimates.
                   </p>
@@ -608,88 +594,91 @@ function CheckoutContent() {
               ) : breakdown ? (
                 <>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="text-gray-900">
+                    <span className="text-textMuted">Subtotal</span>
+                    <span className="text-text">
                       ${Number(breakdown.subtotal).toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">
+                    <span className="text-textMuted">
                       Delivery fee
                       {breakdown.deliveryDistanceKm !== undefined && (
-                        <span className="ml-1 text-xs text-gray-400">
+                        <span className="ml-1 text-xs text-textSubtle">
                           ({breakdown.deliveryDistanceKm.toFixed(1)} km)
                         </span>
                       )}
                     </span>
-                    <span className="text-gray-900">
+                    <span className="text-text">
                       ${Number(breakdown.deliveryFee).toFixed(2)}
                     </span>
                   </div>
                   {breakdown.surgeActive && breakdown.surgeMultiplier !== undefined && (
-                    <div className="flex items-center gap-2 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-xs">
-                      <span className="text-orange-600 font-medium">High demand</span>
-                      <span className="text-orange-500">
+                    <div className="flex items-center gap-2 rounded-md border border-warning/30 bg-warningSoft px-3 py-2 text-xs">
+                      <span className="font-medium text-warning">High demand</span>
+                      <span className="text-warning">
                         Busy area — delivery fee is {breakdown.surgeMultiplier.toFixed(2)}x higher than usual
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Service fee</span>
-                    <span className="text-gray-900">
+                    <span className="text-textMuted">Service fee</span>
+                    <span className="text-text">
                       ${Number(breakdown.serviceFee).toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Tax</span>
-                    <span className="text-gray-900">
+                    <span className="text-textMuted">Tax</span>
+                    <span className="text-text">
                       ${Number(breakdown.tax).toFixed(2)}
                     </span>
                   </div>
                   {breakdown.tip > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Tip</span>
-                      <span className="text-gray-900">
+                      <span className="text-textMuted">Tip</span>
+                      <span className="text-text">
                         ${Number(breakdown.tip).toFixed(2)}
                       </span>
                     </div>
                   )}
                   {breakdown.discount > 0 && (
-                    <div className="flex justify-between text-sm text-green-600">
+                    <div className="flex justify-between text-sm text-success">
                       <span>Discount</span>
                       <span>-${Number(breakdown.discount).toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="border-t border-gray-200 pt-2">
-                    <div className="flex justify-between font-semibold text-lg">
-                      <span>Total</span>
-                      <span className="text-[#E85D26]">
+                  <div className="border-t border-divider pt-2">
+                    <div className="flex justify-between text-lg font-semibold">
+                      <span className="text-text">Total</span>
+                      <span className="text-primary">
                         ${Number(paymentTotal).toFixed(2)}
                       </span>
                     </div>
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-gray-500">Preparing payment summary…</p>
+                <p className="text-sm text-textMuted">Preparing payment summary…</p>
               )}
             </div>
 
             {error && (
-              <p className="mt-4 text-sm text-red-600">{error}</p>
+              <p className="mt-4 text-sm text-danger">{error}</p>
             )}
 
             {checkoutStep === 'details' && (
               <Button
+                variant="primary"
+                size="lg"
+                fullWidth
                 onClick={handleProceedToPayment}
                 disabled={creatingPayment || !selectedAddress}
-                className="mt-4 w-full"
-                size="lg"
+                loading={creatingPayment}
+                className="mt-4"
               >
-                {creatingPayment ? 'Processing...' : 'Continue to Payment'}
+                {creatingPayment ? 'Processing…' : 'Continue to Payment'}
               </Button>
             )}
 
-            <p className="mt-4 text-center text-xs text-gray-500">
+            <p className="mt-4 text-center text-xs text-textSubtle">
               By placing this order, you agree to our Terms of Service
             </p>
           </Card>
@@ -697,26 +686,27 @@ function CheckoutContent() {
       </div>
     </main>
 
-    {/* Sticky mobile Pay bar — visible below md only */}
+    {/* Sticky mobile Pay bar */}
     {checkoutStep === 'details' && (
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white p-4 shadow-lg md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-sticky border-t border-border bg-surface p-4 shadow-lg md:hidden">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs text-gray-500">Subtotal</p>
-            <p className="font-semibold text-gray-900">${cartSubtotal.toFixed(2)}</p>
+            <p className="text-xs text-textMuted">Subtotal</p>
+            <p className="font-semibold text-text">${cartSubtotal.toFixed(2)}</p>
           </div>
           <Button
+            variant="primary"
+            size="lg"
             onClick={handleProceedToPayment}
             disabled={creatingPayment || !selectedAddress}
-            className="flex-1 bg-[#E85D26] text-white hover:bg-[#d44e1e]"
-            size="lg"
+            loading={creatingPayment}
+            className="flex-1"
           >
-            {creatingPayment ? 'Processing...' : 'Continue to Payment'}
+            {creatingPayment ? 'Processing…' : 'Continue to Payment'}
           </Button>
         </div>
       </div>
     )}
-    {/* Bottom padding for mobile sticky bar */}
     {checkoutStep === 'details' && <div className="h-24 md:hidden" />}
     </>
   );
@@ -728,7 +718,7 @@ function LoadingFallback() {
 
 export default function CheckoutPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header />
       <Suspense fallback={<LoadingFallback />}>
         <CheckoutContent />

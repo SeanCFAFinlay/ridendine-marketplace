@@ -54,8 +54,8 @@ function DateTabs({
             onClick={() => onSelect(date)}
             className={`flex-shrink-0 rounded-lg border-2 px-3 py-2 text-sm transition-colors ${
               isActive
-                ? 'border-[#E85D26] bg-orange-50 font-medium text-[#E85D26]'
-                : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                ? 'border-primary bg-primarySoft font-medium text-primary'
+                : 'border-border text-text hover:border-borderStrong'
             }`}
           >
             {formatDayLabel(date)}
@@ -77,7 +77,7 @@ function TimeSlotGrid({
 }) {
   if (slots.length === 0) {
     return (
-      <p className="mt-3 text-sm text-gray-500">
+      <p className="mt-3 text-sm text-textMuted">
         No available time slots for this date. Please choose another day.
       </p>
     );
@@ -95,8 +95,8 @@ function TimeSlotGrid({
             onClick={() => onSelect(iso)}
             className={`rounded-lg border-2 py-2 text-center text-sm transition-colors ${
               isSelected
-                ? 'border-[#E85D26] bg-orange-50 font-medium text-[#E85D26]'
-                : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                ? 'border-primary bg-primarySoft font-medium text-primary'
+                : 'border-border text-text hover:border-borderStrong'
             }`}
           >
             {formatTimeSlot(slot)}
@@ -133,7 +133,7 @@ export function DeliveryTimePicker({ selected, onSelect }: DeliveryTimePickerPro
 
   return (
     <Card>
-      <h2 className="font-semibold text-gray-900">Delivery Time</h2>
+      <h2 className="font-semibold text-text">Delivery Time</h2>
       <div className="mt-4 flex gap-3">
         <button
           type="button"
@@ -142,8 +142,8 @@ export function DeliveryTimePicker({ selected, onSelect }: DeliveryTimePickerPro
           onClick={handleAsap}
           className={`flex-1 rounded-lg border-2 py-3 text-center text-sm font-medium transition-colors ${
             isAsap
-              ? 'border-[#E85D26] bg-orange-50 text-[#E85D26]'
-              : 'border-gray-200 text-gray-700 hover:border-gray-300'
+              ? 'border-primary bg-primarySoft text-primary'
+              : 'border-border text-text hover:border-borderStrong'
           }`}
         >
           ASAP
@@ -157,8 +157,8 @@ export function DeliveryTimePicker({ selected, onSelect }: DeliveryTimePickerPro
           onClick={handleScheduleToggle}
           className={`flex-1 rounded-lg border-2 py-3 text-center text-sm font-medium transition-colors ${
             !isAsap
-              ? 'border-[#E85D26] bg-orange-50 text-[#E85D26]'
-              : 'border-gray-200 text-gray-700 hover:border-gray-300'
+              ? 'border-primary bg-primarySoft text-primary'
+              : 'border-border text-text hover:border-borderStrong'
           }`}
         >
           Schedule for later
