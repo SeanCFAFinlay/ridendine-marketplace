@@ -8,7 +8,7 @@ import { formatScheduledTime, isScheduledOrder } from '@/lib/checkout/scheduling
 
 const OrderTrackingMap = dynamic(
   () => import('./order-tracking-map'),
-  { ssr: false, loading: () => <div className="h-64 rounded-lg bg-gray-100 animate-pulse" /> }
+  { ssr: false, loading: () => <div className="h-64 rounded-lg bg-surfaceMuted animate-pulse" /> }
 );
 
 export interface LiveOrderTrackerProps {
@@ -88,14 +88,14 @@ function StepIndicator({ currentIndex, terminal }: { currentIndex: number; termi
   if (terminal === 'cancelled') {
     return (
       <div className="p-6 text-center">
-        <p className="text-lg font-semibold text-gray-800">This order was cancelled.</p>
+        <p className="text-lg font-semibold text-text">This order was cancelled.</p>
       </div>
     );
   }
   if (terminal === 'refunded') {
     return (
       <div className="p-6 text-center">
-        <p className="text-lg font-semibold text-gray-800">Refund in progress or completed.</p>
+        <p className="text-lg font-semibold text-text">Refund in progress or completed.</p>
       </div>
     );
   }
@@ -108,16 +108,16 @@ function StepIndicator({ currentIndex, terminal }: { currentIndex: number; termi
             <div
               className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-colors ${
                 i < currentIndex
-                  ? 'bg-green-500 text-white'
+                  ? 'bg-success text-white'
                   : i === currentIndex
-                  ? 'bg-[#E85D26] text-white'
-                  : 'bg-gray-200 text-gray-500'
+                  ? 'bg-primary text-primaryFg'
+                  : 'bg-surfaceMuted text-textSubtle'
               }`}
             >
               {i < currentIndex ? '✓' : i + 1}
             </div>
             {i < PUBLIC_STEPS.length - 1 && (
-              <div className={`h-0.5 w-4 sm:w-8 ${i < currentIndex ? 'bg-green-500' : 'bg-gray-200'}`} />
+              <div className={`h-0.5 w-4 sm:w-8 ${i < currentIndex ? 'bg-success' : 'bg-surfaceMuted'}`} />
             )}
           </div>
         ))}
@@ -126,7 +126,7 @@ function StepIndicator({ currentIndex, terminal }: { currentIndex: number; termi
         {PUBLIC_STEPS.map((step, i) => (
           <span
             key={step.key}
-            className={`text-[10px] sm:text-xs ${i <= currentIndex ? 'text-gray-900 font-medium' : 'text-gray-400'}`}
+            className={`text-[10px] sm:text-xs ${i <= currentIndex ? 'font-medium text-text' : 'text-textSubtle'}`}
           >
             {step.label}
           </span>
@@ -163,26 +163,26 @@ function DeliveryDetails({
 
   return (
     <Card className="p-6">
-      <h3 className="font-semibold text-gray-900">Delivery Details</h3>
+      <h3 className="font-semibold text-text">Delivery Details</h3>
       <div className="mt-4 space-y-3">
         <div className="flex items-start gap-3">
-          <div className="mt-1.5 h-3 w-3 flex-shrink-0 rounded-full bg-green-500" />
+          <div className="mt-1.5 h-3 w-3 flex-shrink-0 rounded-full bg-success" />
           <div>
-            <p className="text-xs text-gray-500">PICKUP</p>
-            <p className="text-sm text-gray-900">{pickupAddress}</p>
+            <p className="text-xs text-textMuted">PICKUP</p>
+            <p className="text-sm text-text">{pickupAddress}</p>
           </div>
         </div>
-        <div className="ml-[5px] h-4 w-px bg-gray-200" />
+        <div className="ml-[5px] h-4 w-px bg-border" />
         <div className="flex items-start gap-3">
-          <div className="mt-1.5 h-3 w-3 flex-shrink-0 rounded-full bg-red-500" />
+          <div className="mt-1.5 h-3 w-3 flex-shrink-0 rounded-full bg-danger" />
           <div>
-            <p className="text-xs text-gray-500">DELIVERY</p>
-            <p className="text-sm text-gray-900">{dropoffAddress}</p>
+            <p className="text-xs text-textMuted">DELIVERY</p>
+            <p className="text-sm text-text">{dropoffAddress}</p>
           </div>
         </div>
       </div>
       {(etaPickupAt || etaDropoffAt) && !isDelivered && (
-        <div className="mt-4 space-y-1 rounded-lg bg-orange-50 p-3 text-sm text-orange-900">
+        <div className="mt-4 space-y-1 rounded-md bg-primarySoft p-3 text-sm text-primary">
           {etaPickupAt && (
             <p>
               Pickup ETA: <strong>{fmt(etaPickupAt)}</strong>
@@ -199,8 +199,8 @@ function DeliveryDetails({
         </div>
       )}
       {estimatedDeliveryMinutes && !isDelivered && !etaDropoffAt && (
-        <div className="mt-4 rounded-lg bg-orange-50 p-3">
-          <p className="text-sm text-orange-800">
+        <div className="mt-4 rounded-md bg-primarySoft p-3">
+          <p className="text-sm text-primary">
             Estimated delivery in <strong>{estimatedDeliveryMinutes} minutes</strong>
           </p>
         </div>
@@ -255,8 +255,8 @@ function CancelOrderSection({ orderId, canCancel }: CancelOrderSectionProps) {
 
   if (cancelSuccess) {
     return (
-      <Card className="border-green-200 bg-green-50 p-4">
-        <p className="text-sm font-medium text-green-800">{cancelSuccess}</p>
+      <Card className="border-success/30 bg-successSoft p-4">
+        <p className="text-sm font-medium text-success">{cancelSuccess}</p>
       </Card>
     );
   }
@@ -264,14 +264,15 @@ function CancelOrderSection({ orderId, canCancel }: CancelOrderSectionProps) {
   return (
     <div className="space-y-3">
       {cancelError && (
-        <Card className="border-red-200 bg-red-50 p-3">
-          <p className="text-sm text-red-800">{cancelError}</p>
+        <Card className="border-danger/30 bg-dangerSoft p-3">
+          <p className="text-sm text-danger">{cancelError}</p>
         </Card>
       )}
       <Button
-        variant="outline"
+        variant="secondary"
         onClick={handleCancelClick}
-        className="w-full border-red-300 text-red-600 hover:bg-red-50"
+        fullWidth
+        className="border-danger/40 text-danger hover:bg-dangerSoft"
       >
         Cancel Order
       </Button>
@@ -279,16 +280,16 @@ function CancelOrderSection({ orderId, canCancel }: CancelOrderSectionProps) {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-modal flex items-center justify-center bg-text/40 backdrop-blur-sm p-4"
         >
           <Card className="w-full max-w-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900">Are you sure?</h3>
-            <p className="mt-2 text-sm text-gray-600">
+            <h3 className="text-lg font-semibold text-text">Are you sure?</h3>
+            <p className="mt-2 text-sm text-textMuted">
               Your payment will be refunded within 3–5 business days.
             </p>
             <div className="mt-6 flex gap-3">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={handleDismiss}
                 disabled={isLoading}
                 className="flex-1"
@@ -296,10 +297,11 @@ function CancelOrderSection({ orderId, canCancel }: CancelOrderSectionProps) {
                 Keep Order
               </Button>
               <Button
+                variant="danger"
                 onClick={handleConfirmCancel}
                 disabled={isLoading}
                 loading={isLoading}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                className="flex-1"
               >
                 Yes, Cancel
               </Button>
@@ -372,19 +374,19 @@ export function LiveOrderTracker({
   return (
     <div className="space-y-6">
       {error && (
-        <Card className="border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm text-amber-800">{error}</p>
+        <Card className="border-warning/30 bg-warningSoft p-4">
+          <p className="text-sm text-warning">{error}</p>
         </Card>
       )}
       {!isLive && !error && (
-        <Card className="border-gray-200 bg-gray-50 p-3">
-          <p className="text-xs text-gray-600">Connecting to live updates…</p>
+        <Card className="border-border bg-surfaceMuted p-3">
+          <p className="text-xs text-textMuted">Connecting to live updates…</p>
         </Card>
       )}
-      <Card className="overflow-hidden">
-        <div className="bg-gradient-to-r from-[#1a7a6e] to-[#22a196] p-6 text-white">
+      <Card className="overflow-hidden" padding="none">
+        <div className="bg-accent p-6 text-white">
           <p className="text-sm font-medium opacity-80">Order #{orderNumber}</p>
-          <h2 className="mt-1 text-2xl font-bold">
+          <h2 className="mt-1 font-display text-2xl font-bold">
             {isDelivered ? 'Delivered!' : heading}
           </h2>
           <p className="mt-1 text-sm opacity-80">From {storefrontName}</p>
@@ -392,12 +394,12 @@ export function LiveOrderTracker({
       </Card>
 
       {isScheduledOrder(scheduledFor) && (
-        <Card className="border-blue-200 bg-blue-50 p-4">
+        <Card className="border-info/30 bg-infoSoft p-4">
           <div className="flex items-center gap-2">
-            <svg className="h-4 w-4 flex-shrink-0 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-4 w-4 flex-shrink-0 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-sm text-blue-800">
+            <p className="text-sm text-info">
               <span className="font-medium">Scheduled for </span>
               {formatScheduledTime(scheduledFor)}
             </p>
@@ -405,24 +407,24 @@ export function LiveOrderTracker({
         </Card>
       )}
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden" padding="none">
         <StepIndicator currentIndex={currentStepIndex} terminal={terminal} />
       </Card>
 
       {showMap && (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden" padding="none">
           <div className="p-4 pb-2">
             <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/60 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
               </span>
-              <h3 className="font-semibold text-gray-900">Order progress</h3>
+              <h3 className="font-semibold text-text">Order progress</h3>
             </div>
             {progressPct != null && (
-              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-200">
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-surfaceMuted">
                 <div
-                  className="h-full rounded-full bg-[#E85D26] transition-all duration-500"
+                  className="h-full rounded-full bg-primary transition-all duration-500"
                   style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }}
                 />
               </div>

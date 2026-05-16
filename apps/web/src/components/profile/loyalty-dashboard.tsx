@@ -66,9 +66,9 @@ function ProgressBar({ current, max, label }: { current: number; max: number; la
         <span>{label}</span>
         <span>{pct}%</span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-surfaceMuted">
         <div
-          className="h-full rounded-full bg-[#E85D26] transition-all"
+          className="h-full rounded-full bg-primary transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -161,8 +161,8 @@ export function LoyaltyDashboard() {
               {data.pointsBalance.toLocaleString()}
               <span className="ml-2 text-base font-normal text-slate-500">points</span>
             </p>
-            <p className="mt-1 text-sm text-slate-500">
-              Worth <span className="font-semibold text-[#E85D26]">${discountValue}</span> off your next order
+            <p className="mt-1 text-sm text-textMuted">
+              Worth <span className="font-semibold text-primary">${discountValue}</span> off your next order
             </p>
           </div>
           <div className="text-right text-sm text-slate-500">

@@ -18,7 +18,7 @@ function copyToClipboard(text: string): Promise<void> {
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 text-center shadow-sm">
-      <p className="text-2xl font-bold text-[#E85D26]">{value}</p>
+      <p className="text-2xl font-bold text-primary">{value}</p>
       <p className="mt-1 text-sm text-slate-500">{label}</p>
     </div>
   );
@@ -36,7 +36,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="rounded-md bg-[#E85D26] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#D04D16] focus:outline-none focus:ring-2 focus:ring-[#E85D26]"
+      className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primaryFg transition hover:bg-primaryHover focus:outline-none focus-visible:shadow-focus"
     >
       {copied ? 'Copied!' : label}
     </button>
@@ -150,7 +150,7 @@ export function ReferralDashboard(_props: Props) {
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className="mt-4 rounded-md bg-[#E85D26] px-6 py-2 text-sm font-medium text-white hover:bg-[#D04D16] disabled:opacity-50"
+          className="mt-4 rounded-md bg-primary px-6 py-2 text-sm font-medium text-primaryFg transition-colors hover:bg-primaryHover disabled:opacity-50 focus-visible:outline-none focus-visible:shadow-focus"
         >
           {generating ? 'Generating…' : 'Get My Referral Code'}
         </button>
@@ -167,7 +167,7 @@ export function ReferralDashboard(_props: Props) {
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-slate-800">Your Referral Code</h3>
         <div className="mt-3 flex items-center gap-3">
-          <span className="rounded-md bg-slate-100 px-4 py-2 font-mono text-xl font-bold tracking-widest text-[#E85D26]">
+          <span className="rounded-md bg-surfaceMuted px-4 py-2 font-mono text-xl font-bold tracking-widest text-primary">
             {stats.code}
           </span>
           <CopyButton text={stats.code} label="Copy Code" />

@@ -159,7 +159,7 @@ function StepCircle({ stepKey, icon, state }: StepCircleProps) {
     return (
       <div
         data-testid={`step-icon-${stepKey}`}
-        className={`${baseClass} bg-[#E85D26] text-white`}
+        className={`${baseClass} bg-primary text-primaryFg`}
       >
         {icon}
       </div>
@@ -169,7 +169,7 @@ function StepCircle({ stepKey, icon, state }: StepCircleProps) {
   return (
     <div
       data-testid={`step-icon-${stepKey}`}
-      className={`${baseClass} bg-gray-200 text-gray-400`}
+      className={`${baseClass} bg-surfaceMuted text-textSubtle`}
     >
       {icon}
     </div>
@@ -196,7 +196,7 @@ function StepRow({ step, state, timestamp, isLast }: StepRowProps) {
         {!isLast && (
           <div
             className={`mt-1 w-0.5 flex-1 min-h-[2rem] ${
-              state === 'completed' ? 'bg-green-300' : 'bg-gray-200'
+              state === 'completed' ? 'bg-success/40' : 'bg-surfaceMuted'
             }`}
           />
         )}
@@ -204,7 +204,7 @@ function StepRow({ step, state, timestamp, isLast }: StepRowProps) {
       <div className="pb-6 pt-1.5">
         <p
           className={`text-sm font-semibold ${
-            state === 'future' ? 'text-gray-400' : 'text-gray-900'
+            state === 'future' ? 'text-textSubtle' : 'text-text'
           }`}
         >
           {step.label}
@@ -212,7 +212,7 @@ function StepRow({ step, state, timestamp, isLast }: StepRowProps) {
         {timestamp && state !== 'future' && (
           <p
             data-testid={`step-time-${step.key}`}
-            className="mt-0.5 text-xs text-gray-500"
+            className="mt-0.5 text-xs text-textMuted"
           >
             {formatTime(timestamp)}
           </p>
@@ -220,7 +220,7 @@ function StepRow({ step, state, timestamp, isLast }: StepRowProps) {
         {!timestamp && state === 'current' && (
           <p
             data-testid={`step-time-${step.key}`}
-            className="mt-0.5 text-xs text-[#E85D26] font-medium"
+            className="mt-0.5 text-xs font-medium text-primary"
           >
             In progress
           </p>
@@ -238,19 +238,19 @@ function DriverInfo({
   driverPhone?: string | null;
 }) {
   return (
-    <div className="mt-4 flex items-center gap-3 rounded-xl bg-orange-50 px-4 py-3">
-      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#E85D26] text-white text-sm font-bold">
+    <div className="mt-4 flex items-center gap-3 rounded-xl bg-primarySoft px-4 py-3">
+      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primaryFg">
         {driverFirstName[0]?.toUpperCase()}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs text-gray-500">Your driver</p>
-        <p className="text-sm font-semibold text-gray-900">{driverFirstName}</p>
+        <p className="text-xs text-textMuted">Your driver</p>
+        <p className="text-sm font-semibold text-text">{driverFirstName}</p>
       </div>
       {driverPhone && (
         <a
           href={`tel:${driverPhone}`}
           aria-label="Call driver"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E85D26] text-white hover:bg-[#d44e1e] transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primaryFg transition-colors hover:bg-primaryHover focus-visible:outline-none focus-visible:shadow-focus"
         >
           <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
             <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
@@ -263,10 +263,9 @@ function DriverInfo({
 
 function EstimatedDelivery({ minutes }: { minutes: number }) {
   return (
-    <div className="mt-4 rounded-xl bg-orange-50 px-4 py-3">
-      <p className="text-sm text-orange-800">
-        Estimated delivery in{' '}
-        <span className="font-semibold">{minutes} min</span>
+    <div className="mt-4 rounded-xl bg-primarySoft px-4 py-3">
+      <p className="text-sm text-primary">
+        Estimated delivery in <span className="font-semibold">{minutes} min</span>
       </p>
     </div>
   );
@@ -282,8 +281,8 @@ export function OrderProgressStepper(props: OrderProgressStepperProps) {
 
   if (status === 'cancelled' || status === 'failed') {
     return (
-      <div className="rounded-xl bg-red-50 p-6 text-center">
-        <p className="text-base font-semibold text-red-700">
+      <div className="rounded-xl bg-dangerSoft p-6 text-center">
+        <p className="text-base font-semibold text-danger">
           This order was cancelled.
         </p>
       </div>
@@ -292,8 +291,8 @@ export function OrderProgressStepper(props: OrderProgressStepperProps) {
 
   if (status === 'refunded') {
     return (
-      <div className="rounded-xl bg-gray-50 p-6 text-center">
-        <p className="text-base font-semibold text-gray-700">
+      <div className="rounded-xl bg-surfaceMuted p-6 text-center">
+        <p className="text-base font-semibold text-text">
           Refund in progress or completed.
         </p>
       </div>
@@ -304,8 +303,8 @@ export function OrderProgressStepper(props: OrderProgressStepperProps) {
   const isDelivered = currentIndex >= 5;
 
   return (
-    <div className="rounded-xl bg-white p-6 shadow-sm">
-      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500">
+    <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-textMuted">
         Order Progress
       </h3>
 

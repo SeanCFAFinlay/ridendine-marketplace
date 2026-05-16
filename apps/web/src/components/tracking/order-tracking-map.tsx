@@ -79,7 +79,7 @@ export default function OrderTrackingMap({
     const cut = Math.max(1, Math.ceil((latLngs.length - 1) * (p / 100)) + 1);
     const progressPts = latLngs.slice(0, Math.min(cut, latLngs.length));
     if (progressPts.length >= 2) {
-      const prog = L.polyline(progressPts, { color: '#E85D26', weight: 6, opacity: 1 }).addTo(map);
+      const prog = L.polyline(progressPts, { color: '#EA5B26', weight: 6, opacity: 1 }).addTo(map);
       progressLayerRef.current = prog;
     }
 

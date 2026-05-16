@@ -86,13 +86,13 @@ export default async function OrderConfirmationPage({ params }: Props) {
 
   if (error || !typedOrder) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="container py-8">
-          <Card className="p-8 text-center">
-            <h2 className="text-xl font-semibold text-gray-900">Order not found</h2>
+          <Card className="p-8 text-center" elevated>
+            <h2 className="text-xl font-semibold text-text">Order not found</h2>
             <Link href="/chefs">
-              <Button className="mt-4">Browse Chefs</Button>
+              <Button variant="primary" className="mt-4">Browse Chefs</Button>
             </Link>
           </Card>
         </main>
@@ -109,31 +109,31 @@ export default async function OrderConfirmationPage({ params }: Props) {
   const driverFirstName = delivery?.drivers?.first_name ?? null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header />
 
       <main className="container py-8">
         <div className="mx-auto max-w-2xl space-y-6">
           {/* Confirmation banner */}
-          <div className="flex items-center gap-4 rounded-xl bg-white p-6 shadow-sm">
-            <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-green-100">
-              <svg className="h-7 w-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <Card padding="lg" elevated className="flex items-center gap-4">
+            <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-successSoft">
+              <svg className="h-7 w-7 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Order Confirmed!</h1>
-              <p className="text-sm text-gray-600">
+              <h1 className="font-display text-xl font-bold tracking-tight text-text">Order Confirmed!</h1>
+              <p className="text-sm text-textMuted">
                 Thank you for your order. Total:{' '}
-                <span className="font-semibold text-[#E85D26]">
+                <span className="font-semibold text-primary">
                   ${Number(typedOrder.total).toFixed(2)}
                 </span>
               </p>
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-1 text-xs text-textSubtle">
                 A confirmation email has been sent to your address.
               </p>
             </div>
-          </div>
+          </Card>
 
           {/* Live tracker */}
           <LiveOrderTracker

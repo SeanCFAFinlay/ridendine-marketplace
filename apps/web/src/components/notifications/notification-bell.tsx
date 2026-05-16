@@ -212,15 +212,17 @@ export function NotificationBell() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+        className="relative rounded-full p-2 transition-colors hover:bg-surfaceMuted focus-visible:outline-none focus-visible:shadow-focus"
         aria-label="Notifications"
       >
         <svg
-          className="h-6 w-6 text-gray-600"
+          className="h-6 w-6 text-textMuted"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          aria-hidden="true"
         >
           <path
             strokeLinecap="round"
@@ -230,20 +232,21 @@ export function NotificationBell() {
           />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#E85D26] text-xs font-bold text-white">
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primaryFg">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 rounded-lg bg-white shadow-lg border border-gray-200 z-50">
-          <div className="flex items-center justify-between border-b p-4">
-            <h3 className="font-semibold text-gray-900">Notifications</h3>
+        <div className="absolute right-0 z-dropdown mt-2 w-80 rounded-lg border border-border bg-surface shadow-lg">
+          <div className="flex items-center justify-between border-b border-divider p-4">
+            <h3 className="font-semibold text-text">Notifications</h3>
             {unreadCount > 0 && (
               <button
+                type="button"
                 onClick={markAllAsRead}
-                className="text-sm text-[#E85D26] hover:underline"
+                className="text-sm text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:shadow-focus"
               >
                 Mark all read
               </button>
@@ -251,23 +254,25 @@ export function NotificationBell() {
           </div>
 
           {showPushPrompt && pushPermission === 'default' && (
-            <div className="border-b border-orange-100 bg-orange-50 px-4 py-3">
-              <p className="text-xs text-orange-800">
+            <div className="border-b border-divider bg-primarySoft px-4 py-3">
+              <p className="text-xs text-primary">
                 Enable notifications to track your orders in real time.
               </p>
               <div className="mt-2 flex gap-2">
                 <button
+                  type="button"
                   onClick={async () => {
                     await pushSubscribe();
                     setShowPushPrompt(false);
                   }}
-                  className="rounded bg-[#E85D26] px-3 py-1 text-xs font-medium text-white hover:bg-[#d44e1e]"
+                  className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primaryFg transition-colors hover:bg-primaryHover focus-visible:outline-none focus-visible:shadow-focus"
                 >
                   Enable
                 </button>
                 <button
+                  type="button"
                   onClick={() => setShowPushPrompt(false)}
-                  className="rounded border border-orange-200 px-3 py-1 text-xs text-orange-700 hover:bg-orange-100"
+                  className="rounded-md border border-border bg-surface px-3 py-1 text-xs text-textMuted transition-colors hover:bg-surfaceMuted focus-visible:outline-none focus-visible:shadow-focus"
                 >
                   Dismiss
                 </button>
@@ -277,9 +282,9 @@ export function NotificationBell() {
 
           <div className="max-h-96 overflow-y-auto">
             {loading ? (
-              <div className="p-4 text-center text-gray-500">Loading...</div>
+              <div className="p-4 text-center text-textMuted">Loading…</div>
             ) : notifications.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-textMuted">
                 <div className="text-3xl mb-2">🔔</div>
                 <p>No notifications yet</p>
               </div>
@@ -287,8 +292,8 @@ export function NotificationBell() {
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`flex gap-3 p-4 border-b hover:bg-gray-50 cursor-pointer ${
-                    !notification.read ? 'bg-orange-50' : ''
+                  className={`flex cursor-pointer gap-3 border-b border-divider p-4 transition-colors hover:bg-surfaceMuted ${
+                    !notification.read ? 'bg-primarySoft' : ''
                   }`}
                   onClick={() => {
                     markAsRead(notification.id);
@@ -298,12 +303,12 @@ export function NotificationBell() {
                   }}
                 >
                   <span className="text-2xl">{getIcon(notification.type)}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{notification.title}</p>
-                    <p className="text-sm text-gray-600 line-clamp-2">{notification.message}</p>
-                    <p className="text-xs text-gray-400 mt-1">{formatTime(notification.created_at)}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-text">{notification.title}</p>
+                    <p className="text-sm text-textMuted line-clamp-2">{notification.message}</p>
+                    <p className="mt-1 text-xs text-textSubtle">{formatTime(notification.created_at)}</p>
                   </div>
-                  {!notification.read && <div className="h-2 w-2 rounded-full bg-[#E85D26]" />}
+                  {!notification.read && <div className="h-2 w-2 rounded-full bg-primary" />}
                 </div>
               ))
             )}

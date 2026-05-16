@@ -67,34 +67,34 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <div className="min-h-screen bg-background">
       <Header />
 
       <main className="container py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-[28px] font-bold tracking-tight text-[#2D3436]">
+            <h1 className="font-display text-3xl font-bold tracking-tight text-text">
               Account Settings
             </h1>
-            <p className="mt-1 text-[15px] leading-[1.6] text-[#5F6368]">
+            <p className="mt-1 text-base leading-relaxed text-textMuted">
               Manage your profile and preferences
             </p>
           </div>
           <Link href="/account">
-            <Button variant="outline">Back to Account</Button>
+            <Button variant="secondary">Back to Account</Button>
           </Link>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             {successMessage && (
-              <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-[15px] text-green-700">
+              <div className="rounded-md border border-success/30 bg-successSoft p-4 text-sm text-success">
                 {successMessage}
               </div>
             )}
 
             <Card padding="lg">
-              <h2 className="mb-6 text-[20px] font-semibold text-[#2D3436]">
+              <h2 className="mb-6 text-xl font-semibold text-text">
                 Profile Information
               </h2>
               <form onSubmit={handleProfileSubmit} className="space-y-4">
@@ -146,11 +146,7 @@ export default function SettingsPage() {
                   placeholder="(555) 123-4567"
                 />
                 <div className="flex justify-end">
-                  <Button
-                    type="submit"
-                    loading={isSaving}
-                    className="bg-[#FF6B6B] hover:bg-[#FF5252]"
-                  >
+                  <Button type="submit" variant="primary" loading={isSaving}>
                     Save Changes
                   </Button>
                 </div>
@@ -158,105 +154,48 @@ export default function SettingsPage() {
             </Card>
 
             <Card padding="lg">
-              <h2 className="mb-6 text-[20px] font-semibold text-[#2D3436]">
+              <h2 className="mb-6 text-xl font-semibold text-text">
                 Notification Preferences
               </h2>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-[15px] font-medium text-[#2D3436]">
-                      Order Updates
-                    </h3>
-                    <p className="text-[14px] text-[#5F6368]">
-                      Get notified about order status changes
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleNotificationToggle('orderUpdates')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      notificationSettings.orderUpdates
-                        ? 'bg-[#FF6B6B]'
-                        : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        notificationSettings.orderUpdates
-                          ? 'translate-x-6'
-                          : 'translate-x-1'
+                {[
+                  { key: 'orderUpdates' as const, title: 'Order Updates', desc: 'Get notified about order status changes' },
+                  { key: 'promotions' as const, title: 'Promotions & Offers', desc: 'Receive special offers and promotions' },
+                  { key: 'newChefs' as const, title: 'New Chefs', desc: 'Be notified when new chefs join in your area' },
+                ].map(({ key, title, desc }) => (
+                  <div key={key} className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium text-text">{title}</h3>
+                      <p className="text-sm text-textMuted">{desc}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleNotificationToggle(key)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:shadow-focus ${
+                        notificationSettings[key] ? 'bg-primary' : 'bg-surfaceMuted'
                       }`}
-                    />
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-[15px] font-medium text-[#2D3436]">
-                      Promotions & Offers
-                    </h3>
-                    <p className="text-[14px] text-[#5F6368]">
-                      Receive special offers and promotions
-                    </p>
+                      aria-pressed={notificationSettings[key]}
+                      aria-label={`Toggle ${title}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${
+                          notificationSettings[key] ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleNotificationToggle('promotions')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      notificationSettings.promotions
-                        ? 'bg-[#FF6B6B]'
-                        : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        notificationSettings.promotions
-                          ? 'translate-x-6'
-                          : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-[15px] font-medium text-[#2D3436]">
-                      New Chefs
-                    </h3>
-                    <p className="text-[14px] text-[#5F6368]">
-                      Be notified when new chefs join in your area
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleNotificationToggle('newChefs')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      notificationSettings.newChefs
-                        ? 'bg-[#FF6B6B]'
-                        : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        notificationSettings.newChefs
-                          ? 'translate-x-6'
-                          : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
+                ))}
               </div>
             </Card>
 
-            <Card padding="lg" className="border-red-200">
-              <h2 className="mb-4 text-[20px] font-semibold text-red-600">
+            <Card padding="lg" className="border-danger/30">
+              <h2 className="mb-4 text-xl font-semibold text-danger">
                 Danger Zone
               </h2>
-              <p className="mb-4 text-[15px] leading-[1.6] text-[#5F6368]">
-                Once you delete your account, there is no going back. Please be
-                certain.
+              <p className="mb-4 text-sm leading-relaxed text-textMuted">
+                Once you delete your account, there is no going back. Please be certain.
               </p>
-              <Button variant="destructive" size="sm">
+              <Button variant="danger" size="sm">
                 Delete Account
               </Button>
             </Card>
@@ -264,24 +203,20 @@ export default function SettingsPage() {
 
           <div className="space-y-6">
             <Card padding="lg">
-              <h3 className="mb-3 text-[17px] font-semibold text-[#2D3436]">
-                Password
-              </h3>
-              <p className="mb-4 text-[15px] leading-[1.6] text-[#5F6368]">
+              <h3 className="mb-3 text-base font-semibold text-text">Password</h3>
+              <p className="mb-4 text-sm leading-relaxed text-textMuted">
                 Update your password to keep your account secure
               </p>
               <Link href="/auth/forgot-password">
-                <Button variant="outline" size="sm">
+                <Button variant="secondary" size="sm">
                   Change Password
                 </Button>
               </Link>
             </Card>
 
             <Card padding="lg">
-              <h3 className="mb-3 text-[17px] font-semibold text-[#2D3436]">
-                Privacy & Data
-              </h3>
-              <p className="mb-4 text-[15px] leading-[1.6] text-[#5F6368]">
+              <h3 className="mb-3 text-base font-semibold text-text">Privacy & Data</h3>
+              <p className="mb-4 text-sm leading-relaxed text-textMuted">
                 Learn how we handle your data
               </p>
               <div className="space-y-2">

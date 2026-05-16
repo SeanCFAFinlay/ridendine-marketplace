@@ -138,7 +138,7 @@ export default function OrdersPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="container py-8">
           <div className="flex justify-center py-12">
@@ -150,12 +150,12 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header />
 
       <main className="container py-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Order History</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-text">Order History</h1>
           <Link href="/account">
             <Button variant="ghost" size="sm">
               ← Back to Account
@@ -165,7 +165,7 @@ export default function OrdersPage() {
 
         {error ? (
           <Card className="mt-8 p-6">
-            <p className="text-sm text-red-600">{error}</p>
+            <p className="text-sm text-danger">{error}</p>
           </Card>
         ) : orders.length === 0 ? (
           <Card className="mt-8">
@@ -178,31 +178,31 @@ export default function OrdersPage() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-text">
                         #{order.order_number}
                       </span>
                       <Badge variant={statusVariant(order.status)}>
                         {order.status.replace(/_/g, ' ')}
                       </Badge>
                     </div>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-textMuted">
                       {formatDate(order.created_at)}
                     </p>
                     {order.storefront && (
                       <Link
                         href={`/chefs/${order.storefront.slug}`}
-                        className="mt-1 text-sm text-brand-600 hover:text-brand-700"
+                        className="mt-1 text-sm text-primary transition-colors hover:underline"
                       >
                         {order.storefront.name}
                       </Link>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-semibold text-gray-900">
+                    <span className="font-semibold text-text">
                       ${Number(order.total).toFixed(2)}
                     </span>
                     <Link href={orderConfirmationPath(order.id)}>
-                      <Button variant="outline" size="sm">
+                      <Button variant="secondary" size="sm">
                         View Details
                       </Button>
                     </Link>
@@ -210,12 +210,13 @@ export default function OrdersPage() {
                       order.items &&
                       order.items.length > 0 && (
                         <Button
+                          variant="primary"
                           size="sm"
                           disabled={reorderingId === order.id}
+                          loading={reorderingId === order.id}
                           onClick={() => void handleReorder(order)}
-                          className="bg-[#E85D26] text-white hover:bg-[#d44e1e]"
                         >
-                          {reorderingId === order.id ? 'Adding...' : 'Reorder'}
+                          {reorderingId === order.id ? 'Adding…' : 'Reorder'}
                         </Button>
                       )}
                   </div>

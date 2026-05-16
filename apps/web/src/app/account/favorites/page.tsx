@@ -16,21 +16,21 @@ export default function FavoritesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <div className="min-h-screen bg-background">
       <Header />
 
       <main className="container py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-[28px] font-bold tracking-tight text-[#2D3436]">
+            <h1 className="font-display text-3xl font-bold tracking-tight text-text">
               My Favorites
             </h1>
-            <p className="mt-1 text-[15px] leading-[1.6] text-[#5F6368]">
+            <p className="mt-1 text-base leading-relaxed text-textMuted">
               Chefs and dishes you&apos;ve saved for later
             </p>
           </div>
           <Link href="/account">
-            <Button variant="outline">Back to Account</Button>
+            <Button variant="secondary">Back to Account</Button>
           </Link>
         </div>
 
@@ -42,6 +42,7 @@ export default function FavoritesPage() {
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -55,39 +56,29 @@ export default function FavoritesPage() {
             description="Save your favorite chefs and dishes to find them easily later"
             action={
               <Link href="/chefs">
-                <Button className="bg-[#FF6B6B] hover:bg-[#FF5252]">
-                  Browse Chefs
-                </Button>
+                <Button variant="primary">Browse Chefs</Button>
               </Link>
             }
           />
         </Card>
 
-        <div className="mt-8 rounded-lg border border-[#E8E8E8] bg-white p-6">
-          <h2 className="text-[17px] font-semibold text-[#2D3436]">
-            How to save favorites
-          </h2>
-          <ul className="mt-3 space-y-2 text-[15px] leading-[1.6] text-[#5F6368]">
+        <Card padding="lg" className="mt-8">
+          <h2 className="text-lg font-semibold text-text">How to save favorites</h2>
+          <ul className="mt-3 space-y-2 text-sm leading-relaxed text-textMuted">
             <li className="flex gap-2">
-              <span className="text-[#FF6B6B]">•</span>
-              <span>
-                Click the heart icon on any chef profile to save them
-              </span>
+              <span className="font-semibold text-primary">•</span>
+              <span>Click the heart icon on any chef profile to save them</span>
             </li>
             <li className="flex gap-2">
-              <span className="text-[#FF6B6B]">•</span>
-              <span>
-                Favorite dishes will appear here for quick reordering
-              </span>
+              <span className="font-semibold text-primary">•</span>
+              <span>Favorite dishes will appear here for quick reordering</span>
             </li>
             <li className="flex gap-2">
-              <span className="text-[#FF6B6B]">•</span>
-              <span>
-                Get notified when your favorite chefs add new menu items
-              </span>
+              <span className="font-semibold text-primary">•</span>
+              <span>Get notified when your favorite chefs add new menu items</span>
             </li>
           </ul>
-        </div>
+        </Card>
       </main>
     </div>
   );

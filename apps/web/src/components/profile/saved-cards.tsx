@@ -105,7 +105,7 @@ export function SavedCards() {
 
   return (
     <Card padding="lg">
-      <h2 className="mb-4 text-[20px] font-semibold text-[#2D3436]">Saved Payment Methods</h2>
+      <h2 className="mb-4 text-xl font-semibold text-text">Saved Payment Methods</h2>
 
       {loading && (
         <p className="text-sm text-gray-500">Loading saved cards...</p>
