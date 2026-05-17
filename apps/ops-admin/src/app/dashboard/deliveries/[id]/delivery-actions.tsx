@@ -67,14 +67,14 @@ export function DeliveryActions({
   return (
     <>
       <div className="space-y-4">
-        <div className="rounded-lg border border-gray-700 bg-opsPanel p-4">
-          <p className="text-sm text-gray-300">
+        <div className="rounded-lg border border-border bg-surface p-4">
+          <p className="text-sm text-textSubtle">
             All interventions on this page are engine-backed and audit logged. Delivery execution status remains owned by the live workflow.
           </p>
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
             {error}
           </div>
         )}
@@ -84,7 +84,7 @@ export function DeliveryActions({
             <button
               type="button"
               onClick={() => setMode(assignedDriverId ? 'reassign' : 'assign')}
-              className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-medium text-white"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white"
             >
               {assignedDriverId ? 'Manual Reassign' : 'Manual Assign'}
             </button>
@@ -94,7 +94,7 @@ export function DeliveryActions({
               type="button"
               onClick={() => void runDispatchAction({ action: 'retry_assignment', deliveryId })}
               disabled={submitting}
-              className="rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-200 disabled:opacity-50"
+              className="rounded-lg border border-border px-4 py-2 text-sm text-textSubtle disabled:opacity-50"
             >
               Retry Auto-Assign
             </button>
@@ -110,7 +110,7 @@ export function DeliveryActions({
                 })
               }
               disabled={submitting}
-              className="rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-200 disabled:opacity-50"
+              className="rounded-lg border border-border px-4 py-2 text-sm text-textSubtle disabled:opacity-50"
             >
               Flag Offer Issue
             </button>
@@ -119,7 +119,7 @@ export function DeliveryActions({
             <button
               type="button"
               onClick={() => setMode('escalate')}
-              className="rounded-lg border border-yellow-500/40 px-4 py-2 text-sm text-yellow-200"
+              className="rounded-lg border border-warning/40 px-4 py-2 text-sm text-warning"
             >
               Escalate Exception
             </button>
@@ -133,7 +133,7 @@ export function DeliveryActions({
                   exceptionId: openExceptionId,
                 })
               }
-              className="rounded-lg border border-blue-500/40 px-4 py-2 text-sm text-blue-200"
+              className="rounded-lg border border-info/40 px-4 py-2 text-sm text-info"
             >
               Acknowledge Issue
             </button>
@@ -141,7 +141,7 @@ export function DeliveryActions({
           <button
             type="button"
             onClick={() => setMode('note')}
-            className="rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-200"
+            className="rounded-lg border border-border px-4 py-2 text-sm text-textSubtle"
           >
             Add Ops Note
           </button>
@@ -149,7 +149,7 @@ export function DeliveryActions({
             <button
               type="button"
               onClick={() => setMode('cancel')}
-              className="rounded-lg border border-red-500/40 px-4 py-2 text-sm text-red-200"
+              className="rounded-lg border border-danger/40 px-4 py-2 text-sm text-danger"
             >
               Cancel Delivery
             </button>
@@ -182,7 +182,7 @@ export function DeliveryActions({
             <select
               value={selectedDriverId}
               onChange={(event) => setSelectedDriverId(event.target.value)}
-              className="w-full rounded-lg border border-gray-600 bg-[#0d1528] px-3 py-2 text-white"
+              className="w-full rounded-lg border border-border bg-[#0d1528] px-3 py-2 text-white"
             >
               <option value="">Choose a driver...</option>
               {drivers.map((driver) => (
@@ -203,12 +203,12 @@ export function DeliveryActions({
                   ? 'Add the operator note'
                   : 'Add the required reason'
               }
-              className="w-full rounded-lg border border-gray-600 bg-[#0d1528] px-3 py-2 text-white"
+              className="w-full rounded-lg border border-border bg-[#0d1528] px-3 py-2 text-white"
             />
           )}
 
           {error && (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <div className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
               {error}
             </div>
           )}
@@ -217,7 +217,7 @@ export function DeliveryActions({
             <button
               type="button"
               onClick={() => setMode(null)}
-              className="rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-300"
+              className="rounded-lg border border-border px-4 py-2 text-sm text-textSubtle"
             >
               Close
             </button>
@@ -264,7 +264,7 @@ export function DeliveryActions({
                   });
                 }
               }}
-              className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               {submitting ? 'Saving…' : 'Submit'}
             </button>

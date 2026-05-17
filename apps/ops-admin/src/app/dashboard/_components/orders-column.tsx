@@ -72,31 +72,31 @@ export function OrdersColumn({
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
       {COLS.map((col) => (
-        <div key={col.key} className="flex min-h-[280px] flex-col gap-2 rounded-lg border border-gray-800 bg-[#121c2c] p-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400">{col.title}</h3>
+        <div key={col.key} className="flex min-h-[280px] flex-col gap-2 rounded-lg border border-border bg-[#121c2c] p-3">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-textMuted">{col.title}</h3>
           <div className="flex flex-1 flex-col gap-2 overflow-y-auto max-h-[70vh]">
             {(grouped.get(col.key) ?? []).map((order) => {
               const flags = computeOrderSlaFlags(order, order.delivery);
-              const activeRing = highlightedOrderId === order.id ? 'ring-2 ring-[#E85D26]' : '';
+              const activeRing = highlightedOrderId === order.id ? 'ring-2 ring-primary' : '';
               return (
                 <Link key={order.id} href={`/dashboard/orders/${order.id}`}>
-                  <Card className={`cursor-pointer border-gray-700 bg-opsPanel p-3 transition hover:border-[#E85D26] ${activeRing}`}>
+                  <Card className={`cursor-pointer border-border bg-surface p-3 transition hover:border-primary ${activeRing}`}>
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-mono text-sm text-white">#{order.order_number}</span>
-                      <span className="text-xs text-gray-500">{formatAge(order.created_at)}</span>
+                      <span className="text-xs text-textMuted">{formatAge(order.created_at)}</span>
                     </div>
-                    <p className="mt-1 text-xs text-gray-400">Chef · {order.chef_name}</p>
-                    <p className="text-xs text-gray-400">Customer · {order.customer_name}</p>
-                    <p className="mt-1 text-xs text-gray-500">ETA {etaLabel(order)}</p>
+                    <p className="mt-1 text-xs text-textMuted">Chef · {order.chef_name}</p>
+                    <p className="text-xs text-textMuted">Customer · {order.customer_name}</p>
+                    <p className="mt-1 text-xs text-textMuted">ETA {etaLabel(order)}</p>
                     <div className="mt-2 flex flex-wrap gap-1">
                       {flags.slaBreach && (
-                        <Badge className="bg-red-500/20 text-red-200 text-[10px]">SLA</Badge>
+                        <Badge className="bg-danger/20 text-danger text-[10px]">SLA</Badge>
                       )}
                       {flags.delayed && (
-                        <Badge className="bg-amber-500/20 text-amber-100 text-[10px]">Delayed</Badge>
+                        <Badge className="bg-warning/20 text-warning text-[10px]">Delayed</Badge>
                       )}
                       {flags.dispatchIssue && (
-                        <Badge className="bg-orange-600/30 text-orange-100 text-[10px]">Dispatch</Badge>
+                        <Badge className="bg-primary/30 text-primary text-[10px]">Dispatch</Badge>
                       )}
                     </div>
                   </Card>

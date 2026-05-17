@@ -130,7 +130,7 @@ export default function OrdersPage() {
     return (
       <DashboardLayout>
         <div className="mx-auto max-w-7xl">
-          <div className="text-center text-gray-400">Loading...</div>
+          <div className="text-center text-textMuted">Loading...</div>
         </div>
       </DashboardLayout>
     );
@@ -142,9 +142,9 @@ export default function OrdersPage() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Order Management</h1>
-            <p className="mt-2 text-gray-400">Monitor and manage all platform orders</p>
+            <p className="mt-2 text-textMuted">Monitor and manage all platform orders</p>
           </div>
-          <Badge className="bg-[#E85D26] text-white">{orders.length} Total Orders</Badge>
+          <Badge className="bg-primary text-white">{orders.length} Total Orders</Badge>
         </div>
 
         {/* Status Filter Tabs */}
@@ -162,8 +162,8 @@ export default function OrdersPage() {
               onClick={() => setFilter(tab.key)}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                 filter === tab.key
-                  ? 'bg-[#E85D26] text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  ? 'bg-primary text-white'
+                  : 'bg-surface text-textSubtle hover:bg-surfaceMuted'
               }`}
             >
               {tab.label} ({statusCounts[tab.key as keyof typeof statusCounts] || 0})
@@ -171,11 +171,11 @@ export default function OrdersPage() {
           ))}
         </div>
 
-        <Card className="border-gray-800 bg-opsPanel">
+        <Card className="border-border bg-surface">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-800 text-left text-sm text-gray-400">
+                <tr className="border-b border-border text-left text-sm text-textMuted">
                   <th className="pb-4 pl-6 font-medium">Order Number</th>
                   <th className="pb-4 font-medium">Chef Storefront</th>
                   <th className="pb-4 font-medium">Status</th>
@@ -186,11 +186,11 @@ export default function OrdersPage() {
               </thead>
               <tbody className="text-sm">
                 {filteredOrders.map((order) => (
-                  <tr key={order.id} className="border-b border-gray-800/50">
+                  <tr key={order.id} className="border-b border-border/50">
                     <td className="py-4 pl-6 font-mono font-medium text-white">
                       {order.order_number}
                     </td>
-                    <td className="py-4 text-gray-300">
+                    <td className="py-4 text-textSubtle">
                       {order.chef_storefronts?.name ?? 'N/A'}
                     </td>
                     <td className="py-4">
@@ -201,7 +201,7 @@ export default function OrdersPage() {
                     <td className="py-4 font-medium text-white">
                       ${Number(order.total).toFixed(2)}
                     </td>
-                    <td className="py-4 text-gray-400">
+                    <td className="py-4 text-textMuted">
                       {new Date(order.created_at).toLocaleString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -213,7 +213,7 @@ export default function OrdersPage() {
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/dashboard/orders/${order.id}`}
-                          className="rounded bg-[#E85D26] px-3 py-1 text-xs text-white transition-colors hover:bg-[#d54d1a]"
+                          className="rounded bg-primary px-3 py-1 text-xs text-white transition-colors hover:bg-primaryHover"
                         >
                           View
                         </Link>
@@ -221,13 +221,13 @@ export default function OrdersPage() {
                           <>
                             <button
                               onClick={() => handleStatusChange(order.id, 'accepted')}
-                              className="rounded bg-green-600 px-3 py-1 text-xs text-white transition-colors hover:bg-green-500"
+                              className="rounded bg-success px-3 py-1 text-xs text-white transition-colors hover:bg-success"
                             >
                               Accept
                             </button>
                             <button
                               onClick={() => handleStatusChange(order.id, 'cancelled')}
-                              className="rounded bg-red-600 px-3 py-1 text-xs text-white transition-colors hover:bg-red-500"
+                              className="rounded bg-danger px-3 py-1 text-xs text-white transition-colors hover:bg-danger"
                             >
                               Cancel
                             </button>
@@ -236,7 +236,7 @@ export default function OrdersPage() {
                         {order.status === 'accepted' && (
                           <button
                             onClick={() => handleStatusChange(order.id, 'preparing')}
-                            className="rounded bg-blue-600 px-3 py-1 text-xs text-white transition-colors hover:bg-blue-500"
+                            className="rounded bg-info px-3 py-1 text-xs text-white transition-colors hover:bg-info"
                           >
                             Start Prep
                           </button>
@@ -244,7 +244,7 @@ export default function OrdersPage() {
                         {order.status === 'preparing' && (
                           <button
                             onClick={() => handleStatusChange(order.id, 'ready')}
-                            className="rounded bg-green-600 px-3 py-1 text-xs text-white transition-colors hover:bg-green-500"
+                            className="rounded bg-success px-3 py-1 text-xs text-white transition-colors hover:bg-success"
                           >
                             Mark Ready
                           </button>
@@ -256,7 +256,7 @@ export default function OrdersPage() {
               </tbody>
             </table>
             {filteredOrders.length === 0 && (
-              <div className="py-12 text-center text-gray-400">
+              <div className="py-12 text-center text-textMuted">
                 No orders found {filter !== 'all' && `with status "${filter}"`}
               </div>
             )}

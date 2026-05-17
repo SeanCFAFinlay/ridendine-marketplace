@@ -31,22 +31,22 @@ export default async function FinanceInstantPayoutsPage() {
         <FinanceSubnav />
         <div>
           <h1 className="text-3xl font-bold text-white">Instant payout queue</h1>
-          <p className="mt-1 text-gray-400">
+          <p className="mt-1 text-textMuted">
             Driver-requested payouts (1.5% fee posted to ledger). Execute / cancel via API or future actions.
           </p>
         </div>
         {error ? (
-          <Card className="border-red-900/50 bg-opsPanel p-6 text-red-200">Failed to load queue.</Card>
+          <Card className="border-danger/40 bg-surface p-6 text-danger">Failed to load queue.</Card>
         ) : (
-          <Card className="border-gray-800 bg-opsPanel p-6">
+          <Card className="border-border bg-surface p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Requests</h2>
-              <Badge className="bg-amber-500/20 text-amber-100">{(rows ?? []).length}</Badge>
+              <Badge className="bg-warning/20 text-warning">{(rows ?? []).length}</Badge>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-700 text-gray-400">
+                  <tr className="border-b border-border text-textMuted">
                     <th className="py-2">Requested</th>
                     <th className="py-2">Driver</th>
                     <th className="py-2">Amount</th>
@@ -57,15 +57,15 @@ export default async function FinanceInstantPayoutsPage() {
                 </thead>
                 <tbody>
                   {(rows ?? []).map((r: Record<string, unknown>) => (
-                    <tr key={r.id as string} className="border-b border-gray-800 text-gray-200">
+                    <tr key={r.id as string} className="border-b border-border text-textSubtle">
                       <td className="py-3 whitespace-nowrap">
                         {new Date(r.requested_at as string).toLocaleString()}
                       </td>
                       <td className="py-3 font-mono text-xs">{(r.driver_id as string)?.slice(0, 8)}…</td>
-                      <td className="py-3 text-emerald-200">{fmtCents(r.amount_cents as number)}</td>
+                      <td className="py-3 text-success">{fmtCents(r.amount_cents as number)}</td>
                       <td className="py-3">{fmtCents(r.fee_cents as number)}</td>
                       <td className="py-3">{r.status as string}</td>
-                      <td className="py-3 text-xs text-red-300">{(r.failure_reason as string) ?? '—'}</td>
+                      <td className="py-3 text-xs text-danger">{(r.failure_reason as string) ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>

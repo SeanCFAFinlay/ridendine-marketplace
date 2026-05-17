@@ -131,7 +131,7 @@ export default function DispatchConsolePage() {
       header: 'Time',
       sortable: true,
       cell: (row) => (
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-textMuted">
           {new Date(row.offered_at).toLocaleTimeString()}
         </span>
       ),
@@ -140,7 +140,7 @@ export default function DispatchConsolePage() {
       key: 'driver_name',
       header: 'Driver',
       cell: (row) => (
-        <span className="font-medium text-gray-200">
+        <span className="font-medium text-textSubtle">
           {row.driver_name ?? row.driver_id.slice(0, 8) + '…'}
         </span>
       ),
@@ -160,7 +160,7 @@ export default function DispatchConsolePage() {
       header: 'Latency (ms)',
       sortable: true,
       cell: (row) => (
-        <span className="text-gray-400">
+        <span className="text-textMuted">
           {row.responseTimeMs != null ? row.responseTimeMs : '—'}
         </span>
       ),
@@ -170,7 +170,7 @@ export default function DispatchConsolePage() {
       header: 'Win %',
       sortable: true,
       cell: (row) => (
-        <span className="text-gray-400">
+        <span className="text-textMuted">
           {row.successRate != null ? `${Math.round(row.successRate * 100)}%` : '—'}
         </span>
       ),
@@ -191,7 +191,7 @@ export default function DispatchConsolePage() {
   if (board === undefined && !error) {
     return (
       <DashboardLayout>
-        <div className="flex min-h-[40vh] items-center justify-center text-gray-400">
+        <div className="flex min-h-[40vh] items-center justify-center text-textMuted">
           Loading dispatch…
         </div>
       </DashboardLayout>
@@ -201,7 +201,7 @@ export default function DispatchConsolePage() {
   if (error && board === undefined) {
     return (
       <DashboardLayout>
-        <div className="mx-auto max-w-lg p-6 text-red-400">{error}</div>
+        <div className="mx-auto max-w-lg p-6 text-danger">{error}</div>
       </DashboardLayout>
     );
   }
@@ -215,36 +215,36 @@ export default function DispatchConsolePage() {
           title="Dispatch Console"
           subtitle="Auto-dispatch queue, active routes, and last 24h offer outcomes. Refreshes every 30s."
         />
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
 
         <div className="grid gap-4 lg:grid-cols-3">
           {/* Pending queue */}
-          <Card className="border-gray-800 bg-opsPanel p-4">
+          <Card className="border-border bg-surface p-4">
             <div className="mb-3 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-gray-400" />
+              <Clock className="h-4 w-4 text-textMuted" />
               <h2 className="text-sm font-semibold text-white">Awaiting Driver</h2>
-              <span className="ml-auto rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
+              <span className="ml-auto rounded-full bg-surfaceMuted px-2 py-0.5 text-xs text-textSubtle">
                 {board.pendingQueue?.length ?? 0}
               </span>
             </div>
             <div className="max-h-[70vh] space-y-3 overflow-y-auto pr-1">
               {board.pendingQueue?.length ? (
                 board.pendingQueue.map((item) => (
-                  <div key={item.deliveryId} className="rounded-lg border border-gray-700 p-3 text-sm">
+                  <div key={item.deliveryId} className="rounded-lg border border-border p-3 text-sm">
                     <div className="font-medium text-white">
                       #{item.orderNumber} · {item.storefrontName}
                     </div>
-                    <p className="mt-1 text-xs text-gray-400">{item.pickupAddress}</p>
-                    <p className="text-xs text-gray-500">Attempts: {item.assignmentAttemptsCount}</p>
+                    <p className="mt-1 text-xs text-textMuted">{item.pickupAddress}</p>
+                    <p className="text-xs text-textMuted">Attempts: {item.assignmentAttemptsCount}</p>
                     <div className="mt-2 space-y-1">
-                      <p className="text-xs font-semibold text-gray-300">Ranked drivers (ETA)</p>
+                      <p className="text-xs font-semibold text-textSubtle">Ranked drivers (ETA)</p>
                       {item.topCandidates.map((c) => (
                         <div
                           key={c.driverId}
-                          className="flex items-center justify-between rounded bg-gray-900/60 px-2 py-1 text-xs"
+                          className="flex items-center justify-between rounded bg-text/60 px-2 py-1 text-xs"
                         >
                           <span className="truncate">{c.name}</span>
-                          <span className="shrink-0 text-gray-400">{formatEtaMinutes(c.distanceKm)}</span>
+                          <span className="shrink-0 text-textMuted">{formatEtaMinutes(c.distanceKm)}</span>
                         </div>
                       ))}
                     </div>
@@ -252,7 +252,7 @@ export default function DispatchConsolePage() {
                       {item.topCandidates[0] && (
                         <Button
                           size="sm"
-                          className="bg-[#E85D26] text-white hover:bg-[#d54d1a]"
+                          className="bg-primary text-white hover:bg-primaryHover"
                           disabled={busyId === item.deliveryId}
                           onClick={() => {
                             setActionReason('Manual dispatch override');
@@ -280,7 +280,7 @@ export default function DispatchConsolePage() {
                       {item.topCandidates[0] && (
                         <Link
                           href={`/dashboard/drivers/${item.topCandidates[0]!.driverId}`}
-                          className="inline-flex items-center rounded-md border border-gray-600 px-2 py-1 text-xs text-gray-200 hover:bg-gray-800"
+                          className="inline-flex items-center rounded-md border border-border px-2 py-1 text-xs text-textSubtle hover:bg-surface"
                         >
                           Contact
                         </Link>
@@ -299,16 +299,16 @@ export default function DispatchConsolePage() {
           </Card>
 
           {/* Map */}
-          <Card className="border-gray-800 bg-opsPanel p-4">
+          <Card className="border-border bg-surface p-4">
             <div className="mb-3 flex items-center gap-2">
-              <Truck className="h-4 w-4 text-gray-400" />
+              <Truck className="h-4 w-4 text-textMuted" />
               <h2 className="text-sm font-semibold text-white">Active Deliveries</h2>
             </div>
-            <div className="h-[420px] overflow-hidden rounded-lg border border-gray-800">
+            <div className="h-[420px] overflow-hidden rounded-lg border border-border">
               {mapDeliveries.length ? (
                 <DeliveryMap deliveries={mapDeliveries} className="h-full w-full" />
               ) : (
-                <div className="flex h-full items-center justify-center text-sm text-gray-500">
+                <div className="flex h-full items-center justify-center text-sm text-textMuted">
                   No active deliveries in queue.
                 </div>
               )}
@@ -316,9 +316,9 @@ export default function DispatchConsolePage() {
           </Card>
 
           {/* Offer history */}
-          <Card className="border-gray-800 bg-opsPanel p-4">
+          <Card className="border-border bg-surface p-4">
             <div className="mb-3 flex items-center gap-2">
-              <Users className="h-4 w-4 text-gray-400" />
+              <Users className="h-4 w-4 text-textMuted" />
               <h2 className="text-sm font-semibold text-white">Offer History (24h)</h2>
             </div>
             <DataTable
@@ -331,7 +331,7 @@ export default function DispatchConsolePage() {
                   description="Dispatch activity will appear here."
                 />
               }
-              className="border-gray-800 bg-transparent"
+              className="border-border bg-transparent"
             />
           </Card>
         </div>
@@ -343,7 +343,7 @@ export default function DispatchConsolePage() {
           title={pendingAction?.type === 'force_assign' ? 'Force Assign Driver' : 'Hold Delivery'}
         >
           <div className="space-y-4">
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-textMuted">
               {pendingAction?.type === 'force_assign'
                 ? 'Provide a reason for the manual override. This is audit-logged.'
                 : 'Add an ops note explaining the hold reason.'}
@@ -351,7 +351,7 @@ export default function DispatchConsolePage() {
             <textarea
               value={actionReason}
               onChange={(e) => setActionReason(e.target.value)}
-              className="min-h-24 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[#E85D26] focus:outline-none"
+              className="min-h-24 w-full rounded-lg border border-border bg-text px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-primary focus:outline-none"
               placeholder="Enter reason (min 3 chars)…"
             />
             <div className="flex justify-end gap-2">
@@ -364,7 +364,7 @@ export default function DispatchConsolePage() {
               </Button>
               <Button
                 size="sm"
-                className="bg-[#E85D26] text-white hover:bg-[#d54d1a]"
+                className="bg-primary text-white hover:bg-primaryHover"
                 disabled={Boolean(busyId) || actionReason.trim().length < 3}
                 onClick={handleModalConfirm}
               >

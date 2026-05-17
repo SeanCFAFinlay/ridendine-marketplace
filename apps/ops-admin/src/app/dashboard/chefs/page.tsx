@@ -111,7 +111,7 @@ export default function ChefsPage() {
       header: 'Name',
       sortable: true,
       cell: (row) => (
-        <Link href={`/dashboard/chefs/${row.id}`} className="font-medium text-white hover:text-[#E85D26]">
+        <Link href={`/dashboard/chefs/${row.id}`} className="font-medium text-white hover:text-primary">
           {row.display_name}
         </Link>
       ),
@@ -120,7 +120,7 @@ export default function ChefsPage() {
       key: 'storefront',
       header: 'Storefront',
       cell: (row) => (
-        <span className="text-gray-300 text-sm">
+        <span className="text-textSubtle text-sm">
           {row.chef_storefronts?.[0]?.name ?? 'No storefront'}
         </span>
       ),
@@ -128,7 +128,7 @@ export default function ChefsPage() {
     {
       key: 'phone',
       header: 'Phone',
-      cell: (row) => <span className="text-gray-400 text-sm">{row.phone ?? 'N/A'}</span>,
+      cell: (row) => <span className="text-textMuted text-sm">{row.phone ?? 'N/A'}</span>,
     },
     {
       key: 'status',
@@ -143,7 +143,7 @@ export default function ChefsPage() {
       header: 'Joined',
       sortable: true,
       cell: (row) => (
-        <span className="text-gray-500 text-xs">
+        <span className="text-textMuted text-xs">
           {new Date(row.created_at).toLocaleDateString()}
         </span>
       ),
@@ -155,7 +155,7 @@ export default function ChefsPage() {
         <div className="flex items-center gap-1.5">
           <Link
             href={`/dashboard/chefs/${row.id}`}
-            className="rounded bg-[#E85D26] px-2 py-1 text-xs text-white hover:bg-[#d54d1a]"
+            className="rounded bg-primary px-2 py-1 text-xs text-white hover:bg-primaryHover"
           >
             View
           </Link>
@@ -163,14 +163,14 @@ export default function ChefsPage() {
             <>
               <button
                 onClick={() => void handleChefAction(row.id, 'approve')}
-                className="rounded bg-green-700 px-2 py-1 text-xs text-white hover:bg-green-600"
+                className="rounded bg-success px-2 py-1 text-xs text-white hover:bg-success"
                 title="Approve"
               >
                 <UserCheck className="h-3 w-3" />
               </button>
               <button
                 onClick={() => void handleChefAction(row.id, 'reject')}
-                className="rounded bg-red-700 px-2 py-1 text-xs text-white hover:bg-red-600"
+                className="rounded bg-danger px-2 py-1 text-xs text-white hover:bg-danger"
                 title="Reject"
               >
                 <UserX className="h-3 w-3" />
@@ -180,7 +180,7 @@ export default function ChefsPage() {
           {row.status === 'approved' && (
             <button
               onClick={() => void handleChefAction(row.id, 'suspend')}
-              className="rounded bg-gray-700 px-2 py-1 text-xs text-white hover:bg-gray-600"
+              className="rounded bg-surfaceMuted px-2 py-1 text-xs text-white hover:bg-surfaceMuted"
               title="Suspend"
             >
               <UserMinus className="h-3 w-3" />
@@ -189,7 +189,7 @@ export default function ChefsPage() {
           {row.status === 'suspended' && (
             <button
               onClick={() => void handleChefAction(row.id, 'unsuspend')}
-              className="rounded bg-green-700 px-2 py-1 text-xs text-white hover:bg-green-600"
+              className="rounded bg-success px-2 py-1 text-xs text-white hover:bg-success"
               title="Unsuspend"
             >
               <UserCheck className="h-3 w-3" />
@@ -212,14 +212,14 @@ export default function ChefsPage() {
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
-                className="bg-[#E85D26] text-white hover:bg-[#d54d1a]"
+                className="bg-primary text-white hover:bg-primaryHover"
                 onClick={() => setShowCreate(true)}
               >
                 Add Chef
               </Button>
               <a
                 href="/api/export?type=chefs"
-                className="inline-flex h-8 items-center rounded-md border border-gray-700 px-3 text-xs text-gray-300 hover:border-gray-500"
+                className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs text-textSubtle hover:border-border"
               >
                 Export CSV
               </a>
@@ -228,7 +228,7 @@ export default function ChefsPage() {
         />
 
         {error && !showCreate && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
             {error}
           </div>
         )}
@@ -241,8 +241,8 @@ export default function ChefsPage() {
               onClick={() => setStatusFilter(s)}
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 statusFilter === s
-                  ? 'bg-[#E85D26] text-white'
-                  : 'border border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-200'
+                  ? 'bg-primary text-white'
+                  : 'border border-border text-textMuted hover:border-border hover:text-textSubtle'
               }`}
             >
               {s === 'all' ? `All (${chefs.length})` : s}
@@ -262,7 +262,7 @@ export default function ChefsPage() {
               action={
                 <Button
                   size="sm"
-                  className="bg-[#E85D26] text-white hover:bg-[#d54d1a]"
+                  className="bg-primary text-white hover:bg-primaryHover"
                   onClick={() => setShowCreate(true)}
                 >
                   Add Chef
@@ -270,7 +270,7 @@ export default function ChefsPage() {
               }
             />
           }
-          className="border-gray-800 bg-opsPanel"
+          className="border-border bg-surface"
         />
 
         <Modal
@@ -278,51 +278,51 @@ export default function ChefsPage() {
           onClose={() => { setShowCreate(false); setForm(INITIAL_FORM); setError(''); }}
           title="Add Chef"
         >
-          <p className="mb-4 text-sm text-gray-400">Create a login and chef profile for ops review.</p>
+          <p className="mb-4 text-sm text-textMuted">Create a login and chef profile for ops review.</p>
           {error && (
-            <div className="mb-4 rounded-lg bg-red-500/15 p-3 text-sm text-red-200">{error}</div>
+            <div className="mb-4 rounded-lg bg-danger/15 p-3 text-sm text-danger">{error}</div>
           )}
           <form onSubmit={(e) => void handleCreateChef(e)} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm text-gray-300">
+              <label className="block text-sm text-textSubtle">
                 First name
                 <input
                   required
                   value={form.firstName}
                   onChange={(e) => setForm((v) => ({ ...v, firstName: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-gray-600 bg-gray-950 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-lg border border-border bg-text px-3 py-2 text-white"
                 />
               </label>
-              <label className="block text-sm text-gray-300">
+              <label className="block text-sm text-textSubtle">
                 Last name
                 <input
                   required
                   value={form.lastName}
                   onChange={(e) => setForm((v) => ({ ...v, lastName: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-gray-600 bg-gray-950 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-lg border border-border bg-text px-3 py-2 text-white"
                 />
               </label>
             </div>
-            <label className="block text-sm text-gray-300">
+            <label className="block text-sm text-textSubtle">
               Email
               <input
                 required
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm((v) => ({ ...v, email: e.target.value }))}
-                className="mt-1 w-full rounded-lg border border-gray-600 bg-gray-950 px-3 py-2 text-white"
+                className="mt-1 w-full rounded-lg border border-border bg-text px-3 py-2 text-white"
               />
             </label>
-            <label className="block text-sm text-gray-300">
+            <label className="block text-sm text-textSubtle">
               Phone
               <input
                 value={form.phone}
                 onChange={(e) => setForm((v) => ({ ...v, phone: e.target.value }))}
-                className="mt-1 w-full rounded-lg border border-gray-600 bg-gray-950 px-3 py-2 text-white"
+                className="mt-1 w-full rounded-lg border border-border bg-text px-3 py-2 text-white"
               />
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm text-gray-300">
+              <label className="block text-sm text-textSubtle">
                 Temporary password
                 <input
                   required
@@ -330,15 +330,15 @@ export default function ChefsPage() {
                   type="password"
                   value={form.password}
                   onChange={(e) => setForm((v) => ({ ...v, password: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-gray-600 bg-gray-950 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-lg border border-border bg-text px-3 py-2 text-white"
                 />
               </label>
-              <label className="block text-sm text-gray-300">
+              <label className="block text-sm text-textSubtle">
                 Starting status
                 <select
                   value={form.status}
                   onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-gray-600 bg-gray-950 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-lg border border-border bg-text px-3 py-2 text-white"
                 >
                   <option value="pending">Pending review</option>
                   <option value="approved">Approved</option>
@@ -357,7 +357,7 @@ export default function ChefsPage() {
               <Button
                 type="submit"
                 size="sm"
-                className="bg-[#E85D26] text-white hover:bg-[#d54d1a]"
+                className="bg-primary text-white hover:bg-primaryHover"
                 loading={saving}
               >
                 Create Chef

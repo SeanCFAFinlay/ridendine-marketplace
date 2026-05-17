@@ -19,31 +19,31 @@ export default async function SettingsPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Platform Rules</h1>
-            <p className="mt-1 text-gray-400">
+            <p className="mt-1 text-textMuted">
               Persisted business settings that now govern dispatch, refund review thresholds, and operating defaults.
             </p>
           </div>
-          <Badge className={canEdit ? 'bg-emerald-500/20 text-emerald-200' : 'bg-gray-700 text-gray-200'}>
+          <Badge className={canEdit ? 'bg-success/20 text-success' : 'bg-surfaceMuted text-textSubtle'}>
             {canEdit ? 'Editable' : 'Read only'}
           </Badge>
         </div>
 
-        <Card className="border-gray-800 bg-opsPanel p-6">
+        <Card className="border-border bg-surface p-6">
           <div className="mb-6 grid gap-4 lg:grid-cols-4">
-            <div className="rounded-lg bg-opsPanel p-4">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Dispatch radius</p>
+            <div className="rounded-lg bg-surface p-4">
+              <p className="text-xs uppercase tracking-wide text-textMuted">Dispatch radius</p>
               <p className="mt-2 text-2xl font-semibold text-white">{rules.dispatchRadiusKm} km</p>
             </div>
-            <div className="rounded-lg bg-opsPanel p-4">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Offer timeout</p>
+            <div className="rounded-lg bg-surface p-4">
+              <p className="text-xs uppercase tracking-wide text-textMuted">Offer timeout</p>
               <p className="mt-2 text-2xl font-semibold text-white">{rules.offerTimeoutSeconds}s</p>
             </div>
-            <div className="rounded-lg bg-opsPanel p-4">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Refund threshold</p>
+            <div className="rounded-lg bg-surface p-4">
+              <p className="text-xs uppercase tracking-wide text-textMuted">Refund threshold</p>
               <p className="mt-2 text-2xl font-semibold text-white">${(rules.refundAutoReviewThresholdCents / 100).toFixed(2)}</p>
             </div>
-            <div className="rounded-lg bg-opsPanel p-4">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Last update</p>
+            <div className="rounded-lg bg-surface p-4">
+              <p className="text-xs uppercase tracking-wide text-textMuted">Last update</p>
               <p className="mt-2 text-lg font-semibold text-white">{new Date(rules.updatedAt).toLocaleString()}</p>
             </div>
           </div>

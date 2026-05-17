@@ -45,27 +45,27 @@ export function MaintenanceToggle() {
     finally { setToggling(false); }
   };
 
-  if (loading) return <Card className="border-gray-800 bg-opsPanel p-6"><div className="h-20 bg-gray-700/30 rounded animate-pulse" /></Card>;
+  if (loading) return <Card className="border-border bg-surface p-6"><div className="h-20 bg-surfaceMuted/30 rounded animate-pulse" /></Card>;
 
   const isActive = state?.maintenanceMode;
 
   return (
-    <Card className={`p-6 ${isActive ? 'border-red-500/50 bg-red-950/20' : 'border-gray-800 bg-opsPanel'}`}>
+    <Card className={`p-6 ${isActive ? 'border-danger/50 bg-dangerSoft' : 'border-border bg-surface'}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
             <h3 className="text-lg font-semibold text-white">Maintenance Mode</h3>
-            <Badge className={isActive ? 'bg-red-500/20 text-red-300 animate-pulse' : 'bg-emerald-500/20 text-emerald-300'}>
+            <Badge className={isActive ? 'bg-danger/20 text-danger animate-pulse' : 'bg-success/20 text-success'}>
               {isActive ? 'ACTIVE' : 'OFF'}
             </Badge>
           </div>
-          <p className="mt-1 text-sm text-gray-400">
+          <p className="mt-1 text-sm text-textMuted">
             {isActive
               ? `Activated ${state?.activatedAt ? new Date(state.activatedAt).toLocaleString() : 'recently'}. All storefronts paused.`
               : 'Pauses all storefronts and blocks new orders. Use for planned downtime or emergencies.'}
           </p>
           {state && (
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-textMuted">
               Storefronts: {state.storefronts.active} active, {state.storefronts.paused} paused, {state.storefronts.total} total
             </p>
           )}
@@ -73,14 +73,14 @@ export function MaintenanceToggle() {
         <div className="flex-shrink-0">
           {isActive ? (
             <Button onClick={() => setPendingAction('deactivate_maintenance')} disabled={toggling}
-              className="bg-emerald-600 hover:bg-emerald-700">
+              className="bg-success hover:bg-success">
               {toggling ? 'Restoring...' : 'End Maintenance'}
             </Button>
           ) : (
             <div className="space-y-2">
               <input value={message} onChange={e => setMessage(e.target.value)}
                 placeholder="Reason (optional)"
-                className="w-full rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-1.5 text-sm" />
+                className="w-full rounded-lg bg-surface border border-border text-white px-3 py-1.5 text-sm" />
               <Button onClick={() => setPendingAction('activate_maintenance')} disabled={toggling} variant="destructive" className="w-full">
                 {toggling ? 'Activating...' : 'Activate Maintenance'}
               </Button>
@@ -89,8 +89,8 @@ export function MaintenanceToggle() {
         </div>
       </div>
       {pendingAction && (
-        <div className="mt-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3">
-          <p className="text-sm text-yellow-100">
+        <div className="mt-4 rounded-lg border border-warning/30 bg-warning/10 p-3">
+          <p className="text-sm text-warning">
             {pendingAction === 'activate_maintenance'
               ? 'Confirm maintenance mode. This pauses active storefronts and blocks new orders.'
               : 'Confirm ending maintenance. Storefronts paused by maintenance will be restored.'}
@@ -105,7 +105,7 @@ export function MaintenanceToggle() {
           </div>
         </div>
       )}
-      {error && <div className="mt-3 rounded-lg bg-red-500/20 p-2 text-xs text-red-300">{error}</div>}
+      {error && <div className="mt-3 rounded-lg bg-danger/20 p-2 text-xs text-danger">{error}</div>}
     </Card>
   );
 }

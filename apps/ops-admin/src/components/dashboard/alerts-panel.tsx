@@ -148,11 +148,11 @@ export function AlertsPanel({ pendingApprovals }: AlertsPanelProps) {
   const getAlertStyles = (type: string) => {
     switch (type) {
       case 'urgent':
-        return 'border-l-red-500 bg-red-500/10';
+        return 'border-l-red-500 bg-danger/10';
       case 'warning':
-        return 'border-l-yellow-500 bg-yellow-500/10';
+        return 'border-l-yellow-500 bg-warning/10';
       default:
-        return 'border-l-blue-500 bg-blue-500/10';
+        return 'border-l-blue-500 bg-info/10';
     }
   };
 
@@ -168,25 +168,25 @@ export function AlertsPanel({ pendingApprovals }: AlertsPanelProps) {
   };
 
   return (
-    <Card className="border-gray-800 bg-opsPanel p-6 h-full">
+    <Card className="border-border bg-surface p-6 h-full">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">System Alerts</h3>
         {alerts.filter((a) => a.type === 'urgent').length > 0 && (
           <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-danger"></span>
           </span>
         )}
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-8">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#E85D26] border-t-transparent" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : alerts.length === 0 ? (
         <div className="text-center py-8">
           <div className="text-4xl mb-2">✅</div>
-          <p className="text-gray-400">All systems normal</p>
+          <p className="text-textMuted">All systems normal</p>
         </div>
       ) : (
         <div className="space-y-3 max-h-72 overflow-y-auto">
@@ -203,14 +203,14 @@ export function AlertsPanel({ pendingApprovals }: AlertsPanelProps) {
                       {alert.type}
                     </Badge>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">{alert.message}</p>
+                  <p className="text-xs text-textMuted mt-1">{alert.message}</p>
                 </div>
-                <span className="text-xs text-gray-500 ml-2">{alert.time}</span>
+                <span className="text-xs text-textMuted ml-2">{alert.time}</span>
               </div>
               {alert.link && (
                 <Link
                   href={alert.link}
-                  className="inline-block mt-2 text-xs text-[#E85D26] hover:underline"
+                  className="inline-block mt-2 text-xs text-primary hover:underline"
                 >
                   View details →
                 </Link>

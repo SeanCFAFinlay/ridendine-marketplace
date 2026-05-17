@@ -39,46 +39,46 @@ export default async function CustomerDetailPage({
           <div>
             <Link
               href="/dashboard/customers"
-              className="mb-2 inline-block text-sm text-gray-400 hover:text-white"
+              className="mb-2 inline-block text-sm text-textMuted hover:text-white"
             >
               &larr; Back to Customers
             </Link>
             <h1 className="text-3xl font-bold text-white">
               {customer.first_name} {customer.last_name}
             </h1>
-            <p className="mt-1 text-gray-400">
+            <p className="mt-1 text-textMuted">
               Customer since {new Date(customer.created_at).toLocaleDateString()}
             </p>
           </div>
-          <Badge className="bg-green-500 px-4 py-2 text-white">Active</Badge>
+          <Badge className="bg-success px-4 py-2 text-white">Active</Badge>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="border-gray-800 bg-opsPanel p-6 lg:col-span-2">
+          <Card className="border-border bg-surface p-6 lg:col-span-2">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Customer Account Context
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-sm text-gray-400">Email</p>
+                <p className="text-sm text-textMuted">Email</p>
                 <p className="text-white">{customer.email || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-400">Phone</p>
+                <p className="text-sm text-textMuted">Phone</p>
                 <p className="text-white">{customer.phone || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-400">User ID</p>
+                <p className="text-sm text-textMuted">User ID</p>
                 <p className="font-mono text-sm text-white">{customer.user_id}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-400">Customer ID</p>
+                <p className="text-sm text-textMuted">Customer ID</p>
                 <p className="font-mono text-sm text-white">{customer.id}</p>
               </div>
             </div>
 
-            <div className="mt-6 rounded-lg border border-gray-700 bg-opsPanel p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">
+            <div className="mt-6 rounded-lg border border-border bg-surface p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-textMuted mb-3">
                 Customer Actions
               </p>
               <CustomerActions
@@ -88,35 +88,35 @@ export default async function CustomerDetailPage({
             </div>
           </Card>
 
-          <Card className="border-gray-800 bg-opsPanel p-6">
+          <Card className="border-border bg-surface p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Order Snapshot
             </h2>
             <div className="space-y-4">
-              <div className="rounded-lg bg-opsPanel p-4 text-center">
-                <p className="text-2xl font-bold text-emerald-400">
+              <div className="rounded-lg bg-surface p-4 text-center">
+                <p className="text-2xl font-bold text-success">
                   {formatMoney(customer.stats.totalSpent)}
                 </p>
-                <p className="text-sm text-gray-400">Total Spend</p>
+                <p className="text-sm text-textMuted">Total Spend</p>
               </div>
-              <div className="rounded-lg bg-opsPanel p-4 text-center">
-                <p className="text-2xl font-bold text-blue-400">
+              <div className="rounded-lg bg-surface p-4 text-center">
+                <p className="text-2xl font-bold text-info">
                   {customer.stats.totalOrders}
                 </p>
-                <p className="text-sm text-gray-400">Total Orders</p>
+                <p className="text-sm text-textMuted">Total Orders</p>
               </div>
-              <div className="rounded-lg bg-opsPanel p-4 text-center">
-                <p className="text-2xl font-bold text-purple-400">
+              <div className="rounded-lg bg-surface p-4 text-center">
+                <p className="text-2xl font-bold text-info">
                   {customer.stats.completedOrders}
                 </p>
-                <p className="text-sm text-gray-400">Completed Orders</p>
+                <p className="text-sm text-textMuted">Completed Orders</p>
               </div>
             </div>
           </Card>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="border-gray-800 bg-opsPanel p-6">
+          <Card className="border-border bg-surface p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Saved Addresses
             </h2>
@@ -125,57 +125,57 @@ export default async function CustomerDetailPage({
                 {customer.addresses.map((address) => (
                   <div
                     key={address.id}
-                    className="rounded-lg bg-opsPanel p-4"
+                    className="rounded-lg bg-surface p-4"
                   >
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <p className="font-medium text-white">
                           {address.label || 'Address'}
                         </p>
-                        <p className="text-sm text-gray-400">
+                        <p className="text-sm text-textMuted">
                           {address.address_line1}
                           {address.address_line2 ? `, ${address.address_line2}` : ''}
                         </p>
-                        <p className="text-sm text-gray-400">
+                        <p className="text-sm text-textMuted">
                           {address.city}, {address.state} {address.postal_code}
                         </p>
                       </div>
                       {address.is_default && (
-                        <Badge className="bg-blue-500 text-white">Default</Badge>
+                        <Badge className="bg-info text-white">Default</Badge>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-textMuted">
                 No saved addresses are recorded for this customer.
               </p>
             )}
           </Card>
 
-          <Card className="border-gray-800 bg-opsPanel p-6">
+          <Card className="border-border bg-surface p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">
               Customer Oversight Context
             </h2>
             <div className="space-y-4 text-sm">
-              <div className="rounded-lg border border-gray-700 bg-opsPanel p-4">
-                <p className="text-gray-400">Last Order</p>
+              <div className="rounded-lg border border-border bg-surface p-4">
+                <p className="text-textMuted">Last Order</p>
                 <p className="mt-1 text-white">
                   {customer.stats.lastOrderAt
                     ? new Date(customer.stats.lastOrderAt).toLocaleString()
                     : 'No orders yet'}
                 </p>
               </div>
-              <div className="rounded-lg border border-gray-700 bg-opsPanel p-4">
-                <p className="text-gray-400">Cancelled Orders</p>
+              <div className="rounded-lg border border-border bg-surface p-4">
+                <p className="text-textMuted">Cancelled Orders</p>
                 <p className="mt-1 text-white">
                   {customer.stats.cancelledOrders}
                 </p>
               </div>
               <Link
                 href="/dashboard/support"
-                className="inline-block text-[#E85D26] hover:underline"
+                className="inline-block text-primary hover:underline"
               >
                 Review support queue for customer issues &rarr;
               </Link>
@@ -183,7 +183,7 @@ export default async function CustomerDetailPage({
           </Card>
         </div>
 
-        <Card className="border-gray-800 bg-opsPanel p-6">
+        <Card className="border-border bg-surface p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">
             Recent Orders
           </h2>
@@ -191,7 +191,7 @@ export default async function CustomerDetailPage({
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-700 text-left text-sm text-gray-400">
+                  <tr className="border-b border-border text-left text-sm text-textMuted">
                     <th className="pb-3">Order #</th>
                     <th className="pb-3">Status</th>
                     <th className="pb-3">Total</th>
@@ -201,29 +201,29 @@ export default async function CustomerDetailPage({
                 </thead>
                 <tbody>
                   {customer.recent_orders.map((order) => (
-                    <tr key={order.id} className="border-b border-gray-800">
+                    <tr key={order.id} className="border-b border-border">
                       <td className="py-3 text-white">#{order.order_number}</td>
                       <td className="py-3">
                         <Badge
                           className={`${
                             order.status === 'delivered'
-                              ? 'bg-green-500'
+                              ? 'bg-success'
                               : order.status === 'cancelled'
-                                ? 'bg-red-500'
-                                : 'bg-blue-500'
+                                ? 'bg-danger'
+                                : 'bg-info'
                           } text-white`}
                         >
                           {order.status.replace(/_/g, ' ')}
                         </Badge>
                       </td>
                       <td className="py-3 text-white">{formatMoney(order.total)}</td>
-                      <td className="py-3 text-gray-400">
+                      <td className="py-3 text-textMuted">
                         {new Date(order.created_at).toLocaleDateString()}
                       </td>
                       <td className="py-3">
                         <Link
                           href={`/dashboard/orders/${order.id}`}
-                          className="text-[#E85D26] hover:underline"
+                          className="text-primary hover:underline"
                         >
                           View order &rarr;
                         </Link>
@@ -234,7 +234,7 @@ export default async function CustomerDetailPage({
               </table>
             </div>
           ) : (
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-textMuted">
               No orders are recorded for this customer yet.
             </p>
           )}

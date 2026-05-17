@@ -7,27 +7,27 @@ import {
 } from './control-center-model';
 
 const toneClass: Record<ControlCenterTone, string> = {
-  critical: 'border-red-500/30 bg-red-500/10 text-red-200',
-  warning: 'border-amber-500/30 bg-amber-500/10 text-amber-100',
-  healthy: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100',
-  neutral: 'border-gray-700 bg-[#101827] text-gray-200',
+  critical: 'border-danger/30 bg-danger/10 text-danger',
+  warning: 'border-warning/30 bg-warning/10 text-warning',
+  healthy: 'border-success/30 bg-success/10 text-success',
+  neutral: 'border-border bg-[#101827] text-textSubtle',
 };
 
 export function ControlCenter() {
   const summary = getControlCenterSummary();
 
   return (
-    <Card className="border-gray-800 bg-opsPanel p-4">
+    <Card className="border-border bg-surface p-4">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-white">Admin Control Center</p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-textMuted">
             {summary.wiredAreas}/{summary.totalAreas} domains wired · {summary.totalActions} operator actions mapped
           </p>
         </div>
         <Link
           href="/dashboard/settings"
-          className="inline-flex h-8 items-center justify-center rounded-lg border border-gray-700 px-3 text-sm font-medium text-gray-300 transition-colors hover:border-[#E85D26] hover:text-white"
+          className="inline-flex h-8 items-center justify-center rounded-lg border border-border px-3 text-sm font-medium text-textSubtle transition-colors hover:border-primary hover:text-white"
         >
           Engine settings
         </Link>
@@ -38,7 +38,7 @@ export function ControlCenter() {
           <Link
             key={area.key}
             href={area.href}
-            className={`block rounded-lg border p-3 transition-colors hover:border-[#E85D26] ${toneClass[area.tone]}`}
+            className={`block rounded-lg border p-3 transition-colors hover:border-primary ${toneClass[area.tone]}`}
           >
             <div className="flex items-start justify-between gap-3">
               <div>

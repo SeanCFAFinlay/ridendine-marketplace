@@ -56,7 +56,7 @@ export function FinanceActions({
   return (
     <div className="space-y-6">
       {error && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
@@ -64,14 +64,14 @@ export function FinanceActions({
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-3">
           {refunds.map((refund) => (
-            <div key={refund.id} className="rounded-lg bg-opsPanel p-4">
+            <div key={refund.id} className="rounded-lg bg-surface p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-medium text-white">Order {refund.orderNumber}</p>
-                  <p className="text-sm text-gray-400">{refund.customerName}</p>
-                  <p className="mt-1 text-sm text-gray-500">{refund.reason || 'No reason supplied'}</p>
+                  <p className="text-sm text-textMuted">{refund.customerName}</p>
+                  <p className="mt-1 text-sm text-textMuted">{refund.reason || 'No reason supplied'}</p>
                 </div>
-                <span className="text-lg font-semibold text-red-200">
+                <span className="text-lg font-semibold text-danger">
                   ${(refund.amountCents / 100).toFixed(2)}
                 </span>
               </div>
@@ -85,7 +85,7 @@ export function FinanceActions({
                     })
                   }
                   disabled={busyId === refund.id}
-                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                  className="rounded-lg bg-success px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
                 >
                   Approve
                 </button>
@@ -98,7 +98,7 @@ export function FinanceActions({
                     })
                   }
                   disabled={busyId === refund.id}
-                  className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                  className="rounded-lg bg-surfaceMuted px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
                 >
                   Deny
                 </button>
@@ -106,7 +106,7 @@ export function FinanceActions({
             </div>
           ))}
           {refunds.length === 0 && (
-            <div className="rounded-lg bg-opsPanel p-6 text-sm text-gray-500">
+            <div className="rounded-lg bg-surface p-6 text-sm text-textMuted">
               No refund cases awaiting review.
             </div>
           )}
@@ -114,15 +114,15 @@ export function FinanceActions({
 
         <div className="space-y-3">
           {adjustments.map((adjustment) => (
-            <div key={adjustment.id} className="rounded-lg bg-opsPanel p-4">
+            <div key={adjustment.id} className="rounded-lg bg-surface p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-medium text-white">
                     {adjustment.payeeType} {adjustment.adjustmentType.replace(/_/g, ' ')}
                   </p>
-                  <p className="text-sm text-gray-500">Order {adjustment.orderNumber}</p>
+                  <p className="text-sm text-textMuted">Order {adjustment.orderNumber}</p>
                 </div>
-                <span className="text-lg font-semibold text-yellow-200">
+                <span className="text-lg font-semibold text-warning">
                   ${(adjustment.amountCents / 100).toFixed(2)}
                 </span>
               </div>
@@ -135,7 +135,7 @@ export function FinanceActions({
                     })
                   }
                   disabled={busyId === adjustment.id}
-                  className="rounded-lg bg-[#E85D26] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
                 >
                   Release Hold
                 </button>
@@ -143,7 +143,7 @@ export function FinanceActions({
             </div>
           ))}
           {adjustments.length === 0 && (
-            <div className="rounded-lg bg-opsPanel p-6 text-sm text-gray-500">
+            <div className="rounded-lg bg-surface p-6 text-sm text-textMuted">
               No payout adjustments are pending release.
             </div>
           )}

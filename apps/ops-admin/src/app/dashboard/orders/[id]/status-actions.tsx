@@ -25,19 +25,19 @@ export function OrderStatusActions({
       apiAction: 'accept',
       label: 'Accept Order',
       success: 'Order accepted',
-      className: 'bg-blue-600 hover:bg-blue-700',
+      className: 'bg-info hover:bg-info',
     },
     reject_order: {
       apiAction: 'reject',
       label: 'Reject Order',
       success: 'Order rejected',
-      className: 'bg-red-600 hover:bg-red-700',
+      className: 'bg-danger hover:bg-danger',
     },
     start_preparing: {
       apiAction: 'start_preparing',
       label: 'Start Preparing',
       success: 'Order moved to preparing',
-      className: 'bg-purple-600 hover:bg-purple-700',
+      className: 'bg-info hover:bg-info',
     },
     mark_ready: {
       apiAction: 'mark_ready',
@@ -49,7 +49,7 @@ export function OrderStatusActions({
       apiAction: 'complete',
       label: 'Complete Order',
       success: 'Order completed',
-      className: 'bg-green-600 hover:bg-green-700',
+      className: 'bg-success hover:bg-success',
     },
   };
 
@@ -89,30 +89,30 @@ export function OrderStatusActions({
   );
 
   return (
-    <Card className="border-gray-800 bg-opsPanel p-6">
+    <Card className="border-border bg-surface p-6">
       <h2 className="text-lg font-semibold text-white mb-4">Order Actions</h2>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-400 text-sm">
+        <div className="mb-4 p-3 bg-danger/20 border border-danger rounded-lg text-danger text-sm">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mb-4 p-3 bg-green-500/20 border border-green-500 rounded-lg text-green-400 text-sm">
+        <div className="mb-4 p-3 bg-success/20 border border-success rounded-lg text-success text-sm">
           {success}
         </div>
       )}
 
       {isTerminal ? (
-        <p className="text-gray-400">
+        <p className="text-textMuted">
           This order is in a terminal state ({currentStatus}) and cannot be modified.
         </p> 
       ) : actionableItems.length === 0 ? (
-        <p className="text-gray-400">No engine-backed actions are currently available.</p>
+        <p className="text-textMuted">No engine-backed actions are currently available.</p>
       ) : (
         <>
-          <p className="text-gray-400 mb-4">
+          <p className="text-textMuted mb-4">
             Current status:{' '}
             <span className="text-white font-medium">{currentStatus}</span>
           </p>
@@ -132,12 +132,12 @@ export function OrderStatusActions({
       )}
 
       {/* Quick Actions */}
-      <div className="mt-6 pt-6 border-t border-gray-700">
-        <h3 className="text-sm font-medium text-gray-400 mb-3">Quick Actions</h3>
+      <div className="mt-6 pt-6 border-t border-border">
+        <h3 className="text-sm font-medium text-textMuted mb-3">Quick Actions</h3>
         <div className="flex flex-wrap gap-3">
           <button
             onClick={() => window.print()}
-            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            className="px-4 py-2 bg-surfaceMuted text-white rounded-lg hover:bg-surfaceMuted transition-colors"
           >
             Print Order
           </button>
@@ -146,7 +146,7 @@ export function OrderStatusActions({
               navigator.clipboard.writeText(orderId);
               setSuccess('Order ID copied to clipboard');
             }}
-            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            className="px-4 py-2 bg-surfaceMuted text-white rounded-lg hover:bg-surfaceMuted transition-colors"
           >
             Copy Order ID
           </button>

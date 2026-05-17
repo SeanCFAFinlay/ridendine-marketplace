@@ -26,11 +26,11 @@ export class LiveBoardBoundary extends Component<Props, State> {
     if (!this.state.error) return this.props.children;
 
     return (
-      <Card className="border-amber-500/30 bg-[#121c2c] p-6">
+      <Card className="border-warning/30 bg-[#121c2c] p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-amber-100">Live board unavailable</p>
-            <p className="mt-1 text-sm text-gray-400">
+            <p className="text-sm font-semibold text-warning">Live board unavailable</p>
+            <p className="mt-1 text-sm text-textMuted">
               The dashboard is still available. Retry the live feed after the realtime panel reloads.
             </p>
           </div>
@@ -38,7 +38,7 @@ export class LiveBoardBoundary extends Component<Props, State> {
             type="button"
             variant="outline"
             onClick={() => this.setState({ error: null })}
-            className="border-gray-700 text-gray-100 hover:bg-gray-800"
+            className="border-border text-textSubtle hover:bg-surface"
           >
             Retry live board
           </Button>

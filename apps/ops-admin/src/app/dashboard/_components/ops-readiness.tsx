@@ -11,9 +11,9 @@ export interface OpsReadinessItem {
 }
 
 const statusClass: Record<OpsReadinessStatus, string> = {
-  healthy: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100',
-  degraded: 'border-amber-500/30 bg-amber-500/10 text-amber-100',
-  down: 'border-red-500/30 bg-red-500/10 text-red-100',
+  healthy: 'border-success/30 bg-success/10 text-success',
+  degraded: 'border-warning/30 bg-warning/10 text-warning',
+  down: 'border-danger/30 bg-danger/10 text-danger',
 };
 
 function ReadinessContent({ item }: { item: OpsReadinessItem }) {
@@ -32,15 +32,15 @@ function ReadinessContent({ item }: { item: OpsReadinessItem }) {
 
 export function OpsReadiness({ items }: { items: OpsReadinessItem[] }) {
   return (
-    <Card className="border-gray-800 bg-opsPanel p-4">
+    <Card className="border-border bg-surface p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">Ops Readiness</p>
-          <p className="text-xs text-gray-500">Runtime wiring and operational health</p>
+          <p className="text-xs text-textMuted">Runtime wiring and operational health</p>
         </div>
         <Link
           href="/dashboard/settings"
-          className="inline-flex h-8 items-center rounded-lg border border-gray-700 px-3 text-sm font-medium text-gray-300 transition-colors hover:border-[#E85D26] hover:text-white"
+          className="inline-flex h-8 items-center rounded-lg border border-border px-3 text-sm font-medium text-textSubtle transition-colors hover:border-primary hover:text-white"
         >
           Diagnostics
         </Link>

@@ -42,20 +42,20 @@ export default async function FinanceChefAccountsPage() {
         <FinanceSubnav />
         <div>
           <h1 className="text-3xl font-bold text-white">Chef payable accounts</h1>
-          <p className="mt-1 text-gray-400">Balances derived from ledger_entries (chef_payable).</p>
+          <p className="mt-1 text-textMuted">Balances derived from ledger_entries (chef_payable).</p>
         </div>
         {error ? (
-          <Card className="border-red-900/50 bg-opsPanel p-6 text-red-200">Failed to load accounts.</Card>
+          <Card className="border-danger/40 bg-surface p-6 text-danger">Failed to load accounts.</Card>
         ) : (
-          <Card className="border-gray-800 bg-opsPanel p-6">
+          <Card className="border-border bg-surface p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Storefronts</h2>
-              <Badge className="bg-purple-500/20 text-purple-200">{(rows ?? []).length}</Badge>
+              <Badge className="bg-info/20 text-info">{(rows ?? []).length}</Badge>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-700 text-gray-400">
+                  <tr className="border-b border-border text-textMuted">
                     <th className="py-2">Name</th>
                     <th className="py-2">Balance</th>
                     <th className="py-2">Pending payout</th>
@@ -66,14 +66,14 @@ export default async function FinanceChefAccountsPage() {
                   {(rows ?? []).map((r: { owner_id: string; balance_cents: number; pending_payout_cents?: number }) => {
                     const id = r.owner_id;
                     return (
-                      <tr key={id} className="border-b border-gray-800 text-gray-200">
+                      <tr key={id} className="border-b border-border text-textSubtle">
                         <td className="py-3">{String(nameById.get(id) ?? id)}</td>
-                        <td className="py-3 text-emerald-300">{fmtCents(r.balance_cents as number)}</td>
+                        <td className="py-3 text-success">{fmtCents(r.balance_cents as number)}</td>
                         <td className="py-3">{fmtCents((r.pending_payout_cents as number) ?? 0)}</td>
                         <td className="py-3 text-right">
                           <Link
                             href={`/dashboard/finance/accounts/chefs/${id}`}
-                            className="text-emerald-400 hover:underline"
+                            className="text-success hover:underline"
                           >
                             Ledger
                           </Link>

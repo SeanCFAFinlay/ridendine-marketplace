@@ -37,9 +37,9 @@ function formatCoord(lat: number | null, lng: number | null) {
 }
 
 function statusClass(status: string) {
-  if (status === 'delivered' || status === 'completed') return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200';
-  if (status.includes('route') || status.includes('picked')) return 'border-orange-500/40 bg-orange-500/10 text-orange-200';
-  return 'border-gray-700 bg-gray-900/60 text-gray-300';
+  if (status === 'delivered' || status === 'completed') return 'border-success/40 bg-success/10 text-success';
+  if (status.includes('route') || status.includes('picked')) return 'border-primary/40 bg-primary/10 text-primary';
+  return 'border-border bg-text/60 text-textSubtle';
 }
 
 export function DeliveryMap({
@@ -52,21 +52,21 @@ export function DeliveryMap({
   const hasPins = deliveries.length > 0 || driverPins.length > 0;
 
   return (
-    <div className={`overflow-hidden rounded-lg border border-gray-800 bg-gray-950 ${className ?? ''}`}>
-      <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
+    <div className={`overflow-hidden rounded-lg border border-border bg-text ${className ?? ''}`}>
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
           <p className="text-sm font-semibold text-white">Live coordinate map</p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-textMuted">
             Service center {formatCoord(DEFAULT_SERVICE_REGION_CENTER[0], DEFAULT_SERVICE_REGION_CENTER[1])}
           </p>
         </div>
-        <span className="rounded-full bg-gray-800 px-2 py-1 text-xs text-gray-300">
+        <span className="rounded-full bg-surface px-2 py-1 text-xs text-textSubtle">
           {deliveries.length} deliveries · {driverPins.length} drivers
         </span>
       </div>
 
       {!hasPins ? (
-        <div className="flex h-full min-h-64 items-center justify-center p-6 text-sm text-gray-500">
+        <div className="flex h-full min-h-64 items-center justify-center p-6 text-sm text-textMuted">
           No delivery or driver coordinates available.
         </div>
       ) : (
@@ -78,12 +78,12 @@ export function DeliveryMap({
                 key={delivery.id}
                 type="button"
                 onClick={() => onDeliveryClick?.(delivery.id)}
-                className={`rounded-lg border p-3 text-left transition-colors hover:border-[#E85D26]/60 ${
-                  isHighlighted ? 'border-[#E85D26] bg-[#E85D26]/10' : statusClass(delivery.status)
+                className={`rounded-lg border p-3 text-left transition-colors hover:border-primary/60 ${
+                  isHighlighted ? 'border-primary bg-primary/10' : statusClass(delivery.status)
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-mono text-xs text-gray-400">
+                  <p className="font-mono text-xs text-textMuted">
                     {delivery.order_number ?? delivery.id.slice(0, 8)}
                   </p>
                   <span className="rounded-full bg-black/20 px-2 py-0.5 text-[11px] uppercase tracking-wide">
@@ -92,20 +92,20 @@ export function DeliveryMap({
                 </div>
                 <div className="mt-3 grid gap-2 text-xs">
                   <div>
-                    <p className="font-semibold text-emerald-200">Pickup</p>
-                    <p className="text-gray-300">{delivery.pickup_address}</p>
-                    <p className="font-mono text-gray-500">{formatCoord(delivery.pickup_lat, delivery.pickup_lng)}</p>
+                    <p className="font-semibold text-success">Pickup</p>
+                    <p className="text-textSubtle">{delivery.pickup_address}</p>
+                    <p className="font-mono text-textMuted">{formatCoord(delivery.pickup_lat, delivery.pickup_lng)}</p>
                   </div>
                   <div>
-                    <p className="font-semibold text-red-200">Dropoff</p>
-                    <p className="text-gray-300">{delivery.dropoff_address}</p>
-                    <p className="font-mono text-gray-500">{formatCoord(delivery.dropoff_lat, delivery.dropoff_lng)}</p>
+                    <p className="font-semibold text-danger">Dropoff</p>
+                    <p className="text-textSubtle">{delivery.dropoff_address}</p>
+                    <p className="font-mono text-textMuted">{formatCoord(delivery.dropoff_lat, delivery.dropoff_lng)}</p>
                   </div>
                   {delivery.driver_name && (
-                    <p className="text-gray-400">Driver: <span className="text-gray-200">{delivery.driver_name}</span></p>
+                    <p className="text-textMuted">Driver: <span className="text-textSubtle">{delivery.driver_name}</span></p>
                   )}
                   {delivery.route_polyline && (
-                    <p className="text-gray-500">Route polyline attached</p>
+                    <p className="text-textMuted">Route polyline attached</p>
                   )}
                 </div>
               </button>
@@ -113,9 +113,9 @@ export function DeliveryMap({
           })}
 
           {driverPins.map((pin) => (
-            <div key={pin.id} className="rounded-lg border border-sky-500/40 bg-sky-500/10 p-3 text-xs">
-              <p className="font-semibold text-sky-200">{pin.label}</p>
-              <p className="mt-1 font-mono text-sky-100/70">{formatCoord(pin.lat, pin.lng)}</p>
+            <div key={pin.id} className="rounded-lg border border-info/40 bg-info/10 p-3 text-xs">
+              <p className="font-semibold text-info">{pin.label}</p>
+              <p className="mt-1 font-mono text-info/70">{formatCoord(pin.lat, pin.lng)}</p>
             </div>
           ))}
         </div>

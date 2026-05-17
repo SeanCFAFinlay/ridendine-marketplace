@@ -63,11 +63,11 @@ export default function ReportsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Reports</h1>
-            <p className="mt-1 text-gray-400">Generate detailed reports with date ranges and period comparison</p>
+            <p className="mt-1 text-textMuted">Generate detailed reports with date ranges and period comparison</p>
           </div>
           <div className="flex gap-2">
             <a href={`/api/export?type=orders&start=${startDate}&end=${endDate}`}
-              className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">
+              className="rounded-lg bg-surfaceMuted px-3 py-1.5 text-xs font-medium text-textSubtle hover:bg-surfaceMuted">
               Export CSV
             </a>
           </div>
@@ -75,43 +75,43 @@ export default function ReportsPage() {
 
         {/* Date Range Controls */}
         {error && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
             {error}
           </div>
         )}
 
-        <Card className="border-gray-800 bg-opsPanel p-4">
+        <Card className="border-border bg-surface p-4">
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex gap-2">
               {quickRanges.map(r => (
                 <button key={r.days} onClick={() => setQuickRange(r.days)}
-                  className="rounded-lg bg-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-600">
+                  className="rounded-lg bg-surfaceMuted px-3 py-1.5 text-xs font-medium text-textSubtle hover:bg-surfaceMuted">
                   {r.label}
                 </button>
               ))}
             </div>
             <div className="flex items-center gap-2">
               <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-                className="rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-1.5 text-sm" />
-              <span className="text-gray-500">to</span>
+                className="rounded-lg bg-surface border border-border text-white px-3 py-1.5 text-sm" />
+              <span className="text-textMuted">to</span>
               <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-                className="rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-1.5 text-sm" />
+                className="rounded-lg bg-surface border border-border text-white px-3 py-1.5 text-sm" />
             </div>
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={showCompare} onChange={e => setShowCompare(e.target.checked)}
-                className="rounded border-gray-600" />
-              <span className="text-xs text-gray-400">Compare period</span>
+                className="rounded border-border" />
+              <span className="text-xs text-textMuted">Compare period</span>
             </label>
             {showCompare && (
               <div className="flex items-center gap-2">
                 <input type="date" value={compareStartDate} onChange={e => setCompareStartDate(e.target.value)}
-                  className="rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-1.5 text-sm" />
-                <span className="text-gray-500">to</span>
+                  className="rounded-lg bg-surface border border-border text-white px-3 py-1.5 text-sm" />
+                <span className="text-textMuted">to</span>
                 <input type="date" value={compareEndDate} onChange={e => setCompareEndDate(e.target.value)}
-                  className="rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-1.5 text-sm" />
+                  className="rounded-lg bg-surface border border-border text-white px-3 py-1.5 text-sm" />
               </div>
             )}
-            <Button onClick={fetchReport} disabled={loading} className="bg-[#E85D26]">
+            <Button onClick={fetchReport} disabled={loading} className="bg-primary">
               {loading ? 'Loading...' : 'Generate Report'}
             </Button>
           </div>
@@ -121,43 +121,43 @@ export default function ReportsPage() {
         {data && (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Card className="border-gray-800 bg-opsPanel p-4">
-                <p className="text-xs text-gray-500 uppercase">Total Orders</p>
+              <Card className="border-border bg-surface p-4">
+                <p className="text-xs text-textMuted uppercase">Total Orders</p>
                 <p className="mt-1 text-2xl font-bold text-white">{data.summary.totalOrders}</p>
                 {compareData && (
-                  <p className={`text-xs mt-1 ${data.summary.totalOrders >= compareData.summary.totalOrders ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <p className={`text-xs mt-1 ${data.summary.totalOrders >= compareData.summary.totalOrders ? 'text-success' : 'text-danger'}`}>
                     vs {compareData.summary.totalOrders} ({data.summary.totalOrders >= compareData.summary.totalOrders ? '+' : ''}{data.summary.totalOrders - compareData.summary.totalOrders})
                   </p>
                 )}
               </Card>
-              <Card className="border-gray-800 bg-opsPanel p-4">
-                <p className="text-xs text-gray-500 uppercase">Revenue</p>
-                <p className="mt-1 text-2xl font-bold text-emerald-400">${data.summary.totalRevenue.toFixed(2)}</p>
+              <Card className="border-border bg-surface p-4">
+                <p className="text-xs text-textMuted uppercase">Revenue</p>
+                <p className="mt-1 text-2xl font-bold text-success">${data.summary.totalRevenue.toFixed(2)}</p>
                 {compareData && (
-                  <p className={`text-xs mt-1 ${data.summary.totalRevenue >= compareData.summary.totalRevenue ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <p className={`text-xs mt-1 ${data.summary.totalRevenue >= compareData.summary.totalRevenue ? 'text-success' : 'text-danger'}`}>
                     vs ${compareData.summary.totalRevenue.toFixed(2)}
                   </p>
                 )}
               </Card>
-              <Card className="border-gray-800 bg-opsPanel p-4">
-                <p className="text-xs text-gray-500 uppercase">Avg Daily Orders</p>
-                <p className="mt-1 text-2xl font-bold text-blue-400">{data.summary.avgDailyOrders}</p>
+              <Card className="border-border bg-surface p-4">
+                <p className="text-xs text-textMuted uppercase">Avg Daily Orders</p>
+                <p className="mt-1 text-2xl font-bold text-info">{data.summary.avgDailyOrders}</p>
               </Card>
-              <Card className="border-gray-800 bg-opsPanel p-4">
-                <p className="text-xs text-gray-500 uppercase">Completion Rate</p>
+              <Card className="border-border bg-surface p-4">
+                <p className="text-xs text-textMuted uppercase">Completion Rate</p>
                 <p className="mt-1 text-2xl font-bold text-white">{data.summary.completionRate}%</p>
               </Card>
             </div>
 
             {/* Daily breakdown table */}
-            <Card className="border-gray-800 bg-opsPanel overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-700">
+            <Card className="border-border bg-surface overflow-hidden">
+              <div className="px-4 py-3 border-b border-border">
                 <h3 className="font-semibold text-white">Daily Breakdown</h3>
               </div>
               <div className="max-h-96 overflow-y-auto">
                 <table className="w-full">
-                  <thead className="sticky top-0 bg-opsPanel">
-                    <tr className="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-gray-700">
+                  <thead className="sticky top-0 bg-surface">
+                    <tr className="text-left text-xs uppercase tracking-wider text-textMuted border-b border-border">
                       <th className="px-4 py-2">Date</th>
                       <th className="px-4 py-2">Orders</th>
                       <th className="px-4 py-2">Revenue</th>
@@ -167,12 +167,12 @@ export default function ReportsPage() {
                   </thead>
                   <tbody>
                     {data.trend.filter((d: any) => d.orders > 0).reverse().map((d: any) => (
-                      <tr key={d.date} className="border-b border-gray-800 hover:bg-white/5">
+                      <tr key={d.date} className="border-b border-border hover:bg-surfaceMuted">
                         <td className="px-4 py-2 text-sm text-white">{d.date}</td>
-                        <td className="px-4 py-2 text-sm text-gray-300">{d.orders}</td>
-                        <td className="px-4 py-2 text-sm text-emerald-400">${d.revenue.toFixed(2)}</td>
-                        <td className="px-4 py-2 text-sm text-gray-300">{d.completed}</td>
-                        <td className="px-4 py-2 text-sm text-red-400">{d.cancelled}</td>
+                        <td className="px-4 py-2 text-sm text-textSubtle">{d.orders}</td>
+                        <td className="px-4 py-2 text-sm text-success">${d.revenue.toFixed(2)}</td>
+                        <td className="px-4 py-2 text-sm text-textSubtle">{d.completed}</td>
+                        <td className="px-4 py-2 text-sm text-danger">{d.cancelled}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -182,16 +182,16 @@ export default function ReportsPage() {
 
             {/* Top chefs */}
             {data.topChefs.length > 0 && (
-              <Card className="border-gray-800 bg-opsPanel p-6">
+              <Card className="border-border bg-surface p-6">
                 <h3 className="font-semibold text-white mb-4">Top Performing Chefs</h3>
                 <div className="space-y-2">
                   {data.topChefs.map((chef: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between rounded-lg bg-opsPanel px-4 py-2">
+                    <div key={i} className="flex items-center justify-between rounded-lg bg-surface px-4 py-2">
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-500 w-6">{i + 1}</span>
+                        <span className="text-sm font-bold text-textMuted w-6">{i + 1}</span>
                         <span className="text-sm font-medium text-white">{chef.name}</span>
                       </div>
-                      <span className="text-sm font-bold text-emerald-400">${chef.revenue.toFixed(2)}</span>
+                      <span className="text-sm font-bold text-success">${chef.revenue.toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
@@ -201,8 +201,8 @@ export default function ReportsPage() {
         )}
 
         {!data && !loading && (
-          <Card className="border-gray-800 bg-opsPanel p-8 text-center">
-            <p className="text-gray-500">Select a date range and click Generate Report to view data.</p>
+          <Card className="border-border bg-surface p-8 text-center">
+            <p className="text-textMuted">Select a date range and click Generate Report to view data.</p>
           </Card>
         )}
       </div>

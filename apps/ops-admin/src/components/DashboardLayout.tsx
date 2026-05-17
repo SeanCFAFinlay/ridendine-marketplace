@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { useAuthContext } from '@ridendine/auth';
@@ -37,6 +36,7 @@ import {
   Menu,
   LogOut,
 } from 'lucide-react';
+import { Logo } from '@ridendine/ui';
 import { OpsAlerts } from './ops-alerts';
 import { GlobalSearch } from './global-search';
 
@@ -165,11 +165,12 @@ function NavGroupItem({ group, pathname, collapsed }: {
     return (
       <div className="relative group/group">
         <button
+          type="button"
           onClick={toggle}
           className={`flex w-full items-center justify-center rounded-md p-2 transition-colors ${
             isGroupActive
-              ? 'text-[#E85D26]'
-              : 'text-gray-500 hover:text-gray-300'
+              ? 'text-primary'
+              : 'text-textMuted hover:text-text'
           }`}
           aria-label={group.label}
           title={group.label}
@@ -183,10 +184,11 @@ function NavGroupItem({ group, pathname, collapsed }: {
   return (
     <div className="mb-1">
       <button
+        type="button"
         onClick={toggle}
         aria-expanded={isOpen}
         className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-widest transition-colors ${
-          isGroupActive ? 'text-gray-300' : 'text-gray-600 hover:text-gray-400'
+          isGroupActive ? 'text-text' : 'text-textSubtle hover:text-textMuted'
         }`}
       >
         <span className="flex items-center gap-2">
@@ -212,11 +214,12 @@ function NavGroupItem({ group, pathname, collapsed }: {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-2.5 rounded-md py-2 pl-3 pr-3 text-sm transition-all ${
+                  className={`flex items-center gap-2.5 rounded-md py-2 pl-3 pr-3 text-sm transition-colors ${
                     isActive
-                      ? 'border-l-2 border-[#E85D26] bg-white/5 pl-[10px] font-medium text-white'
-                      : 'border-l-2 border-transparent text-gray-500 hover:bg-white/5 hover:text-gray-300'
+                      ? 'border-l-2 border-primary bg-primarySoft pl-[10px] font-medium text-primary'
+                      : 'border-l-2 border-transparent text-textMuted hover:bg-surfaceMuted hover:text-text'
                   }`}
+                  aria-current={isActive ? 'page' : undefined}
                 >
                   <item.Icon className="h-3.5 w-3.5 flex-shrink-0" />
                   {item.label}
@@ -236,20 +239,21 @@ function QuickCreateMenu() {
   return (
     <div className="relative">
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 rounded-md bg-[#E85D26] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#d54d1a]"
+        className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primaryFg transition-colors hover:bg-primaryHover focus-visible:outline-none focus-visible:shadow-focus"
       >
         <Plus className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">Add</span>
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1.5 w-48 overflow-hidden rounded-lg border border-gray-700 bg-opsPanel shadow-xl">
+        <div className="absolute right-0 top-full z-dropdown mt-1.5 w-48 overflow-hidden rounded-lg border border-border bg-surface shadow-xl">
           {QUICK_CREATES.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="block px-4 py-2.5 text-sm text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
+              className="block px-4 py-2.5 text-sm text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text"
             >
               {item.label}
             </Link>
@@ -290,25 +294,26 @@ function UserMenu() {
   return (
     <div className="relative" ref={ref}>
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-md border border-white/5 bg-opsPanel px-2 py-1.5 text-xs text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
+        className="flex items-center gap-2 rounded-md border border-border bg-surface px-2 py-1.5 text-xs text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text focus-visible:outline-none focus-visible:shadow-focus"
         aria-label="Open user menu"
       >
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E85D26] text-[10px] font-semibold text-white">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primaryFg">
           {initials}
         </span>
         <span className="hidden max-w-[160px] truncate sm:inline">{displayName}</span>
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1.5 w-56 overflow-hidden rounded-lg border border-gray-700 bg-opsPanel shadow-xl">
-          <div className="border-b border-white/5 px-4 py-3">
-            <p className="truncate text-sm font-medium text-white">{displayName}</p>
-            <p className="truncate text-xs text-gray-400">{user?.email}</p>
+        <div className="absolute right-0 top-full z-dropdown mt-1.5 w-56 overflow-hidden rounded-lg border border-border bg-surface shadow-xl">
+          <div className="border-b border-divider px-4 py-3">
+            <p className="truncate text-sm font-medium text-text">{displayName}</p>
+            <p className="truncate text-xs text-textMuted">{user?.email}</p>
           </div>
           <button
             type="button"
             onClick={handleSignOut}
-            className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-red-400 transition-colors hover:bg-white/5 hover:text-red-300"
+            className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-danger transition-colors hover:bg-dangerSoft"
           >
             <LogOut className="h-3.5 w-3.5" />
             Sign out
@@ -334,29 +339,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const sidebarContent = (collapsed: boolean) => (
     <>
       {/* Logo */}
-      <div className={`flex h-14 items-center border-b border-white/5 ${collapsed ? 'justify-center px-2' : 'gap-3 px-4'}`}>
-        <Image
-          src="/logo-icon.png"
-          alt="RideNDine"
-          width={28}
-          height={28}
-          className="rounded-md flex-shrink-0"
-        />
+      <div className={`flex h-14 items-center border-b border-border ${collapsed ? 'justify-center px-2' : 'gap-3 px-4'}`}>
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center rounded-sm focus-visible:outline-none focus-visible:shadow-focus"
+          aria-label="Ops admin — home"
+        >
+          <Logo height={26} variant={collapsed ? 'icon' : 'wordmark'} />
+        </Link>
         {!collapsed && (
-          <>
-            <span className="text-base font-bold">
-              <span className="text-[#1a9e8e]">RideN</span>
-              <span className="text-[#E85D26]">Dine</span>
-            </span>
-            <span className="ml-auto rounded-full bg-[#E85D26]/20 px-2 py-0.5 text-[10px] font-semibold text-[#E85D26]">
-              Ops
-            </span>
-          </>
+          <span className="ml-auto rounded-full bg-primarySoft px-2 py-0.5 text-[10px] font-semibold text-primary">
+            Ops
+          </span>
         )}
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto p-2">
+      <nav className="flex-1 overflow-y-auto p-2" aria-label="Primary">
         {NAV_GROUPS.map((group) => (
           <NavGroupItem
             key={group.id}
@@ -368,14 +367,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </nav>
 
       {/* Status footer */}
-      <div className={`border-t border-white/5 p-3 ${collapsed ? 'flex justify-center' : ''}`}>
+      <div className={`border-t border-border p-3 ${collapsed ? 'flex justify-center' : ''}`}>
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2 flex-shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/60 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
           </span>
           {!collapsed && (
-            <span className="text-[11px] text-gray-600">All systems operational</span>
+            <span className="text-[11px] text-textMuted">All systems operational</span>
           )}
         </div>
       </div>
@@ -383,28 +382,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   );
 
   return (
-    <div className="flex min-h-screen bg-opsCanvas">
+    <div className="flex min-h-screen bg-background">
       {/* Desktop sidebar — icon-only below lg, full above lg */}
-      <aside className="hidden w-12 flex-shrink-0 flex-col border-r border-white/5 bg-opsPanel md:flex lg:hidden">
+      <aside className="hidden w-12 flex-shrink-0 flex-col border-r border-border bg-surface md:flex lg:hidden">
         {sidebarContent(true)}
       </aside>
-      <aside className="hidden w-56 flex-shrink-0 flex-col border-r border-white/5 bg-opsPanel lg:flex">
+      <aside className="hidden w-56 flex-shrink-0 flex-col border-r border-border bg-surface lg:flex">
         {sidebarContent(false)}
       </aside>
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-modal md:hidden">
           <div
-            className="absolute inset-0 bg-black/70"
+            className="absolute inset-0 bg-text/40 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
           />
-          <aside className="absolute left-0 top-0 flex h-full w-64 flex-col border-r border-white/5 bg-opsPanel">
-            <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
-              <span className="text-sm font-semibold text-white">Navigation</span>
+          <aside className="absolute left-0 top-0 flex h-full w-64 flex-col border-r border-border bg-surface shadow-xl">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <span className="text-sm font-semibold text-text">Navigation</span>
               <button
+                type="button"
                 onClick={() => setMobileOpen(false)}
-                className="rounded p-1 text-gray-400 hover:text-white"
+                className="rounded-md p-1 text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text focus-visible:outline-none focus-visible:shadow-focus"
                 aria-label="Close navigation"
               >
                 <X className="h-4 w-4" />
@@ -427,10 +428,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar */}
-        <header className="flex h-14 flex-shrink-0 items-center justify-between border-b border-white/5 bg-opsCanvas px-4 md:px-6">
+        <header className="sticky top-0 z-sticky flex h-14 flex-shrink-0 items-center justify-between border-b border-border bg-surface px-4 md:px-6">
           <div className="flex items-center gap-3">
             <button
-              className="rounded p-1.5 text-gray-500 hover:text-gray-300 md:hidden"
+              type="button"
+              className="rounded-md p-1.5 text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text focus-visible:outline-none focus-visible:shadow-focus md:hidden"
               onClick={() => setMobileOpen(true)}
               aria-label="Open navigation"
             >
@@ -444,10 +446,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <OpsAlerts />
             <div className="flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/60 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
               </span>
-              <span className="hidden text-xs font-medium text-green-400 sm:inline">Live</span>
+              <span className="hidden text-xs font-medium text-success sm:inline">Live</span>
             </div>
             <UserMenu />
           </div>

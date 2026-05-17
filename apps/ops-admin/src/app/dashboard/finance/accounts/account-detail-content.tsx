@@ -46,54 +46,54 @@ export async function FinanceAccountDetailContent({ type, id }: { type: AccountD
       <div className="mx-auto max-w-7xl space-y-6">
         <FinanceSubnav />
         <div className="flex flex-wrap items-center gap-3">
-          <Link href={listHref} className="text-sm text-emerald-400 hover:underline">
+          <Link href={listHref} className="text-sm text-success hover:underline">
             ← Back to {type === 'chefs' ? 'chef' : 'driver'} accounts
           </Link>
         </div>
         <div>
           <h1 className="text-3xl font-bold text-white">{title}</h1>
-          <p className="mt-1 text-gray-400">
-            {accountType} · owner <span className="font-mono text-gray-300">{id}</span>
+          <p className="mt-1 text-textMuted">
+            {accountType} · owner <span className="font-mono text-textSubtle">{id}</span>
           </p>
         </div>
 
         {acctErr || !account ? (
-          <Card className="border-gray-800 bg-opsPanel p-6 text-gray-300">
+          <Card className="border-border bg-surface p-6 text-textSubtle">
             No platform_accounts row yet (balance may be zero until ledger activity).
           </Card>
         ) : (
           <div className="grid gap-4 sm:grid-cols-3">
-            <Card className="border-gray-800 bg-opsPanel p-4">
-              <p className="text-sm text-gray-400">Balance</p>
-              <p className="mt-1 text-2xl font-bold text-emerald-300">
+            <Card className="border-border bg-surface p-4">
+              <p className="text-sm text-textMuted">Balance</p>
+              <p className="mt-1 text-2xl font-bold text-success">
                 {fmtCents(account.balance_cents as number)}
               </p>
             </Card>
-            <Card className="border-gray-800 bg-opsPanel p-4">
-              <p className="text-sm text-gray-400">Pending payout</p>
-              <p className="mt-1 text-2xl font-bold text-yellow-200">
+            <Card className="border-border bg-surface p-4">
+              <p className="text-sm text-textMuted">Pending payout</p>
+              <p className="mt-1 text-2xl font-bold text-warning">
                 {fmtCents((account.pending_payout_cents as number) ?? 0)}
               </p>
             </Card>
-            <Card className="border-gray-800 bg-opsPanel p-4">
-              <p className="text-sm text-gray-400">Currency</p>
+            <Card className="border-border bg-surface p-4">
+              <p className="text-sm text-textMuted">Currency</p>
               <p className="mt-1 text-2xl font-bold text-white">{(account.currency as string) ?? 'CAD'}</p>
             </Card>
           </div>
         )}
 
-        <Card className="border-gray-800 bg-opsPanel p-6">
+        <Card className="border-border bg-surface p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Ledger lines (entity scoped)</h2>
-            <Badge className="bg-gray-700 text-gray-200">{(entries ?? []).length}</Badge>
+            <Badge className="bg-surfaceMuted text-textSubtle">{(entries ?? []).length}</Badge>
           </div>
           {ledErr ? (
-            <p className="text-red-300">Could not load ledger.</p>
+            <p className="text-danger">Could not load ledger.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-700 text-gray-400">
+                  <tr className="border-b border-border text-textMuted">
                     <th className="py-2">When</th>
                     <th className="py-2">Type</th>
                     <th className="py-2">Amount</th>
@@ -103,16 +103,16 @@ export async function FinanceAccountDetailContent({ type, id }: { type: AccountD
                 </thead>
                 <tbody>
                   {(entries ?? []).map((e: Record<string, unknown>) => (
-                    <tr key={e.id as string} className="border-b border-gray-800 text-gray-200">
+                    <tr key={e.id as string} className="border-b border-border text-textSubtle">
                       <td className="py-2 whitespace-nowrap">
                         {new Date(e.created_at as string).toLocaleString()}
                       </td>
                       <td className="py-2">{e.entry_type as string}</td>
-                      <td className="py-2 font-mono text-emerald-200">{fmtCents(e.amount_cents as number)}</td>
-                      <td className="py-2 font-mono text-xs text-gray-400">
+                      <td className="py-2 font-mono text-success">{fmtCents(e.amount_cents as number)}</td>
+                      <td className="py-2 font-mono text-xs text-textMuted">
                         {(e.order_id as string | null)?.slice(0, 8) ?? '—'}
                       </td>
-                      <td className="py-2 text-gray-400">{(e.description as string) ?? '—'}</td>
+                      <td className="py-2 text-textMuted">{(e.description as string) ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>

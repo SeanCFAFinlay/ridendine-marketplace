@@ -139,7 +139,7 @@ export default function DriversPage() {
       cell: (row) => (
         <Link
           href={`/dashboard/drivers/${row.id}`}
-          className="font-medium text-white hover:text-[#E85D26]"
+          className="font-medium text-white hover:text-primary"
         >
           {row.first_name} {row.last_name}
         </Link>
@@ -148,17 +148,17 @@ export default function DriversPage() {
     {
       key: 'email',
       header: 'Email',
-      cell: (row) => <span className="text-gray-300 text-sm">{row.email}</span>,
+      cell: (row) => <span className="text-textSubtle text-sm">{row.email}</span>,
     },
     {
       key: 'phone',
       header: 'Phone',
-      cell: (row) => <span className="text-gray-400 text-sm">{row.phone}</span>,
+      cell: (row) => <span className="text-textMuted text-sm">{row.phone}</span>,
     },
     {
       key: 'vehicle_type',
       header: 'Vehicle',
-      cell: (row) => <span className="text-gray-400 text-sm">{row.vehicle_type ?? 'N/A'}</span>,
+      cell: (row) => <span className="text-textMuted text-sm">{row.vehicle_type ?? 'N/A'}</span>,
     },
     {
       key: 'status',
@@ -171,7 +171,7 @@ export default function DriversPage() {
       header: 'Joined',
       sortable: true,
       cell: (row) => (
-        <span className="text-gray-500 text-xs">
+        <span className="text-textMuted text-xs">
           {new Date(row.created_at).toLocaleDateString()}
         </span>
       ),
@@ -183,7 +183,7 @@ export default function DriversPage() {
         <div className="flex items-center gap-1.5">
           <Link
             href={`/dashboard/drivers/${row.id}`}
-            className="rounded bg-[#E85D26] px-2 py-1 text-xs text-white hover:bg-[#d54d1a]"
+            className="rounded bg-primary px-2 py-1 text-xs text-white hover:bg-primaryHover"
           >
             View
           </Link>
@@ -191,14 +191,14 @@ export default function DriversPage() {
             <>
               <button
                 onClick={() => void handleStatusChange(row.id, 'approved')}
-                className="rounded bg-green-700 px-2 py-1 text-xs text-white hover:bg-green-600"
+                className="rounded bg-success px-2 py-1 text-xs text-white hover:bg-success"
                 title="Approve"
               >
                 <UserCheck className="h-3 w-3" />
               </button>
               <button
                 onClick={() => void handleStatusChange(row.id, 'rejected')}
-                className="rounded bg-red-700 px-2 py-1 text-xs text-white hover:bg-red-600"
+                className="rounded bg-danger px-2 py-1 text-xs text-white hover:bg-danger"
                 title="Reject"
               >
                 <UserX className="h-3 w-3" />
@@ -208,7 +208,7 @@ export default function DriversPage() {
           {row.status === 'approved' && (
             <button
               onClick={() => void handleStatusChange(row.id, 'suspended')}
-              className="rounded bg-gray-700 px-2 py-1 text-xs text-white hover:bg-gray-600"
+              className="rounded bg-surfaceMuted px-2 py-1 text-xs text-white hover:bg-surfaceMuted"
               title="Suspend"
             >
               <UserMinus className="h-3 w-3" />
@@ -217,7 +217,7 @@ export default function DriversPage() {
           {row.status === 'suspended' && (
             <button
               onClick={() => void handleStatusChange(row.id, 'approved')}
-              className="rounded bg-green-700 px-2 py-1 text-xs text-white hover:bg-green-600"
+              className="rounded bg-success px-2 py-1 text-xs text-white hover:bg-success"
               title="Unsuspend"
             >
               <UserCheck className="h-3 w-3" />
@@ -240,14 +240,14 @@ export default function DriversPage() {
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
-                className="bg-[#E85D26] text-white hover:bg-[#d54d1a]"
+                className="bg-primary text-white hover:bg-primaryHover"
                 onClick={() => setShowCreate(true)}
               >
                 Add Driver
               </Button>
               <a
                 href="/api/export?type=drivers"
-                className="inline-flex h-8 items-center rounded-md border border-gray-700 px-3 text-xs text-gray-300 hover:border-gray-500"
+                className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs text-textSubtle hover:border-border"
               >
                 Export CSV
               </a>
@@ -256,7 +256,7 @@ export default function DriversPage() {
         />
 
         {error && !showCreate && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
             {error}
           </div>
         )}
@@ -269,8 +269,8 @@ export default function DriversPage() {
               onClick={() => setStatusFilter(s)}
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 statusFilter === s
-                  ? 'bg-[#E85D26] text-white'
-                  : 'border border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-200'
+                  ? 'bg-primary text-white'
+                  : 'border border-border text-textMuted hover:border-border hover:text-textSubtle'
               }`}
             >
               {s === 'all' ? `All (${drivers.length})` : s}
@@ -290,7 +290,7 @@ export default function DriversPage() {
               action={
                 <Button
                   size="sm"
-                  className="bg-[#E85D26] text-white hover:bg-[#d54d1a]"
+                  className="bg-primary text-white hover:bg-primaryHover"
                   onClick={() => setShowCreate(true)}
                 >
                   Add Driver
@@ -298,7 +298,7 @@ export default function DriversPage() {
               }
             />
           }
-          className="border-gray-800 bg-opsPanel"
+          className="border-border bg-surface"
         />
 
         <Modal
@@ -306,54 +306,54 @@ export default function DriversPage() {
           onClose={() => { setShowCreate(false); setForm(INITIAL_FORM); setError(''); }}
           title="Add Driver"
         >
-          <p className="mb-4 text-sm text-gray-400">
+          <p className="mb-4 text-sm text-textMuted">
             Create a login, driver profile, and offline presence record.
           </p>
           {error && (
-            <div className="mb-4 rounded-lg bg-red-500/15 p-3 text-sm text-red-200">{error}</div>
+            <div className="mb-4 rounded-lg bg-danger/15 p-3 text-sm text-danger">{error}</div>
           )}
           <form onSubmit={(e) => void handleCreateDriver(e)} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm text-gray-300">
+              <label className="block text-sm text-textSubtle">
                 First name
                 <input
                   required
                   value={form.firstName}
                   onChange={(e) => setForm((v) => ({ ...v, firstName: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-gray-600 bg-gray-950 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-lg border border-border bg-text px-3 py-2 text-white"
                 />
               </label>
-              <label className="block text-sm text-gray-300">
+              <label className="block text-sm text-textSubtle">
                 Last name
                 <input
                   required
                   value={form.lastName}
                   onChange={(e) => setForm((v) => ({ ...v, lastName: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-gray-600 bg-gray-950 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-lg border border-border bg-text px-3 py-2 text-white"
                 />
               </label>
             </div>
-            <label className="block text-sm text-gray-300">
+            <label className="block text-sm text-textSubtle">
               Email
               <input
                 required
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm((v) => ({ ...v, email: e.target.value }))}
-                className="mt-1 w-full rounded-lg border border-gray-600 bg-gray-950 px-3 py-2 text-white"
+                className="mt-1 w-full rounded-lg border border-border bg-text px-3 py-2 text-white"
               />
             </label>
-            <label className="block text-sm text-gray-300">
+            <label className="block text-sm text-textSubtle">
               Phone
               <input
                 required
                 value={form.phone}
                 onChange={(e) => setForm((v) => ({ ...v, phone: e.target.value }))}
-                className="mt-1 w-full rounded-lg border border-gray-600 bg-gray-950 px-3 py-2 text-white"
+                className="mt-1 w-full rounded-lg border border-border bg-text px-3 py-2 text-white"
               />
             </label>
             <div className="grid gap-4 sm:grid-cols-3">
-              <label className="block text-sm text-gray-300">
+              <label className="block text-sm text-textSubtle">
                 Temporary password
                 <input
                   required
@@ -361,15 +361,15 @@ export default function DriversPage() {
                   type="password"
                   value={form.password}
                   onChange={(e) => setForm((v) => ({ ...v, password: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-gray-600 bg-gray-950 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-lg border border-border bg-text px-3 py-2 text-white"
                 />
               </label>
-              <label className="block text-sm text-gray-300">
+              <label className="block text-sm text-textSubtle">
                 Vehicle
                 <select
                   value={form.vehicleType}
                   onChange={(e) => setForm((v) => ({ ...v, vehicleType: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-gray-600 bg-gray-950 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-lg border border-border bg-text px-3 py-2 text-white"
                 >
                   <option value="car">Car</option>
                   <option value="motorcycle">Motorcycle</option>
@@ -377,12 +377,12 @@ export default function DriversPage() {
                   <option value="scooter">Scooter</option>
                 </select>
               </label>
-              <label className="block text-sm text-gray-300">
+              <label className="block text-sm text-textSubtle">
                 Starting status
                 <select
                   value={form.status}
                   onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-gray-600 bg-gray-950 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-lg border border-border bg-text px-3 py-2 text-white"
                 >
                   <option value="pending">Pending review</option>
                   <option value="approved">Approved</option>
@@ -401,7 +401,7 @@ export default function DriversPage() {
               <Button
                 type="submit"
                 size="sm"
-                className="bg-[#E85D26] text-white hover:bg-[#d54d1a]"
+                className="bg-primary text-white hover:bg-primaryHover"
                 loading={saving}
               >
                 Create Driver

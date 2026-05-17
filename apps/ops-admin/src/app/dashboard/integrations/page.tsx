@@ -63,7 +63,7 @@ export default function IntegrationsPage() {
       <div className="mx-auto max-w-4xl space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Integrations</h1>
-          <p className="mt-1 text-gray-400">
+          <p className="mt-1 text-textMuted">
             {activeCount}/{integrations.length} integrations active
           </p>
         </div>
@@ -71,7 +71,7 @@ export default function IntegrationsPage() {
         <div className="space-y-3">
           {integrations.map((integration) => (
             <Card key={integration.name} className={`p-5 ${
-              integration.configured ? 'border-gray-800 bg-opsPanel' : 'border-yellow-500/30 bg-yellow-950/10'
+              integration.configured ? 'border-border bg-surface' : 'border-warning/30 bg-warningSoft'
             }`}>
               <div className="flex items-center justify-between">
                 <div>
@@ -79,23 +79,23 @@ export default function IntegrationsPage() {
                     <h3 className="font-semibold text-white">{integration.name}</h3>
                     <Badge className={
                       integration.configured
-                        ? 'bg-emerald-500/20 text-emerald-300'
-                        : 'bg-yellow-500/20 text-yellow-300'
+                        ? 'bg-success/20 text-success'
+                        : 'bg-warning/20 text-warning'
                     }>
                       {integration.configured ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
-                  <p className="mt-1 text-sm text-gray-400">{integration.type}</p>
-                  <p className="mt-0.5 text-xs text-gray-500 font-mono">{integration.url}</p>
+                  <p className="mt-1 text-sm text-textMuted">{integration.type}</p>
+                  <p className="mt-0.5 text-xs text-textMuted font-mono">{integration.url}</p>
                 </div>
               </div>
             </Card>
           ))}
         </div>
 
-        <Card className="border-gray-800 bg-opsPanel p-6">
+        <Card className="border-border bg-surface p-6">
           <h3 className="text-sm font-semibold text-white mb-2">Configuration</h3>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-textMuted">
             Integrations are configured via environment variables in the Vercel dashboard.
             Changes require a redeployment. Processor endpoints are secured with the ENGINE_PROCESSOR_TOKEN
             and run on Vercel Cron every 60 seconds.

@@ -46,7 +46,7 @@ export function SupportTicketActions({ ticketId, status }: SupportTicketActionsP
           type="button"
           onClick={() => runAction('start_review')}
           disabled={busy !== null}
-          className="rounded-lg border border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-200 hover:bg-white/5 disabled:opacity-50"
+          className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-textSubtle hover:bg-surfaceMuted disabled:opacity-50"
         >
           {busy === 'start_review' ? 'Starting...' : 'Start Review'}
         </button>
@@ -56,12 +56,12 @@ export function SupportTicketActions({ ticketId, status }: SupportTicketActionsP
           type="button"
           onClick={() => runAction('resolve')}
           disabled={busy !== null}
-          className="rounded-lg bg-[#E85D26] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#d44e1e] disabled:opacity-50"
+          className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primaryHover disabled:opacity-50"
         >
           {busy === 'resolve' ? 'Resolving...' : 'Resolve'}
         </button>
       )}
-      {error && <span className="text-xs text-red-300">{error}</span>}
+      {error && <span className="text-xs text-danger">{error}</span>}
     </div>
   );
 }

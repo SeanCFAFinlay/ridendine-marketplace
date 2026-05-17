@@ -151,49 +151,49 @@ export function PayoutActions() {
 
   if (loading) {
     return (
-      <Card className="border-gray-800 bg-opsPanel p-6">
-        <div className="animate-pulse h-20 bg-gray-700/30 rounded" />
+      <Card className="border-border bg-surface p-6">
+        <div className="animate-pulse h-20 bg-surfaceMuted/30 rounded" />
       </Card>
     );
   }
 
   return (
-    <Card className="border-gray-800 bg-opsPanel p-6">
+    <Card className="border-border bg-surface p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">Chef Payouts</h3>
-        <span className="text-sm text-gray-400">{chefs.length} chefs with balance</span>
+        <span className="text-sm text-textMuted">{chefs.length} chefs with balance</span>
       </div>
       {error && (
-        <div className="mb-3 rounded-lg bg-red-500/20 p-3 text-sm text-red-300">{error}</div>
+        <div className="mb-3 rounded-lg bg-danger/20 p-3 text-sm text-danger">{error}</div>
       )}
       {chefs.length === 0 ? (
-        <p className="text-sm text-gray-500">No outstanding chef payouts.</p>
+        <p className="text-sm text-textMuted">No outstanding chef payouts.</p>
       ) : (
         <div className="space-y-3">
           {chefs.map((chef) => (
-            <div key={chef.chefId} className="rounded-lg bg-opsPanel p-4">
+            <div key={chef.chefId} className="rounded-lg bg-surface p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-white">{chef.name}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-textMuted">
                     Earned: ${chef.totalEarned.toFixed(2)} | Paid: ${chef.totalPaid.toFixed(2)}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-lg font-bold text-emerald-400">${chef.balance.toFixed(2)}</span>
+                  <span className="text-lg font-bold text-success">${chef.balance.toFixed(2)}</span>
                   <Button
                     size="sm"
                     onClick={() => setPendingChef(chef)}
                     disabled={paying === chef.chefId || chef.balance <= 0}
-                    className="bg-emerald-600 hover:bg-emerald-700"
+                    className="bg-success hover:bg-success"
                   >
                     {paying === chef.chefId ? 'Recording...' : 'Record BANK'}
                   </Button>
                 </div>
               </div>
               {pendingChef?.chefId === chef.chefId && (
-                <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
-                  <p className="text-sm text-emerald-100">
+                <div className="mt-3 rounded-lg border border-success/30 bg-success/10 p-3">
+                  <p className="text-sm text-success">
                     Schedule BANK payout for ${chef.balance.toFixed(2)} to {chef.name}.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -201,7 +201,7 @@ export function PayoutActions() {
                       size="sm"
                       onClick={() => executePayout(chef)}
                       disabled={Boolean(paying)}
-                      className="bg-emerald-600 hover:bg-emerald-700"
+                      className="bg-success hover:bg-success"
                     >
                       Confirm Schedule
                     </Button>
@@ -216,18 +216,18 @@ export function PayoutActions() {
         </div>
       )}
       {bankPayouts.length > 0 && (
-        <div className="mt-6 border-t border-gray-700 pt-5">
+        <div className="mt-6 border-t border-border pt-5">
           <div className="mb-3 flex items-center justify-between">
             <h4 className="font-semibold text-white">BANK Queue</h4>
-            <span className="text-xs text-gray-400">{bankPayouts.length} active</span>
+            <span className="text-xs text-textMuted">{bankPayouts.length} active</span>
           </div>
           <div className="space-y-3">
             {bankPayouts.map((payout) => (
-              <div key={payout.id} className="rounded-lg bg-opsPanel p-4">
+              <div key={payout.id} className="rounded-lg bg-surface p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="font-medium text-white">{payout.name}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-textMuted">
                       ${(payout.amountCents / 100).toFixed(2)} | {payout.status}
                       {payout.bankBatchId ? ` | ${payout.bankBatchId}` : ''}
                       {payout.bankReference ? ` | ${payout.bankReference}` : ''}
@@ -271,8 +271,8 @@ export function PayoutActions() {
                   </div>
                 </div>
                 {pendingBankAction?.payout.id === payout.id && (
-                  <div className="mt-3 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3">
-                    <p className="text-sm text-blue-100">
+                  <div className="mt-3 rounded-lg border border-info/30 bg-info/10 p-3">
+                    <p className="text-sm text-info">
                       Confirm {pendingBankAction.action.replace(/_/g, ' ')} for {payout.name}.
                     </p>
                     {['mark_bank_submitted', 'mark_bank_paid', 'reconcile_bank_payout'].includes(pendingBankAction.action) && (
@@ -280,7 +280,7 @@ export function PayoutActions() {
                         value={bankReference}
                         onChange={(event) => setBankReference(event.target.value)}
                         placeholder="BANK reference"
-                        className="mt-3 w-full rounded-lg border border-gray-600 bg-[#101827] px-3 py-2 text-sm text-white"
+                        className="mt-3 w-full rounded-lg border border-border bg-[#101827] px-3 py-2 text-sm text-white"
                       />
                     )}
                     <div className="mt-3 flex flex-wrap gap-2">

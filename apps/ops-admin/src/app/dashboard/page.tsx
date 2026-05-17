@@ -221,10 +221,10 @@ export default async function DashboardPage() {
           actions={
             <div className="flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
               </span>
-              <span className="text-xs font-medium text-green-400">Live</span>
+              <span className="text-xs font-medium text-success">Live</span>
             </div>
           }
         />
@@ -235,23 +235,23 @@ export default async function DashboardPage() {
             label="Today's Revenue"
             value={`$${stats.todayRevenue.toFixed(2)}`}
             change={Math.round(stats.revenueGrowth * 10) / 10}
-            className="border-gray-800 bg-opsPanel"
+            className="border-border bg-surface"
           />
           <KpiTile
             label="Today's Orders"
             value={stats.todayOrders}
             change={Math.round(stats.orderGrowth * 10) / 10}
-            className="border-gray-800 bg-opsPanel"
+            className="border-border bg-surface"
           />
           <KpiTile
             label="Active Deliveries"
             value={stats.activeDeliveries}
-            className="border-gray-800 bg-opsPanel"
+            className="border-border bg-surface"
           />
           <KpiTile
             label="Drivers Online"
             value={`${stats.onlineDrivers}/${stats.totalDrivers}`}
-            className="border-gray-800 bg-opsPanel"
+            className="border-border bg-surface"
           />
         </div>
 
@@ -261,8 +261,8 @@ export default async function DashboardPage() {
 
         {/* Engine pressure strip */}
         {engineData && pressureItems.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-800 bg-opsPanel px-4 py-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 mr-1">
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface px-4 py-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-textMuted mr-1">
               Engine Pressure
             </span>
             {pressureItems.map((p) => (
@@ -286,18 +286,18 @@ export default async function DashboardPage() {
         </LiveBoardBoundary>
 
         {/* Run the Business CTA strip */}
-        <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+        <div className="rounded-lg border border-border bg-surface p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-white">Run the Business</p>
-              <p className="text-xs text-gray-500">Primary operator controls</p>
+              <p className="text-xs text-textMuted">Primary operator controls</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/dashboard/chefs" className="inline-flex h-8 items-center rounded-lg bg-[#E85D26] px-3 text-sm font-medium text-white transition-colors hover:bg-[#d54d1a]">Add Chef</Link>
-              <Link href="/dashboard/drivers" className="inline-flex h-8 items-center rounded-lg bg-[#E85D26] px-3 text-sm font-medium text-white transition-colors hover:bg-[#d54d1a]">Add Driver</Link>
-              <Link href="/dashboard/finance" className="inline-flex h-8 items-center rounded-lg border border-gray-700 px-3 text-sm font-medium text-gray-300 transition-colors hover:border-[#E85D26] hover:text-white">Finance</Link>
-              <Link href="/dashboard/dispatch" className="inline-flex h-8 items-center rounded-lg border border-gray-700 px-3 text-sm font-medium text-gray-300 transition-colors hover:border-[#E85D26] hover:text-white">Dispatch</Link>
-              <Link href="/dashboard/announcements" className="inline-flex h-8 items-center rounded-lg border border-gray-700 px-3 text-sm font-medium text-gray-300 transition-colors hover:border-[#E85D26] hover:text-white">Announcement</Link>
+              <Link href="/dashboard/chefs" className="inline-flex h-8 items-center rounded-lg bg-primary px-3 text-sm font-medium text-white transition-colors hover:bg-primaryHover">Add Chef</Link>
+              <Link href="/dashboard/drivers" className="inline-flex h-8 items-center rounded-lg bg-primary px-3 text-sm font-medium text-white transition-colors hover:bg-primaryHover">Add Driver</Link>
+              <Link href="/dashboard/finance" className="inline-flex h-8 items-center rounded-lg border border-border px-3 text-sm font-medium text-textSubtle transition-colors hover:border-primary hover:text-white">Finance</Link>
+              <Link href="/dashboard/dispatch" className="inline-flex h-8 items-center rounded-lg border border-border px-3 text-sm font-medium text-textSubtle transition-colors hover:border-primary hover:text-white">Dispatch</Link>
+              <Link href="/dashboard/announcements" className="inline-flex h-8 items-center rounded-lg border border-border px-3 text-sm font-medium text-textSubtle transition-colors hover:border-primary hover:text-white">Announcement</Link>
             </div>
           </div>
         </div>

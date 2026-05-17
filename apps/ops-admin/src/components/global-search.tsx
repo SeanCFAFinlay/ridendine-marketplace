@@ -158,12 +158,12 @@ export function GlobalSearch() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-sm text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+        className="flex items-center gap-2 rounded-lg bg-surfaceMuted px-3 py-1.5 text-sm text-textMuted hover:bg-surfaceMuted hover:text-white transition-colors"
         aria-label="Open search"
       >
         <Search className="h-4 w-4" />
         <span className="hidden sm:inline">Search</span>
-        <kbd className="hidden sm:inline rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-mono text-gray-500">⌘K</kbd>
+        <kbd className="hidden sm:inline rounded bg-surfaceMuted px-1.5 py-0.5 text-[10px] font-mono text-textMuted">⌘K</kbd>
       </button>
 
       {isOpen && (
@@ -173,11 +173,11 @@ export function GlobalSearch() {
         >
           <div className="fixed inset-0 bg-black/60" />
           <div
-            className="relative w-full max-w-lg rounded-xl border border-gray-700 bg-opsCanvas shadow-2xl"
+            className="relative w-full max-w-lg rounded-xl border border-border bg-background shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center gap-3 border-b border-gray-700 px-4 py-3">
-              <Search className="h-5 w-5 text-gray-400 flex-shrink-0" />
+            <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+              <Search className="h-5 w-5 text-textMuted flex-shrink-0" />
               <input
                 ref={inputRef}
                 value={query}
@@ -186,17 +186,17 @@ export function GlobalSearch() {
                 placeholder="Search orders, customers, chefs, drivers..."
                 className="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-sm"
               />
-              <kbd className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-gray-500 font-mono">ESC</kbd>
+              <kbd className="rounded bg-surfaceMuted px-1.5 py-0.5 text-[10px] text-textMuted font-mono">ESC</kbd>
             </div>
             <div className="max-h-80 overflow-y-auto">
               {loading && (
-                <div className="px-4 py-3 text-sm text-gray-500">Searching...</div>
+                <div className="px-4 py-3 text-sm text-textMuted">Searching...</div>
               )}
               {!loading && query.length >= 2 && results.length === 0 && (
-                <div className="px-4 py-6 text-center text-sm text-gray-500">No results found</div>
+                <div className="px-4 py-6 text-center text-sm text-textMuted">No results found</div>
               )}
               {!loading && query.length < 2 && (
-                <div className="px-4 py-6 text-center text-sm text-gray-500">
+                <div className="px-4 py-6 text-center text-sm text-textMuted">
                   Type at least 2 characters to search
                 </div>
               )}
@@ -207,15 +207,15 @@ export function GlobalSearch() {
                     key={`${result.type}-${result.id}`}
                     onClick={() => { router.push(result.href); setIsOpen(false); }}
                     className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                      idx === selectedIndex ? 'bg-[#E85D26]/20' : 'hover:bg-white/5'
+                      idx === selectedIndex ? 'bg-primary/20' : 'hover:bg-surfaceMuted'
                     }`}
                   >
-                    <IconComp className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <IconComp className="h-4 w-4 text-textMuted flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate">{result.title}</p>
-                      <p className="text-xs text-gray-500 truncate">{result.subtitle}</p>
+                      <p className="text-xs text-textMuted truncate">{result.subtitle}</p>
                     </div>
-                    <span className="text-[10px] uppercase tracking-wider text-gray-600">{result.type}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-textMuted">{result.type}</span>
                   </button>
                 );
               })}

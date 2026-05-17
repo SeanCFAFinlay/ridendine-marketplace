@@ -69,24 +69,24 @@ export default function PromosPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Promo Codes</h1>
-            <p className="mt-1 text-gray-400">Create and manage promotional discount codes</p>
+            <p className="mt-1 text-textMuted">Create and manage promotional discount codes</p>
           </div>
-          <Button onClick={() => setShowCreate(true)} className="bg-[#E85D26] hover:bg-[#d44e1e]">
+          <Button onClick={() => setShowCreate(true)} className="bg-primary hover:bg-primaryHover">
             Create Promo Code
           </Button>
         </div>
 
-        {error && <div className="rounded-lg bg-red-500/20 p-3 text-sm text-red-300">{error}</div>}
+        {error && <div className="rounded-lg bg-danger/20 p-3 text-sm text-danger">{error}</div>}
 
-        <Card className="border-gray-800 bg-opsPanel overflow-hidden">
+        <Card className="border-border bg-surface overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center text-gray-500">Loading...</div>
+            <div className="p-8 text-center text-textMuted">Loading...</div>
           ) : promos.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">No promo codes yet. Create one to get started.</div>
+            <div className="p-8 text-center text-textMuted">No promo codes yet. Create one to get started.</div>
           ) : (
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-700 text-left text-xs uppercase tracking-wider text-gray-500">
+                <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-textMuted">
                   <th className="px-4 py-3">Code</th>
                   <th className="px-4 py-3">Discount</th>
                   <th className="px-4 py-3">Min Order</th>
@@ -101,28 +101,28 @@ export default function PromosPage() {
                   const isExpired = promo.expires_at && new Date(promo.expires_at) < new Date();
                   const isExhausted = promo.usage_limit && promo.usage_count >= promo.usage_limit;
                   return (
-                    <tr key={promo.id} className="border-b border-gray-800 hover:bg-white/5">
+                    <tr key={promo.id} className="border-b border-border hover:bg-surfaceMuted">
                       <td className="px-4 py-3">
-                        <span className="rounded bg-gray-700 px-2 py-1 font-mono text-sm font-bold text-white">{promo.code}</span>
+                        <span className="rounded bg-surfaceMuted px-2 py-1 font-mono text-sm font-bold text-white">{promo.code}</span>
                       </td>
                       <td className="px-4 py-3 text-sm text-white">
                         {promo.discount_type === 'percentage' ? `${promo.discount_value}%` : `$${promo.discount_value.toFixed(2)}`}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-400">
+                      <td className="px-4 py-3 text-sm text-textMuted">
                         {promo.min_order_amount > 0 ? `$${promo.min_order_amount.toFixed(2)}` : 'None'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-400">
+                      <td className="px-4 py-3 text-sm text-textMuted">
                         {promo.usage_count}{promo.usage_limit ? ` / ${promo.usage_limit}` : ' / unlimited'}
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">
+                      <td className="px-4 py-3 text-xs text-textMuted">
                         {promo.starts_at ? new Date(promo.starts_at).toLocaleDateString() : 'Any'} — {promo.expires_at ? new Date(promo.expires_at).toLocaleDateString() : 'Never'}
                       </td>
                       <td className="px-4 py-3">
                         <Badge className={
-                          !promo.is_active ? 'bg-gray-700 text-gray-400' :
-                          isExpired ? 'bg-red-500/20 text-red-300' :
-                          isExhausted ? 'bg-yellow-500/20 text-yellow-300' :
-                          'bg-emerald-500/20 text-emerald-300'
+                          !promo.is_active ? 'bg-surfaceMuted text-textMuted' :
+                          isExpired ? 'bg-danger/20 text-danger' :
+                          isExhausted ? 'bg-warning/20 text-warning' :
+                          'bg-success/20 text-success'
                         }>
                           {!promo.is_active ? 'Disabled' : isExpired ? 'Expired' : isExhausted ? 'Exhausted' : 'Active'}
                         </Badge>
@@ -131,12 +131,12 @@ export default function PromosPage() {
                         <div className="flex gap-2">
                           <Button variant="outline" size="sm"
                             onClick={() => toggleActive(promo.id, promo.is_active)}
-                            className="border-gray-600 text-gray-300 hover:bg-white/10">
+                            className="border-border text-textSubtle hover:bg-surfaceMuted">
                             {promo.is_active ? 'Disable' : 'Enable'}
                           </Button>
                           <Button variant="outline" size="sm"
                             onClick={() => deletePromo(promo.id, promo.code)}
-                            className="border-red-500/40 text-red-300 hover:bg-red-500/10">
+                            className="border-danger/40 text-danger hover:bg-danger/10">
                             Delete
                           </Button>
                         </div>
@@ -188,55 +188,55 @@ function CreatePromoModal({ onClose, onSuccess }: { onClose: () => void; onSucce
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-xl bg-opsPanel p-6 border border-gray-700">
+      <div className="w-full max-w-md rounded-xl bg-surface p-6 border border-border">
         <h2 className="text-xl font-bold text-white">Create Promo Code</h2>
-        {error && <div className="mt-2 rounded-lg bg-red-500/20 p-3 text-sm text-red-300">{error}</div>}
+        {error && <div className="mt-2 rounded-lg bg-danger/20 p-3 text-sm text-danger">{error}</div>}
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Code</label>
+            <label className="block text-sm font-medium text-textSubtle mb-1">Code</label>
             <Input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))}
-              placeholder="SUMMER25" required className="bg-opsPanel border-gray-600 text-white" />
+              placeholder="SUMMER25" required className="bg-surface border-border text-white" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Type</label>
+              <label className="block text-sm font-medium text-textSubtle mb-1">Type</label>
               <select value={form.discountType} onChange={e => setForm(f => ({ ...f, discountType: e.target.value as any }))}
-                className="w-full rounded-lg bg-opsPanel border border-gray-600 text-white px-3 py-2 text-sm">
+                className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm">
                 <option value="percentage">Percentage (%)</option>
                 <option value="fixed">Fixed ($)</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Value</label>
+              <label className="block text-sm font-medium text-textSubtle mb-1">Value</label>
               <Input type="number" step="0.01" value={form.discountValue}
                 onChange={e => setForm(f => ({ ...f, discountValue: e.target.value }))}
                 placeholder={form.discountType === 'percentage' ? '25' : '5.00'} required
-                className="bg-opsPanel border-gray-600 text-white" />
+                className="bg-surface border-border text-white" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Min Order ($)</label>
+              <label className="block text-sm font-medium text-textSubtle mb-1">Min Order ($)</label>
               <Input type="number" step="0.01" value={form.minOrderAmount}
                 onChange={e => setForm(f => ({ ...f, minOrderAmount: e.target.value }))}
-                placeholder="0.00" className="bg-opsPanel border-gray-600 text-white" />
+                placeholder="0.00" className="bg-surface border-border text-white" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Usage Limit</label>
+              <label className="block text-sm font-medium text-textSubtle mb-1">Usage Limit</label>
               <Input type="number" value={form.usageLimit}
                 onChange={e => setForm(f => ({ ...f, usageLimit: e.target.value }))}
-                placeholder="Unlimited" className="bg-opsPanel border-gray-600 text-white" />
+                placeholder="Unlimited" className="bg-surface border-border text-white" />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Expires At</label>
+            <label className="block text-sm font-medium text-textSubtle mb-1">Expires At</label>
             <Input type="datetime-local" value={form.expiresAt}
               onChange={e => setForm(f => ({ ...f, expiresAt: e.target.value }))}
-              className="bg-opsPanel border-gray-600 text-white" />
+              className="bg-surface border-border text-white" />
           </div>
           <div className="flex gap-3 justify-end pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="border-gray-600 text-gray-300">Cancel</Button>
-            <Button type="submit" disabled={loading} className="bg-[#E85D26]">{loading ? 'Creating...' : 'Create'}</Button>
+            <Button type="button" variant="outline" onClick={onClose} className="border-border text-textSubtle">Cancel</Button>
+            <Button type="submit" disabled={loading} className="bg-primary">{loading ? 'Creating...' : 'Create'}</Button>
           </div>
         </form>
       </div>

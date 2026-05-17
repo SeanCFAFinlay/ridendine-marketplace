@@ -62,10 +62,10 @@ export default async function FinancePayoutRunsPage() {
             description="Unable to fetch payout run data. Check your database connection."
           />
         ) : (
-          <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+          <div className="rounded-lg border border-border bg-surface p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-white">Recent Runs</h2>
-              <span className="rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
+              <span className="rounded-full bg-surfaceMuted px-2 py-0.5 text-xs text-textSubtle">
                 {(runs ?? []).length}
               </span>
             </div>
@@ -78,7 +78,7 @@ export default async function FinancePayoutRunsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-gray-800 text-xs uppercase tracking-wide text-gray-500">
+                    <tr className="border-b border-border text-xs uppercase tracking-wide text-textMuted">
                       <th className="py-3 pr-4">Created</th>
                       <th className="py-3 pr-4">Type</th>
                       <th className="py-3 pr-4">Status</th>
@@ -90,31 +90,31 @@ export default async function FinancePayoutRunsPage() {
                   </thead>
                   <tbody>
                     {((runs ?? []) as PayoutRun[]).map((run) => (
-                      <tr key={run.id} className="border-b border-gray-900 text-gray-300">
+                      <tr key={run.id} className="border-b border-border text-textSubtle">
                         <td className="py-3 pr-4 whitespace-nowrap text-xs">
                           {new Date(run.created_at).toLocaleString()}
                         </td>
-                        <td className="py-3 pr-4 font-medium text-gray-200">{run.run_type}</td>
+                        <td className="py-3 pr-4 font-medium text-textSubtle">{run.run_type}</td>
                         <td className="py-3 pr-4">
                           <StatusBadge status={getPayoutStatus(run.status)} label={run.status} />
                         </td>
-                        <td className="py-3 pr-4 text-xs text-gray-400">
+                        <td className="py-3 pr-4 text-xs text-textMuted">
                           {run.period_start?.slice(0, 10)} - {run.period_end?.slice(0, 10)}
                         </td>
-                        <td className="py-3 pr-4 font-mono text-emerald-300">
+                        <td className="py-3 pr-4 font-mono text-success">
                           {formatCents(Number(run.total_amount))}
                         </td>
                         <td className="py-3 pr-4">
-                          <span className="text-emerald-400">{run.successful_payouts}</span>
+                          <span className="text-success">{run.successful_payouts}</span>
                           {' / '}
-                          <span className={run.failed_payouts > 0 ? 'text-red-400' : 'text-gray-500'}>
+                          <span className={run.failed_payouts > 0 ? 'text-danger' : 'text-textMuted'}>
                             {run.failed_payouts}
                           </span>
                         </td>
                         <td className="py-3 text-right">
                           <Link
                             href={`/dashboard/finance/payouts/${run.id}`}
-                            className="text-xs text-[#E85D26] hover:underline"
+                            className="text-xs text-primary hover:underline"
                           >
                             Detail
                           </Link>

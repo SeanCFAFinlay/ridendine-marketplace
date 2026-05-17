@@ -40,7 +40,7 @@ export function StorefrontGovernanceActions({
       <button
         onClick={() => handleAction('unpublish')}
         disabled={submitting !== null}
-        className="rounded bg-red-600 px-3 py-1 text-xs text-white transition-colors hover:bg-red-500 disabled:opacity-50"
+        className="rounded bg-danger px-3 py-1 text-xs text-white transition-colors hover:bg-danger disabled:opacity-50"
       >
         {submitting === 'unpublish' ? 'Unpublishing...' : 'Unpublish'}
       </button>
@@ -51,7 +51,7 @@ export function StorefrontGovernanceActions({
     <button
       onClick={() => handleAction('publish')}
       disabled={submitting !== null}
-      className="rounded bg-green-600 px-3 py-1 text-xs text-white transition-colors hover:bg-green-500 disabled:opacity-50"
+      className="rounded bg-success px-3 py-1 text-xs text-white transition-colors hover:bg-success disabled:opacity-50"
     >
       {submitting === 'publish' ? 'Publishing...' : 'Publish'}
     </button>

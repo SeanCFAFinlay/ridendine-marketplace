@@ -47,7 +47,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-opsPanel to-opsPanel flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -62,22 +62,22 @@ export default function LoginPage() {
             />
           </div>
           <h1 className="text-3xl font-bold">
-            <span className="text-[#1a7a6e]">RideN</span>
-            <span className="text-[#E85D26]">Dine</span>
+            <span className="text-accent">RideN</span>
+            <span className="text-primary">Dine</span>
           </h1>
-          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#E85D26]/20 px-3 py-1 text-xs font-semibold text-[#E85D26]">
+          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary/20 px-3 py-1 text-xs font-semibold text-primary">
             <ShieldCheck className="h-3.5 w-3.5" />
             Operations Admin Portal
           </div>
         </div>
 
-        <Card className="border-gray-700/50 bg-opsPanel/80 backdrop-blur-sm p-8 shadow-2xl">
+        <Card className="border-border/50 bg-surface/80 backdrop-blur-sm p-8 shadow-2xl">
           <h2 className="text-xl font-semibold text-white text-center mb-6">
             Sign In
           </h2>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
+            <div className="mb-4 p-3 bg-danger/20 border border-danger/50 rounded-lg text-danger text-sm">
               {error}
             </div>
           )}
@@ -86,7 +86,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-300 mb-1.5"
+                className="block text-sm font-medium text-textSubtle mb-1.5"
               >
                 Email Address
               </label>
@@ -97,14 +97,14 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@ridendine.ca"
                 required
-                className="bg-[#1e293b] border-gray-600 text-white placeholder-gray-500 focus:border-[#E85D26]"
+                className="bg-[#1e293b] border-border text-white placeholder-gray-500 focus:border-primary"
               />
             </div>
 
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-300 mb-1.5"
+                className="block text-sm font-medium text-textSubtle mb-1.5"
               >
                 Password
               </label>
@@ -115,26 +115,26 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 required
-                className="bg-[#1e293b] border-gray-600 text-white placeholder-gray-500 focus:border-[#E85D26]"
+                className="bg-[#1e293b] border-border text-white placeholder-gray-500 focus:border-primary"
               />
             </div>
 
             <Button
               type="submit"
               disabled={loading}
-              className="w-full mt-6 bg-[#E85D26] hover:bg-[#D04D16] text-white font-semibold"
+              className="w-full mt-6 bg-primary hover:bg-[#D04D16] text-white font-semibold"
               size="lg"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-500">
+          <p className="mt-6 text-center text-sm text-textMuted">
             Access restricted to authorized RideNDine personnel only.
           </p>
         </Card>
 
-        <p className="mt-8 text-center text-xs text-gray-600">
+        <p className="mt-8 text-center text-xs text-textMuted">
           &copy; {new Date().getFullYear()} RideNDine. All rights reserved.
         </p>
       </div>

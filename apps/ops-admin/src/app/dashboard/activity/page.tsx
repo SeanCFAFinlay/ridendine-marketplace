@@ -11,9 +11,9 @@ export default async function ActivityPage() {
     return (
       <DashboardLayout>
         <div className="mx-auto max-w-4xl">
-          <Card className="border-gray-800 bg-opsPanel p-8">
+          <Card className="border-border bg-surface p-8">
             <h1 className="text-2xl font-bold text-white">Access restricted</h1>
-            <p className="mt-2 text-gray-400">
+            <p className="mt-2 text-textMuted">
               Activity and audit views require ops admin, ops manager, or super admin.
             </p>
           </Card>
@@ -81,30 +81,30 @@ export default async function ActivityPage() {
       <div className="mx-auto max-w-6xl space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Activity Log</h1>
-          <p className="mt-1 text-gray-400">Who did what, when — all ops team actions and overrides</p>
+          <p className="mt-1 text-textMuted">Who did what, when — all ops team actions and overrides</p>
         </div>
 
-        <Card className="border-gray-800 bg-opsPanel overflow-hidden">
+        <Card className="border-border bg-surface overflow-hidden">
           {activity.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">No activity recorded yet.</div>
+            <div className="p-8 text-center text-textMuted">No activity recorded yet.</div>
           ) : (
-            <div className="divide-y divide-gray-800">
+            <div className="divide-y divide-divider">
               {activity.map((item) => (
-                <div key={item.id} className="flex items-start gap-4 px-4 py-3 hover:bg-white/5">
+                <div key={item.id} className="flex items-start gap-4 px-4 py-3 hover:bg-surfaceMuted">
                   <div className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${
-                    item.type === 'override' ? 'bg-red-400' : 'bg-blue-400'
+                    item.type === 'override' ? 'bg-danger' : 'bg-info'
                   }`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-medium text-white">{item.actor}</span>
-                      <Badge className={item.type === 'override' ? 'bg-red-500/20 text-red-300' : 'bg-blue-500/20 text-blue-300'}>
+                      <Badge className={item.type === 'override' ? 'bg-danger/20 text-danger' : 'bg-info/20 text-info'}>
                         {item.type === 'override' ? 'Override' : item.action}
                       </Badge>
-                      <span className="text-xs text-gray-500">{item.entity}</span>
+                      <span className="text-xs text-textMuted">{item.entity}</span>
                     </div>
-                    {item.reason && <p className="mt-0.5 text-xs text-gray-400">{item.reason}</p>}
+                    {item.reason && <p className="mt-0.5 text-xs text-textMuted">{item.reason}</p>}
                   </div>
-                  <span className="text-xs text-gray-500 flex-shrink-0 whitespace-nowrap">
+                  <span className="text-xs text-textMuted flex-shrink-0 whitespace-nowrap">
                     {new Date(item.time).toLocaleString()}
                   </span>
                 </div>

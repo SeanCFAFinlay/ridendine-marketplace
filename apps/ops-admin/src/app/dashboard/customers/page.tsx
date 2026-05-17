@@ -25,7 +25,7 @@ const columns: ColumnDef<Customer>[] = [
     cell: (row) => (
       <Link
         href={`/dashboard/customers/${row.id}`}
-        className="font-medium text-white hover:text-[#E85D26]"
+        className="font-medium text-white hover:text-primary"
       >
         {row.first_name} {row.last_name}
       </Link>
@@ -34,18 +34,18 @@ const columns: ColumnDef<Customer>[] = [
   {
     key: 'email',
     header: 'Email',
-    cell: (row) => <span className="text-gray-300 text-sm">{row.email}</span>,
+    cell: (row) => <span className="text-textSubtle text-sm">{row.email}</span>,
   },
   {
     key: 'phone',
     header: 'Phone',
-    cell: (row) => <span className="text-gray-400 text-sm">{row.phone ?? 'N/A'}</span>,
+    cell: (row) => <span className="text-textMuted text-sm">{row.phone ?? 'N/A'}</span>,
   },
   {
     key: 'orders',
     header: 'Orders',
     cell: (row) => (
-      <span className="text-gray-300 text-sm">{row.orders?.[0]?.count ?? 0}</span>
+      <span className="text-textSubtle text-sm">{row.orders?.[0]?.count ?? 0}</span>
     ),
   },
   {
@@ -53,7 +53,7 @@ const columns: ColumnDef<Customer>[] = [
     header: 'Joined',
     sortable: true,
     cell: (row) => (
-      <span className="text-gray-500 text-xs">
+      <span className="text-textMuted text-xs">
         {new Date(row.created_at).toLocaleDateString()}
       </span>
     ),
@@ -64,7 +64,7 @@ const columns: ColumnDef<Customer>[] = [
     cell: (row) => (
       <Link
         href={`/dashboard/customers/${row.id}`}
-        className="rounded bg-[#E85D26] px-2 py-1 text-xs text-white hover:bg-[#d54d1a]"
+        className="rounded bg-primary px-2 py-1 text-xs text-white hover:bg-primaryHover"
       >
         View
       </Link>
@@ -100,7 +100,7 @@ export default function CustomersPage() {
           actions={
             <a
               href="/api/export?type=customers"
-              className="inline-flex h-8 items-center rounded-md border border-gray-700 px-3 text-xs text-gray-300 hover:border-gray-500"
+              className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs text-textSubtle hover:border-border"
             >
               Export CSV
             </a>
@@ -119,7 +119,7 @@ export default function CustomersPage() {
               description="Customers appear here after signing up and placing orders through the customer app."
             />
           }
-          className="border-gray-800 bg-opsPanel"
+          className="border-border bg-surface"
         />
       </div>
     </DashboardLayout>

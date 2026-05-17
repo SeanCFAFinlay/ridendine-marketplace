@@ -57,7 +57,7 @@ function BarChart({
             style={{ height: `${(value / maxValue) * 100}%`, minHeight: value > 0 ? '2px' : '0' }}
           />
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10">
-            <div className="rounded bg-gray-900 px-2 py-1 text-[10px] text-white whitespace-nowrap shadow-lg">
+            <div className="rounded bg-text px-2 py-1 text-[10px] text-white whitespace-nowrap shadow-lg">
               {tooltip(i)}
             </div>
           </div>
@@ -70,20 +70,20 @@ function BarChart({
 function SummaryKPIs({ summary }: { summary: TrendSummary }) {
   return (
     <div className="grid gap-4 sm:grid-cols-4">
-      <Card className="border-gray-800 bg-opsPanel p-4">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">Total Orders</p>
+      <Card className="border-border bg-surface p-4">
+        <p className="text-xs text-textMuted uppercase tracking-wide">Total Orders</p>
         <p className="mt-1 text-2xl font-bold text-white">{summary.totalOrders}</p>
       </Card>
-      <Card className="border-gray-800 bg-opsPanel p-4">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">Revenue</p>
-        <p className="mt-1 text-2xl font-bold text-emerald-400">${summary.totalRevenue.toFixed(2)}</p>
+      <Card className="border-border bg-surface p-4">
+        <p className="text-xs text-textMuted uppercase tracking-wide">Revenue</p>
+        <p className="mt-1 text-2xl font-bold text-success">${summary.totalRevenue.toFixed(2)}</p>
       </Card>
-      <Card className="border-gray-800 bg-opsPanel p-4">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">Avg Daily Orders</p>
-        <p className="mt-1 text-2xl font-bold text-blue-400">{summary.avgDailyOrders}</p>
+      <Card className="border-border bg-surface p-4">
+        <p className="text-xs text-textMuted uppercase tracking-wide">Avg Daily Orders</p>
+        <p className="mt-1 text-2xl font-bold text-info">{summary.avgDailyOrders}</p>
       </Card>
-      <Card className="border-gray-800 bg-opsPanel p-4">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">Completion Rate</p>
+      <Card className="border-border bg-surface p-4">
+        <p className="text-xs text-textMuted uppercase tracking-wide">Completion Rate</p>
         <p className="mt-1 text-2xl font-bold text-white">{summary.completionRate}%</p>
       </Card>
     </div>
@@ -92,7 +92,7 @@ function SummaryKPIs({ summary }: { summary: TrendSummary }) {
 
 function TopChefsChart({ chefs }: { chefs: ChefEntry[] }) {
   if (chefs.length === 0) {
-    return <p className="text-sm text-gray-500">No data for this period.</p>;
+    return <p className="text-sm text-textMuted">No data for this period.</p>;
   }
 
   const maxRev = chefs[0]?.revenue || 1;
@@ -100,15 +100,15 @@ function TopChefsChart({ chefs }: { chefs: ChefEntry[] }) {
     <div className="space-y-2">
       {chefs.map((chef, i) => (
         <div key={i} className="flex items-center gap-3">
-          <span className="w-5 text-xs text-gray-500 text-right">{i + 1}</span>
+          <span className="w-5 text-xs text-textMuted text-right">{i + 1}</span>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-0.5">
               <span className="text-sm text-white">{chef.name}</span>
-              <span className="text-sm font-medium text-emerald-400">${chef.revenue.toFixed(2)}</span>
+              <span className="text-sm font-medium text-success">${chef.revenue.toFixed(2)}</span>
             </div>
-            <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-surfaceMuted rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#E85D26] rounded-full"
+                className="h-full bg-primary rounded-full"
                 style={{ width: `${(chef.revenue / maxRev) * 100}%` }}
               />
             </div>
@@ -123,7 +123,7 @@ function LoadingSkeleton() {
   return (
     <div className="space-y-4">
       {[1, 2, 3].map(i => (
-        <div key={i} className="h-48 bg-gray-700/20 rounded-xl animate-pulse" />
+        <div key={i} className="h-48 bg-surfaceMuted/20 rounded-xl animate-pulse" />
       ))}
     </div>
   );
@@ -144,7 +144,7 @@ export function TrendCharts() {
   }, [days]);
 
   if (loading) return <LoadingSkeleton />;
-  if (!data) return <p className="text-sm text-gray-500">Failed to load analytics.</p>;
+  if (!data) return <p className="text-sm text-textMuted">Failed to load analytics.</p>;
 
   const maxOrders = Math.max(...data.trend.map(d => d.orders), 1);
   const maxRevenue = Math.max(...data.trend.map(d => d.revenue), 1);
@@ -158,7 +158,7 @@ export function TrendCharts() {
             key={d}
             onClick={() => setDays(d)}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              days === d ? 'bg-[#E85D26] text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              days === d ? 'bg-primary text-white' : 'bg-surfaceMuted text-textSubtle hover:bg-surfaceMuted'
             }`}
           >
             {d}d
@@ -168,60 +168,60 @@ export function TrendCharts() {
 
       <SummaryKPIs summary={data.summary} />
 
-      <Card className="border-gray-800 bg-opsPanel p-6">
+      <Card className="border-border bg-surface p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Daily Order Volume</h3>
         <BarChart
           bars={data.trend.map(d => d.orders)}
           maxValue={maxOrders}
-          colorClass="bg-blue-500/80 hover:bg-blue-400"
+          colorClass="bg-info/80 hover:bg-info"
           tooltip={i => `${data.trend[i]?.date}: ${data.trend[i]?.orders} orders`}
         />
-        <div className="mt-1 flex justify-between text-[10px] text-gray-500">
+        <div className="mt-1 flex justify-between text-[10px] text-textMuted">
           <span>{data.trend[0]?.date}</span>
           <span>{data.trend[data.trend.length - 1]?.date}</span>
         </div>
       </Card>
 
-      <Card className="border-gray-800 bg-opsPanel p-6">
+      <Card className="border-border bg-surface p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Daily Revenue</h3>
         <BarChart
           bars={data.trend.map(d => d.revenue)}
           maxValue={maxRevenue}
-          colorClass="bg-emerald-500/80 hover:bg-emerald-400"
+          colorClass="bg-success/80 hover:bg-success"
           tooltip={i => `${data.trend[i]?.date}: $${data.trend[i]?.revenue?.toFixed(2)}`}
         />
-        <div className="mt-1 flex justify-between text-[10px] text-gray-500">
+        <div className="mt-1 flex justify-between text-[10px] text-textMuted">
           <span>{data.trend[0]?.date}</span>
           <span>{data.trend[data.trend.length - 1]?.date}</span>
         </div>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-gray-800 bg-opsPanel p-6">
+        <Card className="border-border bg-surface p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Top Chefs by Revenue</h3>
           <TopChefsChart chefs={data.topChefs} />
         </Card>
 
-        <Card className="border-gray-800 bg-opsPanel p-6">
+        <Card className="border-border bg-surface p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Order Volume by Hour</h3>
           <div className="flex items-end gap-1 h-32">
             {data.peakHours.map(h => (
               <div key={h.hour} className="flex-1 group relative">
                 <div
                   className={`rounded-t transition-colors ${
-                    h.orders === maxHourOrders ? 'bg-[#E85D26]' : 'bg-gray-600 hover:bg-gray-500'
+                    h.orders === maxHourOrders ? 'bg-primary' : 'bg-surfaceMuted hover:bg-surfaceMuted0'
                   }`}
                   style={{ height: `${(h.orders / maxHourOrders) * 100}%`, minHeight: h.orders > 0 ? '2px' : '0' }}
                 />
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10">
-                  <div className="rounded bg-gray-900 px-2 py-1 text-[10px] text-white whitespace-nowrap shadow-lg">
+                  <div className="rounded bg-text px-2 py-1 text-[10px] text-white whitespace-nowrap shadow-lg">
                     {h.hour}:00 — {h.orders} orders
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-1 flex justify-between text-[10px] text-gray-500">
+          <div className="mt-1 flex justify-between text-[10px] text-textMuted">
             <span>12am</span><span>6am</span><span>12pm</span><span>6pm</span><span>11pm</span>
           </div>
         </Card>

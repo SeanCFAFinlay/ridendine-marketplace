@@ -59,40 +59,40 @@ export default function AutomationPage() {
       <div className="mx-auto max-w-4xl space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Automation Rules</h1>
-          <p className="mt-1 text-gray-400">Configure automated responses to platform events. Rules run during SLA processor cycles.</p>
+          <p className="mt-1 text-textMuted">Configure automated responses to platform events. Rules run during SLA processor cycles.</p>
         </div>
 
-        {error && <div className="rounded-lg bg-red-500/20 p-3 text-sm text-red-300">{error}</div>}
+        {error && <div className="rounded-lg bg-danger/20 p-3 text-sm text-danger">{error}</div>}
 
         {loading ? (
-          <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-24 bg-gray-700/20 rounded-xl animate-pulse" />)}</div>
+          <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-24 bg-surfaceMuted/20 rounded-xl animate-pulse" />)}</div>
         ) : (
           <div className="space-y-4">
             {rules.map((rule) => (
               <Card key={rule.id} className={`p-5 transition-colors ${
-                rule.enabled ? 'border-emerald-500/30 bg-opsPanel' : 'border-gray-800 bg-opsPanel/50'
+                rule.enabled ? 'border-success/30 bg-surface' : 'border-border bg-surface/50'
               }`}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className={`font-semibold ${rule.enabled ? 'text-white' : 'text-gray-400'}`}>{rule.name}</h3>
-                      <Badge className={rule.enabled ? 'bg-emerald-500/20 text-emerald-300' : 'bg-gray-700 text-gray-500'}>
+                      <h3 className={`font-semibold ${rule.enabled ? 'text-white' : 'text-textMuted'}`}>{rule.name}</h3>
+                      <Badge className={rule.enabled ? 'bg-success/20 text-success' : 'bg-surfaceMuted text-textMuted'}>
                         {rule.enabled ? 'Active' : 'Disabled'}
                       </Badge>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="inline-flex items-center rounded-md bg-blue-500/10 px-2 py-0.5 text-xs text-blue-300">
+                      <span className="inline-flex items-center rounded-md bg-info/10 px-2 py-0.5 text-xs text-info">
                         Trigger: {TRIGGER_LABELS[rule.trigger] || rule.trigger}
                       </span>
-                      <span className="inline-flex items-center rounded-md bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-300">
+                      <span className="inline-flex items-center rounded-md bg-warning/10 px-2 py-0.5 text-xs text-warning">
                         If: {rule.condition}
                       </span>
-                      <span className="inline-flex items-center rounded-md bg-red-500/10 px-2 py-0.5 text-xs text-red-300">
+                      <span className="inline-flex items-center rounded-md bg-danger/10 px-2 py-0.5 text-xs text-danger">
                         Then: {ACTION_LABELS[rule.action] || rule.action}
                       </span>
                     </div>
                     {Object.keys(rule.params).length > 0 && (
-                      <p className="mt-1.5 text-xs text-gray-500">
+                      <p className="mt-1.5 text-xs text-textMuted">
                         Params: {Object.entries(rule.params).map(([k, v]) => `${k}=${v}`).join(', ')}
                       </p>
                     )}
@@ -101,7 +101,7 @@ export default function AutomationPage() {
                     onClick={() => toggleRule(rule.id, rule.enabled)}
                     aria-label={`${rule.enabled ? 'Disable' : 'Enable'} ${rule.name}`}
                     className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors duration-200 ${
-                      rule.enabled ? 'bg-emerald-500' : 'bg-gray-600'
+                      rule.enabled ? 'bg-success' : 'bg-surfaceMuted'
                     }`}>
                     <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200 ${
                       rule.enabled ? 'translate-x-5' : 'translate-x-0.5'
@@ -113,9 +113,9 @@ export default function AutomationPage() {
           </div>
         )}
 
-        <Card className="border-gray-800 bg-opsPanel p-6">
+        <Card className="border-border bg-surface p-6">
           <h3 className="text-sm font-semibold text-white mb-2">How Rules Work</h3>
-          <ul className="space-y-1 text-xs text-gray-400">
+          <ul className="space-y-1 text-xs text-textMuted">
             <li>Rules are evaluated during each SLA processor cycle (every 60 seconds)</li>
             <li>When a trigger condition is met, the configured action executes automatically</li>
             <li>All automated actions are logged in the Activity Log with actor_role = "system"</li>

@@ -82,36 +82,36 @@ export default async function AnalyticsPage() {
 
         {/* 30-day snapshot KPIs (server-rendered) */}
         <section>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-textMuted">
             30-Day Snapshot
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <KpiTile
               label="Total Revenue (30d)"
               value={`$${(stats.totalRevenue / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-              className="border-gray-800 bg-opsPanel"
+              className="border-border bg-surface"
             />
             <KpiTile
               label="Order Volume (30d)"
               value={stats.totalOrders.toLocaleString()}
-              className="border-gray-800 bg-opsPanel"
+              className="border-border bg-surface"
             />
             <KpiTile
               label="Completion Rate"
               value={`${stats.completionRate.toFixed(1)}%`}
-              className="border-gray-800 bg-opsPanel"
+              className="border-border bg-surface"
             />
             <KpiTile
               label="Drivers Online"
               value={`${stats.onlineDrivers}/${stats.approvedDrivers}`}
-              className="border-gray-800 bg-opsPanel"
+              className="border-border bg-surface"
             />
           </div>
         </section>
 
         {/* Interactive platform metrics with period selector */}
         <section>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-textMuted">
             Platform Metrics
           </h2>
           <PlatformMetricsClient />
@@ -123,8 +123,8 @@ export default async function AnalyticsPage() {
         {/* Event metrics */}
         <EventMetrics />
 
-        <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
-          <p className="text-xs text-gray-500">
+        <div className="rounded-lg border border-border bg-surface p-4">
+          <p className="text-xs text-textMuted">
             Platform metrics report live operational counts, financial totals, and historical
             trends. Cohort analysis and deep forecasting are not yet implemented.
           </p>

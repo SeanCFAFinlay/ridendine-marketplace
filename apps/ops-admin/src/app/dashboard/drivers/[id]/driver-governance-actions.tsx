@@ -44,8 +44,8 @@ export function DriverGovernanceActions({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-gray-700 bg-opsPanel p-4">
-        <p className="text-sm text-gray-300">
+      <div className="rounded-lg border border-border bg-surface p-4">
+        <p className="text-sm text-textSubtle">
           Driver governance on this page is real and ops-auth gated. In the
           current implementation it still terminates in the ops driver API rather
           than a dedicated engine-owned driver governance service.
@@ -53,7 +53,7 @@ export function DriverGovernanceActions({
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
@@ -65,7 +65,7 @@ export function DriverGovernanceActions({
               type="button"
               onClick={() => void updateStatus('approved')}
               disabled={submitting}
-              className="rounded-lg bg-green-600 px-4 py-2 text-sm text-white transition-colors hover:bg-green-500 disabled:opacity-50"
+              className="rounded-lg bg-success px-4 py-2 text-sm text-white transition-colors hover:bg-success disabled:opacity-50"
             >
               {submitting ? 'Saving…' : 'Approve Driver'}
             </button>
@@ -73,7 +73,7 @@ export function DriverGovernanceActions({
               type="button"
               onClick={() => void updateStatus('rejected')}
               disabled={submitting}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm text-white transition-colors hover:bg-red-500 disabled:opacity-50"
+              className="rounded-lg bg-danger px-4 py-2 text-sm text-white transition-colors hover:bg-danger disabled:opacity-50"
             >
               {submitting ? 'Saving…' : 'Reject Application'}
             </button>
@@ -85,7 +85,7 @@ export function DriverGovernanceActions({
             type="button"
             onClick={() => void updateStatus('suspended')}
             disabled={submitting}
-            className="rounded-lg bg-orange-600 px-4 py-2 text-sm text-white transition-colors hover:bg-orange-500 disabled:opacity-50"
+            className="rounded-lg bg-primary px-4 py-2 text-sm text-white transition-colors hover:bg-primary disabled:opacity-50"
           >
             {submitting ? 'Saving…' : 'Suspend Driver'}
           </button>
@@ -96,7 +96,7 @@ export function DriverGovernanceActions({
             type="button"
             onClick={() => void updateStatus('approved')}
             disabled={submitting}
-            className="rounded-lg bg-green-600 px-4 py-2 text-sm text-white transition-colors hover:bg-green-500 disabled:opacity-50"
+            className="rounded-lg bg-success px-4 py-2 text-sm text-white transition-colors hover:bg-success disabled:opacity-50"
           >
             {submitting ? 'Saving…' : 'Restore Driver'}
           </button>

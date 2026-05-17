@@ -41,31 +41,31 @@ export function CustomerActions({ customerId, customerName }: CustomerActionsPro
           variant="outline"
           size="sm"
           onClick={() => setShowMessage(!showMessage)}
-          className="border-gray-600 text-gray-300"
+          className="border-border text-textSubtle"
         >
           Send Notification
         </Button>
         <a href={`/api/export?type=orders&customerId=${customerId}`}>
-          <Button variant="outline" size="sm" className="border-gray-600 text-gray-300">
+          <Button variant="outline" size="sm" className="border-border text-textSubtle">
             Export Orders
           </Button>
         </a>
       </div>
       {showMessage && (
-        <div className="rounded-lg bg-opsPanel p-4">
+        <div className="rounded-lg bg-surface p-4">
           <textarea
             value={message}
             onChange={e => setMessage(e.target.value)}
             placeholder={`Send a notification to ${customerName}...`}
             rows={3}
-            className="w-full rounded-lg bg-opsCanvas border border-gray-600 text-white px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-background border border-border text-white px-3 py-2 text-sm"
           />
           <div className="mt-2 flex gap-2 justify-end">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowMessage(false)}
-              className="border-gray-600 text-gray-300"
+              className="border-border text-textSubtle"
             >
               Cancel
             </Button>
@@ -73,14 +73,14 @@ export function CustomerActions({ customerId, customerName }: CustomerActionsPro
               size="sm"
               onClick={sendNotification}
               disabled={sending}
-              className="bg-[#E85D26]"
+              className="bg-primary"
             >
               {sending ? 'Sending...' : 'Send'}
             </Button>
           </div>
         </div>
       )}
-      {status && <p className="text-xs text-gray-400">{status}</p>}
+      {status && <p className="text-xs text-textMuted">{status}</p>}
     </div>
   );
 }

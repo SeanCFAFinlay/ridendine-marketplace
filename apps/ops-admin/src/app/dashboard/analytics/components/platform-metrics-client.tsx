@@ -49,8 +49,8 @@ function PeriodSelector({
           onClick={() => onSelect(p)}
           className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
             period === p
-              ? 'bg-[#E85D26] text-white'
-              : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
+              ? 'bg-primary text-white'
+              : 'bg-surface text-textMuted hover:bg-surfaceMuted hover:text-white'
           }`}
         >
           {PERIOD_LABELS[p]}
@@ -62,33 +62,33 @@ function PeriodSelector({
 
 function SkeletonCard() {
   return (
-    <div className="rounded-lg border border-gray-800 bg-opsPanel p-4 animate-pulse">
-      <div className="h-3 w-24 bg-gray-700 rounded mb-3" />
-      <div className="h-7 w-16 bg-gray-700 rounded mb-2" />
-      <div className="h-3 w-12 bg-gray-700 rounded" />
+    <div className="rounded-lg border border-border bg-surface p-4 animate-pulse">
+      <div className="h-3 w-24 bg-surfaceMuted rounded mb-3" />
+      <div className="h-7 w-16 bg-surfaceMuted rounded mb-2" />
+      <div className="h-3 w-12 bg-surfaceMuted rounded" />
     </div>
   );
 }
 
 function OperationalStats({ data }: { data: AnalyticsData }) {
   return (
-    <Card className="border-gray-800 bg-opsPanel p-6">
+    <Card className="border-border bg-surface p-6">
       <h3 className="text-base font-semibold text-white mb-4">Operational Stats</h3>
       <dl className="space-y-3">
         <div className="flex justify-between text-sm">
-          <dt className="text-gray-400">Unique Customers</dt>
+          <dt className="text-textMuted">Unique Customers</dt>
           <dd className="font-medium text-white">{formatNumber(data.uniqueCustomers)}</dd>
         </div>
         <div className="flex justify-between text-sm">
-          <dt className="text-gray-400">Active Chefs</dt>
+          <dt className="text-textMuted">Active Chefs</dt>
           <dd className="font-medium text-white">{formatNumber(data.activeChefs)}</dd>
         </div>
         <div className="flex justify-between text-sm">
-          <dt className="text-gray-400">Active Drivers</dt>
+          <dt className="text-textMuted">Active Drivers</dt>
           <dd className="font-medium text-white">{formatNumber(data.activeDrivers)}</dd>
         </div>
         <div className="flex justify-between text-sm">
-          <dt className="text-gray-400">Avg Delivery Time</dt>
+          <dt className="text-textMuted">Avg Delivery Time</dt>
           <dd className="font-medium text-white">
             {data.avgDeliveryMinutes != null
               ? `${data.avgDeliveryMinutes} min`
@@ -129,7 +129,7 @@ export function PlatformMetricsClient() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-400">Platform-wide metrics for the selected period.</p>
+        <p className="text-sm text-textMuted">Platform-wide metrics for the selected period.</p>
         <PeriodSelector period={period} onSelect={setPeriod} />
       </div>
 
@@ -139,7 +139,7 @@ export function PlatformMetricsClient() {
           {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)}
         </div>
       ) : error ? (
-        <div className="rounded-lg border border-red-900 bg-red-950/30 p-4 text-sm text-red-400">
+        <div className="rounded-lg border border-danger bg-dangerSoft p-4 text-sm text-danger">
           {error}
         </div>
       ) : data ? (

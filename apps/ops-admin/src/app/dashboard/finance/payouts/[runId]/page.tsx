@@ -41,53 +41,53 @@ export default async function FinancePayoutRunDetailPage({ params }: PageProps) 
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-6">
         <FinanceSubnav />
-        <Link href="/dashboard/finance/payouts" className="text-sm text-emerald-400 hover:underline">
+        <Link href="/dashboard/finance/payouts" className="text-sm text-success hover:underline">
           ← All payout runs
         </Link>
         {error || !run ? (
-          <Card className="border-gray-800 bg-opsPanel p-6 text-gray-300">Run not found.</Card>
+          <Card className="border-border bg-surface p-6 text-textSubtle">Run not found.</Card>
         ) : (
           <>
             <div>
               <h1 className="text-3xl font-bold text-white">Payout run</h1>
-              <p className="mt-1 font-mono text-sm text-gray-400">{runId}</p>
-              <p className="mt-2 text-gray-300">
+              <p className="mt-1 font-mono text-sm text-textMuted">{runId}</p>
+              <p className="mt-2 text-textSubtle">
                 Type <span className="text-white">{run.run_type as string}</span> · status{' '}
                 <span className="text-white">{run.status as string}</span>
               </p>
             </div>
-            <Card className="border-gray-800 bg-opsPanel p-6">
+            <Card className="border-border bg-surface p-6">
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-sm">
                 <div>
-                  <p className="text-gray-400">Period</p>
+                  <p className="text-textMuted">Period</p>
                   <p className="mt-1 text-white">
                     {(run.period_start as string)?.slice(0, 10)} → {(run.period_end as string)?.slice(0, 10)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-400">Total amount (run)</p>
+                  <p className="text-textMuted">Total amount (run)</p>
                   <p className="mt-1 text-white">{run.total_amount as number}</p>
                 </div>
                 <div>
-                  <p className="text-gray-400">Successful</p>
-                  <p className="mt-1 text-emerald-300">{run.successful_payouts as number}</p>
+                  <p className="text-textMuted">Successful</p>
+                  <p className="mt-1 text-success">{run.successful_payouts as number}</p>
                 </div>
                 <div>
-                  <p className="text-gray-400">Failed</p>
-                  <p className="mt-1 text-red-300">{run.failed_payouts as number}</p>
+                  <p className="text-textMuted">Failed</p>
+                  <p className="mt-1 text-danger">{run.failed_payouts as number}</p>
                 </div>
               </div>
             </Card>
 
-            <Card className="border-gray-800 bg-opsPanel p-6">
+            <Card className="border-border bg-surface p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-white">Ledger (payout_run_id)</h2>
-                <Badge className="bg-gray-700 text-gray-200">{(ledgerLines ?? []).length}</Badge>
+                <Badge className="bg-surfaceMuted text-textSubtle">{(ledgerLines ?? []).length}</Badge>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-gray-700 text-gray-400">
+                    <tr className="border-b border-border text-textMuted">
                       <th className="py-2">When</th>
                       <th className="py-2">Type</th>
                       <th className="py-2">Payee</th>
@@ -97,16 +97,16 @@ export default async function FinancePayoutRunDetailPage({ params }: PageProps) 
                   </thead>
                   <tbody>
                     {(ledgerLines ?? []).map((e: Record<string, unknown>) => (
-                      <tr key={e.id as string} className="border-b border-gray-800 text-gray-200">
+                      <tr key={e.id as string} className="border-b border-border text-textSubtle">
                         <td className="py-2 whitespace-nowrap">
                           {new Date(e.created_at as string).toLocaleString()}
                         </td>
                         <td className="py-2">{e.entry_type as string}</td>
                         <td className="py-2 font-mono text-xs">{(e.entity_id as string)?.slice(0, 8)}…</td>
-                        <td className="py-2 font-mono text-emerald-200">
+                        <td className="py-2 font-mono text-success">
                           {fmtCents(e.amount_cents as number)}
                         </td>
-                        <td className="py-2 text-gray-400">{(e.description as string) ?? '—'}</td>
+                        <td className="py-2 text-textMuted">{(e.description as string) ?? '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -115,11 +115,11 @@ export default async function FinancePayoutRunDetailPage({ params }: PageProps) 
             </Card>
 
             {(run.run_type as string) === 'driver' && (driverLines?.length ?? 0) > 0 ? (
-              <Card className="border-gray-800 bg-opsPanel p-6">
+              <Card className="border-border bg-surface p-6">
                 <h2 className="text-lg font-semibold text-white">driver_payouts rows</h2>
-                <ul className="mt-4 space-y-2 text-sm text-gray-300">
+                <ul className="mt-4 space-y-2 text-sm text-textSubtle">
                   {(driverLines ?? []).map((d: Record<string, unknown>) => (
-                    <li key={d.id as string} className="flex justify-between border-b border-gray-800 py-2">
+                    <li key={d.id as string} className="flex justify-between border-b border-border py-2">
                       <span className="font-mono text-xs">{(d.driver_id as string)?.slice(0, 8)}…</span>
                       <span>{d.amount as number}</span>
                       <span>{d.status as string}</span>

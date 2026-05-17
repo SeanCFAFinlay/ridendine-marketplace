@@ -42,14 +42,14 @@ export function ChefGovernanceActions({
           <button
             onClick={() => handleAction('approve')}
             disabled={submitting !== null}
-            className="rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+            className="rounded-lg bg-success px-4 py-2 text-white transition-colors hover:bg-success disabled:opacity-50"
           >
             {submitting === 'approve' ? 'Approving...' : 'Approve Chef'}
           </button>
           <button
             onClick={() => handleAction('reject')}
             disabled={submitting !== null}
-            className="rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+            className="rounded-lg bg-danger px-4 py-2 text-white transition-colors hover:bg-danger disabled:opacity-50"
           >
             {submitting === 'reject' ? 'Rejecting...' : 'Reject Application'}
           </button>
@@ -60,7 +60,7 @@ export function ChefGovernanceActions({
         <button
           onClick={() => handleAction('suspend')}
           disabled={submitting !== null}
-          className="rounded-lg bg-orange-600 px-4 py-2 text-white transition-colors hover:bg-orange-700 disabled:opacity-50"
+          className="rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary disabled:opacity-50"
         >
           {submitting === 'suspend' ? 'Suspending...' : 'Suspend Chef'}
         </button>
@@ -70,7 +70,7 @@ export function ChefGovernanceActions({
         <button
           onClick={() => handleAction('unsuspend')}
           disabled={submitting !== null}
-          className="rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+          className="rounded-lg bg-success px-4 py-2 text-white transition-colors hover:bg-success disabled:opacity-50"
         >
           {submitting === 'unsuspend' ? 'Restoring...' : 'Restore Chef'}
         </button>

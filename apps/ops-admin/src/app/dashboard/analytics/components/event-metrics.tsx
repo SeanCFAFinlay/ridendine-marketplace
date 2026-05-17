@@ -61,8 +61,8 @@ function PeriodToggle({
           onClick={() => onSelect(p)}
           className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
             period === p
-              ? 'bg-[#E85D26] text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              ? 'bg-primary text-white'
+              : 'bg-surfaceMuted text-textSubtle hover:bg-surfaceMuted'
           }`}
         >
           {p === 'today' ? 'Today' : p}
@@ -74,8 +74,8 @@ function PeriodToggle({
 
 function MetricRow({ metric }: { metric: EventCount }) {
   return (
-    <div className="flex items-center justify-between rounded-lg bg-opsPanel px-3 py-2">
-      <span className="text-sm text-gray-300">
+    <div className="flex items-center justify-between rounded-lg bg-surface px-3 py-2">
+      <span className="text-sm text-textSubtle">
         {EVENT_LABELS[metric.event_name] || metric.event_name}
       </span>
       <span className="text-sm font-bold text-white">
@@ -116,7 +116,7 @@ export function EventMetrics() {
   }, [period]);
 
   return (
-    <Card className="border-gray-800 bg-opsPanel p-6">
+    <Card className="border-border bg-surface p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">Event Metrics</h3>
         <PeriodToggle period={period} onSelect={setPeriod} />
@@ -125,11 +125,11 @@ export function EventMetrics() {
       {loading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-8 bg-gray-700/50 rounded animate-pulse" />
+            <div key={i} className="h-8 bg-surfaceMuted/50 rounded animate-pulse" />
           ))}
         </div>
       ) : metrics.length === 0 ? (
-        <p className="text-sm text-gray-500">No events recorded for this period.</p>
+        <p className="text-sm text-textMuted">No events recorded for this period.</p>
       ) : (
         <div className="space-y-2">
           {metrics.map((m) => (

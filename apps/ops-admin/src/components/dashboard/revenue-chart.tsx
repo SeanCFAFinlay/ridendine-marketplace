@@ -73,7 +73,7 @@ export function RevenueChart() {
   const avgDaily = data.length > 0 ? totalRevenue / data.length : 0;
 
   return (
-    <Card className="border-gray-800 bg-opsPanel p-6">
+    <Card className="border-border bg-surface p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">Revenue Trend</h3>
         <div className="flex gap-2">
@@ -83,8 +83,8 @@ export function RevenueChart() {
               onClick={() => setPeriod(p)}
               className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
                 period === p
-                  ? 'bg-[#E85D26] text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  ? 'bg-primary text-white'
+                  : 'bg-surfaceMuted text-textSubtle hover:bg-surfaceMuted'
               }`}
             >
               {p}
@@ -95,26 +95,26 @@ export function RevenueChart() {
 
       {!supabase ? (
         <div className="h-48 flex items-center justify-center">
-          <p className="text-gray-400 text-center">Revenue data unavailable</p>
+          <p className="text-textMuted text-center">Revenue data unavailable</p>
         </div>
       ) : loading ? (
         <div className="h-48 flex items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#E85D26] border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
       ) : (
         <>
           <div className="grid grid-cols-3 gap-4 mb-4 text-center">
             <div>
-              <p className="text-2xl font-bold text-emerald-400">${totalRevenue.toFixed(0)}</p>
-              <p className="text-xs text-gray-400">Total Revenue</p>
+              <p className="text-2xl font-bold text-success">${totalRevenue.toFixed(0)}</p>
+              <p className="text-xs text-textMuted">Total Revenue</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-blue-400">{totalOrders}</p>
-              <p className="text-xs text-gray-400">Total Orders</p>
+              <p className="text-2xl font-bold text-info">{totalOrders}</p>
+              <p className="text-xs text-textMuted">Total Orders</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-purple-400">${avgDaily.toFixed(0)}</p>
-              <p className="text-xs text-gray-400">Daily Average</p>
+              <p className="text-2xl font-bold text-info">${avgDaily.toFixed(0)}</p>
+              <p className="text-xs text-textMuted">Daily Average</p>
             </div>
           </div>
 
@@ -131,7 +131,7 @@ export function RevenueChart() {
                     minHeight: '4px',
                   }}
                 />
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-text text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
                   <p>{new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
                   <p>${day.revenue.toFixed(2)} • {day.orders} orders</p>
                 </div>
@@ -139,7 +139,7 @@ export function RevenueChart() {
             ))}
           </div>
 
-          <div className="flex justify-between text-xs text-gray-500 mt-2">
+          <div className="flex justify-between text-xs text-textMuted mt-2">
             <span>{data[0]?.date && new Date(data[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
             <span>Today</span>
           </div>

@@ -68,10 +68,10 @@ function mapSeverity(raw: string): AlertItem['severity'] {
 }
 
 const SEVERITY_COLOR: Record<string, string> = {
-  critical: 'bg-red-500',
-  error: 'bg-red-400',
-  warning: 'bg-yellow-400',
-  info: 'bg-blue-400',
+  critical: 'bg-danger',
+  error: 'bg-danger',
+  warning: 'bg-warning',
+  info: 'bg-info',
 };
 
 export function OpsAlerts() {
@@ -150,35 +150,35 @@ export function OpsAlerts() {
     <div ref={dropdownRef} className="relative">
       <button
         onClick={handleOpen}
-        className="relative rounded-lg p-2 text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+        className="relative rounded-lg p-2 text-textMuted hover:bg-surfaceMuted hover:text-white transition-colors"
         aria-label="Alerts"
       >
         <Bell className="h-5 w-5" />
         {unseenCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white animate-pulse">
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-danger text-[10px] font-bold text-white animate-pulse">
             {unseenCount > 9 ? '9+' : unseenCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-gray-700 bg-opsPanel shadow-2xl z-50">
-          <div className="border-b border-gray-700 px-4 py-3">
+        <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-border bg-surface shadow-2xl z-50">
+          <div className="border-b border-border px-4 py-3">
             <h3 className="text-sm font-semibold text-white">Alerts ({alerts.length})</h3>
           </div>
           <div className="max-h-80 overflow-y-auto">
             {alerts.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm text-gray-500">No active alerts</div>
+              <div className="px-4 py-6 text-center text-sm text-textMuted">No active alerts</div>
             ) : (
               alerts.map((alert) => (
                 <Link key={alert.id} href={alert.link} onClick={() => setOpen(false)}>
-                  <div className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors">
+                  <div className="flex items-start gap-3 px-4 py-3 hover:bg-surfaceMuted transition-colors">
                     <div
-                      className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${SEVERITY_COLOR[alert.severity] ?? 'bg-gray-400'}`}
+                      className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${SEVERITY_COLOR[alert.severity] ?? 'bg-surfaceMuted'}`}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate">{alert.title}</p>
-                      <p className="text-xs text-gray-500">{new Date(alert.time).toLocaleTimeString()}</p>
+                      <p className="text-xs text-textMuted">{new Date(alert.time).toLocaleTimeString()}</p>
                     </div>
                   </div>
                 </Link>
@@ -186,11 +186,11 @@ export function OpsAlerts() {
             )}
           </div>
           {alerts.length > 0 && (
-            <div className="border-t border-gray-700 px-4 py-2">
+            <div className="border-t border-border px-4 py-2">
               <Link
                 href="/dashboard/support"
                 onClick={() => setOpen(false)}
-                className="text-xs text-[#E85D26] hover:underline"
+                className="text-xs text-primary hover:underline"
               >
                 View all alerts
               </Link>

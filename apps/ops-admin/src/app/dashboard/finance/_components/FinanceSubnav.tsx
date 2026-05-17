@@ -16,7 +16,7 @@ const links = [
 export function FinanceSubnav() {
   const pathname = usePathname();
   return (
-    <nav className="flex flex-wrap gap-2 border-b border-gray-800 pb-4">
+    <nav className="flex flex-wrap gap-2 border-b border-border pb-4">
       {links.map(({ href, label }) => {
         const active = pathname === href || (href !== '/dashboard/finance' && pathname.startsWith(href));
         return (
@@ -24,7 +24,7 @@ export function FinanceSubnav() {
             key={href}
             href={href}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-              active ? 'bg-emerald-600/30 text-emerald-200' : 'bg-opsPanel text-gray-300 hover:bg-gray-700'
+              active ? 'bg-success/30 text-success' : 'bg-surface text-textSubtle hover:bg-surfaceMuted'
             }`}
           >
             {label}

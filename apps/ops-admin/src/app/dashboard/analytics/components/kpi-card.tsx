@@ -18,9 +18,9 @@ function ChangeIndicator({ change }: { change: number }) {
     <span
       className={cn(
         'inline-flex items-center gap-0.5 text-xs font-medium',
-        isNeutral && 'text-gray-500',
-        isUp && 'text-emerald-400',
-        !isUp && !isNeutral && 'text-red-400'
+        isNeutral && 'text-textMuted',
+        isUp && 'text-success',
+        !isUp && !isNeutral && 'text-danger'
       )}
     >
       {!isNeutral && (
@@ -46,11 +46,11 @@ export function KpiCard({ label, value, change, subtitle, className }: KpiCardPr
   return (
     <div
       className={cn(
-        'rounded-lg border border-gray-800 bg-opsPanel p-4',
+        'rounded-lg border border-border bg-surface p-4',
         className
       )}
     >
-      <p className="truncate text-xs font-medium uppercase tracking-wider text-gray-500">
+      <p className="truncate text-xs font-medium uppercase tracking-wider text-textMuted">
         {label}
       </p>
       <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
@@ -59,7 +59,7 @@ export function KpiCard({ label, value, change, subtitle, className }: KpiCardPr
       <div className="mt-1 flex items-center gap-2">
         {change !== undefined && <ChangeIndicator change={change} />}
         {subtitle && (
-          <span className="text-xs text-gray-500">{subtitle}</span>
+          <span className="text-xs text-textMuted">{subtitle}</span>
         )}
       </div>
     </div>

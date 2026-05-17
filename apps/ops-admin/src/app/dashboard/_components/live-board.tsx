@@ -70,21 +70,21 @@ export function LiveBoard() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-800 bg-[#121c2c] px-4 py-3 text-sm">
-        <span className="text-gray-400">Live feed</span>
-        <Badge className={realtimeConnected ? 'bg-emerald-500/20 text-emerald-200' : 'bg-amber-500/20 text-amber-100'}>
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-[#121c2c] px-4 py-3 text-sm">
+        <span className="text-textMuted">Live feed</span>
+        <Badge className={realtimeConnected ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}>
           {realtimeConnected ? 'Realtime' : 'Reconnecting · 60s backup'}
         </Badge>
         {lastEventAt && (
-          <span className="text-gray-500">Last event {lastEventAt.toLocaleTimeString()}</span>
+          <span className="text-textMuted">Last event {lastEventAt.toLocaleTimeString()}</span>
         )}
         {pressure && (
           <>
-            <span className="text-gray-600">|</span>
-            <span className="text-gray-300">Exceptions {pressure.openExceptions}</span>
-            <span className="text-gray-300">Escalations {pressure.deliveryEscalations}</span>
-            <span className="text-gray-300">Pending dispatch {pressure.pendingDispatch}</span>
-            <span className="text-red-300/90">SLA flags (board) {slaBoardCount}</span>
+            <span className="text-textMuted">|</span>
+            <span className="text-textSubtle">Exceptions {pressure.openExceptions}</span>
+            <span className="text-textSubtle">Escalations {pressure.deliveryEscalations}</span>
+            <span className="text-textSubtle">Pending dispatch {pressure.pendingDispatch}</span>
+            <span className="text-danger/90">SLA flags (board) {slaBoardCount}</span>
           </>
         )}
       </div>
@@ -99,8 +99,8 @@ export function LiveBoard() {
           <ChefsColumn chefs={chefs} />
         </div>
         <div className="lg:col-span-6">
-          <Card className="h-[420px] overflow-hidden border-gray-800 bg-[#121c2c] p-2">
-            <p className="mb-2 px-1 text-xs text-gray-500">Internal map · driver positions (ops only)</p>
+          <Card className="h-[420px] overflow-hidden border-border bg-[#121c2c] p-2">
+            <p className="mb-2 px-1 text-xs text-textMuted">Internal map · driver positions (ops only)</p>
             <div className="h-[360px] w-full">
               <DeliveryMap
                 className="h-full w-full"

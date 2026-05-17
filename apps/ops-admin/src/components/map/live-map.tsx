@@ -302,7 +302,7 @@ export default function LiveMap() {
           className: 'pickup-marker',
           html: `
             <div style="
-              background: #E85D26;
+              background: #EA5B26;
               width: 30px;
               height: 30px;
               border-radius: 50%;
@@ -376,13 +376,13 @@ export default function LiveMap() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex gap-2 bg-opsPanel p-4">
+      <div className="flex gap-2 bg-surface p-4">
         <button
           onClick={() => setFilter('all')}
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             filter === 'all'
-              ? 'bg-[#E85D26] text-white'
-              : 'bg-opsPanel text-gray-300 hover:bg-opsPanel'
+              ? 'bg-primary text-white'
+              : 'bg-surface text-textSubtle hover:bg-surface'
           }`}
         >
           All ({drivers.length})
@@ -391,8 +391,8 @@ export default function LiveMap() {
           onClick={() => setFilter('online')}
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             filter === 'online'
-              ? 'bg-green-600 text-white'
-              : 'bg-opsPanel text-gray-300 hover:bg-opsPanel'
+              ? 'bg-success text-white'
+              : 'bg-surface text-textSubtle hover:bg-surface'
           }`}
         >
           Online ({counts.online})
@@ -401,8 +401,8 @@ export default function LiveMap() {
           onClick={() => setFilter('busy')}
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             filter === 'busy'
-              ? 'bg-orange-600 text-white'
-              : 'bg-opsPanel text-gray-300 hover:bg-opsPanel'
+              ? 'bg-primary text-white'
+              : 'bg-surface text-textSubtle hover:bg-surface'
           }`}
         >
           Busy ({counts.busy})
@@ -411,8 +411,8 @@ export default function LiveMap() {
           onClick={() => setFilter('offline')}
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             filter === 'offline'
-              ? 'bg-gray-600 text-white'
-              : 'bg-opsPanel text-gray-300 hover:bg-opsPanel'
+              ? 'bg-surfaceMuted text-white'
+              : 'bg-surface text-textSubtle hover:bg-surface'
           }`}
         >
           Offline ({counts.offline})
@@ -421,7 +421,7 @@ export default function LiveMap() {
 
       <div ref={containerRef} className="flex-1" style={{ minHeight: '400px' }} />
       {!loading && drivers.length > 0 && (
-        <div className="border-t border-gray-800 bg-opsPanel px-4 py-3">
+        <div className="border-t border-border bg-surface px-4 py-3">
           <div className="flex flex-wrap gap-2 text-xs">
             {drivers.slice(0, 8).map((driver) => {
               const health = getLocationHealth(driver.last_seen_at, driver.status);
@@ -435,30 +435,30 @@ export default function LiveMap() {
         </div>
       )}
       {(loading || loadError || (drivers.length === 0 && deliveries.length === 0)) && (
-        <div className="border-t border-gray-800 bg-opsPanel px-4 py-3 text-sm">
-          {loading && <p className="text-gray-400">Loading live map data...</p>}
-          {loadError && <p className="text-red-300">{loadError}</p>}
+        <div className="border-t border-border bg-surface px-4 py-3 text-sm">
+          {loading && <p className="text-textMuted">Loading live map data...</p>}
+          {loadError && <p className="text-danger">{loadError}</p>}
           {!loading && !loadError && drivers.length === 0 && deliveries.length === 0 && (
-            <p className="text-gray-400">No live driver or delivery locations are currently available.</p>
+            <p className="text-textMuted">No live driver or delivery locations are currently available.</p>
           )}
         </div>
       )}
 
-      <div className="border-t border-gray-800 bg-opsPanel p-4">
+      <div className="border-t border-border bg-surface p-4">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-2xl font-bold text-green-400">{counts.online}</p>
-            <p className="text-xs text-gray-400">Drivers Online</p>
+            <p className="text-2xl font-bold text-success">{counts.online}</p>
+            <p className="text-xs text-textMuted">Drivers Online</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-orange-400">
+            <p className="text-2xl font-bold text-primary">
               {deliveries.length}
             </p>
-            <p className="text-xs text-gray-400">Active Deliveries</p>
+            <p className="text-xs text-textMuted">Active Deliveries</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-yellow-300">{counts.stale}</p>
-            <p className="text-xs text-gray-400">Stale GPS</p>
+            <p className="text-2xl font-bold text-warning">{counts.stale}</p>
+            <p className="text-xs text-textMuted">Stale GPS</p>
           </div>
         </div>
       </div>

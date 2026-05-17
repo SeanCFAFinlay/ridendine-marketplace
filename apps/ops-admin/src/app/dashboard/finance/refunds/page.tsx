@@ -51,19 +51,19 @@ export default async function FinanceRefundsPage() {
           <KpiTile
             label="Pending Refund Exposure"
             value={formatCurrency(pendingAmount)}
-            className="border-gray-800 bg-opsPanel"
+            className="border-border bg-surface"
           />
           <KpiTile
             label="Auto-Review Threshold"
             value={formatCurrency(threshold / 100)}
-            className="border-gray-800 bg-opsPanel"
+            className="border-border bg-surface"
           />
         </div>
 
-        <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+        <div className="rounded-lg border border-border bg-surface p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white">Cases</h2>
-            <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-300">
+            <span className="rounded-full bg-danger/20 px-2 py-0.5 text-xs font-medium text-danger">
               {pendingRefunds.length}
             </span>
           </div>

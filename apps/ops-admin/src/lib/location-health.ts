@@ -36,8 +36,8 @@ export function getLocationHealth(lastSeen: string | null | undefined, presenceS
 }
 
 export function locationHealthClass(status: LocationHealthStatus) {
-  if (status === 'live') return 'bg-emerald-500/20 text-emerald-200';
-  if (status === 'stale') return 'bg-yellow-500/20 text-yellow-200';
-  if (status === 'offline') return 'bg-gray-700 text-gray-300';
-  return 'bg-red-500/20 text-red-200';
+  if (status === 'live') return 'bg-success/20 text-success';
+  if (status === 'stale') return 'bg-warning/20 text-warning';
+  if (status === 'offline') return 'bg-surfaceMuted text-textSubtle';
+  return 'bg-danger/20 text-danger';
 }

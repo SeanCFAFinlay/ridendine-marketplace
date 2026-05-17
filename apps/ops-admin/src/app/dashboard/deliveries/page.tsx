@@ -93,31 +93,31 @@ export default async function DeliveriesPage({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Dispatch Command Center</h1>
-            <p className="mt-1 text-gray-400">
+            <p className="mt-1 text-textMuted">
               Deterministic dispatch queues, driver supply visibility, and intervention controls.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-4">
-            <div className="rounded-lg border border-gray-800 bg-opsPanel px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Pending</p>
+            <div className="rounded-lg border border-border bg-surface px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-textMuted">Pending</p>
               <p className="mt-1 text-xl font-semibold text-white">{commandCenter.summary.pendingDispatch}</p>
             </div>
-            <div className="rounded-lg border border-gray-800 bg-opsPanel px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Active</p>
+            <div className="rounded-lg border border-border bg-surface px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-textMuted">Active</p>
               <p className="mt-1 text-xl font-semibold text-white">{commandCenter.summary.activeDeliveries}</p>
             </div>
-            <div className="rounded-lg border border-gray-800 bg-opsPanel px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Escalated</p>
+            <div className="rounded-lg border border-border bg-surface px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-textMuted">Escalated</p>
               <p className="mt-1 text-xl font-semibold text-white">{commandCenter.summary.escalatedDeliveries}</p>
             </div>
-            <div className="rounded-lg border border-gray-800 bg-opsPanel px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Expired Offers</p>
+            <div className="rounded-lg border border-border bg-surface px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-textMuted">Expired Offers</p>
               <p className="mt-1 text-xl font-semibold text-white">{commandCenter.summary.expiredOffers}</p>
             </div>
           </div>
         </div>
 
-        <Card className="border-gray-800 bg-opsPanel p-4">
+        <Card className="border-border bg-surface p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap gap-2">
               {(['pending', 'active', 'escalated', 'stale'] as QueueName[]).map((entry) => (
@@ -126,8 +126,8 @@ export default async function DeliveriesPage({
                   href={`/dashboard/deliveries?queue=${entry}`}
                   className={`rounded-full px-4 py-2 text-sm ${
                     queue === entry
-                      ? 'bg-[#E85D26] text-white'
-                      : 'bg-opsPanel text-gray-300 hover:bg-[#222745]'
+                      ? 'bg-primary text-white'
+                      : 'bg-surface text-textSubtle hover:bg-[#222745]'
                   }`}
                 >
                   {entry}
@@ -141,9 +141,9 @@ export default async function DeliveriesPage({
                 name="search"
                 defaultValue={search}
                 placeholder="Search order, customer, storefront, driver"
-                className="w-full min-w-[280px] rounded-lg border border-gray-700 bg-opsPanel px-3 py-2 text-sm text-white focus:border-[#E85D26] focus:outline-none"
+                className="w-full min-w-[280px] rounded-lg border border-border bg-surface px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
               />
-              <button className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-medium text-white">
+              <button className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white">
                 Search
               </button>
             </form>
@@ -151,17 +151,17 @@ export default async function DeliveriesPage({
         </Card>
 
         <div className="grid gap-6 xl:grid-cols-[2fr,1fr]">
-          <Card className="border-gray-800 bg-opsPanel p-6">
+          <Card className="border-border bg-surface p-6">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-white">
                   {queue.charAt(0).toUpperCase() + queue.slice(1)} Queue
                 </h2>
-                <p className="mt-1 text-sm text-gray-400">
+                <p className="mt-1 text-sm text-textMuted">
                   Page {safePage} of {totalPages}. {filtered.length} deliveries match the current filter.
                 </p>
               </div>
-              <Badge className="bg-gray-700 text-gray-200">{filtered.length}</Badge>
+              <Badge className="bg-surfaceMuted text-textSubtle">{filtered.length}</Badge>
             </div>
 
             <div className="space-y-4">
@@ -169,48 +169,48 @@ export default async function DeliveriesPage({
                 <Link
                   key={item.deliveryId}
                   href={`/dashboard/deliveries/${item.deliveryId}`}
-                  className="block rounded-lg border border-gray-800 bg-opsPanel p-4 transition-colors hover:border-[#E85D26]"
+                  className="block rounded-lg border border-border bg-surface p-4 transition-colors hover:border-primary"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-mono text-white">Order {item.orderNumber}</span>
-                        <Badge className="bg-blue-500/20 text-blue-200">{item.status}</Badge>
+                        <Badge className="bg-info/20 text-info">{item.status}</Badge>
                         {item.escalatedToOps && (
-                          <Badge className="bg-red-500/20 text-red-200">Escalated</Badge>
+                          <Badge className="bg-danger/20 text-danger">Escalated</Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-300">{item.storefrontName}</p>
-                      <p className="text-sm text-gray-400">
+                      <p className="text-sm text-textSubtle">{item.storefrontName}</p>
+                      <p className="text-sm text-textMuted">
                         {item.pickupAddress} to {item.dropoffAddress}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-textMuted">
                         Customer: {item.customerName} · Attempts: {item.assignmentAttemptsCount}
                       </p>
                       {item.assignedDriver && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-textMuted">
                           Driver: {item.assignedDriver.name}
                         </p>
                       )}
                     </div>
 
                     <div className="min-w-[220px] rounded-lg bg-[#121928] p-3 text-sm">
-                      <p className="text-xs uppercase tracking-wide text-gray-500">Top candidates</p>
+                      <p className="text-xs uppercase tracking-wide text-textMuted">Top candidates</p>
                       <div className="mt-2 space-y-2">
                         {item.topCandidates.length === 0 ? (
-                          <p className="text-gray-500">No eligible supply in range.</p>
+                          <p className="text-textMuted">No eligible supply in range.</p>
                         ) : (
                           item.topCandidates.map((candidate) => (
                             <div key={candidate.driverId} className="flex items-center justify-between gap-3">
                               <div>
                                 <p className="text-white">{candidate.name}</p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-textMuted">
                                   {candidate.distanceKm == null
                                     ? 'No live location'
                                     : `${candidate.distanceKm.toFixed(1)} km`} · {candidate.status}
                                 </p>
                               </div>
-                              <span className="text-xs text-gray-400">
+                              <span className="text-xs text-textMuted">
                                 load {candidate.activeDeliveries}
                               </span>
                             </div>
@@ -223,7 +223,7 @@ export default async function DeliveriesPage({
               ))}
 
               {pageItems.length === 0 && (
-                <div className="rounded-lg border border-dashed border-gray-700 p-10 text-center text-gray-500">
+                <div className="rounded-lg border border-dashed border-border p-10 text-center text-textMuted">
                   No deliveries match this queue view.
                 </div>
               )}
@@ -233,7 +233,7 @@ export default async function DeliveriesPage({
               <Link
                 href={`/dashboard/deliveries?queue=${queue}&search=${encodeURIComponent(search)}&page=${Math.max(1, safePage - 1)}`}
                 className={`rounded-lg px-4 py-2 text-sm ${
-                  safePage <= 1 ? 'pointer-events-none bg-gray-800 text-gray-600' : 'bg-opsPanel text-white'
+                  safePage <= 1 ? 'pointer-events-none bg-surface text-textMuted' : 'bg-surface text-white'
                 }`}
               >
                 Previous
@@ -241,7 +241,7 @@ export default async function DeliveriesPage({
               <Link
                 href={`/dashboard/deliveries?queue=${queue}&search=${encodeURIComponent(search)}&page=${Math.min(totalPages, safePage + 1)}`}
                 className={`rounded-lg px-4 py-2 text-sm ${
-                  safePage >= totalPages ? 'pointer-events-none bg-gray-800 text-gray-600' : 'bg-opsPanel text-white'
+                  safePage >= totalPages ? 'pointer-events-none bg-surface text-textMuted' : 'bg-surface text-white'
                 }`}
               >
                 Next
@@ -250,47 +250,47 @@ export default async function DeliveriesPage({
           </Card>
 
           <div className="space-y-6">
-            <Card className="border-gray-800 bg-opsPanel p-6">
+            <Card className="border-border bg-surface p-6">
               <h2 className="text-lg font-semibold text-white">Driver Supply</h2>
               <div className="mt-4 space-y-3">
                 {commandCenter.driverSupply.slice(0, 8).map((driver) => (
-                  <div key={driver.driverId} className="rounded-lg bg-opsPanel p-3">
+                  <div key={driver.driverId} className="rounded-lg bg-surface p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-white">{driver.name}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-textMuted">
                           {driver.status} · declines {driver.recentDeclines} · expiries {driver.recentExpiries}
                         </p>
                       </div>
-                      <span className="text-xs text-gray-400">load {driver.activeDeliveries}</span>
+                      <span className="text-xs text-textMuted">load {driver.activeDeliveries}</span>
                     </div>
                   </div>
                 ))}
               </div>
             </Card>
 
-            <Card className="border-gray-800 bg-opsPanel p-6">
+            <Card className="border-border bg-surface p-6">
               <h2 className="text-lg font-semibold text-white">Coverage Gaps</h2>
               <div className="mt-4 space-y-3">
                 {commandCenter.coverageGaps.length === 0 ? (
-                  <p className="text-sm text-gray-500">No open coverage gaps identified.</p>
+                  <p className="text-sm text-textMuted">No open coverage gaps identified.</p>
                 ) : (
                   commandCenter.coverageGaps.map((gap) => (
-                    <div key={gap.area} className="rounded-lg bg-opsPanel p-3">
+                    <div key={gap.area} className="rounded-lg bg-surface p-3">
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="text-white">{gap.area}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-textMuted">
                             {gap.openDeliveries} open deliveries · {gap.availableDrivers} available drivers
                           </p>
                         </div>
                         <Badge
                           className={
                             gap.riskLevel === 'high'
-                              ? 'bg-red-500/20 text-red-200'
+                              ? 'bg-danger/20 text-danger'
                               : gap.riskLevel === 'medium'
-                                ? 'bg-yellow-500/20 text-yellow-200'
-                                : 'bg-emerald-500/20 text-emerald-200'
+                                ? 'bg-warning/20 text-warning'
+                                : 'bg-success/20 text-success'
                           }
                         >
                           {gap.riskLevel}

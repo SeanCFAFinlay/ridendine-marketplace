@@ -9,7 +9,7 @@ type SettingsFormProps = {
 };
 
 const inputClass =
-  'w-full rounded-lg border border-gray-700 bg-opsPanel px-3 py-2 text-white disabled:opacity-60';
+  'w-full rounded-lg border border-border bg-surface px-3 py-2 text-white disabled:opacity-60';
 
 function NumberField({
   label,
@@ -26,7 +26,7 @@ function NumberField({
 }) {
   return (
     <label className="space-y-2">
-      <span className="text-sm text-gray-300">{label}</span>
+      <span className="text-sm text-textSubtle">{label}</span>
       <input
         type="number"
         step={step}
@@ -51,8 +51,8 @@ function ToggleField({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between rounded-lg border border-gray-700 bg-opsPanel px-4 py-3">
-      <span className="text-sm text-gray-300">{label}</span>
+    <label className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-3">
+      <span className="text-sm text-textSubtle">{label}</span>
       <input
         type="checkbox"
         checked={checked}
@@ -65,7 +65,7 @@ function ToggleField({
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+    <h3 className="text-sm font-semibold uppercase tracking-wider text-textMuted">
       {children}
     </h3>
   );
@@ -256,8 +256,8 @@ export function SettingsForm({ initialRules, canEdit }: SettingsFormProps) {
         <div
           className={`rounded-lg px-4 py-3 text-sm ${
             error
-              ? 'border border-red-500/30 bg-red-500/10 text-red-200'
-              : 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+              ? 'border border-danger/30 bg-danger/10 text-danger'
+              : 'border border-success/30 bg-success/10 text-success'
           }`}
         >
           {error ?? message}
@@ -267,7 +267,7 @@ export function SettingsForm({ initialRules, canEdit }: SettingsFormProps) {
       <button
         type="submit"
         disabled={!canEdit || saving}
-        className="rounded-lg bg-[#E85D26] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
       >
         {saving ? 'Saving…' : 'Save Platform Rules'}
       </button>

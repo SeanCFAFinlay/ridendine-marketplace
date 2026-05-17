@@ -45,16 +45,16 @@ function LiabilityTable({
   return (
     <table className="w-full text-left text-sm">
       <thead>
-        <tr className="border-b border-gray-800 text-xs uppercase tracking-wide text-gray-500">
+        <tr className="border-b border-border text-xs uppercase tracking-wide text-textMuted">
           <th className="py-3 pr-4">Name</th>
           <th className="py-3 text-right">Amount</th>
         </tr>
       </thead>
       <tbody>
         {rows.map((row) => (
-          <tr key={row.id} className="border-b border-gray-900">
+          <tr key={row.id} className="border-b border-border">
             <td className="py-3 pr-4 font-medium text-white">{row.name}</td>
-            <td className="py-3 text-right font-medium text-emerald-400">
+            <td className="py-3 text-right font-medium text-success">
               {formatCurrency(row.amount)}
             </td>
           </tr>
@@ -73,7 +73,7 @@ function LedgerTable({ rows }: { rows: LedgerEntry[] }) {
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-gray-800 text-xs uppercase tracking-wide text-gray-500">
+          <tr className="border-b border-border text-xs uppercase tracking-wide text-textMuted">
             <th className="py-3 pr-4">Date</th>
             <th className="py-3 pr-4">Type</th>
             <th className="py-3 pr-4">Entity</th>
@@ -83,16 +83,16 @@ function LedgerTable({ rows }: { rows: LedgerEntry[] }) {
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id} className="border-b border-gray-900">
-              <td className="py-3 pr-4 whitespace-nowrap text-xs text-gray-400">
+            <tr key={row.id} className="border-b border-border">
+              <td className="py-3 pr-4 whitespace-nowrap text-xs text-textMuted">
                 {new Date(row.createdAt).toLocaleString()}
               </td>
-              <td className="py-3 pr-4 text-gray-300">{row.entryType}</td>
-              <td className="py-3 pr-4 text-xs text-gray-400">
+              <td className="py-3 pr-4 text-textSubtle">{row.entryType}</td>
+              <td className="py-3 pr-4 text-xs text-textMuted">
                 {row.entityType ? `${row.entityType}:${row.entityId ?? 'n/a'}` : 'platform'}
               </td>
-              <td className="py-3 pr-4 text-xs text-gray-300">{row.description ?? 'No description'}</td>
-              <td className="py-3 text-right font-medium text-emerald-400">
+              <td className="py-3 pr-4 text-xs text-textSubtle">{row.description ?? 'No description'}</td>
+              <td className="py-3 text-right font-medium text-success">
                 {formatCurrency(row.amountCents / 100)}
               </td>
             </tr>
@@ -154,9 +154,9 @@ export default async function FinancePage() {
           subtitle="Review and action workflows for refunds, payout holds, liabilities, and ledger activity."
           actions={
             <div className="flex flex-wrap gap-2">
-              <a href="/api/export?type=orders" className="rounded-md border border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:border-gray-500">Export Orders</a>
-              <a href="/api/export?type=ledger" className="rounded-md border border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:border-gray-500">Export Ledger</a>
-              <a href="/api/export?type=bank_payouts" className="rounded-md border border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:border-gray-500">Export Bank</a>
+              <a href="/api/export?type=orders" className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-textSubtle hover:border-border">Export Orders</a>
+              <a href="/api/export?type=ledger" className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-textSubtle hover:border-border">Export Ledger</a>
+              <a href="/api/export?type=bank_payouts" className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-textSubtle hover:border-border">Export Bank</a>
             </div>
           }
         />
@@ -166,31 +166,31 @@ export default async function FinancePage() {
           <KpiTile
             label="Captured Revenue (30d)"
             value={formatCurrency(data.summary.totalRevenue)}
-            className="border-gray-800 bg-opsPanel"
+            className="border-border bg-surface"
           />
           <KpiTile
             label="Pending Refund Review"
             value={formatCurrency(data.pendingRefundAmount)}
-            className="border-gray-800 bg-opsPanel"
+            className="border-border bg-surface"
           />
           <KpiTile
             label="Pending Payout Adjustments"
             value={formatCurrency(data.pendingAdjustmentAmount)}
-            className="border-gray-800 bg-opsPanel"
+            className="border-border bg-surface"
           />
           <KpiTile
             label="Tax Collected"
             value={formatCurrency(data.summary.taxCollected)}
-            className="border-gray-800 bg-opsPanel"
+            className="border-border bg-surface"
           />
         </div>
 
         {/* Payables grid */}
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+          <div className="rounded-lg border border-border bg-surface p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-white">Chef Payables</h2>
-              <span className="rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
+              <span className="rounded-full bg-surfaceMuted px-2 py-0.5 text-xs text-textSubtle">
                 {data.chefLiabilities.length}
               </span>
             </div>
@@ -201,10 +201,10 @@ export default async function FinancePage() {
             />
           </div>
 
-          <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+          <div className="rounded-lg border border-border bg-surface p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-white">Driver Payables</h2>
-              <span className="rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
+              <span className="rounded-full bg-surfaceMuted px-2 py-0.5 text-xs text-textSubtle">
                 {data.driverLiabilities.length}
               </span>
             </div>
@@ -217,9 +217,9 @@ export default async function FinancePage() {
         </div>
 
         {/* Review queues */}
-        <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+        <div className="rounded-lg border border-border bg-surface p-4">
           <h2 className="mb-1 text-sm font-semibold text-white">Review Queues</h2>
-          <p className="mb-4 text-xs text-gray-500">
+          <p className="mb-4 text-xs text-textMuted">
             Refunds and payout adjustments are actionable here and write audit logs through the engine.
           </p>
           <FinanceActions
@@ -229,10 +229,10 @@ export default async function FinancePage() {
         </div>
 
         {/* Ledger */}
-        <div className="rounded-lg border border-gray-800 bg-opsPanel p-4">
+        <div className="rounded-lg border border-border bg-surface p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white">Recent Ledger Activity</h2>
-            <span className="rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
+            <span className="rounded-full bg-surfaceMuted px-2 py-0.5 text-xs text-textSubtle">
               {data.recentLedger.length}
             </span>
           </div>
