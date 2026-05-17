@@ -184,7 +184,7 @@ export default function ReviewsPage() {
               <span className="text-warning">★</span>
               <div className="flex-1 h-2 bg-surfaceMuted rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-yellow-400"
+                  className="h-full bg-warning"
                   style={{
                     width: stats.total > 0
                       ? `${((stats.distribution[rating - 1] ?? 0) / stats.total) * 100}%`

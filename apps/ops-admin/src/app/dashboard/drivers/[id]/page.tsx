@@ -20,7 +20,7 @@ const statusColors: Record<string, string> = {
 
 const presenceColors: Record<string, string> = {
   online: 'bg-success',
-  offline: 'bg-surfaceMuted0',
+  offline: 'bg-surfaceMuted',
   busy: 'bg-primary',
 };
 
@@ -71,7 +71,7 @@ export default async function DriverDetailPage({
             {driver.driver_presence && (
               <Badge
                 className={`${
-                  presenceColors[driver.driver_presence.status] || 'bg-surfaceMuted0'
+                  presenceColors[driver.driver_presence.status] || 'bg-surfaceMuted'
                 } px-3 py-1 text-white`}
               >
                 {driver.driver_presence.status.toUpperCase()}
@@ -79,7 +79,7 @@ export default async function DriverDetailPage({
             )}
             <Badge
               className={`${
-                statusColors[driver.status] || 'bg-surfaceMuted0'
+                statusColors[driver.status] || 'bg-surfaceMuted'
               } px-3 py-1 text-white`}
             >
               {driver.status?.toUpperCase()}

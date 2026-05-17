@@ -90,10 +90,10 @@ export function RealTimeStats() {
       case 'pending': return 'bg-warning';
       case 'accepted': return 'bg-info';
       case 'preparing': return 'bg-info';
-      case 'ready_for_pickup': return 'bg-cyan-500';
+      case 'ready_for_pickup': return 'bg-infoSoft0';
       case 'delivered': return 'bg-success';
       case 'cancelled': return 'bg-danger';
-      default: return 'bg-surfaceMuted0';
+      default: return 'bg-surfaceMuted';
     }
   };
 
@@ -144,7 +144,7 @@ export function RealTimeStats() {
             <div
               key={order.id}
               className={`flex items-center justify-between p-3 rounded-lg bg-surface ${
-                index === 0 ? 'animate-pulse ring-1 ring-green-500' : ''
+                index === 0 ? 'animate-pulse ring-1 ring-success' : ''
               }`}
             >
               <div className="flex items-center gap-3">

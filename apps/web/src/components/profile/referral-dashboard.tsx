@@ -17,9 +17,9 @@ function copyToClipboard(text: string): Promise<void> {
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 text-center shadow-sm">
+    <div className="rounded-lg border border-border bg-white p-4 text-center shadow-sm">
       <p className="text-2xl font-bold text-primary">{value}</p>
-      <p className="mt-1 text-sm text-slate-500">{label}</p>
+      <p className="mt-1 text-sm text-textMuted">{label}</p>
     </div>
   );
 }
@@ -45,19 +45,19 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 
 function ReferralSignupRow({ signup }: { signup: ReferralStats['signups'][0] }) {
   const statusColors: Record<string, string> = {
-    pending: 'text-yellow-600 bg-yellow-50',
-    completed: 'text-green-600 bg-green-50',
-    rewarded: 'text-blue-600 bg-blue-50',
+    pending: 'text-warning bg-warningSoft',
+    completed: 'text-success bg-successSoft',
+    rewarded: 'text-info bg-infoSoft',
   };
 
-  const colorClass = statusColors[signup.status] ?? 'text-slate-600 bg-slate-50';
+  const colorClass = statusColors[signup.status] ?? 'text-textMuted bg-surfaceMuted';
 
   return (
-    <tr className="border-t border-slate-100">
-      <td className="py-3 pl-4 pr-3 text-sm text-slate-700 font-mono">
+    <tr className="border-t border-divider">
+      <td className="py-3 pl-4 pr-3 text-sm text-text font-mono">
         {signup.referredUserId.slice(0, 8)}…
       </td>
-      <td className="py-3 px-3 text-sm capitalize text-slate-600">
+      <td className="py-3 px-3 text-sm capitalize text-textMuted">
         {signup.referredUserType}
       </td>
       <td className="py-3 px-3">
@@ -65,7 +65,7 @@ function ReferralSignupRow({ signup }: { signup: ReferralStats['signups'][0] }) 
           {signup.status}
         </span>
       </td>
-      <td className="py-3 pl-3 pr-4 text-sm text-slate-600">
+      <td className="py-3 pl-3 pr-4 text-sm text-textMuted">
         {signup.rewardPaid ? 'Paid' : 'Pending'}
       </td>
     </tr>
@@ -74,7 +74,7 @@ function ReferralSignupRow({ signup }: { signup: ReferralStats['signups'][0] }) 
 
 function EmptySignups() {
   return (
-    <p className="py-8 text-center text-sm text-slate-400">
+    <p className="py-8 text-center text-sm text-textSubtle">
       No referrals yet. Share your code to start earning!
     </p>
   );
@@ -124,9 +124,9 @@ export function ReferralDashboard(_props: Props) {
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-24 rounded-lg bg-slate-100" />
+        <div className="h-24 rounded-lg bg-surfaceMuted" />
         <div className="grid grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-lg bg-slate-100" />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-lg bg-surfaceMuted" />)}
         </div>
       </div>
     );
@@ -134,7 +134,7 @@ export function ReferralDashboard(_props: Props) {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      <div className="rounded-lg border border-danger/30 bg-dangerSoft p-4 text-sm text-danger">
         {error}
       </div>
     );
@@ -142,9 +142,9 @@ export function ReferralDashboard(_props: Props) {
 
   if (!stats) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-800">Start Referring Friends</h3>
-        <p className="mt-2 text-sm text-slate-500">
+      <div className="rounded-lg border border-border bg-white p-6 text-center shadow-sm">
+        <h3 className="text-lg font-semibold text-text">Start Referring Friends</h3>
+        <p className="mt-2 text-sm text-textMuted">
           Earn $5 for every friend who places their first order using your referral link.
         </p>
         <button
@@ -164,8 +164,8 @@ export function ReferralDashboard(_props: Props) {
   return (
     <div className="space-y-6">
       {/* Code card */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-800">Your Referral Code</h3>
+      <div className="rounded-lg border border-border bg-white p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-text">Your Referral Code</h3>
         <div className="mt-3 flex items-center gap-3">
           <span className="rounded-md bg-surfaceMuted px-4 py-2 font-mono text-xl font-bold tracking-widest text-primary">
             {stats.code}
@@ -173,9 +173,9 @@ export function ReferralDashboard(_props: Props) {
           <CopyButton text={stats.code} label="Copy Code" />
         </div>
 
-        <p className="mt-4 text-sm text-slate-500">Or share your unique link:</p>
+        <p className="mt-4 text-sm text-textMuted">Or share your unique link:</p>
         <div className="mt-2 flex items-center gap-3">
-          <span className="truncate rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+          <span className="truncate rounded-md border border-border bg-surfaceMuted px-3 py-2 text-sm text-textMuted">
             {referralLink}
           </span>
           <CopyButton text={referralLink} label="Copy Link" />
@@ -190,9 +190,9 @@ export function ReferralDashboard(_props: Props) {
       </div>
 
       {/* Signup list */}
-      <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-4 py-3">
-          <h4 className="text-sm font-semibold text-slate-700">Referred Users</h4>
+      <div className="rounded-lg border border-border bg-white shadow-sm">
+        <div className="border-b border-divider px-4 py-3">
+          <h4 className="text-sm font-semibold text-text">Referred Users</h4>
         </div>
 
         {stats.signups.length === 0 ? (
@@ -200,7 +200,7 @@ export function ReferralDashboard(_props: Props) {
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
+              <tr className="bg-surfaceMuted text-left text-xs font-medium uppercase text-textMuted">
                 <th className="py-2 pl-4 pr-3">User ID</th>
                 <th className="py-2 px-3">Type</th>
                 <th className="py-2 px-3">Status</th>
@@ -216,7 +216,7 @@ export function ReferralDashboard(_props: Props) {
         )}
       </div>
 
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-textSubtle">
         You earn $5 when a referred friend places their first order. Reward is issued as a promo code.
       </p>
     </div>

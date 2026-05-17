@@ -40,7 +40,7 @@ export function ReviewsList({ storefrontId }: ReviewsListProps) {
   if (loading) return <ReviewsSkeleton />;
 
   if (reviews.length === 0) {
-    return <Card className="p-6 text-center"><p className="text-gray-500">No reviews yet. Be the first!</p></Card>;
+    return <Card className="p-6 text-center"><p className="text-textMuted">No reviews yet. Be the first!</p></Card>;
   }
 
   return (
@@ -50,13 +50,13 @@ export function ReviewsList({ storefrontId }: ReviewsListProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="flex">{[1,2,3,4,5].map((s) => <span key={s} className="text-sm">{s <= review.rating ? '\u2B50' : '\u2606'}</span>)}</div>
-              <span className="text-sm font-medium text-gray-900">
+              <span className="text-sm font-medium text-text">
                 {review.customer ? `${review.customer.first_name} ${review.customer.last_name?.charAt(0)}.` : 'Customer'}
               </span>
             </div>
-            <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString()}</span>
+            <span className="text-xs text-textSubtle">{new Date(review.created_at).toLocaleDateString()}</span>
           </div>
-          {review.comment && <p className="mt-2 text-sm text-gray-600">{review.comment}</p>}
+          {review.comment && <p className="mt-2 text-sm text-textMuted">{review.comment}</p>}
         </Card>
       ))}
     </div>

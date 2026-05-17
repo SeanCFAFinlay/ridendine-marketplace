@@ -18,16 +18,16 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surfaceMuted">
       <Header />
       <main className="container py-12">
         <div className="mx-auto max-w-3xl">
-          <h1 className="text-4xl font-bold text-gray-900">Terms of Service</h1>
-          <p className="mt-4 text-gray-600">Last updated: March 2024</p>
+          <h1 className="text-4xl font-bold text-text">Terms of Service</h1>
+          <p className="mt-4 text-textMuted">Last updated: March 2024</p>
 
           <div
             role="alert"
-            className="mt-6 rounded-lg border-2 border-amber-400 bg-amber-50 p-4 text-sm text-amber-900"
+            className="mt-6 rounded-lg border-2 border-warning/40 bg-warningSoft p-4 text-sm text-warning"
           >
             <p className="font-semibold">⚠️ DRAFT — Pending Legal Review</p>
             <p className="mt-1">
@@ -39,9 +39,9 @@ export default function TermsPage() {
             </p>
           </div>
 
-          <div className="mt-8 space-y-8 text-gray-600">
+          <div className="mt-8 space-y-8 text-textMuted">
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">1. Acceptance of Terms</h2>
+              <h2 className="text-2xl font-semibold text-text">1. Acceptance of Terms</h2>
               <p className="mt-4">
                 By accessing or using Ridendine ("the Platform"), you agree to be bound by these
                 Terms of Service. If you do not agree to these terms, please do not use our services.
@@ -49,7 +49,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">2. Description of Service</h2>
+              <h2 className="text-2xl font-semibold text-text">2. Description of Service</h2>
               <p className="mt-4">
                 Ridendine is a marketplace that connects customers with local home chefs. We facilitate
                 ordering, payment processing, and delivery coordination. Ridendine is not a food
@@ -59,7 +59,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">3. User Accounts</h2>
+              <h2 className="text-2xl font-semibold text-text">3. User Accounts</h2>
               <div className="mt-4 space-y-4">
                 <p>
                   To use certain features of the Platform, you must create an account. You agree to:
@@ -74,10 +74,10 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">4. Orders and Payments</h2>
+              <h2 className="text-2xl font-semibold text-text">4. Orders and Payments</h2>
               <div className="mt-4 space-y-4">
                 <div>
-                  <h3 className="font-medium text-gray-900">Pricing</h3>
+                  <h3 className="font-medium text-text">Pricing</h3>
                   <p className="mt-2">
                     Menu prices are set by individual chefs. Additional fees include:
                   </p>
@@ -88,14 +88,14 @@ export default function TermsPage() {
                   </ul>
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900">Payment Processing</h3>
+                  <h3 className="font-medium text-text">Payment Processing</h3>
                   <p className="mt-2">
                     All payments are processed securely through Stripe. By placing an order,
                     you authorize us to charge your selected payment method for the total amount.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900">Refunds</h3>
+                  <h3 className="font-medium text-text">Refunds</h3>
                   <p className="mt-2">
                     Refund requests are handled on a case-by-case basis. If there's an issue with
                     your order, please contact support within 24 hours of delivery.
@@ -105,7 +105,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">5. For Chefs</h2>
+              <h2 className="text-2xl font-semibold text-text">5. For Chefs</h2>
               <div className="mt-4 space-y-4">
                 <p>Chefs using our platform agree to:</p>
                 <ul className="list-disc space-y-2 pl-6">
@@ -123,7 +123,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">6. For Drivers</h2>
+              <h2 className="text-2xl font-semibold text-text">6. For Drivers</h2>
               <div className="mt-4 space-y-4">
                 <p>Delivery drivers agree to:</p>
                 <ul className="list-disc space-y-2 pl-6">
@@ -137,7 +137,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">7. Prohibited Conduct</h2>
+              <h2 className="text-2xl font-semibold text-text">7. Prohibited Conduct</h2>
               <p className="mt-4">Users may not:</p>
               <ul className="mt-4 list-disc space-y-2 pl-6">
                 <li>Use the platform for any illegal purpose</li>
@@ -150,7 +150,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">8. Intellectual Property</h2>
+              <h2 className="text-2xl font-semibold text-text">8. Intellectual Property</h2>
               <p className="mt-4">
                 The Ridendine name, logo, and platform design are our intellectual property.
                 Users retain ownership of content they create (such as menu items and reviews)
@@ -159,7 +159,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">9. Limitation of Liability</h2>
+              <h2 className="text-2xl font-semibold text-text">9. Limitation of Liability</h2>
               <p className="mt-4">
                 Ridendine is a platform that facilitates connections between users. We are not
                 responsible for the quality, safety, or legality of food prepared by chefs.
@@ -169,7 +169,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">10. Dispute Resolution</h2>
+              <h2 className="text-2xl font-semibold text-text">10. Dispute Resolution</h2>
               <p className="mt-4">
                 Any disputes arising from the use of Ridendine shall be resolved through
                 binding arbitration in Ontario, Canada, in accordance with Canadian law.
@@ -178,7 +178,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">11. Termination</h2>
+              <h2 className="text-2xl font-semibold text-text">11. Termination</h2>
               <p className="mt-4">
                 We reserve the right to suspend or terminate accounts that violate these terms,
                 engage in fraudulent activity, or receive consistently poor ratings.
@@ -186,7 +186,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">12. Changes to Terms</h2>
+              <h2 className="text-2xl font-semibold text-text">12. Changes to Terms</h2>
               <p className="mt-4">
                 We may update these terms at any time. Continued use of the platform after
                 changes constitutes acceptance of the new terms.
@@ -194,11 +194,11 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">13. Contact</h2>
+              <h2 className="text-2xl font-semibold text-text">13. Contact</h2>
               <p className="mt-4">
                 For questions about these terms, contact us at:
               </p>
-              <div className="mt-4 rounded-lg bg-gray-100 p-4">
+              <div className="mt-4 rounded-lg bg-surfaceMuted p-4">
                 <p><strong>Ridendine Legal</strong></p>
                 <p className="mt-1">Email: legal@ridendine.ca</p>
                 <p>123 Main Street, Hamilton, ON L8P 1A1, Canada</p>

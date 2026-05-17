@@ -3,12 +3,12 @@ import { Card } from '@ridendine/ui';
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-warning',
   accepted: 'bg-info',
-  preparing: 'bg-indigo-500',
+  preparing: 'bg-infoSoft0',
   ready_for_pickup: 'bg-info',
   delivered: 'bg-success',
   completed: 'bg-success',
   cancelled: 'bg-danger',
-  refunded: 'bg-surfaceMuted0',
+  refunded: 'bg-surfaceMuted',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -52,7 +52,7 @@ export function OrdersByStatus({ ordersByStatus, totalOrders }: OrdersByStatusPr
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-surfaceMuted">
                   <div
-                    className={`h-full rounded-full ${STATUS_COLORS[status] ?? 'bg-surfaceMuted0'}`}
+                    className={`h-full rounded-full ${STATUS_COLORS[status] ?? 'bg-surfaceMuted'}`}
                     style={{ width: `${pct}%` }}
                   />
                 </div>

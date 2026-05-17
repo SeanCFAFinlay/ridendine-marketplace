@@ -86,7 +86,7 @@ export default async function MenuPage() {
         ].map((metric) => (
           <div key={metric.label} className="rounded-lg border border-border bg-white p-4 shadow-sm">
             <p className="text-sm font-medium text-textMuted">{metric.label}</p>
-            <p className="mt-2 text-3xl font-bold text-slate-950">{metric.value}</p>
+            <p className="mt-2 text-3xl font-bold text-text">{metric.value}</p>
             <p className="mt-1 text-xs text-textMuted">{metric.helper}</p>
           </div>
         ))}

@@ -43,7 +43,7 @@ export function OrderStatusActions({
       apiAction: 'mark_ready',
       label: 'Mark Ready',
       success: 'Order marked ready',
-      className: 'bg-indigo-600 hover:bg-indigo-700',
+      className: 'bg-info hover:bg-info/90',
     },
     complete_order: {
       apiAction: 'complete',

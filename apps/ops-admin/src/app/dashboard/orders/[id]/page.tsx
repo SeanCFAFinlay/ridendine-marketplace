@@ -12,11 +12,11 @@ const statusColors: Record<string, string> = {
   pending: 'bg-warning',
   accepted: 'bg-info',
   preparing: 'bg-info',
-  ready_for_pickup: 'bg-indigo-500',
-  picked_up: 'bg-cyan-500',
+  ready_for_pickup: 'bg-infoSoft0',
+  picked_up: 'bg-infoSoft0',
   delivered: 'bg-success',
   cancelled: 'bg-danger',
-  refunded: 'bg-surfaceMuted0',
+  refunded: 'bg-surfaceMuted',
 };
 
 function formatMoney(value: number | null | undefined) {
@@ -115,7 +115,7 @@ export default async function OrderDetailPage({
           </div>
           <Badge
             className={`${
-              statusColors[order.status] || 'bg-surfaceMuted0'
+              statusColors[order.status] || 'bg-surfaceMuted'
             } px-4 py-2 text-white`}
           >
             {order.status?.replace(/_/g, ' ').toUpperCase()}

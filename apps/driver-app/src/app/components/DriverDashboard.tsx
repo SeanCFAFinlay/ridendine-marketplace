@@ -171,8 +171,8 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
       <div
         className={`px-5 py-5 transition-colors duration-300 ${
           isOnline
-            ? 'bg-gradient-to-r from-green-500 to-emerald-500'
-            : 'bg-gradient-to-r from-gray-500 to-gray-600'
+            ? 'bg-gradient-to-r from-success to-success'
+            : 'bg-gradient-to-r from-surfaceMuted to-borderStrong'
         }`}
       >
         <div className="flex items-center justify-between">

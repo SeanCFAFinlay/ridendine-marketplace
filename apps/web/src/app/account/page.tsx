@@ -28,11 +28,11 @@ export default function AccountPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surfaceMuted">
       <Header />
 
       <main className="container py-8">
-        <h1 className="text-2xl font-bold text-gray-900">My Account</h1>
+        <h1 className="text-2xl font-bold text-text">My Account</h1>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           {/* Profile Card */}
@@ -44,10 +44,10 @@ export default function AccountPage() {
                 fallback={user.email?.slice(0, 2) || 'U'}
                 size="xl"
               />
-              <h2 className="mt-4 font-semibold text-gray-900">
+              <h2 className="mt-4 font-semibold text-text">
                 {user.user_metadata?.first_name} {user.user_metadata?.last_name}
               </h2>
-              <p className="text-sm text-gray-500">{user.email}</p>
+              <p className="text-sm text-textMuted">{user.email}</p>
               <Button
                 variant="outline"
                 size="sm"
@@ -62,15 +62,15 @@ export default function AccountPage() {
           {/* Menu Items */}
           <div className="lg:col-span-2">
             <Card padding="none">
-              <nav className="divide-y divide-gray-100">
+              <nav className="divide-y divide-divider">
                 {menuItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="flex items-center gap-4 p-4 hover:bg-gray-50"
+                    className="flex items-center gap-4 p-4 hover:bg-surfaceMuted"
                   >
                     <svg
-                      className="h-6 w-6 text-gray-400"
+                      className="h-6 w-6 text-textSubtle"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -82,9 +82,9 @@ export default function AccountPage() {
                         d={item.icon}
                       />
                     </svg>
-                    <span className="font-medium text-gray-900">{item.label}</span>
+                    <span className="font-medium text-text">{item.label}</span>
                     <svg
-                      className="ml-auto h-5 w-5 text-gray-400"
+                      className="ml-auto h-5 w-5 text-textSubtle"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

@@ -91,7 +91,7 @@ export function NotificationPreferences() {
                 <th className="pb-3 text-center font-medium text-text">SMS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-divider">
               {EVENTS.map(({ key, label, description }) => (
                 <tr key={key}>
                   <td className="py-3 pr-4">

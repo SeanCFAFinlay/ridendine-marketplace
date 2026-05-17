@@ -89,7 +89,7 @@ export default function OrderTrackingMap({
   return (
     <div className="space-y-2">
       {etaDropoffAt && (
-        <p className="px-1 text-xs text-gray-600">
+        <p className="px-1 text-xs text-textMuted">
           ETA:{' '}
           <time dateTime={etaDropoffAt}>
             {new Date(etaDropoffAt).toLocaleString(undefined, {

@@ -48,7 +48,7 @@ export default function DashboardLoading() {
           ))}
         </div>
         {/* Table rows */}
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-divider">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="grid grid-cols-5 gap-4 px-6 py-3.5">
               <div className="h-4 w-20 rounded bg-surfaceMuted" />

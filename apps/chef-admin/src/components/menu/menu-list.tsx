@@ -87,22 +87,22 @@ function getItemHealth(item: MenuItem) {
   const issues = getSetupIssues(item);
 
   if (item.is_sold_out) {
-    return { label: 'Sold Out', tone: 'bg-dangerSoft text-danger ring-red-200', detail: 'Restock before customers can order' };
+    return { label: 'Sold Out', tone: 'bg-dangerSoft text-danger ring-danger/30', detail: 'Restock before customers can order' };
   }
 
   if (!item.is_available) {
-    return { label: 'Hidden', tone: 'bg-surfaceMuted text-text ring-slate-200', detail: 'Not visible to customers' };
+    return { label: 'Hidden', tone: 'bg-surfaceMuted text-text ring-border', detail: 'Not visible to customers' };
   }
 
   if (isLowCapacity(item)) {
-    return { label: 'Low capacity', tone: 'bg-warningSoft text-warning ring-amber-200', detail: `${getRemaining(item)} portions left today` };
+    return { label: 'Low capacity', tone: 'bg-warningSoft text-warning ring-warning/30', detail: `${getRemaining(item)} portions left today` };
   }
 
   if (issues.length > 0) {
-    return { label: 'Needs setup', tone: 'bg-primarySoft text-primary ring-orange-200', detail: `Missing ${issues.slice(0, 2).join(', ')}` };
+    return { label: 'Needs setup', tone: 'bg-primarySoft text-primary ring-primary/30', detail: `Missing ${issues.slice(0, 2).join(', ')}` };
   }
 
-  return { label: 'Ready', tone: 'bg-successSoft text-success ring-emerald-200', detail: 'Customer-ready and operational' };
+  return { label: 'Ready', tone: 'bg-successSoft text-success ring-success/30', detail: 'Customer-ready and operational' };
 }
 
 function formatCurrency(value: number) {
@@ -303,7 +303,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
         <div className="rounded-lg border border-border bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <p className="text-sm font-semibold text-slate-950">Today&apos;s menu readiness</p>
+              <p className="text-sm font-semibold text-text">Today&apos;s menu readiness</p>
               <p className="mt-1 max-w-2xl text-sm text-textMuted">
                 This is the live operating view for {storefrontName}: what can sell, what is constrained, and what needs chef or admin attention.
               </p>
@@ -334,7 +334,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                     <Icon className="h-4 w-4" />
                     <p className="text-xs font-semibold uppercase tracking-wide">{metric.label}</p>
                   </div>
-                  <p className="mt-2 text-2xl font-bold text-slate-950">{metric.value}</p>
+                  <p className="mt-2 text-2xl font-bold text-text">{metric.value}</p>
                   <p className="mt-1 text-xs text-textMuted">{metric.helper}</p>
                 </div>
               );
@@ -345,7 +345,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
         <div className="rounded-lg border border-border bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-warning" />
-            <p className="font-semibold text-slate-950">Ops watchlist</p>
+            <p className="font-semibold text-text">Ops watchlist</p>
           </div>
           <div className="mt-4 space-y-3">
             {[
@@ -358,7 +358,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                   <p className="text-sm font-medium text-text">{row.label}</p>
                   <p className="text-xs text-textMuted">{row.helper}</p>
                 </div>
-                <span className="text-lg font-bold text-slate-950">{row.value}</span>
+                <span className="text-lg font-bold text-text">{row.value}</span>
               </div>
             ))}
           </div>
@@ -396,11 +396,11 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
           </div>
         </div>
 
-        <div className="divide-y divide-slate-200">
+        <div className="divide-y divide-divider">
           {filteredCategories.length === 0 ? (
             <div className="p-10 text-center">
-              <ChefHat className="mx-auto h-10 w-10 text-slate-300" />
-              <p className="mt-3 font-medium text-slate-950">No matching menu items</p>
+              <ChefHat className="mx-auto h-10 w-10 text-textSubtle" />
+              <p className="mt-3 font-medium text-text">No matching menu items</p>
               <p className="mt-1 text-sm text-textMuted">Clear the search or change the filter to see more of the menu.</p>
             </div>
           ) : (
@@ -413,7 +413,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-semibold text-slate-950">{category.name}</h2>
+                        <h2 className="font-semibold text-text">{category.name}</h2>
                         <Badge variant="default" className="text-xs">{sellable}/{category.items.length} sellable</Badge>
                         <Badge variant="default" className="text-xs">{categoryCapacity} capacity left</Badge>
                       </div>
@@ -443,7 +443,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                       <span>Status</span>
                       <span className="text-right">Actions</span>
                     </div>
-                    <div className="divide-y divide-slate-200">
+                    <div className="divide-y divide-divider">
                       {category.items.map((item) => {
                         const health = getItemHealth(item);
                         const remaining = getRemaining(item);
@@ -466,7 +466,7 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                               </div>
                               <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <p className="font-semibold text-slate-950">{item.name}</p>
+                                  <p className="font-semibold text-text">{item.name}</p>
                                   {item.is_featured ? <Badge variant="default" className="text-xs">Featured</Badge> : null}
                                 </div>
                                 <p className="mt-1 line-clamp-2 text-sm text-textMuted">
@@ -488,12 +488,12 @@ export function MenuList({ categories: initialCategories, storefrontName }: Menu
                             </div>
 
                             <div>
-                              <p className="text-sm font-semibold text-slate-950">{formatCurrency(item.price)}</p>
+                              <p className="text-sm font-semibold text-text">{formatCurrency(item.price)}</p>
                               <p className="text-xs text-textMuted">Customer price</p>
                             </div>
 
                             <div className="space-y-1 text-sm">
-                              <p className="font-medium text-slate-950">
+                              <p className="font-medium text-text">
                                 {item.prep_time_minutes ? `${item.prep_time_minutes} min prep` : 'Prep time missing'}
                               </p>
                               <p className="text-xs text-textMuted">

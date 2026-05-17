@@ -209,7 +209,7 @@ export function TrendCharts() {
               <div key={h.hour} className="flex-1 group relative">
                 <div
                   className={`rounded-t transition-colors ${
-                    h.orders === maxHourOrders ? 'bg-primary' : 'bg-surfaceMuted hover:bg-surfaceMuted0'
+                    h.orders === maxHourOrders ? 'bg-primary' : 'bg-surfaceMuted hover:bg-surfaceMuted'
                   }`}
                   style={{ height: `${(h.orders / maxHourOrders) * 100}%`, minHeight: h.orders > 0 ? '2px' : '0' }}
                 />

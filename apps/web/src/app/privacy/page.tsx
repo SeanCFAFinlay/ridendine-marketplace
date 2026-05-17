@@ -15,16 +15,16 @@ export const metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surfaceMuted">
       <Header />
       <main className="container py-12">
         <div className="mx-auto max-w-3xl">
-          <h1 className="text-4xl font-bold text-gray-900">Privacy Policy</h1>
-          <p className="mt-4 text-gray-600">Last updated: March 2024</p>
+          <h1 className="text-4xl font-bold text-text">Privacy Policy</h1>
+          <p className="mt-4 text-textMuted">Last updated: March 2024</p>
 
           <div
             role="alert"
-            className="mt-6 rounded-lg border-2 border-amber-400 bg-amber-50 p-4 text-sm text-amber-900"
+            className="mt-6 rounded-lg border-2 border-warning/40 bg-warningSoft p-4 text-sm text-warning"
           >
             <p className="font-semibold">⚠️ DRAFT — Pending Legal Review</p>
             <p className="mt-1">
@@ -36,12 +36,12 @@ export default function PrivacyPage() {
             </p>
           </div>
 
-          <div className="mt-8 space-y-8 text-gray-600">
+          <div className="mt-8 space-y-8 text-textMuted">
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">1. Information We Collect</h2>
+              <h2 className="text-2xl font-semibold text-text">1. Information We Collect</h2>
               <div className="mt-4 space-y-4">
                 <div>
-                  <h3 className="font-medium text-gray-900">Personal Information</h3>
+                  <h3 className="font-medium text-text">Personal Information</h3>
                   <p className="mt-2">
                     When you create an account, we collect your name, email address, phone number,
                     and delivery addresses. For chefs and drivers, we also collect additional
@@ -49,14 +49,14 @@ export default function PrivacyPage() {
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900">Order Information</h3>
+                  <h3 className="font-medium text-text">Order Information</h3>
                   <p className="mt-2">
                     We collect information about your orders, including items purchased, delivery
                     addresses, payment methods, and order history.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900">Location Data</h3>
+                  <h3 className="font-medium text-text">Location Data</h3>
                   <p className="mt-2">
                     With your permission, we collect location data to provide delivery services,
                     show nearby chefs, and enable real-time order tracking.
@@ -66,7 +66,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">2. How We Use Your Information</h2>
+              <h2 className="text-2xl font-semibold text-text">2. How We Use Your Information</h2>
               <ul className="mt-4 list-disc space-y-2 pl-6">
                 <li>Process and deliver your orders</li>
                 <li>Connect you with local chefs and delivery drivers</li>
@@ -79,7 +79,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">3. Information Sharing</h2>
+              <h2 className="text-2xl font-semibold text-text">3. Information Sharing</h2>
               <p className="mt-4">
                 We share your information only as necessary to provide our services:
               </p>
@@ -92,7 +92,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">4. Data Security</h2>
+              <h2 className="text-2xl font-semibold text-text">4. Data Security</h2>
               <p className="mt-4">
                 We implement industry-standard security measures to protect your data, including:
               </p>
@@ -105,7 +105,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">5. Your Rights</h2>
+              <h2 className="text-2xl font-semibold text-text">5. Your Rights</h2>
               <p className="mt-4">
                 You have the right to:
               </p>
@@ -119,7 +119,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">6. Cookies and Tracking</h2>
+              <h2 className="text-2xl font-semibold text-text">6. Cookies and Tracking</h2>
               <p className="mt-4">
                 We use cookies and similar technologies to remember your preferences, maintain
                 your session, and analyze how our service is used. You can control cookie
@@ -128,7 +128,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">7. Children's Privacy</h2>
+              <h2 className="text-2xl font-semibold text-text">7. Children's Privacy</h2>
               <p className="mt-4">
                 Ridendine is not intended for users under 18 years of age. We do not knowingly
                 collect personal information from children.
@@ -136,7 +136,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">8. Changes to This Policy</h2>
+              <h2 className="text-2xl font-semibold text-text">8. Changes to This Policy</h2>
               <p className="mt-4">
                 We may update this privacy policy from time to time. We will notify you of
                 significant changes by email or through the app.
@@ -144,12 +144,12 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900">9. Contact Us</h2>
+              <h2 className="text-2xl font-semibold text-text">9. Contact Us</h2>
               <p className="mt-4">
                 If you have questions about this privacy policy or your personal data, please
                 contact us at:
               </p>
-              <div className="mt-4 rounded-lg bg-gray-100 p-4">
+              <div className="mt-4 rounded-lg bg-surfaceMuted p-4">
                 <p><strong>Ridendine Privacy Team</strong></p>
                 <p className="mt-1">Email: privacy@ridendine.ca</p>
                 <p>123 Main Street, Hamilton, ON L8P 1A1, Canada</p>

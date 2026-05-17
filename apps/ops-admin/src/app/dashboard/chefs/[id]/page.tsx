@@ -79,7 +79,7 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
               Member since {new Date(chef.created_at).toLocaleDateString()}
             </p>
           </div>
-          <Badge className={`${statusColors[chef.status] || 'bg-surfaceMuted0'} text-white px-4 py-2`}>
+          <Badge className={`${statusColors[chef.status] || 'bg-surfaceMuted'} text-white px-4 py-2`}>
             {chef.status?.toUpperCase()}
           </Badge>
         </div>
@@ -152,7 +152,7 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
                       {storefront.is_featured && (
                         <Badge className="bg-warning text-white">Featured</Badge>
                       )}
-                      <Badge className={storefront.is_active ? 'bg-success text-white' : 'bg-surfaceMuted0 text-white'}>
+                      <Badge className={storefront.is_active ? 'bg-success text-white' : 'bg-surfaceMuted text-white'}>
                         {storefront.is_active ? 'Active' : 'Inactive'}
                       </Badge>
                       <StorefrontGovernanceActions
@@ -204,7 +204,7 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
                             : 'N/A'}
                         </td>
                         <td className="py-3">
-                          <Badge className={zone.is_active ? 'bg-success text-white' : 'bg-surfaceMuted0 text-white'}>
+                          <Badge className={zone.is_active ? 'bg-success text-white' : 'bg-surfaceMuted text-white'}>
                             {zone.is_active ? 'Active' : 'Inactive'}
                           </Badge>
                         </td>

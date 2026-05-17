@@ -15,7 +15,7 @@ export function StorefrontEtaBadge({ storefrontId, prepTimeMin, prepTimeMax }: S
 
   if (loading) {
     return (
-      <div className="flex items-center gap-1 text-gray-400">
+      <div className="flex items-center gap-1 text-textSubtle">
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
@@ -26,8 +26,8 @@ export function StorefrontEtaBadge({ storefrontId, prepTimeMin, prepTimeMax }: S
 
   if (!eta) {
     return (
-      <div className="flex items-center gap-1 text-gray-500">
-        <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="flex items-center gap-1 text-textMuted">
+        <svg className="h-4 w-4 text-textSubtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <span>{prepLabel}</span>
@@ -36,8 +36,8 @@ export function StorefrontEtaBadge({ storefrontId, prepTimeMin, prepTimeMax }: S
   }
 
   return (
-    <div className="flex items-center gap-1 text-gray-500">
-      <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="flex items-center gap-1 text-textMuted">
+      <svg className="h-4 w-4 text-textSubtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
       <span>{prepLabel} · ~{eta.minMinutes}–{eta.maxMinutes} min delivery</span>

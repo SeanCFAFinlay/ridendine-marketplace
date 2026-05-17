@@ -125,7 +125,7 @@ export function RevenueChart() {
                 className="flex-1 group relative"
               >
                 <div
-                  className="bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-t hover:from-emerald-500 hover:to-emerald-300 transition-colors"
+                  className="bg-gradient-to-t from-success to-success/70 rounded-t hover:from-success hover:to-success/60 transition-colors"
                   style={{
                     height: `${(day.revenue / maxRevenue) * 100}%`,
                     minHeight: '4px',
