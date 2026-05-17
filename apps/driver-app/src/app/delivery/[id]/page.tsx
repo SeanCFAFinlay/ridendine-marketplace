@@ -40,10 +40,10 @@ export default async function ActiveDeliveryPage({ params }: PageProps) {
 
   if (!isApprovedDriver(driver)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">Driver access unavailable</h2>
-          <p className="mt-2 text-gray-600">
+          <h2 className="text-xl font-semibold text-text">Driver access unavailable</h2>
+          <p className="mt-2 text-textMuted">
             Your account must be approved before you can open deliveries.
           </p>
         </div>
@@ -56,10 +56,10 @@ export default async function ActiveDeliveryPage({ params }: PageProps) {
 
   if (!delivery) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">Delivery not found</h2>
-          <p className="mt-2 text-gray-600">This delivery doesn&apos;t exist or has been removed</p>
+          <h2 className="text-xl font-semibold text-text">Delivery not found</h2>
+          <p className="mt-2 text-textMuted">This delivery doesn&apos;t exist or has been removed</p>
         </div>
       </div>
     );
@@ -80,10 +80,10 @@ export default async function ActiveDeliveryPage({ params }: PageProps) {
 
   if (!assignedToMe && !hasPendingOffer) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">Delivery not found</h2>
-          <p className="mt-2 text-gray-600">This delivery is not assigned to you</p>
+          <h2 className="text-xl font-semibold text-text">Delivery not found</h2>
+          <p className="mt-2 text-textMuted">This delivery is not assigned to you</p>
         </div>
       </div>
     );

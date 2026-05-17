@@ -55,9 +55,9 @@ describe('PWA assets', () => {
       expect(fs.existsSync(offlinePath)).toBe(true);
     });
 
-    it('contains brand color #E85D26', () => {
+    it('contains brand color #EA5B26', () => {
       const content = fs.readFileSync(offlinePath, 'utf-8');
-      expect(content).toContain('#E85D26');
+      expect(content).toContain('#EA5B26');
     });
 
     it('has a Retry button that calls location.reload()', () => {

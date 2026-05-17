@@ -78,8 +78,8 @@ function CountdownBadge({ secondsLeft }: { secondsLeft: number }) {
     <div
       className={`rounded-full px-3 py-1 text-sm font-bold ${
         isUrgent
-          ? 'bg-red-100 text-red-600 animate-pulse'
-          : 'bg-orange-100 text-orange-600'
+          ? 'bg-dangerSoft text-danger animate-pulse'
+          : 'bg-primarySoft text-primary'
       }`}
     >
       {secondsLeft}s
@@ -97,18 +97,18 @@ function RouteDisplay({
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-3">
-        <div className="mt-1.5 h-3 w-3 flex-shrink-0 rounded-full bg-green-500" />
+        <div className="mt-1.5 h-3 w-3 flex-shrink-0 rounded-full bg-success" />
         <div>
-          <p className="text-xs font-medium text-gray-500">PICKUP</p>
-          <p className="text-sm font-medium text-gray-900">{pickupAddress}</p>
+          <p className="text-xs font-medium text-textMuted">PICKUP</p>
+          <p className="text-sm font-medium text-text">{pickupAddress}</p>
         </div>
       </div>
-      <div className="ml-[5px] h-4 w-px bg-gray-200" />
+      <div className="ml-[5px] h-4 w-px bg-surfaceMuted" />
       <div className="flex items-start gap-3">
-        <div className="mt-1.5 h-3 w-3 flex-shrink-0 rounded-full bg-red-500" />
+        <div className="mt-1.5 h-3 w-3 flex-shrink-0 rounded-full bg-danger" />
         <div>
-          <p className="text-xs font-medium text-gray-500">DROPOFF</p>
-          <p className="text-sm font-medium text-gray-900">{dropoffAddress}</p>
+          <p className="text-xs font-medium text-textMuted">DROPOFF</p>
+          <p className="text-sm font-medium text-text">{dropoffAddress}</p>
         </div>
       </div>
     </div>
@@ -123,14 +123,14 @@ function OfferStats({
   estimatedPayout: number;
 }) {
   return (
-    <div className="mt-4 flex justify-between rounded-xl bg-gray-50 p-3">
+    <div className="mt-4 flex justify-between rounded-xl bg-surfaceMuted p-3">
       <div className="text-center">
-        <p className="text-lg font-bold text-gray-900">{distanceKm.toFixed(1)} km</p>
-        <p className="text-xs text-gray-500">Distance</p>
+        <p className="text-lg font-bold text-text">{distanceKm.toFixed(1)} km</p>
+        <p className="text-xs text-textMuted">Distance</p>
       </div>
       <div className="text-center">
-        <p className="text-lg font-bold text-green-600">${estimatedPayout.toFixed(2)}</p>
-        <p className="text-xs text-gray-500">Earnings</p>
+        <p className="text-lg font-bold text-success">${estimatedPayout.toFixed(2)}</p>
+        <p className="text-xs text-textMuted">Earnings</p>
       </div>
     </div>
   );
@@ -239,7 +239,7 @@ export function OfferAlert({ driverId, isOnline, onChannelStatus }: OfferAlertPr
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-300">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">New Delivery!</h2>
+          <h2 className="text-xl font-bold text-text">New Delivery!</h2>
           <CountdownBadge secondsLeft={secondsLeft} />
         </div>
 

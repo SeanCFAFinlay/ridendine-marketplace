@@ -106,19 +106,19 @@ export default function DriverSignupPage() {
             className="mx-auto rounded-2xl shadow-lg"
           />
           <h1 className="mt-3 text-2xl font-bold">
-            <span className="text-[#1a9e8e]">RideN</span>
-            <span className="text-[#E85D26]">Dine</span>
+            <span className="text-accent">RideN</span>
+            <span className="text-primary">Dine</span>
           </h1>
-          <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-green-500/20 px-3 py-1 text-xs font-semibold text-green-400">
+          <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-success/20 px-3 py-1 text-xs font-semibold text-success">
             Driver Application
           </div>
         </div>
 
         <div className="rounded-2xl bg-white p-8 shadow-2xl">
-          <h2 className="text-xl font-semibold text-gray-900 text-center mb-6">Become a Driver</h2>
+          <h2 className="text-xl font-semibold text-text text-center mb-6">Become a Driver</h2>
 
           {error && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <div className="mb-4 rounded-lg border border-danger/30 bg-dangerSoft p-3 text-sm text-danger">
               {error}
             </div>
           )}
@@ -172,14 +172,14 @@ export default function DriverSignupPage() {
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-text mb-1">
                 Vehicle Type
               </label>
               <select
                 name="vehicleType"
                 value={formData.vehicleType}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#E85D26] focus:outline-none focus:ring-1 focus:ring-[#E85D26]"
+                className="w-full rounded-lg border border-borderStrong px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               >
                 {VEHICLE_TYPES.map(({ value, label }) => (
                   <option key={value} value={value}>{label}</option>
@@ -219,29 +219,29 @@ export default function DriverSignupPage() {
                 id="terms"
                 checked={agreedToTerms}
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#E85D26] focus:ring-[#E85D26] focus:ring-offset-0"
+                className="mt-0.5 h-4 w-4 rounded border-borderStrong text-primary focus:ring-primary focus:ring-offset-0"
               />
-              <label htmlFor="terms" className="text-sm text-gray-600">
+              <label htmlFor="terms" className="text-sm text-textMuted">
                 I agree to the{' '}
-                <Link href="/terms" className="font-medium text-[#E85D26] hover:text-[#d44e1e]">
+                <Link href="/terms" className="font-medium text-primary hover:text-primaryHover">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link href="/privacy" className="font-medium text-[#E85D26] hover:text-[#d44e1e]">
+                <Link href="/privacy" className="font-medium text-primary hover:text-primaryHover">
                   Privacy Policy
                 </Link>
               </label>
             </div>
 
-            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warningSoft p-3">
               <input
                 type="checkbox"
                 id="driverDuties"
                 checked={agreedToDriverDuties}
                 onChange={(e) => setAgreedToDriverDuties(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#E85D26] focus:ring-[#E85D26] focus:ring-offset-0"
+                className="mt-0.5 h-4 w-4 rounded border-borderStrong text-primary focus:ring-primary focus:ring-offset-0"
               />
-              <label htmlFor="driverDuties" className="text-sm text-gray-700">
+              <label htmlFor="driverDuties" className="text-sm text-text">
                 I confirm I am an <strong>independent contractor</strong>, not an employee of
                 RideNDine. I hold a valid driver&apos;s licence and{' '}
                 <strong>commercial-delivery-eligible insurance</strong> for the vehicle I will
@@ -252,7 +252,7 @@ export default function DriverSignupPage() {
 
             <Button
               type="submit"
-              className="w-full bg-[#E85D26] hover:bg-[#d44e1e]"
+              className="w-full bg-primary hover:bg-primaryHover"
               size="lg"
               loading={loading}
             >
@@ -260,9 +260,9 @@ export default function DriverSignupPage() {
             </Button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-gray-500">
+          <p className="mt-4 text-center text-sm text-textMuted">
             Already have an account?{' '}
-            <Link href="/auth/login" className="font-medium text-[#E85D26] hover:text-[#d44e1e]">
+            <Link href="/auth/login" className="font-medium text-primary hover:text-primaryHover">
               Log in
             </Link>
           </p>

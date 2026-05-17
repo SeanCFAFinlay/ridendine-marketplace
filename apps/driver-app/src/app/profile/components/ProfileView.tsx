@@ -100,7 +100,7 @@ export default function ProfileView({ driver }: ProfileViewProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] pb-20">
+    <div className="min-h-screen bg-background pb-20">
       <div className="bg-brand-500 p-6 text-white">
         <h1 className="text-[24px] font-bold">Profile</h1>
       </div>
@@ -229,20 +229,20 @@ export default function ProfileView({ driver }: ProfileViewProps) {
         <Card className="border-0 shadow-sm">
           <h2 className="text-[17px] font-semibold text-[#1a1a1a] mb-4">Payouts</h2>
           {payoutLoading ? (
-            <div className="h-12 animate-pulse rounded bg-gray-100" />
+            <div className="h-12 animate-pulse rounded bg-surfaceMuted" />
           ) : payoutSetupSuccess && !payoutAccount ? (
-            <div className="rounded-lg bg-green-50 border border-green-200 p-4">
-              <p className="text-sm font-medium text-green-800">Payout account setup initiated!</p>
-              <p className="text-xs text-green-700 mt-1">Verification may take a few minutes. Refresh to check status.</p>
+            <div className="rounded-lg bg-successSoft border border-success/30 p-4">
+              <p className="text-sm font-medium text-success">Payout account setup initiated!</p>
+              <p className="text-xs text-success mt-1">Verification may take a few minutes. Refresh to check status.</p>
             </div>
           ) : !payoutAccount ? (
-            <div className="rounded-lg bg-orange-50 border border-orange-200 p-4">
-              <p className="text-sm font-medium text-orange-900">Connect your bank account to receive earnings</p>
-              <p className="text-xs text-orange-700 mt-1">Set up Stripe to get paid for deliveries</p>
+            <div className="rounded-lg bg-primarySoft border border-primary/20 p-4">
+              <p className="text-sm font-medium text-primary">Connect your bank account to receive earnings</p>
+              <p className="text-xs text-primary mt-1">Set up Stripe to get paid for deliveries</p>
               <Button
                 onClick={handleSetupPayouts}
                 disabled={setupLoading}
-                className="mt-3 w-full rounded-lg bg-[#E85D26] py-2.5 text-[14px] font-semibold text-white hover:bg-[#d44e1e]"
+                className="mt-3 w-full rounded-lg bg-primary py-2.5 text-[14px] font-semibold text-white hover:bg-primaryHover"
               >
                 {setupLoading ? 'Setting up...' : 'Set Up Payouts'}
               </Button>

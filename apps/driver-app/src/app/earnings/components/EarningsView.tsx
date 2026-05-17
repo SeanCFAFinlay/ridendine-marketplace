@@ -105,7 +105,7 @@ export default function EarningsView({
   const previewFee = Number.isFinite(previewCents) && previewCents > 0 ? instantFeeCents(previewCents) : 0;
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] pb-20">
+    <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <div className="bg-brand-600 p-6 text-white">
         <h1 className="text-[22px] font-bold tracking-tight">Earnings</h1>

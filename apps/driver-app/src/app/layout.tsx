@@ -54,7 +54,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="RideNDine Driver" />
       </head>
-      <body className="min-h-screen bg-[#FAFAFA] font-sans antialiased">
+      <body className="min-h-screen bg-background font-sans text-text antialiased">
         <AuthProvider>{children}</AuthProvider>
         <ServiceWorkerRegister />
       </body>

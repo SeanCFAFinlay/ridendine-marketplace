@@ -15,11 +15,11 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="text-center">
         <div className="text-6xl mb-4">😔</div>
-        <h1 className="text-2xl font-bold text-gray-900">Something went wrong</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-2xl font-bold text-text">Something went wrong</h1>
+        <p className="mt-2 text-textMuted">
           We couldn't load this page. Please try again.
         </p>
         <div className="mt-6 flex flex-col gap-4">

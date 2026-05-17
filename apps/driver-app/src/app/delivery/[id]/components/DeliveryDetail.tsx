@@ -347,10 +347,10 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
   const action = getNextAction();
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {errorMessage && (
         <div className="p-4 pb-0">
-          <Card className="border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <Card className="border border-danger/30 bg-dangerSoft p-3 text-sm text-danger">
             {errorMessage}
           </Card>
         </div>
@@ -397,7 +397,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
       <div className="p-4">
         <Button
           variant="outline"
-          className="w-full rounded-lg border-blue-500 text-blue-600 hover:bg-blue-50"
+          className="w-full rounded-lg border-info text-info hover:bg-infoSoft"
           onClick={() => {
             const isPickup = status.includes('pickup') || status === 'accepted';
             if (isPickup) {
@@ -424,7 +424,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
           dropoffLat={delivery.dropoff_lat}
           dropoffLng={delivery.dropoff_lng}
           dropoffAddress={delivery.dropoff_address}
-          className="h-52 w-full rounded-2xl overflow-hidden border border-gray-100 shadow-sm"
+          className="h-52 w-full rounded-2xl overflow-hidden border border-divider shadow-sm"
         />
       </div>
 
@@ -536,8 +536,8 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
       {showPickupModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6">
-            <h2 className="text-xl font-bold text-gray-900">Confirm Pickup</h2>
-            <p className="mt-1 text-sm text-gray-600">Take a photo of the order to confirm pickup</p>
+            <h2 className="text-xl font-bold text-text">Confirm Pickup</h2>
+            <p className="mt-1 text-sm text-textMuted">Take a photo of the order to confirm pickup</p>
 
             <input
               ref={pickupFileInputRef}
@@ -554,7 +554,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
                   <img src={pickupPhoto} alt="Pickup proof" className="w-full rounded-lg" />
                   <button
                     onClick={() => setPickupPhoto(null)}
-                    className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white"
+                    className="absolute right-2 top-2 rounded-full bg-danger p-1 text-white"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -564,7 +564,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
               ) : (
                 <button
                   onClick={() => pickupFileInputRef.current?.click()}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-6 text-gray-600 hover:border-gray-400"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-borderStrong p-6 text-textMuted hover:border-borderStrong"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -580,7 +580,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
                 Cancel
               </Button>
               <Button
-                className="flex-1 bg-[#E85D26] hover:bg-[#d44e1e]"
+                className="flex-1 bg-primary hover:bg-primaryHover"
                 onClick={handlePickupConfirm}
                 disabled={!pickupPhoto || isUploading}
               >
@@ -595,14 +595,14 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
       {showCompletionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6">
-            <h2 className="text-xl font-bold text-gray-900">Complete Delivery</h2>
-            <p className="mt-1 text-sm text-gray-600">
+            <h2 className="text-xl font-bold text-text">Complete Delivery</h2>
+            <p className="mt-1 text-sm text-textMuted">
               Please take a photo and collect customer signature
             </p>
 
             {/* Photo Capture */}
             <div className="mt-4">
-              <p className="text-sm font-medium text-gray-700">Proof of Delivery Photo</p>
+              <p className="text-sm font-medium text-text">Proof of Delivery Photo</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -616,7 +616,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
                   <img src={photo} alt="Proof" className="w-full rounded-lg" />
                   <button
                     onClick={() => setPhoto(null)}
-                    className="absolute top-2 right-2 rounded-full bg-red-500 p-1 text-white"
+                    className="absolute top-2 right-2 rounded-full bg-danger p-1 text-white"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -626,7 +626,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
               ) : (
                 <button
                   onClick={handlePhotoCapture}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-6 text-gray-600 hover:border-gray-400"
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-borderStrong p-6 text-textMuted hover:border-borderStrong"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -640,9 +640,9 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
             {/* Signature Pad */}
             <div className="mt-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-700">Customer Signature (optional)</p>
+                <p className="text-sm font-medium text-text">Customer Signature (optional)</p>
                 {signature && (
-                  <button onClick={clearSignature} className="text-sm text-red-500">
+                  <button onClick={clearSignature} className="text-sm text-danger">
                     Clear
                   </button>
                 )}
@@ -651,7 +651,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
                 ref={canvasRef}
                 width={300}
                 height={150}
-                className="mt-2 w-full rounded-lg border border-gray-300 touch-none"
+                className="mt-2 w-full rounded-lg border border-borderStrong touch-none"
                 onMouseDown={handleCanvasMouseDown}
                 onMouseMove={handleCanvasMouseMove}
                 onMouseUp={handleCanvasMouseUp}

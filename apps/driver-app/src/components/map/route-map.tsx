@@ -71,8 +71,8 @@ export function RouteMap({
 
   if (!isMounted || !L) {
     return (
-      <div className={`bg-gray-100 rounded-lg flex items-center justify-center ${className}`}>
-        <span className="text-gray-500">Loading map...</span>
+      <div className={`bg-surfaceMuted rounded-lg flex items-center justify-center ${className}`}>
+        <span className="text-textMuted">Loading map...</span>
       </div>
     );
   }
@@ -149,7 +149,7 @@ export function RouteMap({
           <Marker position={[pickupLat!, pickupLng!]} icon={pickupIcon}>
             <Popup>
               <div className="text-sm">
-                <strong className="text-green-600">Pickup</strong>
+                <strong className="text-success">Pickup</strong>
                 <br />
                 {pickupAddress || 'Restaurant'}
               </div>
@@ -161,7 +161,7 @@ export function RouteMap({
           <Marker position={[dropoffLat!, dropoffLng!]} icon={dropoffIcon}>
             <Popup>
               <div className="text-sm">
-                <strong className="text-red-600">Dropoff</strong>
+                <strong className="text-danger">Dropoff</strong>
                 <br />
                 {dropoffAddress || 'Customer'}
               </div>
@@ -173,7 +173,7 @@ export function RouteMap({
           <Marker position={[driverLat!, driverLng!]} icon={driverIcon}>
             <Popup>
               <div className="text-sm">
-                <strong className="text-blue-600">Your Location</strong>
+                <strong className="text-info">Your Location</strong>
               </div>
             </Popup>
           </Marker>
@@ -182,7 +182,7 @@ export function RouteMap({
         {routePoints.length >= 2 && (
           <Polyline
             positions={routePoints}
-            color="#E85D26"
+            color="#EA5B26"
             weight={4}
             opacity={0.8}
             dashArray="10, 10"

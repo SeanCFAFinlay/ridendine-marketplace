@@ -117,7 +117,7 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
     <div className="min-h-screen bg-[#f8f9fa] pb-24">
       <OfferAlert driverId={driver.id} isOnline={isOnline} />
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-5 py-4">
+      <div className="bg-white border-b border-divider px-5 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Image
@@ -129,27 +129,27 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
             />
             <div>
               <span className="text-base font-bold">
-                <span className="text-[#1a7a6e]">RideN</span>
-                <span className="text-[#E85D26]">Dine</span>
+                <span className="text-accent">RideN</span>
+                <span className="text-primary">Dine</span>
               </span>
-              <span className="ml-1.5 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+              <span className="ml-1.5 rounded-full bg-surfaceMuted px-2 py-0.5 text-xs font-medium text-textMuted">
                 Driver
               </span>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-sm font-semibold text-text">
                 {driver ? `${driver.first_name} ${driver.last_name}` : 'Driver'}
               </p>
-              <p className="text-xs text-gray-400">Hamilton, ON</p>
+              <p className="text-xs text-textSubtle">Hamilton, ON</p>
             </div>
             <button
               type="button"
               onClick={handleSignOut}
               title="Sign out"
               aria-label="Sign out"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-textMuted transition-colors hover:border-danger/30 hover:bg-dangerSoft hover:text-danger"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -161,7 +161,7 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
 
       {statusError && (
         <div className="px-4 pt-4">
-          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-xl border border-danger/30 bg-dangerSoft p-3 text-sm text-danger">
             {statusError}
           </div>
         </div>
@@ -195,7 +195,7 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
             className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-all disabled:opacity-60 ${
               isOnline
                 ? 'bg-white/20 text-white hover:bg-white/30'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+                : 'bg-white text-text hover:bg-surfaceMuted'
             }`}
           >
             {isTogglingStatus ? 'Updating...' : isOnline ? 'Go Offline' : 'Go Online'}
@@ -205,24 +205,24 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
 
       {/* Today's Summary */}
       <div className="px-4 pt-4">
-        <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
-          <h2 className="text-base font-bold text-gray-900">Today&apos;s Summary</h2>
+        <div className="rounded-2xl bg-white p-5 shadow-sm border border-divider">
+          <h2 className="text-base font-bold text-text">Today&apos;s Summary</h2>
           <div className="mt-4 grid grid-cols-3 gap-4">
             <div className="text-center">
-              <p className="text-3xl font-bold text-[#E85D26]">{todayStats.deliveries}</p>
-              <p className="mt-1 text-xs font-medium text-gray-500">Deliveries</p>
+              <p className="text-3xl font-bold text-primary">{todayStats.deliveries}</p>
+              <p className="mt-1 text-xs font-medium text-textMuted">Deliveries</p>
             </div>
-            <div className="text-center border-x border-gray-100">
-              <p className="text-3xl font-bold text-green-600">
+            <div className="text-center border-x border-divider">
+              <p className="text-3xl font-bold text-success">
                 ${todayStats.earnings.toFixed(2)}
               </p>
-              <p className="mt-1 text-xs font-medium text-gray-500">Earnings</p>
+              <p className="mt-1 text-xs font-medium text-textMuted">Earnings</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-3xl font-bold text-text">
                 {todayStats.hours === null ? '—' : todayStats.hours.toFixed(1)}
               </p>
-              <p className="mt-1 text-xs font-medium text-gray-500">Hours</p>
+              <p className="mt-1 text-xs font-medium text-textMuted">Hours</p>
             </div>
           </div>
         </div>
@@ -231,49 +231,49 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
       {/* Active Delivery Card */}
       {currentDelivery && isOnline && (
         <div className="px-4 pt-4">
-          <div className="rounded-2xl border-2 border-[#E85D26] bg-white p-5 shadow-md">
+          <div className="rounded-2xl border-2 border-primary bg-white p-5 shadow-md">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-gray-900">Active Delivery</h2>
-              <span className="rounded-full bg-[#fff0e8] px-3 py-1 text-xs font-semibold text-[#E85D26]">
+              <h2 className="text-base font-bold text-text">Active Delivery</h2>
+              <span className="rounded-full bg-[#fff0e8] px-3 py-1 text-xs font-semibold text-primary">
                 In Progress
               </span>
             </div>
 
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <div className="mt-1.5 h-3 w-3 flex-shrink-0 rounded-full bg-green-500" />
+                <div className="mt-1.5 h-3 w-3 flex-shrink-0 rounded-full bg-success" />
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Pickup</p>
-                  <p className="text-sm text-gray-500">{currentDelivery.pickup_address}</p>
+                  <p className="text-sm font-semibold text-text">Pickup</p>
+                  <p className="text-sm text-textMuted">{currentDelivery.pickup_address}</p>
                 </div>
               </div>
-              <div className="ml-1.5 h-6 w-px bg-gray-200 ml-[5px]" />
+              <div className="ml-1.5 h-6 w-px bg-surfaceMuted ml-[5px]" />
               <div className="flex items-start gap-3">
-                <div className="mt-1.5 h-3 w-3 flex-shrink-0 rounded-full bg-red-500" />
+                <div className="mt-1.5 h-3 w-3 flex-shrink-0 rounded-full bg-danger" />
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Dropoff</p>
-                  <p className="text-sm text-gray-500">{currentDelivery.dropoff_address}</p>
+                  <p className="text-sm font-semibold text-text">Dropoff</p>
+                  <p className="text-sm text-textMuted">{currentDelivery.dropoff_address}</p>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between rounded-xl bg-gray-50 p-3">
+            <div className="mt-4 flex items-center justify-between rounded-xl bg-surfaceMuted p-3">
               <div>
-                <p className="text-xs text-gray-500">Distance</p>
-                <p className="text-sm font-bold text-gray-900">
+                <p className="text-xs text-textMuted">Distance</p>
+                <p className="text-sm font-bold text-text">
                   {currentDelivery.distance_km?.toFixed(1) ?? '—'} km
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-gray-500">Earnings</p>
-                <p className="text-xl font-bold text-green-600">
+                <p className="text-xs text-textMuted">Earnings</p>
+                <p className="text-xl font-bold text-success">
                   ${Number(currentDelivery.driver_payout).toFixed(2)}
                 </p>
               </div>
             </div>
 
             <Link href={`/delivery/${currentDelivery.id}`} className="mt-4 block">
-              <button className="w-full rounded-xl bg-[#E85D26] py-3 text-sm font-semibold text-white hover:bg-[#d44e1e]">
+              <button className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white hover:bg-primaryHover">
                 View Delivery Details →
               </button>
             </Link>
@@ -284,17 +284,17 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
       {/* No active deliveries empty state */}
       {!currentDelivery && activeDeliveries.length === 0 && (
         <div className="px-4 pt-4">
-          <div className="rounded-2xl bg-white p-8 shadow-sm border border-gray-100 text-center">
+          <div className="rounded-2xl bg-white p-8 shadow-sm border border-divider text-center">
             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[#fff0e8]">
-              <svg className="h-10 w-10 text-[#E85D26]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l1.5.5M13 16H3m10 0h3m3-3V9.5a1 1 0 00-.293-.707L16 6H13v10h6z" />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-gray-900">No active deliveries</h3>
-            <p className="mt-2 text-sm text-gray-500">
+            <h3 className="text-lg font-bold text-text">No active deliveries</h3>
+            <p className="mt-2 text-sm text-textMuted">
               New delivery offers will appear here when available
             </p>
           </div>
@@ -304,14 +304,14 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
       {/* Waiting state */}
       {isOnline && !currentDelivery && (
         <div className="px-4 pt-4">
-          <div className="rounded-2xl bg-white p-8 shadow-sm border border-gray-100 text-center">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-50">
-              <svg className="h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="rounded-2xl bg-white p-8 shadow-sm border border-divider text-center">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-successSoft">
+              <svg className="h-10 w-10 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-gray-900">You&apos;re Online!</h3>
-            <p className="mt-2 text-sm text-gray-500">
+            <h3 className="text-lg font-bold text-text">You&apos;re Online!</h3>
+            <p className="mt-2 text-sm text-textMuted">
               Waiting for delivery requests from RideNDine chefs...
             </p>
           </div>
@@ -321,19 +321,19 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
       {/* Offline state */}
       {!isOnline && (
         <div className="px-4 pt-4">
-          <div className="rounded-2xl bg-white p-8 shadow-sm border border-gray-100 text-center">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gray-100">
-              <svg className="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="rounded-2xl bg-white p-8 shadow-sm border border-divider text-center">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-surfaceMuted">
+              <svg className="h-10 w-10 text-textSubtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3" />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-gray-900">You&apos;re Offline</h3>
-            <p className="mt-2 text-sm text-gray-500">
+            <h3 className="text-lg font-bold text-text">You&apos;re Offline</h3>
+            <p className="mt-2 text-sm text-textMuted">
               Tap &quot;Go Online&quot; to start receiving delivery requests
             </p>
             <button
               onClick={toggleOnlineStatus}
-              className="mt-4 rounded-xl bg-[#E85D26] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#d44e1e]"
+              className="mt-4 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:bg-primaryHover"
             >
               Go Online
             </button>
@@ -343,42 +343,42 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
 
       {/* Quick Actions */}
       <div className="px-4 pt-4">
-        <h3 className="mb-3 text-sm font-semibold text-gray-700">Quick Actions</h3>
+        <h3 className="mb-3 text-sm font-semibold text-text">Quick Actions</h3>
         <div className="grid grid-cols-2 gap-3">
           <Link href="/earnings">
-            <div className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100 hover:border-[#E85D26]/30 transition-colors">
-              <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-green-50">
-                <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="rounded-2xl bg-white p-4 shadow-sm border border-divider hover:border-primary/30 transition-colors">
+              <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-successSoft">
+                <svg className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <p className="text-sm font-semibold text-gray-900">My Earnings</p>
-              <p className="text-xs text-gray-500">View payout history</p>
+              <p className="text-sm font-semibold text-text">My Earnings</p>
+              <p className="text-xs text-textMuted">View payout history</p>
             </div>
           </Link>
           <Link href="/history">
-            <div className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100 hover:border-[#E85D26]/30 transition-colors">
-              <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
-                <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="rounded-2xl bg-white p-4 shadow-sm border border-divider hover:border-primary/30 transition-colors">
+              <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-infoSoft">
+                <svg className="h-5 w-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <p className="text-sm font-semibold text-gray-900">Delivery History</p>
-              <p className="text-xs text-gray-500">Past deliveries</p>
+              <p className="text-sm font-semibold text-text">Delivery History</p>
+              <p className="text-xs text-textMuted">Past deliveries</p>
             </div>
           </Link>
         </div>
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-gray-100 bg-white shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 border-t border-divider bg-white shadow-lg">
         <div className="flex justify-around py-2">
           {NAV_ITEMS.map((item, idx) => (
             <Link
               key={item.label}
               href={item.href}
               className={`flex flex-col items-center gap-1 px-4 py-2 ${
-                idx === 0 ? 'text-[#E85D26]' : 'text-gray-400'
+                idx === 0 ? 'text-primary' : 'text-textSubtle'
               }`}
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

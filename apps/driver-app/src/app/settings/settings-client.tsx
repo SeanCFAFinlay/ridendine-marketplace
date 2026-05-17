@@ -40,7 +40,7 @@ export default function SettingsClient({ driver, balanceCents }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] pb-24">
+    <div className="min-h-screen bg-background pb-24">
       <div className="bg-brand-600 p-6 text-white">
         <h1 className="text-[22px] font-bold tracking-tight">Payout settings</h1>
         <p className="mt-1 text-sm text-white/90">Instant payouts are optional and include a 1.5% fee.</p>
@@ -71,7 +71,7 @@ export default function SettingsClient({ driver, balanceCents }: Props) {
               {saving ? 'Saving…' : enabled ? 'Turn off' : 'Turn on'}
             </Button>
           </div>
-          {message ? <p className="mt-3 text-sm text-red-600">{message}</p> : null}
+          {message ? <p className="mt-3 text-sm text-danger">{message}</p> : null}
         </Card>
 
         <Link href="/earnings" className="block text-center text-[15px] font-medium text-brand-600">

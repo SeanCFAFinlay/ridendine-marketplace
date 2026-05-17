@@ -78,14 +78,14 @@ export function NotificationPreferences() {
       <h2 className="text-[17px] font-semibold text-[#1a1a1a]">Notification Preferences</h2>
       <p className="mt-1 text-[13px] text-[#6b7280]">
         Choose how you want to be notified.{' '}
-        <span className="text-xs text-amber-600">(Stored locally — production will sync to DB)</span>
+        <span className="text-xs text-warning">(Stored locally — production will sync to DB)</span>
       </p>
 
       <Card className="mt-3 border-0 shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100">
+              <tr className="border-b border-divider">
                 <th className="pb-3 text-left text-[13px] font-medium text-[#6b7280]">Event</th>
                 <th className="pb-3 text-center text-[13px] font-medium text-[#6b7280]">Email</th>
                 <th className="pb-3 text-center text-[13px] font-medium text-[#6b7280]">SMS</th>
@@ -103,8 +103,8 @@ export function NotificationPreferences() {
                       <button
                         type="button"
                         onClick={() => toggle(key, ch)}
-                        className={`inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D26] ${
-                          prefs[key][ch] ? 'bg-[#E85D26]' : 'bg-gray-200'
+                        className={`inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:shadow-focus ${
+                          prefs[key][ch] ? 'bg-primary' : 'bg-surfaceMuted'
                         }`}
                         aria-checked={prefs[key][ch]}
                         role="switch"
@@ -124,10 +124,10 @@ export function NotificationPreferences() {
         </div>
 
         <div className="mt-4 flex items-center gap-3">
-          <Button onClick={handleSave} className="rounded-lg bg-[#E85D26] hover:bg-[#d44e1e]">
+          <Button onClick={handleSave} className="rounded-lg bg-primary hover:bg-primaryHover">
             Save Preferences
           </Button>
-          {saved && <span className="text-[13px] text-green-600">Saved!</span>}
+          {saved && <span className="text-[13px] text-success">Saved!</span>}
         </div>
       </Card>
     </div>

@@ -12,10 +12,10 @@ export default async function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">Please sign in</h2>
-          <p className="mt-2 text-gray-600">You need to be signed in to view your profile</p>
+          <h2 className="text-xl font-semibold text-text">Please sign in</h2>
+          <p className="mt-2 text-textMuted">You need to be signed in to view your profile</p>
         </div>
       </div>
     );
@@ -25,10 +25,10 @@ export default async function ProfilePage() {
 
   if (!driver) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">Driver profile not found</h2>
-          <p className="mt-2 text-gray-600">Please contact support</p>
+          <h2 className="text-xl font-semibold text-text">Driver profile not found</h2>
+          <p className="mt-2 text-textMuted">Please contact support</p>
         </div>
       </div>
     );

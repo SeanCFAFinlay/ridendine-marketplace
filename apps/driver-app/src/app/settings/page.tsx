@@ -13,8 +13,8 @@ export default async function DriverSettingsPage() {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA]">
-        <p className="text-gray-700">Please sign in</p>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-text">Please sign in</p>
       </div>
     );
   }
@@ -22,8 +22,8 @@ export default async function DriverSettingsPage() {
   const driver = await getDriverByUserId(supabase as never, user.id);
   if (!driver) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA]">
-        <p className="text-gray-700">Driver profile not found</p>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-text">Driver profile not found</p>
       </div>
     );
   }

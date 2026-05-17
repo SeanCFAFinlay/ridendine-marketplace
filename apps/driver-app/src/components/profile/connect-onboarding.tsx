@@ -29,17 +29,17 @@ function NotStartedContent({
   onSetup: () => void | Promise<void>;
 }) {
   return (
-    <div className="rounded-lg bg-orange-50 border border-orange-200 p-4">
-      <p className="text-sm font-medium text-orange-900">
+    <div className="rounded-lg bg-primarySoft border border-primary/20 p-4">
+      <p className="text-sm font-medium text-primary">
         Connect your bank account to receive earnings
       </p>
-      <p className="text-xs text-orange-700 mt-1">
+      <p className="text-xs text-primary mt-1">
         Set up Stripe to get paid for deliveries
       </p>
       <Button
         onClick={onSetup}
         disabled={isLoading}
-        className="mt-3 w-full rounded-lg bg-[#E85D26] py-2.5 text-[14px] font-semibold text-white hover:bg-[#d44e1e]"
+        className="mt-3 w-full rounded-lg bg-primary py-2.5 text-[14px] font-semibold text-white hover:bg-primaryHover"
       >
         {isLoading ? 'Setting up...' : 'Set Up Payouts'}
       </Button>
