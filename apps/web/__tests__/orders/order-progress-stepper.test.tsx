@@ -34,24 +34,24 @@ describe('OrderProgressStepper', () => {
     expect(activeStep).toHaveClass('animate-pulse');
   });
 
-  it('marks all steps before current as completed (green)', () => {
+  it('marks all steps before current as completed (success)', () => {
     render(<OrderProgressStepper status="preparing" createdAt="2026-05-06T10:00:00.000Z" />);
     const pendingStep = screen.getByTestId('step-icon-pending');
     const acceptedStep = screen.getByTestId('step-icon-accepted');
-    expect(pendingStep).toHaveClass('bg-green-500');
-    expect(acceptedStep).toHaveClass('bg-green-500');
+    expect(pendingStep).toHaveClass('bg-success');
+    expect(acceptedStep).toHaveClass('bg-success');
   });
 
-  it('marks current step with brand orange', () => {
+  it('marks current step with brand primary', () => {
     render(<OrderProgressStepper status="preparing" createdAt="2026-05-06T10:00:00.000Z" />);
     const currentIcon = screen.getByTestId('step-icon-preparing');
-    expect(currentIcon.className).toMatch(/E85D26/);
+    expect(currentIcon).toHaveClass('bg-primary');
   });
 
-  it('marks future steps as gray', () => {
+  it('marks future steps as muted', () => {
     render(<OrderProgressStepper status="pending" createdAt="2026-05-06T10:00:00.000Z" />);
     const futureIcon = screen.getByTestId('step-icon-delivered');
-    expect(futureIcon).toHaveClass('bg-gray-200');
+    expect(futureIcon).toHaveClass('bg-surfaceMuted');
   });
 
   it('shows timestamp for the current step when provided', () => {
@@ -111,7 +111,7 @@ describe('OrderProgressStepper', () => {
     render(<OrderProgressStepper status="delivered" createdAt="2026-05-06T10:00:00.000Z" />);
     const allIcons = ['pending', 'accepted', 'preparing', 'ready', 'picked_up', 'delivered'];
     for (const step of allIcons) {
-      expect(screen.getByTestId(`step-icon-${step}`)).toHaveClass('bg-green-500');
+      expect(screen.getByTestId(`step-icon-${step}`)).toHaveClass('bg-success');
     }
   });
 });

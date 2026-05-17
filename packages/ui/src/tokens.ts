@@ -30,27 +30,29 @@ export const ridendineTokens = {
     textMuted: '#475569',
     textSubtle: '#94A3B8',
 
-    // Semantic
-    success: '#16A34A',
+    // Semantic — foregrounds darkened to Tailwind 700-tier so text on the
+    // matching soft background clears WCAG AA 4.5:1 contrast.
+    success: '#15803D',
     successSoft: '#DCFCE7',
-    danger: '#DC2626',
+    danger: '#B91C1C',
     dangerSoft: '#FEE2E2',
-    warning: '#D97706',
+    warning: '#B45309',
     warningSoft: '#FEF3C7',
-    info: '#0284C7',
+    info: '#0369A1',
     infoSoft: '#E0F2FE',
 
     focusRing: '#EA5B26',
   },
 
   // Status pills — the ONLY way to render order/delivery/driver status.
+  // All fg/bg pairs verified at ≥ 4.5:1 contrast (see wcag-contrast.test.ts).
   status: {
-    live: { label: 'Live', fg: '#16A34A', bg: '#DCFCE7' },
-    fresh: { label: 'Fresh', fg: '#0284C7', bg: '#E0F2FE' },
-    pending: { label: 'Pending', fg: '#D97706', bg: '#FEF3C7' },
-    stale: { label: 'Stale', fg: '#D97706', bg: '#FEF3C7' },
-    offline: { label: 'Offline', fg: '#64748B', bg: '#F1F5F9' },
-    error: { label: 'Error', fg: '#DC2626', bg: '#FEE2E2' },
+    live: { label: 'Live', fg: '#15803D', bg: '#DCFCE7' },
+    fresh: { label: 'Fresh', fg: '#0369A1', bg: '#E0F2FE' },
+    pending: { label: 'Pending', fg: '#B45309', bg: '#FEF3C7' },
+    stale: { label: 'Stale', fg: '#B45309', bg: '#FEF3C7' },
+    offline: { label: 'Offline', fg: '#475569', bg: '#F1F5F9' },
+    error: { label: 'Error', fg: '#B91C1C', bg: '#FEE2E2' },
   },
 
   typography: {

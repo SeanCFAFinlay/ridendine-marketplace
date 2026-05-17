@@ -108,7 +108,7 @@ describe('StorefrontForm inline validation', () => {
     fireEvent.blur(nameInput);
 
     await waitFor(() => {
-      expect(nameInput.classList.contains('border-red-500')).toBe(true);
+      expect(nameInput.classList.contains('border-danger')).toBe(true);
     });
   });
 
@@ -120,7 +120,7 @@ describe('StorefrontForm inline validation', () => {
     fireEvent.blur(nameInput);
 
     await waitFor(() => {
-      expect(nameInput.classList.contains('border-green-500')).toBe(true);
+      expect(nameInput.classList.contains('border-success')).toBe(true);
     });
   });
 

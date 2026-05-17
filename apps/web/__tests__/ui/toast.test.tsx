@@ -103,7 +103,7 @@ describe('Toast notification system', () => {
     expect(screen.getByText('FYI: update available')).toBeInTheDocument();
   });
 
-  it('auto-dismisses after default 3 seconds', async () => {
+  it('auto-dismisses after default duration', async () => {
     render(
       <Wrapper>
         <ToastTrigger />
@@ -115,8 +115,9 @@ describe('Toast notification system', () => {
     });
     expect(screen.getByRole('alert')).toBeInTheDocument();
 
+    // Default success duration is 5000ms + 200ms exit animation
     act(() => {
-      jest.advanceTimersByTime(3400);
+      jest.advanceTimersByTime(5400);
     });
 
     await waitFor(() => {
@@ -137,10 +138,10 @@ describe('Toast notification system', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument();
 
     act(() => {
-      jest.advanceTimersByTime(3100);
+      jest.advanceTimersByTime(5100);
     });
 
-    // Should still be visible at 3.1s with 10s duration
+    // Should still be visible at 5.1s with 10s duration
     expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
@@ -162,7 +163,7 @@ describe('Toast notification system', () => {
     expect(alerts).toHaveLength(2);
   });
 
-  it('toast container exists and is at bottom-right', () => {
+  it('toast container exists and anchors top on mobile, right on desktop', () => {
     render(
       <Wrapper>
         <ToastTrigger />
@@ -172,11 +173,11 @@ describe('Toast notification system', () => {
     // Container is always rendered (even without toasts)
     const container = screen.getByTestId('toast-container');
     expect(container).toBeInTheDocument();
-    expect(container.className).toMatch(/bottom/);
-    expect(container.className).toMatch(/right/);
+    expect(container.className).toMatch(/top-4/);
+    expect(container.className).toMatch(/md:right-6/);
   });
 
-  it('applies brand color for success variant', () => {
+  it('applies success token color stripe for success variant', () => {
     render(
       <Wrapper>
         <ToastTrigger />
@@ -188,7 +189,8 @@ describe('Toast notification system', () => {
     });
 
     const toast = screen.getByRole('alert');
-    // Brand color #E85D26 is applied via a class
-    expect(toast.className).toMatch(/bg-\[#E85D26\]|toast-success/);
+    // Success token #16A34A is applied as inline borderLeftColor
+    expect(toast.style.borderLeftColor).toBeTruthy();
+    expect(toast.className).toMatch(/border-l-4/);
   });
 });

@@ -43,17 +43,17 @@ describe('EmptyState component - light-mode styling', () => {
     expect(wrapper.className).not.toMatch(/border-white\/15/);
   });
 
-  it('uses dark text for title (light-mode legible)', () => {
+  it('uses brand text token for title (light-mode legible)', () => {
     render(<EmptyState title="My Title" />);
     const heading = screen.getByText('My Title');
     expect(heading.className).not.toMatch(/text-white\b/);
-    expect(heading.className).toMatch(/gray-900|text-gray-900/);
+    expect(heading.className).toMatch(/text-text\b/);
   });
 
-  it('uses gray-500 for description text', () => {
+  it('uses textMuted token for description text', () => {
     render(<EmptyState title="Title" description="Some description" />);
     const desc = screen.getByText('Some description');
-    expect(desc.className).toMatch(/gray-500|text-gray-500/);
+    expect(desc.className).toMatch(/text-textMuted\b/);
   });
 
   it('applies extra className when passed', () => {

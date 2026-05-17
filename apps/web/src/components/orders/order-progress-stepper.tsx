@@ -142,7 +142,7 @@ function StepCircle({ stepKey, icon, state }: StepCircleProps) {
     return (
       <div
         data-testid={`step-icon-${stepKey}`}
-        className={`${baseClass} bg-successSoft0 text-white`}
+        className={`${baseClass} bg-success text-white`}
       >
         <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
           <path

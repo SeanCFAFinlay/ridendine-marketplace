@@ -15,27 +15,27 @@ describe('ReviewsSkeleton', () => {
     expect(pulseEls.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('renders avatar circle skeleton (rounded-full + bg-gray-200)', () => {
+  it('renders avatar circle skeleton (rounded-full + bg-surfaceMuted)', () => {
     const { container } = render(<ReviewsSkeleton />);
-    const circles = container.querySelectorAll('.rounded-full.bg-gray-200');
+    const circles = container.querySelectorAll('.rounded-full.bg-surfaceMuted');
     expect(circles.length).toBeGreaterThanOrEqual(3);
   });
 
   it('renders name bar (h-3 w-24)', () => {
     const { container } = render(<ReviewsSkeleton />);
-    const nameBars = container.querySelectorAll('.h-3.w-24.bg-gray-200');
+    const nameBars = container.querySelectorAll('.h-3.w-24.bg-surfaceMuted');
     expect(nameBars.length).toBeGreaterThanOrEqual(3);
   });
 
   it('renders stars bar (h-3 w-16)', () => {
     const { container } = render(<ReviewsSkeleton />);
-    const starsBars = container.querySelectorAll('.h-3.w-16.bg-gray-200');
+    const starsBars = container.querySelectorAll('.h-3.w-16.bg-surfaceMuted');
     expect(starsBars.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('renders two comment text lines per card (h-2 bg-gray-200)', () => {
+  it('renders two comment text lines per card (h-2 bg-surfaceMuted)', () => {
     const { container } = render(<ReviewsSkeleton />);
-    const textLines = container.querySelectorAll('.h-2.bg-gray-200');
+    const textLines = container.querySelectorAll('.h-2.bg-surfaceMuted');
     expect(textLines.length).toBeGreaterThanOrEqual(6); // 3 cards × 2 lines
   });
 
@@ -56,28 +56,28 @@ describe('CheckoutSkeleton', () => {
     expect(pulseEls.length).toBeGreaterThanOrEqual(4);
   });
 
-  it('renders bg-gray-200 field bars', () => {
+  it('renders bg-surfaceMuted field bars', () => {
     const { container } = render(<CheckoutSkeleton />);
-    const bars = container.querySelectorAll('.bg-gray-200');
+    const bars = container.querySelectorAll('.bg-surfaceMuted');
     expect(bars.length).toBeGreaterThan(10);
   });
 
   it('renders address option rows with radio + text bars', () => {
     const { container } = render(<CheckoutSkeleton />);
-    // Radio circles: h-4 w-4 rounded-full bg-gray-200
-    const radioBars = container.querySelectorAll('.h-4.w-4.rounded-full.bg-gray-200');
+    // Radio circles: h-4 w-4 rounded-full bg-surfaceMuted
+    const radioBars = container.querySelectorAll('.h-4.w-4.rounded-full.bg-surfaceMuted');
     expect(radioBars.length).toBeGreaterThanOrEqual(2);
   });
 
   it('renders a tip grid with four option boxes', () => {
     const { container } = render(<CheckoutSkeleton />);
-    const tipBoxes = container.querySelectorAll('.h-14.rounded-lg.bg-gray-200');
+    const tipBoxes = container.querySelectorAll('.h-14.rounded-lg.bg-surfaceMuted');
     expect(tipBoxes.length).toBeGreaterThanOrEqual(4);
   });
 
   it('renders item image placeholders (h-12 w-12)', () => {
     const { container } = render(<CheckoutSkeleton />);
-    const imagePlaceholders = container.querySelectorAll('.h-12.w-12.bg-gray-200');
+    const imagePlaceholders = container.querySelectorAll('.h-12.w-12.bg-surfaceMuted');
     expect(imagePlaceholders.length).toBeGreaterThanOrEqual(3);
   });
 
