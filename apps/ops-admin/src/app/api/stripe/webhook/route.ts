@@ -20,9 +20,13 @@ import { getEngine } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
+// Reconciliation + payout-lifecycle events only. The web marketplace
+// webhook (apps/web/src/app/api/webhooks/stripe/route.ts) owns
+// payment_intent.* and charge.refunded — it is the side that performs the
+// `submitToKitchen` transition. If we claimed those events here first, the
+// idempotency table would mark them processed and the web webhook would
+// skip its kitchen-submit work, stranding orders in `payment_authorized`.
 const FINANCE_TYPES = new Set([
-  'payment_intent.succeeded',
-  'charge.refunded',
   'transfer.created',
   'payout.paid',
   'payout.failed',
