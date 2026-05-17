@@ -13,9 +13,13 @@ VALUES
   ('00000000-0000-0000-0000-000000000001', 'ops@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
    '{"provider":"email","providers":["email"],"role":"super_admin"}',
    '{"display_name":"RideNDine Ops","role":"super_admin"}', true, 'authenticated'),
+  -- sean@ridendine.ca — multi-role test super-admin.
+  -- Promoted to super_admin AND retains chef profile + storefront, plus has
+  -- customer and driver rows below so one login (password123) can exercise
+  -- all 4 apps (customer marketplace, chef-admin, ops-admin, driver-app).
   ('11111111-1111-1111-1111-111111111111', 'sean@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
-   '{"provider":"email","providers":["email"],"role":"chef"}',
-   '{"display_name":"Sean","role":"chef"}', false, 'authenticated'),
+   '{"provider":"email","providers":["email"],"role":"super_admin"}',
+   '{"display_name":"Sean","role":"super_admin"}', true, 'authenticated'),
   ('22222222-2222-2222-2222-222222222222', 'tuan@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
    '{"provider":"email","providers":["email"],"role":"chef"}',
    '{"display_name":"Tuan","role":"chef"}', false, 'authenticated'),
@@ -50,6 +54,17 @@ VALUES
    '00000000-0000-0000-0000-000000000001',
    'ops@ridendine.ca',
    'RideNDine Ops',
+   'super_admin',
+   true,
+   NOW() - INTERVAL '120 days',
+   NOW()),
+  -- sean@ridendine.ca super-admin entry — unlocks ops-admin dashboard for the
+  -- multi-role test user. He also has a chef_profile, customer row, and
+  -- driver row below so one login exercises all 4 apps.
+  ('90000000-0000-0000-0000-000000000002',
+   '11111111-1111-1111-1111-111111111111',
+   'sean@ridendine.ca',
+   'Sean (Test Super Admin)',
    'super_admin',
    true,
    NOW() - INTERVAL '120 days',
@@ -310,7 +325,12 @@ VALUES
    NOW() - INTERVAL '30 days', NOW()),
   ('cust-0002-0000-0000-0000-000000000002', '55555555-5555-5555-5555-555555555555',
    'Bob', 'Martinez', 'bob@example.com', '+1 (905) 555-1002',
-   NOW() - INTERVAL '20 days', NOW())
+   NOW() - INTERVAL '20 days', NOW()),
+  -- Sean as a customer — lets the multi-role test super-admin browse the
+  -- marketplace, add to cart, and place orders end-to-end.
+  ('11111111-2222-3333-aaaa-000000000001', '11111111-1111-1111-1111-111111111111',
+   'Sean', 'Finlay', 'sean@ridendine.ca', '+1 (905) 555-0101',
+   NOW() - INTERVAL '120 days', NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
@@ -326,6 +346,10 @@ VALUES
   ('addr-0002-0000-0000-0000-000000000002',
    'cust-0002-0000-0000-0000-000000000002',
    'Home', '25 Dundurn St N', 'Hamilton', 'ON', 'L8R 3E2', 'CA',
+   true, NOW(), NOW()),
+  ('11111111-2222-3333-bbbb-000000000001',
+   '11111111-2222-3333-aaaa-000000000001',
+   'Home', '500 James St N', 'Hamilton', 'ON', 'L8L 1J5', 'CA',
    true, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
@@ -342,7 +366,13 @@ VALUES
   ('drv-00002-0000-0000-0000-000000000002',
    '77777777-7777-7777-7777-777777777777',
    'Sarah', 'Kim', '+1 (905) 555-2002', 'sarah.driver@ridendine.ca',
-   'approved', NOW() - INTERVAL '40 days', NOW())
+   'approved', NOW() - INTERVAL '40 days', NOW()),
+  -- Sean as a driver — lets the multi-role test super-admin sign in to the
+  -- driver PWA and accept delivery offers.
+  ('11111111-2222-3333-cccc-000000000001',
+   '11111111-1111-1111-1111-111111111111',
+   'Sean', 'Finlay', '+1 (905) 555-0101', 'sean@ridendine.ca',
+   'approved', NOW() - INTERVAL '120 days', NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
@@ -358,6 +388,10 @@ VALUES
   ('veh-00002-0000-0000-0000-000000000002',
    'drv-00002-0000-0000-0000-000000000002',
    'car', 'Honda', 'Civic', 2020, 'Blue', 'EFGH 456',
+   true, NOW(), NOW()),
+  ('11111111-2222-3333-dddd-000000000001',
+   '11111111-2222-3333-cccc-000000000001',
+   'car', 'Tesla', 'Model 3', 2023, 'Black', 'TEST 001',
    true, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
