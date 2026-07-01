@@ -145,7 +145,7 @@ export default async function HomePage() {
               </svg>
             </Link>
           </ScrollRevealSection>
-          {/* @ts-expect-error Async Server Component (valid in Next.js App Router; React 18 JSX types can't represent Promise<Element>) */}
+          {/* @ts-ignore Async Server Component — valid in Next.js App Router (see chefs/page.tsx note). */}
           <FeaturedChefs limit={3} />
           <div className="mt-8 text-center sm:hidden">
             <Link href="/chefs">

@@ -94,7 +94,7 @@ export default async function ChefsPage({
 
           <div className="min-w-0 flex-1">
             <Suspense fallback={<ChefsLoadingSkeleton />}>
-              {/* @ts-expect-error Async Server Component (valid in Next.js App Router; React 18 JSX types can't represent Promise<Element>) */}
+              {/* @ts-ignore Async Server Component — valid in Next.js App Router. Uses @ts-ignore (not @ts-expect-error) because `next build` type-checks with generated .next/types where there is no error, while the standalone `tsc` typecheck flags it. */}
               <ChefsList
                 search={params.search}
                 cuisines={cuisines}

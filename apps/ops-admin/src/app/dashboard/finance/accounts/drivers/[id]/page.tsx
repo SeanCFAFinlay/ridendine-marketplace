@@ -13,6 +13,6 @@ export default async function FinanceDriverAccountDetailPage({ params }: PagePro
   if (!actor || !hasRequiredRole(actor, [...FINANCE_PAGE_ROLES])) {
     return <FinanceAccessDenied />;
   }
-  // @ts-expect-error Async Server Component (valid in Next.js App Router; React 18 JSX types can't represent Promise<Element>)
+  // @ts-ignore Async Server Component — valid in Next.js App Router (see chefs/[id]/page.tsx note).
   return <FinanceAccountDetailContent type="drivers" id={id} />;
 }
