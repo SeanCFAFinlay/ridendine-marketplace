@@ -33,9 +33,16 @@ describe('GET /api/health', () => {
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_should_not_leak';
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    // The detailed payload (checks/details) is gated behind an internal health
+    // token; authorize so we can inspect the per-dependency readiness.
+    process.env.HEALTH_CHECK_TOKEN = 'test-health-token';
 
     const { GET } = await import('../../src/app/api/health/route');
-    const response = await GET();
+    const response = await GET(
+      new Request('http://localhost/api/health', {
+        headers: { 'x-health-token': 'test-health-token' },
+      })
+    );
     const payload = await response.json();
     const payloadString = JSON.stringify(payload);
 
