@@ -46,15 +46,16 @@ describe('customer-ordering helpers (Phase 6)', () => {
   });
 
   it('checkout API calls kitchen readiness guard', () => {
-    const checkoutApi = join(
-      __dirname,
-      '../../src/app/api/checkout/route.ts'
-    );
-    const src = readFileSync(checkoutApi, 'utf8');
-    expect(src).toContain('validateCustomerCheckoutReadiness');
-    expect(src).toContain('evaluateCheckoutRisk');
-    expect(src).toContain('RATE_LIMIT_POLICIES.checkout');
-    expect(src).toContain("'RISK_BLOCKED'");
+    // The route rate-limits and delegates to runCheckout; the readiness/risk
+    // guards live in the shared runCheckout implementation.
+    const routeSrc = readFileSync(join(__dirname, '../../src/app/api/checkout/route.ts'), 'utf8');
+    expect(routeSrc).toContain('runCheckout');
+    expect(routeSrc).toContain('RATE_LIMIT_POLICIES.checkout');
+
+    const runCheckoutSrc = readFileSync(join(__dirname, '../../src/lib/checkout/run-checkout.ts'), 'utf8');
+    expect(runCheckoutSrc).toContain('validateCustomerCheckoutReadiness');
+    expect(runCheckoutSrc).toContain('evaluateCheckoutRisk');
+    expect(runCheckoutSrc).toContain("'RISK_BLOCKED'");
   });
 
   it('checkout page does not use removed hardcoded fee fallback', () => {
