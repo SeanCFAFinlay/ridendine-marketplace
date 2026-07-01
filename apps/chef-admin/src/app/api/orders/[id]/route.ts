@@ -19,6 +19,7 @@ import {
 } from '@/lib/engine';
 import type { OrderRejectReason } from '@ridendine/types';
 import { syncKitchenState } from '@/lib/kitchen-sync';
+import { snapshotOrderRecipeCosts } from '@/lib/recipe-snapshot';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -144,6 +145,8 @@ async function applyOrderAction(
         return errorResponse(result.error!.code, result.error!.message);
       }
       await syncKitchenState(orderId);
+      // Capture point-in-time recipe cost so historical profitability is stable.
+      await snapshotOrderRecipeCosts(orderId);
       return successResponse(result.data);
     }
 

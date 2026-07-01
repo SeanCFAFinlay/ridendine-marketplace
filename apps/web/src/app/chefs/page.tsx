@@ -94,6 +94,7 @@ export default async function ChefsPage({
 
           <div className="min-w-0 flex-1">
             <Suspense fallback={<ChefsLoadingSkeleton />}>
+              {/* @ts-expect-error Async Server Component (valid in Next.js App Router; React 18 JSX types can't represent Promise<Element>) */}
               <ChefsList
                 search={params.search}
                 cuisines={cuisines}

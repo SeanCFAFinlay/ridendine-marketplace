@@ -54,6 +54,7 @@ function createMockClient(orderData: Record<string, unknown> = {}) {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue({ data: defaultOrder, error: null }),
+              maybeSingle: vi.fn().mockResolvedValue({ data: defaultOrder, error: null }),
             }),
           }),
           update: updateFn,
