@@ -8,7 +8,7 @@ test('classifies every discovered page surface with auth intent', () => {
   const { collectSurfaceClassifications } = require('./runtime-surface-classification.cjs');
   const summary = collectSurfaceClassifications({ root: repoRoot });
 
-  assert.equal(summary.pages.length, 91);
+  assert.equal(summary.pages.length, 101);
   assert.equal(summary.pages.every((page) => page.classification.kind === 'page'), true);
   assert.equal(
     summary.pages.find((page) => page.app === 'customer' && page.route === '/account').classification.authIntent,
@@ -22,7 +22,7 @@ test('classifies every discovered page surface with auth intent', () => {
     summary.pages.find((page) => page.app === 'ops' && page.route === '/dashboard').classification.authIntent,
     'protected'
   );
-  assert.equal(summary.pageTotals.classified, 91);
+  assert.equal(summary.pageTotals.classified, 101);
   assert.deepEqual(summary.failures, []);
 });
 
@@ -30,7 +30,7 @@ test('classifies every discovered API route handler with method and guard intent
   const { collectSurfaceClassifications } = require('./runtime-surface-classification.cjs');
   const summary = collectSurfaceClassifications({ root: repoRoot });
 
-  assert.equal(summary.apis.length, 124);
+  assert.equal(summary.apis.length, 172);
   assert.equal(summary.apis.every((api) => api.classification.kind === 'api'), true);
 
   const health = summary.apis.find((api) => api.app === 'customer' && api.endpoint === '/api/health');
@@ -45,7 +45,7 @@ test('classifies every discovered API route handler with method and guard intent
   const opsFinance = summary.apis.find((api) => api.app === 'ops' && api.endpoint === '/api/engine/finance');
   assert.equal(opsFinance.classification.guardIntent, 'protected-session');
   assert.equal(opsFinance.classification.liveSmokeBucket, 'authenticated-read');
-  assert.equal(summary.apiTotals.classified, 124);
+  assert.equal(summary.apiTotals.classified, 172);
   assert.deepEqual(summary.failures, []);
 });
 
@@ -59,6 +59,6 @@ test('generates markdown docs with page and API classification sections', () => 
   assert.ok(markdown.includes('# Runtime Surface Classification'));
   assert.ok(markdown.includes('## Page Surface Classification'));
   assert.ok(markdown.includes('## API Route Handler Classification'));
-  assert.ok(markdown.includes('| Pages | 91 | 91 | 0 |'));
-  assert.ok(markdown.includes('| API route handlers | 124 | 124 | 0 |'));
+  assert.ok(markdown.includes('| Pages | 101 | 101 | 0 |'));
+  assert.ok(markdown.includes('| API route handlers | 172 | 172 | 0 |'));
 });

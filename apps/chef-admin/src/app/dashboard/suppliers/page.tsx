@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Card, Badge, Button, Modal, Input, EmptyState, Spinner } from '@ridendine/ui';
-import { Truck, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Plus, RefreshCw, Trash2 } from 'lucide-react';
 
 interface Supplier {
   id: string;

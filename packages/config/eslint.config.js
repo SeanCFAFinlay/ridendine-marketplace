@@ -68,6 +68,15 @@ export default tseslint.config(
       // docs/TYPING_BACKLOG.md. Re-enable when working through that backlog.
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/consistent-type-imports': 'error',
+      // Allow `@ts-ignore` when it carries an explanatory description. Needed
+      // for Next.js App Router async Server Components: `next build` type-checks
+      // with generated .next/types where the usage is valid, so `@ts-expect-error`
+      // would be flagged as an "unused directive" and fail the build — only
+      // `@ts-ignore` works across both the standalone typecheck and next build.
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        { 'ts-ignore': 'allow-with-description', minimumDescriptionLength: 10 },
+      ],
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
       'react-hooks/rules-of-hooks': 'error',
@@ -138,6 +147,15 @@ export default tseslint.config(
     files: ['**/packages/ui/src/tokens.ts'],
     rules: {
       'no-restricted-syntax': 'off',
+    },
+  },
+  {
+    // Test files legitimately use require() — jest's mock/re-require idiom after
+    // jest.resetModules(), and dynamic requires inside test bodies. The base
+    // no-require-imports rule (from tseslint recommended) doesn't fit tests.
+    files: ['**/__tests__/**', '**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
   {

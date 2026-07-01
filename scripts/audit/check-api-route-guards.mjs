@@ -39,6 +39,8 @@ const APPROVED_GUARDS = [
   'verifyStripeWebhook',
   'getCurrentCustomer',
   'auth.getUser',
+  // Partner API routes authenticate via API key + request signature.
+  'resolvePartnerContext',
 ];
 
 const STATEFUL_METHODS = ['POST', 'PATCH', 'DELETE', 'PUT'];

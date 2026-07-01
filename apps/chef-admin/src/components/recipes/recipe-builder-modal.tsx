@@ -50,7 +50,7 @@ export function RecipeBuilderModal({ menuItems, onClose, onSuccess }: RecipeBuil
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     { name: '', quantity: '', unit: 'unit', costPerUnit: '', wasteFactor: '0' },
   ]);
-  const [steps, setSteps] = useState<Step[]>([]);
+  const [steps] = useState<Step[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

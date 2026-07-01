@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Card, Button, Input, EmptyState, Spinner } from '@ridendine/ui';
+import { Card, Button, Spinner } from '@ridendine/ui';
 import { Check, Plus, RefreshCw, Wand2 } from 'lucide-react';
 
 interface PrepTask {
