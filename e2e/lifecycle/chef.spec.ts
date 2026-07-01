@@ -93,19 +93,22 @@ test.describe('chef lifecycle @lifecycle', () => {
     await page.getByRole('button', { name: /sign in|log in/i }).click();
     await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 10_000 });
 
-    await page.goto('/dashboard/orders');
-    // Scope to the RND-005 card: RND-008 on the same dashboard is the
+    // The live accept/prep/ready workflow lives in Kitchen Command; the Orders
+    // page is a read-only ledger. Drive the KDS ticket here.
+    await page.goto('/dashboard/kitchen');
+    // Scope to the RND-005 kitchen ticket card: RND-008 on the same board is the
     // DEDICATED chef-reject fixture for negative-paths.spec.ts and must not
     // be consumed here. RND-005 is seeded 10 minutes in the past, so the
     // 8-minute acceptance timeout may already have auto-rejected it — in
     // that case the guard below skips (existing behaviour).
-    const orderCard = page.locator('div.bg-surface').filter({ hasText: 'RND-005' }).last();
+    const orderCard = page.locator('div.rounded-xl.bg-white').filter({ hasText: 'RND-005' }).last();
     const acceptBtn = orderCard.getByRole('button', { name: /^accept$/i });
     if (!(await acceptBtn.isVisible({ timeout: 5_000 }))) {
       test.skip();
     }
     await acceptBtn.click();
-    await expect(orderCard.getByText(/accepted|preparing/i).first()).toBeVisible({ timeout: 5_000 });
+    // Accepting advances the ticket's action to "Start Preparing".
+    await expect(orderCard.getByRole('button', { name: /start preparing/i })).toBeVisible({ timeout: 5_000 });
   });
 
   test('chef can mark order as preparing and then ready', async ({ page }) => {
@@ -116,9 +119,10 @@ test.describe('chef lifecycle @lifecycle', () => {
     await page.getByRole('button', { name: /sign in|log in/i }).click();
     await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 10_000 });
 
-    await page.goto('/dashboard/orders');
+    // Prep/ready actions live on the Kitchen board, not the Orders ledger.
+    await page.goto('/dashboard/kitchen');
     // Seed order RND-004 is in 'preparing' state — look for ready button
-    const readyBtn = page.getByRole('button', { name: /ready|mark ready/i }).first();
+    const readyBtn = page.getByRole('button', { name: /mark ready|^ready$/i }).first();
     if (!(await readyBtn.isVisible({ timeout: 5_000 }))) {
       test.skip();
     }

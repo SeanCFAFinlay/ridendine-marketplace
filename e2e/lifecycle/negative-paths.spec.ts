@@ -258,13 +258,15 @@ test.describe('chef negative paths @lifecycle @negative', () => {
     // 'Rejected by chef' } — the engine refuses rejects without a reason
     // (MISSING_REASON).
     await signInChefAdmin(page, 'tuan@ridendine.ca');
-    await page.goto('/dashboard/orders');
+    // The Reject action lives on the Kitchen board (the Orders page is now a
+    // read-only ledger).
+    await page.goto('/dashboard/kitchen');
 
-    // Scope to the RND-008 order card (the @ridendine/ui Card renders
-    // div.bg-surface; `.last()` picks the innermost match, i.e. the card
-    // itself rather than a page-level container).
+    // Scope to the RND-008 kitchen ticket card (rounded-xl bg-white); `.last()`
+    // picks the innermost match, i.e. the ticket card itself rather than a
+    // page-level container.
     const orderCard = page
-      .locator('div.bg-surface')
+      .locator('div.rounded-xl.bg-white')
       .filter({ hasText: SEED_REJECTABLE_ORDER_NUMBER })
       .last();
     const rejectBtn = orderCard.getByRole('button', { name: /^reject$/i });
@@ -276,7 +278,9 @@ test.describe('chef negative paths @lifecycle @negative', () => {
     }
     await rejectBtn.click();
 
-    await expect(orderCard.getByText(/rejected/i).first()).toBeVisible({ timeout: 10_000 });
+    // A rejected ticket leaves the active KDS board (no column tracks the
+    // 'rejected' state), so the card disappears once the engine confirms.
+    await expect(orderCard).toBeHidden({ timeout: 10_000 });
   });
 
   test('order action on a terminal-state order is refused gracefully by the API', async ({ page }) => {
