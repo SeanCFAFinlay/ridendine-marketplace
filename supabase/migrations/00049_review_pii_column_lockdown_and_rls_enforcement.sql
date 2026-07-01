@@ -46,6 +46,13 @@ GRANT SELECT (
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 
 -- R2 — ensure RLS is enabled on every ordinary base table in `public`.
+-- Only tables OWNED by the migration role are eligible: ALTER TABLE ... ENABLE
+-- ROW LEVEL SECURITY requires ownership. Extension-owned system tables that
+-- land in `public` (notably PostGIS's `spatial_ref_sys`, owned by
+-- supabase_admin on the local Supabase stack) are skipped — attempting to
+-- alter them raises `must be owner of table` (SQLSTATE 42501) and would abort
+-- the whole migration on a fresh `supabase db reset`. App tables are created by
+-- the migration role, so they remain covered on both local and hosted apply.
 DO $$
 DECLARE
   r RECORD;
@@ -57,6 +64,7 @@ BEGIN
     WHERE n.nspname = 'public'
       AND c.relkind = 'r'          -- ordinary tables only
       AND NOT c.relrowsecurity     -- RLS not yet enabled
+      AND pg_catalog.pg_get_userbyid(c.relowner) = current_user  -- only tables we own
   LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', r.relname);
     RAISE NOTICE 'Enabled RLS on public.%', r.relname;
