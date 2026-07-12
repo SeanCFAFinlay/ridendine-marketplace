@@ -4,7 +4,7 @@
 
 import { createAdminClient, type SupabaseClient } from '@ridendine/db';
 import { prepTaskProgress } from '@ridendine/engine';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 import { kitchenDateKey } from '@/lib/kitchen';
 
 export const dynamic = 'force-dynamic';
@@ -16,8 +16,8 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET() {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const today = kitchenDateKey(new Date());
     const tomorrow = kitchenDateKey(new Date(Date.now() + 24 * 60 * 60 * 1000));
@@ -27,13 +27,13 @@ export async function GET() {
       admin
         .from('prep_tasks')
         .select('*')
-        .eq('storefront_id', chefContext.storefrontId)
+        .eq('kitchen_id', ctx.kitchenId)
         .in('plan_date', [today, tomorrow])
         .order('created_at', { ascending: true }),
       admin
         .from('production_batches')
         .select('*')
-        .eq('storefront_id', chefContext.storefrontId)
+        .eq('kitchen_id', ctx.kitchenId)
         .in('status', ['planned', 'in_progress'])
         .order('created_at', { ascending: true }),
     ]);

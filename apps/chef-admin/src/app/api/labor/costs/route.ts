@@ -10,7 +10,7 @@ import {
   laborPerOrder,
   type TimeEntryLike,
 } from '@ridendine/engine';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 import { kitchenDateKey } from '@/lib/kitchen';
 
 export const dynamic = 'force-dynamic';
@@ -26,8 +26,8 @@ const round4 = (n: number | null) => (n === null ? null : Math.round(n * 10000) 
  */
 export async function GET() {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const now = new Date();
     const today = kitchenDateKey(now);
@@ -38,12 +38,12 @@ export async function GET() {
       admin
         .from('time_entries')
         .select('id, staff_id, clock_in, clock_out, hourly_rate')
-        .eq('storefront_id', chefContext.storefrontId)
+        .eq('kitchen_id', ctx.kitchenId)
         .gte('clock_in', cutoff.toISOString()),
       admin
         .from('orders')
         .select('total, created_at')
-        .eq('storefront_id', chefContext.storefrontId)
+        .eq('storefront_id', ctx.storefrontId)
         .neq('is_test', true)
         .in('status', ['delivered', 'completed'])
         .gte('created_at', cutoff.toISOString()),

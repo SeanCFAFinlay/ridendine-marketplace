@@ -10,21 +10,21 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 /** POST /api/labor/clock-in — open a time entry (snapshots the staff rate). */
 export async function POST(request: NextRequest) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-clock-in',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/labor/clock-in',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       .from('kitchen_staff')
       .select('id, hourly_rate')
       .eq('id', staffId)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .maybeSingle();
     if (!staff) return errorResponse('NOT_FOUND', 'Staff not found', 404);
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const { data: open } = await admin
       .from('time_entries')
       .select('id')
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .eq('staff_id', staffId)
       .is('clock_out', null)
       .maybeSingle();
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const { data: entry, error } = await admin
       .from('time_entries')
       .insert({
-        storefront_id: chefContext.storefrontId,
+        kitchen_id: ctx.kitchenId,
         staff_id: staffId,
         shift_id: shiftId ?? null,
         clock_in: new Date().toISOString(),

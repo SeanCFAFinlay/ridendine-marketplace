@@ -806,3 +806,72 @@ VALUES
    1899, 'quality_issue', 'Burger arrived cold — customer requested a refund for the item.',
    'pending', NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- SECTION: GHOST-KITCHEN (dev/e2e only) — commissary multi-brand
+--
+-- Makes the Every Bite Yum kitchen (aa000000-0001) a commissary running TWO
+-- brand storefronts from ONE shared pool, so ACCEPTANCE A is exercisable:
+-- the same operator (chef aaaa…) manages ≥2 brands, and the shared inventory /
+-- suppliers / staff (kitchen-scoped) show identically from either brand.
+-- Obvious demo data — never resembles production.
+-- ============================================================
+
+-- Second brand under the SAME kitchen + SAME chef as Every Bite Yum.
+INSERT INTO chef_storefronts (
+  id, chef_id, kitchen_id, slug, name, description, cuisine_types,
+  cover_image_url, logo_url, is_active, is_featured,
+  estimated_prep_time_min, estimated_prep_time_max, min_order_amount,
+  average_rating, total_reviews, created_at, updated_at
+)
+VALUES
+  ('d5000000-0002-4000-8000-000000000002',
+   'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+   'aa000000-0001-4000-8000-000000000001',
+   'saigon-pho-house',
+   'Saigon Pho House',
+   'DEV SEED — a second virtual brand run out of the Every Bite Yum commissary to exercise multi-brand ghost-kitchen operations.',
+   ARRAY['Vietnamese', 'Phở', 'Noodle Soups'],
+   NULL, NULL, true, false,
+   25, 45, 18.00, 0, 0,
+   NOW() - INTERVAL '10 days', NOW())
+ON CONFLICT (id) DO NOTHING;
+
+-- Shared inventory pool (kitchen-scoped): identical from both brands.
+INSERT INTO inventory_items (id, kitchen_id, name, category, unit, current_quantity, par_quantity, reorder_point, cost_per_unit, is_active)
+VALUES
+  ('1a170000-0001-4000-8000-000000000001', 'aa000000-0001-4000-8000-000000000001', 'All-Purpose Flour', 'Dry Goods', 'kg',  40, 50, 20, 1.20, true),
+  ('1a170000-0002-4000-8000-000000000002', 'aa000000-0001-4000-8000-000000000001', 'Yellow Onions',     'Produce',   'kg',  25, 30, 12, 0.90, true),
+  ('1a170000-0003-4000-8000-000000000003', 'aa000000-0001-4000-8000-000000000001', 'Chicken Thigh',     'Protein',   'kg',  18, 25, 15, 6.50, true),
+  ('1a170000-0004-4000-8000-000000000004', 'aa000000-0001-4000-8000-000000000001', 'Rice Noodles',      'Dry Goods', 'kg',  30, 30, 10, 2.10, true),
+  ('1a170000-0005-4000-8000-000000000005', 'aa000000-0001-4000-8000-000000000001', 'Canola Oil',        'Pantry',    'L',    8, 20, 10, 2.80, true)
+ON CONFLICT (kitchen_id, name) DO NOTHING;
+
+-- Opening-stock ledger so on-hand reconciles (metadata brand-attribution absent = kitchen-wide).
+INSERT INTO inventory_stock_movements (kitchen_id, inventory_item_id, movement_type, quantity, unit_cost, note)
+VALUES
+  ('aa000000-0001-4000-8000-000000000001', '1a170000-0001-4000-8000-000000000001', 'receive', 40, 1.20, 'Opening stock (dev seed)'),
+  ('aa000000-0001-4000-8000-000000000001', '1a170000-0002-4000-8000-000000000002', 'receive', 25, 0.90, 'Opening stock (dev seed)'),
+  ('aa000000-0001-4000-8000-000000000001', '1a170000-0003-4000-8000-000000000003', 'receive', 18, 6.50, 'Opening stock (dev seed)'),
+  ('aa000000-0001-4000-8000-000000000001', '1a170000-0004-4000-8000-000000000004', 'receive', 30, 2.10, 'Opening stock (dev seed)'),
+  ('aa000000-0001-4000-8000-000000000001', '1a170000-0005-4000-8000-000000000005', 'receive',  8, 2.80, 'Opening stock (dev seed)')
+ON CONFLICT DO NOTHING;
+
+-- Shared supplier (kitchen-scoped).
+INSERT INTO suppliers (id, kitchen_id, name, contact_name, email, is_active)
+VALUES
+  ('5a170000-0001-4000-8000-000000000001', 'aa000000-0001-4000-8000-000000000001', 'Hamilton Restaurant Depot', 'Dana Ruiz', 'orders@hamdepot.test', true)
+ON CONFLICT (kitchen_id, name) DO NOTHING;
+
+-- Shared prep station (kitchen-scoped).
+INSERT INTO kitchen_stations (id, kitchen_id, name, sort_order, is_active)
+VALUES
+  ('57a70000-0001-4000-8000-000000000001', 'aa000000-0001-4000-8000-000000000001', 'Line', 1, true)
+ON CONFLICT (kitchen_id, name) DO NOTHING;
+
+-- Shared staff (kitchen-scoped), with hourly rates for labour/payroll.
+INSERT INTO kitchen_staff (id, kitchen_id, name, role, station_id, hourly_rate, is_active)
+VALUES
+  ('57aff000-0001-4000-8000-000000000001', 'aa000000-0001-4000-8000-000000000001', 'Alex Prep',  'line_staff', '57a70000-0001-4000-8000-000000000001', 17.50, true),
+  ('57aff000-0002-4000-8000-000000000002', 'aa000000-0001-4000-8000-000000000001', 'Sam Cook',   'head_chef',  '57a70000-0001-4000-8000-000000000001', 24.00, true)
+ON CONFLICT (id) DO NOTHING;

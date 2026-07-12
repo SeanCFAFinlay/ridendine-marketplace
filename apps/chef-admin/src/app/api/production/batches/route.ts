@@ -10,21 +10,21 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 /** POST /api/production/batches — plan a production batch with its inputs. */
 export async function POST(request: NextRequest) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-batch-create',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/production/batches',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -39,14 +39,14 @@ export async function POST(request: NextRequest) {
     const { data: batch, error } = await admin
       .from('production_batches')
       .insert({
-        storefront_id: chefContext.storefrontId,
+        kitchen_id: ctx.kitchenId,
         recipe_version_id: b.recipeVersionId ?? null,
         menu_item_id: b.menuItemId ?? null,
         name: b.name,
         planned_yield: b.plannedYield ?? null,
         plan_date: b.planDate ?? null,
         notes: b.notes ?? null,
-        created_by: chefContext.actor.userId,
+        created_by: ctx.actor.userId,
       })
       .select('*')
       .single();

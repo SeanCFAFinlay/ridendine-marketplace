@@ -10,7 +10,7 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,14 +19,14 @@ type RouteParams = { params: Promise<{ id: string }> };
 /** POST /api/production/batches/[id]/waste — add wasted (overproduced) yield to the batch. */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-batch-waste',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/production/batches/[id]/waste',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .from('production_batches')
       .select('id, waste_quantity, notes')
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .maybeSingle();
     if (!batch) return errorResponse('NOT_FOUND', 'Batch not found', 404);
 
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .from('production_batches')
       .update({ waste_quantity: newWaste, notes: noteAppend ?? null })
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .select('*')
       .single();
 

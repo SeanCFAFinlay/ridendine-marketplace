@@ -23,20 +23,23 @@
 -- ==========================================
 
 -- ------------------------------------------------------------------
--- kitchen_stations: a chef's prep stations (grill, fry, cold, ...)
+-- kitchen_stations: a kitchen's prep stations (grill, fry, cold, ...).
+-- Ghost-kitchen scope: stations are SHARED across every brand under the
+-- commissary kitchen, so they scope by kitchen_id (a brand's kitchen_ticket
+-- still references the shared station via station_id).
 -- ------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS kitchen_stations (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  storefront_id UUID NOT NULL REFERENCES chef_storefronts(id) ON DELETE CASCADE,
+  kitchen_id    UUID NOT NULL REFERENCES chef_kitchens(id) ON DELETE CASCADE,
   name          TEXT NOT NULL,
   sort_order    INTEGER NOT NULL DEFAULT 0,
   is_active     BOOLEAN NOT NULL DEFAULT true,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (storefront_id, name)
+  UNIQUE (kitchen_id, name)
 );
 
-CREATE INDEX IF NOT EXISTS idx_kitchen_stations_storefront ON kitchen_stations(storefront_id, sort_order);
+CREATE INDEX IF NOT EXISTS idx_kitchen_stations_kitchen ON kitchen_stations(kitchen_id, sort_order);
 
 -- ------------------------------------------------------------------
 -- kitchen_tickets: one internal kitchen ticket per order
@@ -173,15 +176,19 @@ ALTER TABLE order_pack_checks     ENABLE ROW LEVEL SECURITY;
 -- Helper expression used below (inlined per-policy, matching repo convention):
 --   the row's storefront belongs to the authenticated chef.
 
--- ---- kitchen_stations ----
+-- ---- kitchen_stations (shared across brands: kitchen-scoped) ----
+-- Inlined ownership check: public.is_operator_of_kitchen is defined in 00055,
+-- which runs after this migration, so the join is spelled out here to match the
+-- file's existing convention.
 DROP POLICY IF EXISTS "chef_manage_own_kitchen_stations" ON kitchen_stations;
-CREATE POLICY "chef_manage_own_kitchen_stations"
+DROP POLICY IF EXISTS "operator_manage_kitchen_stations" ON kitchen_stations;
+CREATE POLICY "operator_manage_kitchen_stations"
   ON kitchen_stations FOR ALL TO authenticated
   USING (
     EXISTS (
-      SELECT 1 FROM chef_storefronts cs
-      JOIN chef_profiles cp ON cp.id = cs.chef_id
-      WHERE cs.id = kitchen_stations.storefront_id
+      SELECT 1 FROM chef_kitchens ck
+      JOIN chef_profiles cp ON cp.id = ck.chef_id
+      WHERE ck.id = kitchen_stations.kitchen_id
         AND cp.user_id = auth.uid()
     )
   );

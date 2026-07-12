@@ -10,7 +10,7 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +19,8 @@ type RouteParams = { params: Promise<{ id: string }> };
 /** GET /api/suppliers/[id] — supplier plus its catalogue items. */
 export async function GET(_req: NextRequest, { params }: RouteParams) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const { id } = await params;
     const admin = createAdminClient() as unknown as SupabaseClient;
@@ -29,7 +29,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
       .from('suppliers')
       .select('*')
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .maybeSingle();
     if (!supplier) return errorResponse('NOT_FOUND', 'Supplier not found', 404);
 
@@ -37,7 +37,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
       .from('supplier_items')
       .select('*')
       .eq('supplier_id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .order('name', { ascending: true });
 
     return successResponse({ supplier, items: items ?? [] });
@@ -50,14 +50,14 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 /** PATCH /api/suppliers/[id] — update supplier fields. */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-supplier-update',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'PATCH:/api/suppliers/[id]',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -74,7 +74,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .from('suppliers')
       .select('id')
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .maybeSingle();
     if (!existing) return errorResponse('NOT_FOUND', 'Supplier not found', 404);
 
@@ -90,7 +90,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .from('suppliers')
       .update(patch)
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .select('*')
       .single();
 

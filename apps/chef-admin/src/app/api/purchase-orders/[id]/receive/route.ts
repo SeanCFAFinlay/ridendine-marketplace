@@ -20,7 +20,7 @@ import {
 } from '@ridendine/utils';
 import {
   getEngine,
-  getChefActorContext,
+  getOperatorKitchenContext,
   errorResponse,
   successResponse,
 } from '@/lib/engine';
@@ -31,14 +31,14 @@ type RouteParams = { params: Promise<{ id: string }> };
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-po-receive',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/purchase-orders/[id]/receive',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -49,14 +49,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return errorResponse('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Invalid receipt', 400);
     }
     const receipt = parsed.data;
-    const storefrontId = chefContext.storefrontId;
+    const kitchenId = ctx.kitchenId;
     const admin = createAdminClient() as unknown as SupabaseClient;
 
     const { data: po } = await admin
       .from('purchase_orders')
       .select('id, status')
       .eq('id', poId)
-      .eq('storefront_id', storefrontId)
+      .eq('kitchen_id', kitchenId)
       .maybeSingle();
     if (!po) return errorResponse('NOT_FOUND', 'Purchase order not found', 404);
     if (po.status === 'cancelled' || po.status === 'received') {
@@ -78,9 +78,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { data: batch, error: batchErr } = await admin
       .from('receiving_batches')
       .insert({
-        storefront_id: storefrontId,
+        kitchen_id: kitchenId,
         purchase_order_id: poId,
-        received_by: chefContext.actor.userId,
+        received_by: ctx.actor.userId,
         note: receipt.note ?? null,
       })
       .select('*')
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           .from('inventory_items')
           .select('id, current_quantity, cost_per_unit')
           .eq('id', line.inventory_item_id)
-          .eq('storefront_id', storefrontId)
+          .eq('kitchen_id', kitchenId)
           .maybeSingle();
         if (item) {
           const currentQty = Number(item.current_quantity ?? 0);
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           const newCost = blendedUnitCost(currentQty, Number(item.cost_per_unit ?? 0), baseQty, receivedUnitCost);
 
           await admin.from('inventory_stock_movements').insert({
-            storefront_id: storefrontId,
+            kitchen_id: kitchenId,
             inventory_item_id: line.inventory_item_id,
             movement_type: 'receive',
             quantity: baseQty,
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             reference_type: 'receiving_batch',
             reference_id: batch.id,
             note: 'PO receipt',
-            created_by: chefContext.actor.userId,
+            created_by: ctx.actor.userId,
           });
           movementsCreated += 1;
 
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             .from('inventory_items')
             .update({ current_quantity: newQty, cost_per_unit: newCost })
             .eq('id', line.inventory_item_id)
-            .eq('storefront_id', storefrontId);
+            .eq('kitchen_id', kitchenId);
         }
       }
 
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       if (line.supplier_item_id) {
         await admin.from('supplier_price_history').insert({
           supplier_item_id: line.supplier_item_id,
-          storefront_id: storefrontId,
+          kitchen_id: kitchenId,
           unit_cost: Number(line.unit_cost ?? 0),
           pack_size: Number(line.pack_size ?? 1),
           source: 'receiving',
@@ -165,14 +165,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         .from('purchase_orders')
         .update({ status: 'received', received_at: new Date().toISOString() })
         .eq('id', poId)
-        .eq('storefront_id', storefrontId);
+        .eq('kitchen_id', kitchenId);
     }
 
     await getEngine().audit.log({
       action: 'update',
       entityType: 'purchase_order',
       entityId: poId,
-      actor: chefContext.actor,
+      actor: ctx.actor,
       afterState: { receivedLines: receipt.lines.length, movementsCreated, poStatus },
     });
 

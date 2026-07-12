@@ -10,7 +10,7 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 import {
   computePrepPlan,
   type PrepMenuItem,
@@ -26,14 +26,14 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: NextRequest) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-production-forecast',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/production/forecast',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       return errorResponse('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Invalid forecast request', 400);
     }
     const { planDate, lookbackWeeks } = parsed.data;
-    const storefrontId = chefContext.storefrontId;
+    const storefrontId = ctx.storefrontId;
     const admin = createAdminClient() as unknown as SupabaseClient;
 
     // Forecast for the plan date's weekday; look back a few weeks of history.
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       admin
         .from('prep_tasks')
         .select('menu_item_id')
-        .eq('storefront_id', storefrontId)
+        .eq('kitchen_id', ctx.kitchenId)
         .eq('plan_date', planDate),
     ]);
 
@@ -82,12 +82,12 @@ export async function POST(request: NextRequest) {
     }
 
     const rows = toCreate.map((p) => ({
-      storefront_id: storefrontId,
+      kitchen_id: ctx.kitchenId,
       menu_item_id: p.id,
       title: p.name,
       target_quantity: p.suggestedQty,
       plan_date: planDate,
-      created_by: chefContext.actor.userId,
+      created_by: ctx.actor.userId,
     }));
     const { data: inserted, error } = await admin.from('prep_tasks').insert(rows).select('id');
     if (error) {

@@ -10,21 +10,21 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 /** GET /api/labor/staff — kitchen staff for this storefront. */
 export async function GET() {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const admin = createAdminClient() as unknown as SupabaseClient;
     const { data, error } = await admin
       .from('kitchen_staff')
       .select('*')
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .order('name', { ascending: true });
 
     if (error) {
@@ -41,14 +41,14 @@ export async function GET() {
 /** POST /api/labor/staff — add a staff member. */
 export async function POST(request: NextRequest) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-staff-create',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/labor/staff',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     const { data: staff, error } = await admin
       .from('kitchen_staff')
       .insert({
-        storefront_id: chefContext.storefrontId,
+        kitchen_id: ctx.kitchenId,
         name: s.name,
         role: s.role ?? null,
         station_id: s.stationId ?? null,

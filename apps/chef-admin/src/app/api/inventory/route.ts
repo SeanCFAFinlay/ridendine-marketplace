@@ -13,7 +13,7 @@ import {
 } from '@ridendine/utils';
 import {
   getEngine,
-  getChefActorContext,
+  getOperatorKitchenContext,
   errorResponse,
   successResponse,
 } from '@/lib/engine';
@@ -23,8 +23,8 @@ export const dynamic = 'force-dynamic';
 /** GET /api/inventory — list the storefront's inventory items with stock status. */
 export async function GET() {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) {
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) {
       return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
     }
 
@@ -32,7 +32,7 @@ export async function GET() {
     const { data, error } = await admin
       .from('inventory_items')
       .select('*')
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .order('name', { ascending: true });
 
     if (error) {
@@ -59,8 +59,8 @@ export async function GET() {
 /** POST /api/inventory — create an inventory item (seeds the ledger if it opens with stock). */
 export async function POST(request: NextRequest) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) {
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) {
       return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
     }
 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-inventory-create',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/inventory',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     const { data: item, error } = await admin
       .from('inventory_items')
       .insert({
-        storefront_id: chefContext.storefrontId,
+        kitchen_id: ctx.kitchenId,
         name: input.name,
         category: input.category ?? null,
         unit: input.unit,
@@ -107,13 +107,13 @@ export async function POST(request: NextRequest) {
     // Seed the ledger so on-hand reconciles with the opening quantity.
     if (input.initialQuantity > 0) {
       await admin.from('inventory_stock_movements').insert({
-        storefront_id: chefContext.storefrontId,
+        kitchen_id: ctx.kitchenId,
         inventory_item_id: item.id,
         movement_type: 'receive',
         quantity: input.initialQuantity,
         unit_cost: input.costPerUnit,
         note: 'Opening stock',
-        created_by: chefContext.actor.userId,
+        created_by: ctx.actor.userId,
       });
     }
 
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
       action: 'create',
       entityType: 'inventory_item',
       entityId: item.id,
-      actor: chefContext.actor,
+      actor: ctx.actor,
       afterState: { name: item.name, current_quantity: item.current_quantity },
     });
 

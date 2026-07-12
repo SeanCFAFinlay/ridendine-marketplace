@@ -10,7 +10,7 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,14 +19,14 @@ type RouteParams = { params: Promise<{ id: string }> };
 /** PATCH /api/production/batches/[id] — rename / start / cancel / edit plan. */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-batch-update',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'PATCH:/api/production/batches/[id]',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .from('production_batches')
       .select('id, status')
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .maybeSingle();
     if (!existing) return errorResponse('NOT_FOUND', 'Batch not found', 404);
     if (existing.status === 'completed') {
@@ -63,7 +63,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .from('production_batches')
       .update(patch)
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .select('*')
       .single();
 

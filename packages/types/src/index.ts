@@ -32,3 +32,6 @@ export * from './engine/transitions';
 
 // Re-export platform capability constants
 export * from './capabilities';
+
+// Re-export ghost-kitchen operator roles/capabilities (chef-app scoped)
+export * from './kitchen-capabilities';

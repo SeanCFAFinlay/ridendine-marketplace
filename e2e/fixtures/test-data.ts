@@ -31,6 +31,20 @@ export const deterministicFixtures = {
     /** Unassigned pending delivery UUID (for driver "accept offer" test) */
     pendingDeliveryId: 'b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2',
   },
+  /**
+   * Ghost-kitchen (commissary) fixtures: the Every Bite Yum kitchen runs TWO
+   * brands from one shared pool. Drives the multi-brand isolation + shared-pool
+   * decrement e2e. See supabase/seeds/seed.sql "GHOST-KITCHEN" section.
+   */
+  ghostKitchen: {
+    kitchenId: 'aa000000-0001-4000-8000-000000000001',
+    brands: {
+      everyBiteYum: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+      saigonPhoHouse: 'd5000000-0002-4000-8000-000000000002',
+    },
+    /** A shared inventory item that must read identically from both brands. */
+    sharedInventoryItemId: '1a170000-0003-4000-8000-000000000003',
+  },
   stripe: {
     publishableKeyPrefix: 'pk_test_',
     paymentIntentPrefix: 'pi_',

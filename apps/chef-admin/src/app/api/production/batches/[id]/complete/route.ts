@@ -17,7 +17,7 @@ import {
 } from '@ridendine/utils';
 import {
   getEngine,
-  getChefActorContext,
+  getOperatorKitchenContext,
   errorResponse,
   successResponse,
 } from '@/lib/engine';
@@ -28,23 +28,24 @@ type RouteParams = { params: Promise<{ id: string }> };
 
 async function adjustInventory(
   admin: SupabaseClient,
-  storefrontId: string,
+  kitchenId: string,
   inventoryItemId: string,
   signedQty: number,
   movementType: 'consume_batch' | 'receive',
   batchId: string,
   userId: string
 ) {
+  // inventory_items is the shared commissary pool — scope by kitchen_id.
   const { data: item } = await admin
     .from('inventory_items')
     .select('id, current_quantity')
     .eq('id', inventoryItemId)
-    .eq('storefront_id', storefrontId)
+    .eq('kitchen_id', kitchenId)
     .maybeSingle();
   if (!item) return false;
 
   await admin.from('inventory_stock_movements').insert({
-    storefront_id: storefrontId,
+    kitchen_id: kitchenId,
     inventory_item_id: inventoryItemId,
     movement_type: movementType,
     quantity: signedQty,
@@ -57,20 +58,20 @@ async function adjustInventory(
     .from('inventory_items')
     .update({ current_quantity: applyMovementToQuantity(Number(item.current_quantity ?? 0), signedQty) })
     .eq('id', inventoryItemId)
-    .eq('storefront_id', storefrontId);
+    .eq('kitchen_id', kitchenId);
   return true;
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-batch-complete',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/production/batches/[id]/complete',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -81,14 +82,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return errorResponse('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Invalid completion', 400);
     }
     const c = parsed.data;
-    const storefrontId = chefContext.storefrontId;
     const admin = createAdminClient() as unknown as SupabaseClient;
 
     const { data: batch } = await admin
       .from('production_batches')
       .select('id, status')
       .eq('id', id)
-      .eq('storefront_id', storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .maybeSingle();
     if (!batch) return errorResponse('NOT_FOUND', 'Batch not found', 404);
     if (batch.status === 'completed' || batch.status === 'cancelled') {
@@ -105,12 +105,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       if (input.consumed || !input.inventory_item_id || Number(input.quantity ?? 0) <= 0) continue;
       const ok = await adjustInventory(
         admin,
-        storefrontId,
+        ctx.kitchenId,
         input.inventory_item_id,
         -Math.abs(Number(input.quantity)),
         'consume_batch',
         id,
-        chefContext.actor.userId
+        ctx.actor.userId
       );
       if (ok) {
         consumed += 1;
@@ -130,12 +130,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       if (output.inventoryItemId && output.quantity > 0) {
         const ok = await adjustInventory(
           admin,
-          storefrontId,
+          ctx.kitchenId,
           output.inventoryItemId,
           Math.abs(output.quantity),
           'receive',
           id,
-          chefContext.actor.userId
+          ctx.actor.userId
         );
         if (ok) produced += 1;
       }
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         completed_at: new Date().toISOString(),
       })
       .eq('id', id)
-      .eq('storefront_id', storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .select('*')
       .single();
 
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       action: 'update',
       entityType: 'production_batch',
       entityId: id,
-      actor: chefContext.actor,
+      actor: ctx.actor,
       afterState: { status: 'completed', actualYield: c.actualYield, consumed, produced },
     });
 

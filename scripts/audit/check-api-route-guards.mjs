@@ -34,6 +34,7 @@ const APPROVED_GUARDS = [
   'guardPlatformApi',
   'getCustomerActorContext',
   'getChefActorContext',
+  'getOperatorKitchenContext',
   'getDriverActorContext',
   'validateEngineProcessorHeaders',
   'verifyStripeWebhook',
