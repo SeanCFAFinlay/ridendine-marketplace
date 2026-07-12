@@ -43,7 +43,7 @@ export async function GET() {
       admin
         .from('orders')
         .select('total, created_at')
-        .eq('storefront_id', ctx.storefrontId)
+        .eq('storefront_id', ctx.storefrontId ?? '')
         .neq('is_test', true)
         .in('status', ['delivered', 'completed'])
         .gte('created_at', cutoff.toISOString()),

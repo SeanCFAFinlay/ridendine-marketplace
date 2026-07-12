@@ -30,25 +30,6 @@ AS $$
   );
 $$;
 
--- Reusable operator-ownership predicate for ghost-kitchen (commissary) scope.
--- Mirrors is_chef_of_storefront but one level up: true when the current user
--- owns the chef_kitchen that a shared-ops row (inventory, suppliers, labour,
--- production) belongs to. Shared-ops tables scope by kitchen_id; per-brand
--- tables (recipes, menu, orders, tickets) keep is_chef_of_storefront.
-CREATE OR REPLACE FUNCTION public.is_operator_of_kitchen(k_id UUID)
-RETURNS BOOLEAN
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM chef_kitchens ck
-    JOIN chef_profiles cp ON cp.id = ck.chef_id
-    WHERE ck.id = k_id AND cp.user_id = auth.uid()
-  );
-$$;
-
 -- ------------------------------------------------------------------
 -- recipes / recipe_versions
 -- ------------------------------------------------------------------

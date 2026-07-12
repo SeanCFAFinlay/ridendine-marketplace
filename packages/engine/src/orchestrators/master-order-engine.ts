@@ -18,6 +18,7 @@ import {
 } from './order-state-machine';
 import type { PaymentAdapter } from '../types/payment-adapter';
 import { createLedgerService } from '../services/ledger.service';
+import { applyOrderStockConsumption } from '../services/order-consumption.writer';
 import { PLATFORM_FEE_PERCENT, DRIVER_PAYOUT_PERCENT } from '../constants';
 
 // ==========================================
@@ -509,6 +510,21 @@ export class MasterOrderEngine {
     if (!orderRow) return result;
 
     const order = orderRow as OrderData;
+
+    // Ghost-kitchen: decrement the shared inventory pool for what this order
+    // consumed. Idempotent + best-effort — a failure here must NEVER undo a
+    // completed order (inventory is a downstream cache; the ledger below is the
+    // money path). No-op for kitchens/brands without recipes mapped.
+    try {
+      await applyOrderStockConsumption(this.client, {
+        orderId: input.orderId,
+        storefrontId: order.storefront_id,
+        actorUserId: input.actorId,
+      });
+    } catch (err) {
+      console.error('[order.completed] inventory auto-decrement failed:', err);
+    }
+
     const { data: deliveryRow } = await this.client
       .from('deliveries')
       .select('driver_id')

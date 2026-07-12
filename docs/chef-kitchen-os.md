@@ -200,10 +200,86 @@ coverage — runnable now, ready to wire once types regenerate:
 - Verified: `@ridendine/engine` typecheck clean; full engine vitest **1082
   passing** (24 new + no regressions).
 
-**Deferred to post-regen (needs applied schema + regenerated types):** B.3 DB
-subscriber on `order.completed` (idempotent on `metadata->>'order_id'`, writes
-`consume_order` movements + keeps `current_quantity` cache in step); B.1
-multi-brand KDS aggregation; B.2 consolidated prep plan; B.4 auto-reorder → draft
-PO; C.1 writer job (cron) + C.3 `/api/costs/pnl` route + dashboard page. These
-wire the verified pure cores into routes/DB, which can't typecheck until
-`pnpm db:generate` runs.
+### Phase B.3 — auto-decrement subscriber WIRED (done & verified)
+`services/order-consumption.writer.ts` (`applyOrderStockConsumption`) loads a
+completed order's lines → active `menu_item_recipe_versions` →
+`recipe_ingredients`, runs the pure consumption core, writes `consume_order`
+movements tagged `{ order_id, storefront_id }`, and keeps `current_quantity` in
+step. Wired into `MasterOrderEngine.completeOrder` right beside the ledger
+capture as a **best-effort, idempotent** side-effect (wrapped so it can never
+undo a completed order). Idempotency is enforced in code (skip if the order
+already has consume_order movements) AND by the DB backstop
+`uq_inventory_movements_consume_order` (unique per order+item, partial on
+`consume_order`) so a duplicate `order.completed` cannot double-decrement.
+Verifiable now because the order engine uses the untyped Supabase client —
+engine typecheck clean, all 33 order-engine tests still green (the completeOrder
+ledger test exercises the graceful-failure path when the mock lacks inventory
+tables).
+
+### Phases B & C — route layer AUTHORED (verify after `pnpm db:generate`)
+Built on the verified pure cores; these use the typed Supabase client so they
+compile only after types regenerate, but are guarded (`audit:guards` 0 unguarded)
+and correct-by-design:
+- **B.1 multi-brand KDS** — `GET /api/kitchen/board` aggregates active
+  `kitchen_tickets` across all brands under the kitchen, groups by station, tags
+  each ticket with brand + colour; `/dashboard/kitchen/board` page (station
+  columns, brand-coloured cards, 10s poll). Additive — per-brand overview
+  untouched.
+- **B.2 consolidated prep** — pure `consolidatePrepDemand` (3 tests) +
+  `GET /api/production/plan/consolidated` (cross-brand demand → one ingredient
+  prep sheet with contributing brands).
+- **B.4 auto-reorder** — `POST /api/inventory/reorder` drafts one PO per
+  preferred supplier at qty-back-to-par for low-stock items (operator submits
+  before send); guarded + rate-limited + audit-logged.
+- **C.2/C.3 P&L** — `GET /api/costs/pnl` (reuses costs/overview data gathering +
+  verified `computeKitchenPnl`/`allocateLaborByOrderCount`) +
+  `/dashboard/kitchen/pnl` page; sidebar "Costs & P&L" repointed.
+
+**Still deferred:** C.1 labour-allocation WRITER cron (persists daily
+`labor_allocations`; the P&L route allocates on-the-fly meanwhile, so this is
+persistence/optimisation, not a blocker); realtime hydration on the KDS board
+(poll for now); **Phase D** (payroll export, clone-a-brand, advisory AI). And the
+owner-gated Phase A sign-off: `pnpm db:migrate && pnpm db:generate` (unblocks
+chef-admin typecheck for every route above) + `supabase db reset` (pgTAP + seed).
+
+### Phase D — payroll export + brand toolkit (built)
+- **D.1 payroll (Path A export)** — migration `00061_pay_periods.sql` (kitchen-
+  scoped `pay_periods` open→locked→exported, + a DB trigger
+  `trg_block_locked_time_entries` that rejects edits/deletes of `time_entries`
+  inside a locked/exported period — real freeze). Pure `payroll.service`
+  (`computePayrollRun` + `payrollRunToCsv`): hours × snapshotted rate = gross,
+  open shifts excluded, **no CPP/EI/tax** (provider withholds). 4 tests, verified.
+  Routes: `GET`/`POST /api/labor/pay-periods`, `POST …/[id]/lock`,
+  `GET …/[id]/export?format=csv|json` (marks exported, audit-logged).
+- **D.2 clone-a-brand** — `POST /api/kitchen/brands/clone`: new storefront under
+  the SAME kitchen (inactive until reviewed), optionally copying a template's
+  menu categories/items, recipes + active versions + ingredients, and active
+  recipe links — all FK-remapped, but `inventory_item_id` KEPT so the clone draws
+  from the shared kitchen pool (no inventory duplicated). Packaging copy is a
+  follow-up. Guarded + rate-limited + audit-logged.
+- **D.3 advisory AI** — intentionally NOT built: optional, and autonomous AI over
+  pay/inventory would violate the deterministic-over-AI non-negotiable.
+
+Verified after D: engine typecheck clean, engine vitest **1089 passing** (31 new
+across six pure cores), `audit:guards` 179 routes / 0 unguarded.
+
+### CORRECTION — production recovery (supersedes the "in-place edit" notes above)
+The re-scope was originally written by editing migrations `00054`–`00060` in
+place, on the belief they were never applied. They **were** applied to production
+(2026-07-01) with `storefront_id`, so editing applied history was wrong: it never
+reached prod and it red-lined the Vercel build (`kitchen_id` absent from the
+generated types). Corrected:
+- Reverted the in-place edits to `00054`–`00059`; deleted the standalone
+  `00061`. Those files again match what production actually applied.
+- Added forward-only **`00062_ghost_kitchen_kitchen_scope.sql`** (the correct
+  artifact for an applied schema): `ALTER`s the live tables to add `kitchen_id`
+  (backfilled), relaxes `storefront_id` to nullable, adds `is_operator_of_kitchen`,
+  swaps RLS to operator, adds movement `metadata` + `consume_order` unique index,
+  dual-scopes labour, and creates `pay_periods` + freeze trigger. Idempotent +
+  transactional; applied to production against empty tables (near-zero risk).
+- Regenerated `packages/db/src/generated/database.types.ts` from the live schema
+  and removed the stale hand-written Kitchen-OS overrides in `database.merged.ts`
+  that shadowed it. All packages + apps typecheck; the Vercel build is unblocked.
+
+Future schema changes to these tables must be forward migrations (`00063+`), never
+edits to `00054`–`00062`.

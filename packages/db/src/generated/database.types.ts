@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       admin_notes: {
@@ -99,6 +74,102 @@ export type Database = {
           session_id?: string | null
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      api_partner_keys: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          partner_id: string
+          require_signature: boolean
+          revoked_at: string | null
+          scopes: Json
+          signing_secret: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          partner_id: string
+          require_signature?: boolean
+          revoked_at?: string | null
+          scopes?: Json
+          signing_secret?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          partner_id?: string
+          require_signature?: boolean
+          revoked_at?: string | null
+          scopes?: Json
+          signing_secret?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_partner_keys_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "api_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_partner_keys_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_api_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_partners: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          rate_limit_per_min: number
+          slug: string
+          test_mode: boolean
+          updated_at: string
+          webhook_secret: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          rate_limit_per_min?: number
+          slug: string
+          test_mode?: boolean
+          updated_at?: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          rate_limit_per_min?: number
+          slug?: string
+          test_mode?: boolean
+          updated_at?: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
         }
         Relationships: []
       }
@@ -759,6 +830,9 @@ export type Database = {
           paused_by: string | null
           paused_reason: string | null
           phone: string | null
+          prep_time_buffer_minutes: number
+          service_state: string
+          service_state_reason: string | null
           slug: string
           storefront_state: string | null
           total_reviews: number
@@ -789,6 +863,9 @@ export type Database = {
           paused_by?: string | null
           paused_reason?: string | null
           phone?: string | null
+          prep_time_buffer_minutes?: number
+          service_state?: string
+          service_state_reason?: string | null
           slug: string
           storefront_state?: string | null
           total_reviews?: number
@@ -819,6 +896,9 @@ export type Database = {
           paused_by?: string | null
           paused_reason?: string | null
           phone?: string | null
+          prep_time_buffer_minutes?: number
+          service_state?: string
+          service_state_reason?: string | null
           slug?: string
           storefront_state?: string | null
           total_reviews?: number
@@ -1417,6 +1497,35 @@ export type Database = {
           },
         ]
       }
+      driver_notification_preferences: {
+        Row: {
+          created_at: string
+          driver_id: string
+          preferences: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          driver_id: string
+          preferences?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string
+          preferences?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_notification_preferences_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: true
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       driver_payout_accounts: {
         Row: {
           charges_enabled: boolean
@@ -1832,6 +1941,453 @@ export type Database = {
           },
         ]
       }
+      inventory_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          detail: Json
+          id: string
+          inventory_item_id: string
+          kitchen_id: string
+          resolved_at: string | null
+          status: string
+          storefront_id: string | null
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          detail?: Json
+          id?: string
+          inventory_item_id: string
+          kitchen_id: string
+          resolved_at?: string | null
+          status?: string
+          storefront_id?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          detail?: Json
+          id?: string
+          inventory_item_id?: string
+          kitchen_id?: string
+          resolved_at?: string | null
+          status?: string
+          storefront_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_alerts_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_alerts_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_alerts_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_count_lines: {
+        Row: {
+          count_id: string
+          counted_quantity: number
+          created_at: string
+          id: string
+          inventory_item_id: string
+          system_quantity: number | null
+          variance: number | null
+        }
+        Insert: {
+          count_id: string
+          counted_quantity: number
+          created_at?: string
+          id?: string
+          inventory_item_id: string
+          system_quantity?: number | null
+          variance?: number | null
+        }
+        Update: {
+          count_id?: string
+          counted_quantity?: number
+          created_at?: string
+          id?: string
+          inventory_item_id?: string
+          system_quantity?: number | null
+          variance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_count_lines_count_id_fkey"
+            columns: ["count_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_count_lines_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_counts: {
+        Row: {
+          completed_at: string | null
+          counted_by: string | null
+          created_at: string
+          id: string
+          kitchen_id: string
+          note: string | null
+          status: string
+          storefront_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          counted_by?: string | null
+          created_at?: string
+          id?: string
+          kitchen_id: string
+          note?: string | null
+          status?: string
+          storefront_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          counted_by?: string | null
+          created_at?: string
+          id?: string
+          kitchen_id?: string
+          note?: string | null
+          status?: string
+          storefront_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_counts_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_counts_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_items: {
+        Row: {
+          category: string | null
+          cost_per_unit: number
+          created_at: string
+          current_quantity: number
+          expiry_date: string | null
+          id: string
+          is_active: boolean
+          kitchen_id: string
+          lot_code: string | null
+          name: string
+          par_quantity: number | null
+          preferred_supplier_id: string | null
+          reorder_point: number | null
+          storage_location_id: string | null
+          storefront_id: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          cost_per_unit?: number
+          created_at?: string
+          current_quantity?: number
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean
+          kitchen_id: string
+          lot_code?: string | null
+          name: string
+          par_quantity?: number | null
+          preferred_supplier_id?: string | null
+          reorder_point?: number | null
+          storage_location_id?: string | null
+          storefront_id?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          cost_per_unit?: number
+          created_at?: string
+          current_quantity?: number
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean
+          kitchen_id?: string
+          lot_code?: string | null
+          name?: string
+          par_quantity?: number | null
+          preferred_supplier_id?: string | null
+          reorder_point?: number | null
+          storage_location_id?: string | null
+          storefront_id?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_storage_location_id_fkey"
+            columns: ["storage_location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_stock_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          inventory_item_id: string
+          kitchen_id: string
+          metadata: Json
+          movement_type: string
+          note: string | null
+          quantity: number
+          reference_id: string | null
+          reference_type: string | null
+          storefront_id: string | null
+          unit_cost: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inventory_item_id: string
+          kitchen_id: string
+          metadata?: Json
+          movement_type: string
+          note?: string | null
+          quantity: number
+          reference_id?: string | null
+          reference_type?: string | null
+          storefront_id?: string | null
+          unit_cost?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inventory_item_id?: string
+          kitchen_id?: string
+          metadata?: Json
+          movement_type?: string
+          note?: string | null
+          quantity?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          storefront_id?: string | null
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_stock_movements_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_stock_movements_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_stock_movements_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_waste_events: {
+        Row: {
+          cost_value: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          inventory_item_id: string
+          kitchen_id: string
+          quantity: number
+          reason: string | null
+          storefront_id: string | null
+        }
+        Insert: {
+          cost_value?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inventory_item_id: string
+          kitchen_id: string
+          quantity: number
+          reason?: string | null
+          storefront_id?: string | null
+        }
+        Update: {
+          cost_value?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inventory_item_id?: string
+          kitchen_id?: string
+          quantity?: number
+          reason?: string | null
+          storefront_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_waste_events_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_waste_events_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_waste_events_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kitchen_daily_summaries: {
+        Row: {
+          avg_prep_minutes: number | null
+          closed_at: string
+          closed_by: string | null
+          created_at: string
+          food_cost: number | null
+          gross_sales: number
+          id: string
+          labor_cost: number | null
+          late_tickets: number
+          metadata: Json
+          net_sales: number
+          notes: string | null
+          orders_completed: number
+          packaging_cost: number | null
+          prime_cost: number | null
+          refund_loss: number | null
+          reopened_at: string | null
+          sold_out_items: Json
+          storefront_id: string
+          summary_date: string
+          top_sellers: Json
+          updated_at: string
+          waste_value: number | null
+        }
+        Insert: {
+          avg_prep_minutes?: number | null
+          closed_at?: string
+          closed_by?: string | null
+          created_at?: string
+          food_cost?: number | null
+          gross_sales?: number
+          id?: string
+          labor_cost?: number | null
+          late_tickets?: number
+          metadata?: Json
+          net_sales?: number
+          notes?: string | null
+          orders_completed?: number
+          packaging_cost?: number | null
+          prime_cost?: number | null
+          refund_loss?: number | null
+          reopened_at?: string | null
+          sold_out_items?: Json
+          storefront_id: string
+          summary_date: string
+          top_sellers?: Json
+          updated_at?: string
+          waste_value?: number | null
+        }
+        Update: {
+          avg_prep_minutes?: number | null
+          closed_at?: string
+          closed_by?: string | null
+          created_at?: string
+          food_cost?: number | null
+          gross_sales?: number
+          id?: string
+          labor_cost?: number | null
+          late_tickets?: number
+          metadata?: Json
+          net_sales?: number
+          notes?: string | null
+          orders_completed?: number
+          packaging_cost?: number | null
+          prime_cost?: number | null
+          refund_loss?: number | null
+          reopened_at?: string | null
+          sold_out_items?: Json
+          storefront_id?: string
+          summary_date?: string
+          top_sellers?: Json
+          updated_at?: string
+          waste_value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_daily_summaries_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kitchen_queue_entries: {
         Row: {
           actual_prep_minutes: number | null
@@ -1882,6 +2438,581 @@ export type Database = {
           },
           {
             foreignKeyName: "kitchen_queue_entries_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kitchen_shifts: {
+        Row: {
+          created_at: string
+          id: string
+          kitchen_id: string
+          notes: string | null
+          role: string | null
+          scheduled_end: string
+          scheduled_start: string
+          staff_id: string
+          station_id: string | null
+          storefront_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kitchen_id: string
+          notes?: string | null
+          role?: string | null
+          scheduled_end: string
+          scheduled_start: string
+          staff_id: string
+          station_id?: string | null
+          storefront_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kitchen_id?: string
+          notes?: string | null
+          role?: string | null
+          scheduled_end?: string
+          scheduled_start?: string
+          staff_id?: string
+          station_id?: string | null
+          storefront_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_shifts_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_shifts_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_shifts_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_shifts_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kitchen_staff: {
+        Row: {
+          created_at: string
+          hourly_rate: number
+          id: string
+          is_active: boolean
+          kitchen_id: string
+          name: string
+          role: string | null
+          station_id: string | null
+          storefront_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          hourly_rate?: number
+          id?: string
+          is_active?: boolean
+          kitchen_id: string
+          name: string
+          role?: string | null
+          station_id?: string | null
+          storefront_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          hourly_rate?: number
+          id?: string
+          is_active?: boolean
+          kitchen_id?: string
+          name?: string
+          role?: string | null
+          station_id?: string | null
+          storefront_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_staff_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_staff_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_staff_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kitchen_station_assignments: {
+        Row: {
+          assigned_at: string
+          created_at: string
+          id: string
+          kitchen_id: string
+          released_at: string | null
+          shift_id: string | null
+          staff_id: string
+          station_id: string
+          storefront_id: string | null
+        }
+        Insert: {
+          assigned_at?: string
+          created_at?: string
+          id?: string
+          kitchen_id: string
+          released_at?: string | null
+          shift_id?: string | null
+          staff_id: string
+          station_id: string
+          storefront_id?: string | null
+        }
+        Update: {
+          assigned_at?: string
+          created_at?: string
+          id?: string
+          kitchen_id?: string
+          released_at?: string | null
+          shift_id?: string | null
+          staff_id?: string
+          station_id?: string
+          storefront_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_station_assignments_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_station_assignments_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_station_assignments_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_station_assignments_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_station_assignments_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kitchen_stations: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          kitchen_id: string
+          name: string
+          sort_order: number
+          storefront_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kitchen_id: string
+          name: string
+          sort_order?: number
+          storefront_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kitchen_id?: string
+          name?: string
+          sort_order?: number
+          storefront_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_stations_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_stations_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kitchen_ticket_events: {
+        Row: {
+          actor_user_id: string | null
+          created_at: string
+          detail: Json
+          event_type: string
+          from_status: string | null
+          id: string
+          storefront_id: string
+          ticket_id: string
+          to_status: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          created_at?: string
+          detail?: Json
+          event_type: string
+          from_status?: string | null
+          id?: string
+          storefront_id: string
+          ticket_id: string
+          to_status?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          created_at?: string
+          detail?: Json
+          event_type?: string
+          from_status?: string | null
+          id?: string
+          storefront_id?: string
+          ticket_id?: string
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_ticket_events_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_ticket_events_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kitchen_ticket_items: {
+        Row: {
+          allergen_flags: string[]
+          completed_at: string | null
+          created_at: string
+          id: string
+          menu_item_id: string | null
+          modifiers_snapshot: Json
+          order_item_id: string | null
+          quantity: number
+          special_instructions: string | null
+          started_at: string | null
+          station_id: string | null
+          status: string
+          ticket_id: string
+          updated_at: string
+        }
+        Insert: {
+          allergen_flags?: string[]
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          menu_item_id?: string | null
+          modifiers_snapshot?: Json
+          order_item_id?: string | null
+          quantity?: number
+          special_instructions?: string | null
+          started_at?: string | null
+          station_id?: string | null
+          status?: string
+          ticket_id: string
+          updated_at?: string
+        }
+        Update: {
+          allergen_flags?: string[]
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          menu_item_id?: string | null
+          modifiers_snapshot?: Json
+          order_item_id?: string | null
+          quantity?: number
+          special_instructions?: string | null
+          started_at?: string | null
+          station_id?: string | null
+          status?: string
+          ticket_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_ticket_items_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_ticket_items_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_ticket_items_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_ticket_items_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kitchen_tickets: {
+        Row: {
+          created_at: string
+          id: string
+          kitchen_status: string
+          metadata: Json
+          notes: string | null
+          order_id: string
+          packed_at: string | null
+          packing_started_at: string | null
+          priority: number
+          problem_reason: string | null
+          queue_entry_id: string | null
+          ready_at: string | null
+          started_at: string | null
+          station_id: string | null
+          storefront_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kitchen_status?: string
+          metadata?: Json
+          notes?: string | null
+          order_id: string
+          packed_at?: string | null
+          packing_started_at?: string | null
+          priority?: number
+          problem_reason?: string | null
+          queue_entry_id?: string | null
+          ready_at?: string | null
+          started_at?: string | null
+          station_id?: string | null
+          storefront_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kitchen_status?: string
+          metadata?: Json
+          notes?: string | null
+          order_id?: string
+          packed_at?: string | null
+          packing_started_at?: string | null
+          priority?: number
+          problem_reason?: string | null
+          queue_entry_id?: string | null
+          ready_at?: string | null
+          started_at?: string | null
+          station_id?: string | null
+          storefront_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_tickets_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_tickets_queue_entry_id_fkey"
+            columns: ["queue_entry_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_queue_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_tickets_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_tickets_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labor_allocations: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          kitchen_id: string
+          storefront_id: string
+          target_id: string | null
+          target_type: string | null
+          time_entry_id: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          kitchen_id: string
+          storefront_id: string
+          target_id?: string | null
+          target_type?: string | null
+          time_entry_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          kitchen_id?: string
+          storefront_id?: string
+          target_id?: string | null
+          target_type?: string | null
+          time_entry_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labor_allocations_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labor_allocations_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labor_allocations_time_entry_id_fkey"
+            columns: ["time_entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labor_cost_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          kitchen_id: string
+          labor_cost: number
+          labor_hours: number
+          snapshot_date: string
+          staff_count: number
+          storefront_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kitchen_id: string
+          labor_cost?: number
+          labor_hours?: number
+          snapshot_date: string
+          staff_count?: number
+          storefront_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kitchen_id?: string
+          labor_cost?: number
+          labor_hours?: number
+          snapshot_date?: string
+          staff_count?: number
+          storefront_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labor_cost_snapshots_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labor_cost_snapshots_storefront_id_fkey"
             columns: ["storefront_id"]
             isOneToOne: false
             referencedRelation: "chef_storefronts"
@@ -2185,6 +3316,84 @@ export type Database = {
             columns: ["menu_item_id"]
             isOneToOne: false
             referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_item_packaging: {
+        Row: {
+          created_at: string
+          id: string
+          menu_item_id: string
+          packaging_item_id: string
+          quantity: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          menu_item_id: string
+          packaging_item_id: string
+          quantity?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          menu_item_id?: string
+          packaging_item_id?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_item_packaging_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_item_packaging_packaging_item_id_fkey"
+            columns: ["packaging_item_id"]
+            isOneToOne: false
+            referencedRelation: "packaging_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_item_recipe_versions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          menu_item_id: string
+          recipe_version_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          menu_item_id: string
+          recipe_version_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          menu_item_id?: string
+          recipe_version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_item_recipe_versions_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_item_recipe_versions_recipe_version_id_fkey"
+            columns: ["recipe_version_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_versions"
             referencedColumns: ["id"]
           },
         ]
@@ -2591,6 +3800,82 @@ export type Database = {
           },
         ]
       }
+      order_pack_checks: {
+        Row: {
+          allergy_label_applied: boolean
+          bag_count: number
+          checked_items: Json
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          order_id: string
+          photo_url: string | null
+          sauces_included: boolean
+          sealed: boolean
+          storefront_id: string
+          ticket_id: string | null
+          updated_at: string
+          utensils_included: boolean
+        }
+        Insert: {
+          allergy_label_applied?: boolean
+          bag_count?: number
+          checked_items?: Json
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          photo_url?: string | null
+          sauces_included?: boolean
+          sealed?: boolean
+          storefront_id: string
+          ticket_id?: string | null
+          updated_at?: string
+          utensils_included?: boolean
+        }
+        Update: {
+          allergy_label_applied?: boolean
+          bag_count?: number
+          checked_items?: Json
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          photo_url?: string | null
+          sauces_included?: boolean
+          sealed?: boolean
+          storefront_id?: string
+          ticket_id?: string | null
+          updated_at?: string
+          utensils_included?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_pack_checks_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_pack_checks_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_pack_checks_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_status_history: {
         Row: {
           changed_by: string | null
@@ -2650,7 +3935,9 @@ export type Database = {
           estimated_ready_at: string | null
           exception_count: number | null
           id: string
+          is_test: boolean
           order_number: string
+          partner_id: string | null
           payment_intent_id: string | null
           payment_status: string
           prep_started_at: string | null
@@ -2659,6 +3946,7 @@ export type Database = {
           ready_at: string | null
           rejection_notes: string | null
           rejection_reason: string | null
+          scheduled_for: string | null
           service_fee: number
           special_instructions: string | null
           status: string
@@ -2686,7 +3974,9 @@ export type Database = {
           estimated_ready_at?: string | null
           exception_count?: number | null
           id?: string
+          is_test?: boolean
           order_number: string
+          partner_id?: string | null
           payment_intent_id?: string | null
           payment_status?: string
           prep_started_at?: string | null
@@ -2695,6 +3985,7 @@ export type Database = {
           ready_at?: string | null
           rejection_notes?: string | null
           rejection_reason?: string | null
+          scheduled_for?: string | null
           service_fee?: number
           special_instructions?: string | null
           status?: string
@@ -2722,7 +4013,9 @@ export type Database = {
           estimated_ready_at?: string | null
           exception_count?: number | null
           id?: string
+          is_test?: boolean
           order_number?: string
+          partner_id?: string | null
           payment_intent_id?: string | null
           payment_status?: string
           prep_started_at?: string | null
@@ -2731,6 +4024,7 @@ export type Database = {
           ready_at?: string | null
           rejection_notes?: string | null
           rejection_reason?: string | null
+          scheduled_for?: string | null
           service_fee?: number
           special_instructions?: string | null
           status?: string
@@ -2757,10 +4051,178 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orders_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "api_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_api_stats"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_storefront_id_fkey"
             columns: ["storefront_id"]
             isOneToOne: false
             referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      packaging_items: {
+        Row: {
+          cost_per_unit: number
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          storefront_id: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          cost_per_unit?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          storefront_id: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cost_per_unit?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          storefront_id?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "packaging_items_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_webhook_deliveries: {
+        Row: {
+          attempts: number
+          created_at: string
+          delivered_at: string | null
+          domain_event_id: string
+          event_type: string
+          id: string
+          last_error: string | null
+          max_attempts: number
+          next_attempt_at: string
+          order_id: string | null
+          partner_id: string
+          payload: Json
+          response_code: number | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          delivered_at?: string | null
+          domain_event_id: string
+          event_type: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          next_attempt_at?: string
+          order_id?: string | null
+          partner_id: string
+          payload?: Json
+          response_code?: number | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          delivered_at?: string | null
+          domain_event_id?: string
+          event_type?: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          next_attempt_at?: string
+          order_id?: string | null
+          partner_id?: string
+          payload?: Json
+          response_code?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_webhook_deliveries_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "api_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_webhook_deliveries_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_api_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pay_periods: {
+        Row: {
+          created_at: string
+          ends_on: string
+          exported_at: string | null
+          id: string
+          kitchen_id: string
+          locked_at: string | null
+          locked_by: string | null
+          starts_on: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ends_on: string
+          exported_at?: string | null
+          id?: string
+          kitchen_id: string
+          locked_at?: string | null
+          locked_by?: string | null
+          starts_on: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ends_on?: string
+          exported_at?: string | null
+          id?: string
+          kitchen_id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          starts_on?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pay_periods_kitchen_id_fkey"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
             referencedColumns: ["id"]
           },
         ]
@@ -3041,6 +4503,379 @@ export type Database = {
         }
         Relationships: []
       }
+      prep_task_events: {
+        Row: {
+          actor_user_id: string | null
+          created_at: string
+          detail: Json
+          event_type: string
+          from_status: string | null
+          id: string
+          kitchen_id: string
+          prep_task_id: string
+          storefront_id: string | null
+          to_status: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          created_at?: string
+          detail?: Json
+          event_type: string
+          from_status?: string | null
+          id?: string
+          kitchen_id: string
+          prep_task_id: string
+          storefront_id?: string | null
+          to_status?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          created_at?: string
+          detail?: Json
+          event_type?: string
+          from_status?: string | null
+          id?: string
+          kitchen_id?: string
+          prep_task_id?: string
+          storefront_id?: string | null
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prep_task_events_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prep_task_events_prep_task_id_fkey"
+            columns: ["prep_task_id"]
+            isOneToOne: false
+            referencedRelation: "prep_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prep_task_events_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prep_tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_quantity: number
+          created_at: string
+          created_by: string | null
+          id: string
+          kitchen_id: string
+          menu_item_id: string | null
+          notes: string | null
+          plan_date: string
+          station_id: string | null
+          status: string
+          storefront_id: string | null
+          target_quantity: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_quantity?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kitchen_id: string
+          menu_item_id?: string | null
+          notes?: string | null
+          plan_date: string
+          station_id?: string | null
+          status?: string
+          storefront_id?: string | null
+          target_quantity?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_quantity?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kitchen_id?: string
+          menu_item_id?: string | null
+          notes?: string | null
+          plan_date?: string
+          station_id?: string | null
+          status?: string
+          storefront_id?: string | null
+          target_quantity?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prep_tasks_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prep_tasks_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prep_tasks_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prep_tasks_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_batch_inputs: {
+        Row: {
+          batch_id: string
+          consumed: boolean
+          created_at: string
+          id: string
+          inventory_item_id: string | null
+          quantity: number
+          unit: string | null
+        }
+        Insert: {
+          batch_id: string
+          consumed?: boolean
+          created_at?: string
+          id?: string
+          inventory_item_id?: string | null
+          quantity?: number
+          unit?: string | null
+        }
+        Update: {
+          batch_id?: string
+          consumed?: boolean
+          created_at?: string
+          id?: string
+          inventory_item_id?: string | null
+          quantity?: number
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_batch_inputs_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_batch_inputs_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_batch_outputs: {
+        Row: {
+          batch_id: string
+          created_at: string
+          id: string
+          inventory_item_id: string | null
+          menu_item_id: string | null
+          quantity: number
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          id?: string
+          inventory_item_id?: string | null
+          menu_item_id?: string | null
+          quantity?: number
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          id?: string
+          inventory_item_id?: string | null
+          menu_item_id?: string | null
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_batch_outputs_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_batch_outputs_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_batch_outputs_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_batches: {
+        Row: {
+          actual_yield: number | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          kitchen_id: string
+          menu_item_id: string | null
+          name: string
+          notes: string | null
+          plan_date: string | null
+          planned_yield: number | null
+          recipe_version_id: string | null
+          started_at: string | null
+          status: string
+          storefront_id: string | null
+          updated_at: string
+          waste_quantity: number
+        }
+        Insert: {
+          actual_yield?: number | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kitchen_id: string
+          menu_item_id?: string | null
+          name: string
+          notes?: string | null
+          plan_date?: string | null
+          planned_yield?: number | null
+          recipe_version_id?: string | null
+          started_at?: string | null
+          status?: string
+          storefront_id?: string | null
+          updated_at?: string
+          waste_quantity?: number
+        }
+        Update: {
+          actual_yield?: number | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kitchen_id?: string
+          menu_item_id?: string | null
+          name?: string
+          notes?: string | null
+          plan_date?: string | null
+          planned_yield?: number | null
+          recipe_version_id?: string | null
+          started_at?: string | null
+          status?: string
+          storefront_id?: string | null
+          updated_at?: string
+          waste_quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_batches_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_batches_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_batches_recipe_version_id_fkey"
+            columns: ["recipe_version_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_batches_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promo_code_usages: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          order_id: string | null
+          promo_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          order_id?: string | null
+          promo_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          order_id?: string | null
+          promo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_code_usages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_usages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_usages_promo_id_fkey"
+            columns: ["promo_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promo_codes: {
         Row: {
           code: string
@@ -3052,15 +4887,11 @@ export type Database = {
           id: string
           is_active: boolean
           max_discount: number | null
-          max_uses: number | null
           min_order_amount: number | null
           starts_at: string | null
-          times_used: number
           updated_at: string
           usage_count: number
           usage_limit: number | null
-          valid_from: string | null
-          valid_until: string | null
         }
         Insert: {
           code: string
@@ -3072,15 +4903,11 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_discount?: number | null
-          max_uses?: number | null
           min_order_amount?: number | null
           starts_at?: string | null
-          times_used?: number
           updated_at?: string
           usage_count?: number
           usage_limit?: number | null
-          valid_from?: string | null
-          valid_until?: string | null
         }
         Update: {
           code?: string
@@ -3092,17 +4919,147 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_discount?: number | null
-          max_uses?: number | null
           min_order_amount?: number | null
           starts_at?: string | null
-          times_used?: number
           updated_at?: string
           usage_count?: number
           usage_limit?: number | null
-          valid_from?: string | null
-          valid_until?: string | null
         }
         Relationships: []
+      }
+      purchase_order_lines: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          inventory_item_id: string | null
+          pack_size: number
+          purchase_order_id: string
+          quantity: number
+          received_quantity: number
+          supplier_item_id: string | null
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          inventory_item_id?: string | null
+          pack_size?: number
+          purchase_order_id: string
+          quantity?: number
+          received_quantity?: number
+          supplier_item_id?: string | null
+          unit_cost?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          inventory_item_id?: string | null
+          pack_size?: number
+          purchase_order_id?: string
+          quantity?: number
+          received_quantity?: number
+          supplier_item_id?: string | null
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_lines_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_lines_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_lines_supplier_item_id_fkey"
+            columns: ["supplier_item_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expected_at: string | null
+          id: string
+          kitchen_id: string
+          notes: string | null
+          received_at: string | null
+          reference: string | null
+          status: string
+          storefront_id: string | null
+          submitted_at: string | null
+          supplier_id: string | null
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expected_at?: string | null
+          id?: string
+          kitchen_id: string
+          notes?: string | null
+          received_at?: string | null
+          reference?: string | null
+          status?: string
+          storefront_id?: string | null
+          submitted_at?: string | null
+          supplier_id?: string | null
+          total_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expected_at?: string | null
+          id?: string
+          kitchen_id?: string
+          notes?: string | null
+          received_at?: string | null
+          reference?: string | null
+          status?: string
+          storefront_id?: string | null
+          submitted_at?: string | null
+          supplier_id?: string | null
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       push_subscriptions: {
         Row: {
@@ -3133,6 +5090,299 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      receiving_batches: {
+        Row: {
+          created_at: string
+          id: string
+          kitchen_id: string
+          note: string | null
+          purchase_order_id: string | null
+          received_by: string | null
+          storefront_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kitchen_id: string
+          note?: string | null
+          purchase_order_id?: string | null
+          received_by?: string | null
+          storefront_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kitchen_id?: string
+          note?: string | null
+          purchase_order_id?: string | null
+          received_by?: string | null
+          storefront_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receiving_batches_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receiving_batches_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receiving_batches_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_cost_snapshots: {
+        Row: {
+          created_at: string
+          food_cost_pct: number | null
+          id: string
+          ingredient_cost: number
+          menu_item_id: string | null
+          packaging_cost: number
+          recipe_version_id: string
+          sell_price: number | null
+          snapshot_reason: string | null
+          total_cost: number
+        }
+        Insert: {
+          created_at?: string
+          food_cost_pct?: number | null
+          id?: string
+          ingredient_cost: number
+          menu_item_id?: string | null
+          packaging_cost?: number
+          recipe_version_id: string
+          sell_price?: number | null
+          snapshot_reason?: string | null
+          total_cost: number
+        }
+        Update: {
+          created_at?: string
+          food_cost_pct?: number | null
+          id?: string
+          ingredient_cost?: number
+          menu_item_id?: string | null
+          packaging_cost?: number
+          recipe_version_id?: string
+          sell_price?: number | null
+          snapshot_reason?: string | null
+          total_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_cost_snapshots_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_cost_snapshots_recipe_version_id_fkey"
+            columns: ["recipe_version_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_ingredients: {
+        Row: {
+          cost_per_unit: number
+          created_at: string
+          id: string
+          inventory_item_id: string | null
+          name: string
+          quantity: number
+          recipe_version_id: string
+          sort_order: number
+          unit: string
+          waste_factor: number
+        }
+        Insert: {
+          cost_per_unit?: number
+          created_at?: string
+          id?: string
+          inventory_item_id?: string | null
+          name: string
+          quantity?: number
+          recipe_version_id: string
+          sort_order?: number
+          unit?: string
+          waste_factor?: number
+        }
+        Update: {
+          cost_per_unit?: number
+          created_at?: string
+          id?: string
+          inventory_item_id?: string | null
+          name?: string
+          quantity?: number
+          recipe_version_id?: string
+          sort_order?: number
+          unit?: string
+          waste_factor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_ingredients_inventory_item_fk"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_recipe_version_id_fkey"
+            columns: ["recipe_version_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_steps: {
+        Row: {
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          instruction: string
+          phase: string
+          recipe_version_id: string
+          station: string | null
+          step_number: number
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          instruction: string
+          phase?: string
+          recipe_version_id: string
+          station?: string | null
+          step_number: number
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          instruction?: string
+          phase?: string
+          recipe_version_id?: string
+          station?: string | null
+          step_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_steps_recipe_version_id_fkey"
+            columns: ["recipe_version_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_versions: {
+        Row: {
+          batch_yield: number
+          created_at: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          portion_size: string | null
+          recipe_id: string
+          updated_at: string
+          version: number
+          waste_factor: number
+        }
+        Insert: {
+          batch_yield?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          portion_size?: string | null
+          recipe_id: string
+          updated_at?: string
+          version?: number
+          waste_factor?: number
+        }
+        Update: {
+          batch_yield?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          portion_size?: string | null
+          recipe_id?: string
+          updated_at?: string
+          version?: number
+          waste_factor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_versions_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          menu_item_id: string | null
+          name: string
+          storefront_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          menu_item_id?: string | null
+          name: string
+          storefront_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          menu_item_id?: string | null
+          name?: string
+          storefront_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipes_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       referral_codes: {
         Row: {
@@ -3462,6 +5712,51 @@ export type Database = {
         }
         Relationships: []
       }
+      storage_locations: {
+        Row: {
+          created_at: string
+          id: string
+          kitchen_id: string
+          name: string
+          storefront_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kitchen_id: string
+          name: string
+          storefront_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kitchen_id?: string
+          name?: string
+          storefront_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storage_locations_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storage_locations_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storefront_state_changes: {
         Row: {
           changed_by: string | null
@@ -3613,6 +5908,198 @@ export type Database = {
           },
         ]
       }
+      supplier_items: {
+        Row: {
+          created_at: string
+          id: string
+          inventory_item_id: string | null
+          is_active: boolean
+          kitchen_id: string
+          name: string
+          pack_size: number
+          pack_unit: string | null
+          storefront_id: string | null
+          supplier_id: string
+          supplier_sku: string | null
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inventory_item_id?: string | null
+          is_active?: boolean
+          kitchen_id: string
+          name: string
+          pack_size?: number
+          pack_unit?: string | null
+          storefront_id?: string | null
+          supplier_id: string
+          supplier_sku?: string | null
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inventory_item_id?: string | null
+          is_active?: boolean
+          kitchen_id?: string
+          name?: string
+          pack_size?: number
+          pack_unit?: string | null
+          storefront_id?: string | null
+          supplier_id?: string
+          supplier_sku?: string | null
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_items_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_items_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_items_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_price_history: {
+        Row: {
+          created_at: string
+          effective_at: string
+          id: string
+          kitchen_id: string
+          pack_size: number | null
+          source: string
+          storefront_id: string | null
+          supplier_item_id: string
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          effective_at?: string
+          id?: string
+          kitchen_id: string
+          pack_size?: number | null
+          source?: string
+          storefront_id?: string | null
+          supplier_item_id: string
+          unit_cost: number
+        }
+        Update: {
+          created_at?: string
+          effective_at?: string
+          id?: string
+          kitchen_id?: string
+          pack_size?: number | null
+          source?: string
+          storefront_id?: string | null
+          supplier_item_id?: string
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_price_history_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_price_history_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_price_history_supplier_item_id_fkey"
+            columns: ["supplier_item_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          kitchen_id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          storefront_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          kitchen_id: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          storefront_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          kitchen_id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          storefront_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suppliers_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           assigned_to: string | null
@@ -3734,6 +6221,74 @@ export type Database = {
         }
         Relationships: []
       }
+      time_entries: {
+        Row: {
+          clock_in: string
+          clock_out: string | null
+          created_at: string
+          hourly_rate: number
+          id: string
+          kitchen_id: string
+          shift_id: string | null
+          staff_id: string
+          storefront_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          clock_in?: string
+          clock_out?: string | null
+          created_at?: string
+          hourly_rate?: number
+          id?: string
+          kitchen_id: string
+          shift_id?: string | null
+          staff_id: string
+          storefront_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          clock_in?: string
+          clock_out?: string | null
+          created_at?: string
+          hourly_rate?: number
+          id?: string
+          kitchen_id?: string
+          shift_id?: string | null
+          staff_id?: string
+          storefront_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_kitchen_fk"
+            columns: ["kitchen_id"]
+            isOneToOne: false
+            referencedRelation: "chef_kitchens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "chef_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       geography_columns: {
@@ -3818,6 +6373,23 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      partner_api_stats: {
+        Row: {
+          id: string | null
+          is_active: boolean | null
+          key_last_used_at: string | null
+          last_order_at: string | null
+          name: string | null
+          orders: number | null
+          rate_limit_per_min: number | null
+          revenue: number | null
+          slug: string | null
+          test_mode: boolean | null
+          webhooks_delivered: number | null
+          webhooks_failing: number | null
+        }
+        Relationships: []
       }
     }
     Functions: {
@@ -4096,8 +6668,24 @@ export type Database = {
         }[]
       }
       get_chef_id: { Args: { user_id: string }; Returns: string }
+      get_chef_liability_summaries: {
+        Args: { p_limit?: number }
+        Returns: {
+          amount: number
+          id: string
+          name: string
+        }[]
+      }
       get_customer_id: { Args: { user_id: string }; Returns: string }
       get_driver_id: { Args: { user_id: string }; Returns: string }
+      get_driver_liability_summaries: {
+        Args: { p_limit?: number }
+        Returns: {
+          amount: number
+          id: string
+          name: string
+        }[]
+      }
       get_financial_summary: {
         Args: { end_date: string; start_date: string }
         Returns: {
@@ -4141,7 +6729,9 @@ export type Database = {
         Args: { storefront_id: string }
         Returns: undefined
       }
+      is_chef_of_storefront: { Args: { sf_id: string }; Returns: boolean }
       is_finance_staff: { Args: { uid: string }; Returns: boolean }
+      is_operator_of_kitchen: { Args: { k_id: string }; Returns: boolean }
       is_ops_admin: { Args: { user_id: string }; Returns: boolean }
       is_platform_staff: { Args: { uid: string }; Returns: boolean }
       is_support_staff: { Args: { uid: string }; Returns: boolean }
@@ -4798,456 +7388,6 @@ export type Database = {
       }
     }
   }
-  storage: {
-    Tables: {
-      buckets: {
-        Row: {
-          allowed_mime_types: string[] | null
-          avif_autodetection: boolean | null
-          created_at: string | null
-          file_size_limit: number | null
-          id: string
-          name: string
-          owner: string | null
-          owner_id: string | null
-          public: boolean | null
-          type: Database["storage"]["Enums"]["buckettype"]
-          updated_at: string | null
-        }
-        Insert: {
-          allowed_mime_types?: string[] | null
-          avif_autodetection?: boolean | null
-          created_at?: string | null
-          file_size_limit?: number | null
-          id: string
-          name: string
-          owner?: string | null
-          owner_id?: string | null
-          public?: boolean | null
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string | null
-        }
-        Update: {
-          allowed_mime_types?: string[] | null
-          avif_autodetection?: boolean | null
-          created_at?: string | null
-          file_size_limit?: number | null
-          id?: string
-          name?: string
-          owner?: string | null
-          owner_id?: string | null
-          public?: boolean | null
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      buckets_analytics: {
-        Row: {
-          created_at: string
-          deleted_at: string | null
-          format: string
-          id: string
-          name: string
-          type: Database["storage"]["Enums"]["buckettype"]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          deleted_at?: string | null
-          format?: string
-          id?: string
-          name: string
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          deleted_at?: string | null
-          format?: string
-          id?: string
-          name?: string
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      buckets_vectors: {
-        Row: {
-          created_at: string
-          id: string
-          type: Database["storage"]["Enums"]["buckettype"]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id: string
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      migrations: {
-        Row: {
-          executed_at: string | null
-          hash: string
-          id: number
-          name: string
-        }
-        Insert: {
-          executed_at?: string | null
-          hash: string
-          id: number
-          name: string
-        }
-        Update: {
-          executed_at?: string | null
-          hash?: string
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
-      objects: {
-        Row: {
-          bucket_id: string | null
-          created_at: string | null
-          id: string
-          last_accessed_at: string | null
-          metadata: Json | null
-          name: string | null
-          owner: string | null
-          owner_id: string | null
-          path_tokens: string[] | null
-          updated_at: string | null
-          user_metadata: Json | null
-          version: string | null
-        }
-        Insert: {
-          bucket_id?: string | null
-          created_at?: string | null
-          id?: string
-          last_accessed_at?: string | null
-          metadata?: Json | null
-          name?: string | null
-          owner?: string | null
-          owner_id?: string | null
-          path_tokens?: string[] | null
-          updated_at?: string | null
-          user_metadata?: Json | null
-          version?: string | null
-        }
-        Update: {
-          bucket_id?: string | null
-          created_at?: string | null
-          id?: string
-          last_accessed_at?: string | null
-          metadata?: Json | null
-          name?: string | null
-          owner?: string | null
-          owner_id?: string | null
-          path_tokens?: string[] | null
-          updated_at?: string | null
-          user_metadata?: Json | null
-          version?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "objects_bucketId_fkey"
-            columns: ["bucket_id"]
-            isOneToOne: false
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      s3_multipart_uploads: {
-        Row: {
-          bucket_id: string
-          created_at: string
-          id: string
-          in_progress_size: number
-          key: string
-          metadata: Json | null
-          owner_id: string | null
-          upload_signature: string
-          user_metadata: Json | null
-          version: string
-        }
-        Insert: {
-          bucket_id: string
-          created_at?: string
-          id: string
-          in_progress_size?: number
-          key: string
-          metadata?: Json | null
-          owner_id?: string | null
-          upload_signature: string
-          user_metadata?: Json | null
-          version: string
-        }
-        Update: {
-          bucket_id?: string
-          created_at?: string
-          id?: string
-          in_progress_size?: number
-          key?: string
-          metadata?: Json | null
-          owner_id?: string | null
-          upload_signature?: string
-          user_metadata?: Json | null
-          version?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "s3_multipart_uploads_bucket_id_fkey"
-            columns: ["bucket_id"]
-            isOneToOne: false
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      s3_multipart_uploads_parts: {
-        Row: {
-          bucket_id: string
-          created_at: string
-          etag: string
-          id: string
-          key: string
-          owner_id: string | null
-          part_number: number
-          size: number
-          upload_id: string
-          version: string
-        }
-        Insert: {
-          bucket_id: string
-          created_at?: string
-          etag: string
-          id?: string
-          key: string
-          owner_id?: string | null
-          part_number: number
-          size?: number
-          upload_id: string
-          version: string
-        }
-        Update: {
-          bucket_id?: string
-          created_at?: string
-          etag?: string
-          id?: string
-          key?: string
-          owner_id?: string | null
-          part_number?: number
-          size?: number
-          upload_id?: string
-          version?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "s3_multipart_uploads_parts_bucket_id_fkey"
-            columns: ["bucket_id"]
-            isOneToOne: false
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "s3_multipart_uploads_parts_upload_id_fkey"
-            columns: ["upload_id"]
-            isOneToOne: false
-            referencedRelation: "s3_multipart_uploads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vector_indexes: {
-        Row: {
-          bucket_id: string
-          created_at: string
-          data_type: string
-          dimension: number
-          distance_metric: string
-          id: string
-          metadata_configuration: Json | null
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          bucket_id: string
-          created_at?: string
-          data_type: string
-          dimension: number
-          distance_metric: string
-          id?: string
-          metadata_configuration?: Json | null
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          bucket_id?: string
-          created_at?: string
-          data_type?: string
-          dimension?: number
-          distance_metric?: string
-          id?: string
-          metadata_configuration?: Json | null
-          name?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vector_indexes_bucket_id_fkey"
-            columns: ["bucket_id"]
-            isOneToOne: false
-            referencedRelation: "buckets_vectors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      allow_any_operation: {
-        Args: { expected_operations: string[] }
-        Returns: boolean
-      }
-      allow_only_operation: {
-        Args: { expected_operation: string }
-        Returns: boolean
-      }
-      can_insert_object: {
-        Args: { bucketid: string; metadata: Json; name: string; owner: string }
-        Returns: undefined
-      }
-      extension: { Args: { name: string }; Returns: string }
-      filename: { Args: { name: string }; Returns: string }
-      foldername: { Args: { name: string }; Returns: string[] }
-      get_common_prefix: {
-        Args: { p_delimiter: string; p_key: string; p_prefix: string }
-        Returns: string
-      }
-      get_size_by_bucket: {
-        Args: never
-        Returns: {
-          bucket_id: string
-          size: number
-        }[]
-      }
-      list_multipart_uploads_with_delimiter: {
-        Args: {
-          bucket_id: string
-          delimiter_param: string
-          max_keys?: number
-          next_key_token?: string
-          next_upload_token?: string
-          prefix_param: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          key: string
-        }[]
-      }
-      list_objects_with_delimiter: {
-        Args: {
-          _bucket_id: string
-          delimiter_param: string
-          max_keys?: number
-          next_token?: string
-          prefix_param: string
-          sort_order?: string
-          start_after?: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          last_accessed_at: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }[]
-      }
-      operation: { Args: never; Returns: string }
-      search: {
-        Args: {
-          bucketname: string
-          levels?: number
-          limits?: number
-          offsets?: number
-          prefix: string
-          search?: string
-          sortcolumn?: string
-          sortorder?: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          last_accessed_at: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }[]
-      }
-      search_by_timestamp: {
-        Args: {
-          p_bucket_id: string
-          p_level: number
-          p_limit: number
-          p_prefix: string
-          p_sort_column: string
-          p_sort_column_after: string
-          p_sort_order: string
-          p_start_after: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          key: string
-          last_accessed_at: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }[]
-      }
-      search_v2: {
-        Args: {
-          bucket_name: string
-          levels?: number
-          limits?: number
-          prefix: string
-          sort_column?: string
-          sort_column_after?: string
-          sort_order?: string
-          start_after?: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          key: string
-          last_accessed_at: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }[]
-      }
-    }
-    Enums: {
-      buckettype: "STANDARD" | "ANALYTICS" | "VECTOR"
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
@@ -5368,15 +7508,7 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
-  },
-  storage: {
-    Enums: {
-      buckettype: ["STANDARD", "ANALYTICS", "VECTOR"],
-    },
   },
 } as const
