@@ -262,3 +262,24 @@ chef-admin typecheck for every route above) + `supabase db reset` (pgTAP + seed)
 
 Verified after D: engine typecheck clean, engine vitest **1089 passing** (31 new
 across six pure cores), `audit:guards` 179 routes / 0 unguarded.
+
+### CORRECTION — production recovery (supersedes the "in-place edit" notes above)
+The re-scope was originally written by editing migrations `00054`–`00060` in
+place, on the belief they were never applied. They **were** applied to production
+(2026-07-01) with `storefront_id`, so editing applied history was wrong: it never
+reached prod and it red-lined the Vercel build (`kitchen_id` absent from the
+generated types). Corrected:
+- Reverted the in-place edits to `00054`–`00059`; deleted the standalone
+  `00061`. Those files again match what production actually applied.
+- Added forward-only **`00062_ghost_kitchen_kitchen_scope.sql`** (the correct
+  artifact for an applied schema): `ALTER`s the live tables to add `kitchen_id`
+  (backfilled), relaxes `storefront_id` to nullable, adds `is_operator_of_kitchen`,
+  swaps RLS to operator, adds movement `metadata` + `consume_order` unique index,
+  dual-scopes labour, and creates `pay_periods` + freeze trigger. Idempotent +
+  transactional; applied to production against empty tables (near-zero risk).
+- Regenerated `packages/db/src/generated/database.types.ts` from the live schema
+  and removed the stale hand-written Kitchen-OS overrides in `database.merged.ts`
+  that shadowed it. All packages + apps typecheck; the Vercel build is unblocked.
+
+Future schema changes to these tables must be forward migrations (`00063+`), never
+edits to `00054`–`00062`.
