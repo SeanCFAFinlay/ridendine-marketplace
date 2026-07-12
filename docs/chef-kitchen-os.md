@@ -241,3 +241,24 @@ persistence/optimisation, not a blocker); realtime hydration on the KDS board
 (poll for now); **Phase D** (payroll export, clone-a-brand, advisory AI). And the
 owner-gated Phase A sign-off: `pnpm db:migrate && pnpm db:generate` (unblocks
 chef-admin typecheck for every route above) + `supabase db reset` (pgTAP + seed).
+
+### Phase D — payroll export + brand toolkit (built)
+- **D.1 payroll (Path A export)** — migration `00061_pay_periods.sql` (kitchen-
+  scoped `pay_periods` open→locked→exported, + a DB trigger
+  `trg_block_locked_time_entries` that rejects edits/deletes of `time_entries`
+  inside a locked/exported period — real freeze). Pure `payroll.service`
+  (`computePayrollRun` + `payrollRunToCsv`): hours × snapshotted rate = gross,
+  open shifts excluded, **no CPP/EI/tax** (provider withholds). 4 tests, verified.
+  Routes: `GET`/`POST /api/labor/pay-periods`, `POST …/[id]/lock`,
+  `GET …/[id]/export?format=csv|json` (marks exported, audit-logged).
+- **D.2 clone-a-brand** — `POST /api/kitchen/brands/clone`: new storefront under
+  the SAME kitchen (inactive until reviewed), optionally copying a template's
+  menu categories/items, recipes + active versions + ingredients, and active
+  recipe links — all FK-remapped, but `inventory_item_id` KEPT so the clone draws
+  from the shared kitchen pool (no inventory duplicated). Packaging copy is a
+  follow-up. Guarded + rate-limited + audit-logged.
+- **D.3 advisory AI** — intentionally NOT built: optional, and autonomous AI over
+  pay/inventory would violate the deterministic-over-AI non-negotiable.
+
+Verified after D: engine typecheck clean, engine vitest **1089 passing** (31 new
+across six pure cores), `audit:guards` 179 routes / 0 unguarded.

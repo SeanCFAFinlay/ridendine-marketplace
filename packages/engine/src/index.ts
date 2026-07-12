@@ -118,6 +118,7 @@ export * from './services/inventory-consumption.service';
 export * from './services/labor-allocation.service';
 export * from './services/kitchen-pnl.service';
 export * from './services/prep-consolidation.service';
+export * from './services/payroll.service';
 export * from './services/order-consumption.writer';
 export * from './services/chefs.service';
 export * from './services/customers.service';
