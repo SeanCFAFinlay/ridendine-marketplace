@@ -11,21 +11,21 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 /** POST /api/labor/clock-out — close the open time entry (by id or staff). */
 export async function POST(request: NextRequest) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-clock-out',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/labor/clock-out',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -38,11 +38,11 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient() as unknown as SupabaseClient;
 
-    // Find the open entry, scoped to this storefront.
+    // Find the open entry, scoped to this kitchen.
     let query = admin
       .from('time_entries')
       .select('*')
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .is('clock_out', null);
     query = timeEntryId ? query.eq('id', timeEntryId) : query.eq('staff_id', staffId as string);
     const { data: entry } = await query.order('clock_in', { ascending: false }).limit(1).maybeSingle();
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       .from('time_entries')
       .update({ clock_out: clockOut })
       .eq('id', entry.id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .select('*')
       .single();
 

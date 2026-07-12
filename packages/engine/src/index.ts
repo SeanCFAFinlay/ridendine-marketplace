@@ -114,6 +114,9 @@ export {
 // Legacy services (for backwards compatibility)
 export * from './services/orders.service';
 export * from './services/costing.service';
+export * from './services/inventory-consumption.service';
+export * from './services/labor-allocation.service';
+export * from './services/kitchen-pnl.service';
 export * from './services/chefs.service';
 export * from './services/customers.service';
 export * from './services/permissions.service';

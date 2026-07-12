@@ -10,7 +10,7 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,14 +19,14 @@ type RouteParams = { params: Promise<{ id: string }> };
 /** PATCH /api/production/prep-tasks/[id] — persist prep progress / status. */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-prep-task-update',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'PATCH:/api/production/prep-tasks/[id]',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .from('prep_tasks')
       .select('id, status')
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .maybeSingle();
     if (!existing) return errorResponse('NOT_FOUND', 'Prep task not found', 404);
 
@@ -59,7 +59,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .from('prep_tasks')
       .update(patch)
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .select('*')
       .single();
 
@@ -72,11 +72,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (u.status !== undefined && u.status !== existing.status) {
       await admin.from('prep_task_events').insert({
         prep_task_id: id,
-        storefront_id: chefContext.storefrontId,
+        kitchen_id: ctx.kitchenId,
         event_type: 'status_changed',
         from_status: existing.status,
         to_status: u.status,
-        actor_user_id: chefContext.actor.userId,
+        actor_user_id: ctx.actor.userId,
       });
     }
 

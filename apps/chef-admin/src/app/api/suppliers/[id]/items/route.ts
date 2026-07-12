@@ -10,7 +10,7 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,14 +19,14 @@ type RouteParams = { params: Promise<{ id: string }> };
 /** POST /api/suppliers/[id]/items — add a catalogue item and seed price history. */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-supplier-item-create',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/suppliers/[id]/items',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -40,12 +40,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const admin = createAdminClient() as unknown as SupabaseClient;
 
-    // Confirm the supplier belongs to this storefront.
+    // Confirm the supplier belongs to this kitchen.
     const { data: supplier } = await admin
       .from('suppliers')
       .select('id')
       .eq('id', supplierId)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .maybeSingle();
     if (!supplier) return errorResponse('NOT_FOUND', 'Supplier not found', 404);
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .from('supplier_items')
       .insert({
         supplier_id: supplierId,
-        storefront_id: chefContext.storefrontId,
+        kitchen_id: ctx.kitchenId,
         inventory_item_id: it.inventoryItemId ?? null,
         supplier_sku: it.supplierSku ?? null,
         name: it.name,
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Seed price history so future cost changes are traceable.
     await admin.from('supplier_price_history').insert({
       supplier_item_id: item.id,
-      storefront_id: chefContext.storefrontId,
+      kitchen_id: ctx.kitchenId,
       unit_cost: it.unitCost,
       pack_size: it.packSize,
       source: 'manual',

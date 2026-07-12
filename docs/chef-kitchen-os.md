@@ -78,3 +78,132 @@ storefront; ops sees all; customers/drivers excluded) and Zod schemas in
 `@ridendine/validation`. Recommended next stage: **Stage 5 — kitchen ticket
 internal state** (unlocks packing column + close‑of‑day without touching public
 order statuses).
+
+## Ghost-Kitchen (multi-brand commissary) upgrade
+
+Turning `apps/chef-admin` + `@ridendine/engine` into a **multi-brand
+ghost-kitchen OS**: the commissary `chef_kitchen` runs many brand
+`chef_storefronts` from one SHARED pool of inventory, suppliers, staff/labour
+and production, with one KDS. Independent single-storefront chefs stay
+onboardable and unchanged — this layer is additive.
+
+**Scope rule:** shared-ops tables scope by `kitchen_id`; per-brand tables keep
+`storefront_id`.
+- Shared (`kitchen_id`): `kitchen_stations`, `storage_locations`,
+  `inventory_items`, `inventory_stock_movements`, `inventory_counts`,
+  `inventory_count_lines` (via parent), `inventory_waste_events`,
+  `inventory_alerts`, `suppliers`, `supplier_items`, `purchase_orders`,
+  `purchase_order_lines` (via parent), `receiving_batches`,
+  `supplier_price_history`, `prep_tasks`, `prep_task_events`,
+  `production_batches`, `production_batch_inputs`/`outputs` (via parent),
+  `kitchen_staff`, `kitchen_shifts`, `time_entries`,
+  `kitchen_station_assignments`.
+- Per-brand (`storefront_id`): `recipes*`, `menu_*`, `packaging_*`, `orders`,
+  `kitchen_tickets`, `kitchen_ticket_items`, `kitchen_daily_summaries`.
+- Dual-scope (both): `labor_allocations`, `labor_cost_snapshots` — owned by the
+  kitchen (RLS) but attributed to a brand storefront.
+
+### Phase A — Re-scope + operator foundation (in progress)
+Delivered so far (files authored; **owner must apply migrations**):
+- **A.1 migrations re-scoped in place** (never-applied set, so edited directly,
+  not a new forward migration): `00054` (`kitchen_stations`), `00056`
+  (inventory), `00057` (suppliers/receiving), `00058` (production), `00059`
+  (labour). `inventory_stock_movements` gained a `metadata` JSONB column +
+  partial index `idx_inventory_movements_order` for Phase B brand-attribution &
+  idempotent auto-decrement. Parent-scoped policies (`inventory_count_lines`,
+  `purchase_order_lines`, `production_batch_*`) rewritten to reach `kitchen_id`
+  through their parent. `00060` `kitchen_daily_summaries` intentionally left
+  per-brand.
+- **A.2 RLS** — `public.is_operator_of_kitchen(k_id)` added in `00055` (mirrors
+  `is_chef_of_storefront` at kitchen level). `00054`'s station policy inlines the
+  `chef_kitchens` join because the helper is defined one migration later. pgTAP
+  `supabase/tests/rls/kitchen_scope.sql` proves cross-kitchen isolation, insert
+  refusal, ops read-all, and non-owner denial via real `authenticated`-role RLS.
+- **A.3 roles** — `packages/types/src/kitchen-capabilities.ts`
+  (`KITCHEN_ROLES` operator/head_chef/line_staff + `KITCHEN_CAPS`), exported from
+  the types barrel. Platform capability matrix untouched.
+- **A.4 context** — `getOperatorKitchenContext()` in
+  `packages/engine/src/server.ts` → `{ actor, kitchenId, storefrontId|null }`;
+  active brand from validated `x-brand-id` header/cookie (spoof-safe: re-checked
+  against `kitchen_id`). Re-exported via `apps/chef-admin/src/lib/engine.ts`.
+
+**Owner action required before A.5/A.6 can be typecheck-verified:**
+`pnpm db:migrate` on a fresh local DB, then `pnpm db:generate` (regenerates
+`database.types.ts` with `kitchen_id`), then `supabase db reset` to run the
+pgTAP. Remaining: **A.5** repoint chef-admin inventory/suppliers/PO/labour/
+production routes + repositories + Zod schemas to `getOperatorKitchenContext` /
+`kitchen_id`; **A.6** `KitchenScopeProvider` + `BrandSwitcher` + Kitchen-vs-Brand
+nav split. Decisions locked: labour split = order-count share; payroll = Path A
+export; billing = single Ridendine merchant, brands not partner-listed.
+
+**A.5 — routes repointed (done, unverified until type regen).** All 26
+chef-admin shared-ops routes under `api/{inventory,suppliers,purchase-orders,
+labor,production}` now call `getOperatorKitchenContext` and filter/insert by
+`kitchen_id`. Zod schemas needed no change (scope comes from context, not the
+body). `getOperatorKitchenContext` added to the `audit:guards` APPROVED_GUARDS
+allowlist → `pnpm audit:guards` passes (0 unguarded). Brand-scoped reads that
+these routes legitimately keep on `storefront_id`: `orders`/`menu_items` in
+`production/forecast` and `orders` in `labor/costs`.
+- KNOWN Phase-C follow-up: `labor/costs` computes labour-vs-sales but labour is
+  now kitchen-wide while its `orders` read is single-brand — the labour % is
+  only meaningful once Phase C aggregates sales across the kitchen's brands. Left
+  as-is (brand sales) for now; flagged, not fabricated.
+- When no brand is active (`storefrontId` null), brand-scoped reads return empty
+  rather than error — graceful "needs setup", consistent with no-fake-data.
+
+**A.6 — kitchen scope UI (done).** `components/layout/kitchen-scope-provider.tsx`
+(client context: kitchen, brands, active brand; `setActiveBrand` writes the
+`x-brand-id` cookie + `router.refresh()`), `brand-switcher.tsx` (top-bar; hidden
+for single-brand chefs, null for non-operators), `lib/kitchen-scope.ts` (server
+loader; returns null → shell unchanged for independent chefs). `dashboard/layout`
+now async, wraps the shell in the provider (never throws). Sidebar nav split into
+Overview / **Kitchen** (shared: KDS, Inventory, Suppliers, Production, Labour,
+Costs & P&L) / **Brand** (Orders, Menu, Recipes, Storefront, Hours, Reviews) /
+Business, with the active brand shown on the Brand header.
+
+**Verified now:** `@ridendine/types` + `@ridendine/engine` typecheck clean;
+`audit:guards` passes. **Still blocked on owner:** `pnpm db:migrate` +
+`pnpm db:generate` (chef-admin typecheck can't pass until `kitchen_id` is in the
+generated types), `supabase db reset` (pgTAP). **Then remaining for ACCEPTANCE A:**
+update the chef-admin jest route tests that assert `storefront_id` behaviour to
+`kitchen_id`, and a small dev seed (1 kitchen → 2 brands, shared pool) to
+exercise the two-brand isolation e2e.
+
+**Dev seed (done).** `supabase/seeds/seed.sql` now makes the Every Bite Yum
+kitchen a commissary running TWO brands — `every-bite-yum` +
+`saigon-pho-house` (both under kitchen `aa000000-0001`, same operator) — plus a
+shared inventory pool (5 items + opening-stock ledger), a shared supplier,
+station, and two staff. Registered in `e2e/fixtures/test-data.ts` under
+`ghostKitchen`. (Note: `saigon-pho-house` is a placeholder 2nd brand; rename once
+the final 9 brand names are chosen.) There were no existing jest tests on the
+re-scoped routes, so no route-test rewrite was needed.
+
+### Phase B / C — pure engine cores (done & VERIFIED, DB wiring deferred)
+Authored the money-critical math as pure, DB-free services with full vitest
+coverage — runnable now, ready to wire once types regenerate:
+- **B.3 auto-decrement core** — `services/inventory-consumption.service.ts`:
+  `computeOrderStockConsumption` / `buildConsumeOrderMovements`. Given a completed
+  order's lines + their active recipes, aggregates per-shared-item consumption
+  (waste-grossed, per-portion via batch yield), brand-agnostic, signed via
+  `signedMovementQuantity('consume_order', …)`. 10 tests incl. the shared-pool and
+  "applied once decrements exactly / a second apply double-decrements → why the DB
+  guard is required" properties.
+- **C.1 labour allocation core** — `services/labor-allocation.service.ts`:
+  `allocateLaborByOrderCount(total, brands)` = order-count share with
+  largest-remainder whole-cent apportionment so per-brand amounts sum EXACTLY to
+  the total (no drift, no invented pennies). 7 tests.
+- **C.2/C.3 kitchen P&L core** — `services/kitchen-pnl.service.ts`:
+  `allocateBySalesShare` (overhead by sales, exact cents) + `computeKitchenPnl`
+  → per-brand contribution/food%/labour%/prime% and the kitchen rollup with
+  prime-cost % vs a 60% target and best/worst brand. Brands with no recipe/labour
+  data are `needsSetup` with null contribution — never zero-as-fact. 7 tests.
+- Verified: `@ridendine/engine` typecheck clean; full engine vitest **1082
+  passing** (24 new + no regressions).
+
+**Deferred to post-regen (needs applied schema + regenerated types):** B.3 DB
+subscriber on `order.completed` (idempotent on `metadata->>'order_id'`, writes
+`consume_order` movements + keeps `current_quantity` cache in step); B.1
+multi-brand KDS aggregation; B.2 consolidated prep plan; B.4 auto-reorder → draft
+PO; C.1 writer job (cron) + C.3 `/api/costs/pnl` route + dashboard page. These
+wire the verified pure cores into routes/DB, which can't typecheck until
+`pnpm db:generate` runs.

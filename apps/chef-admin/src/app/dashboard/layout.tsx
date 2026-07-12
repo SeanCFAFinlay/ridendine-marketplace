@@ -1,5 +1,7 @@
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
+import { KitchenScopeProvider } from '@/components/layout/kitchen-scope-provider';
+import { getKitchenScopeData } from '@/lib/kitchen-scope';
 
 // NOTE: The redirect-based role check that briefly lived here (Phase C of
 // the 2026-05-13 stabilization pass) caused a redirect loop on chef.ridendine.ca:
@@ -13,18 +15,24 @@ import { Header } from '@/components/layout/header';
 // dedicated /onboarding entry route or a "you don't have a chef account" page,
 // not via an in-layout redirect that fights the middleware.
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Ghost-kitchen scope for the shell (null for independent/onboarding chefs —
+  // the shell then renders exactly as before). Never throws the layout.
+  const scope = await getKitchenScopeData().catch(() => null);
+
   return (
-    <div className="flex min-h-screen overflow-x-hidden">
-      <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Header />
-        <main className="min-w-0 flex-1 overflow-x-hidden p-4 sm:p-6">{children}</main>
+    <KitchenScopeProvider scope={scope}>
+      <div className="flex min-h-screen overflow-x-hidden">
+        <Sidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Header />
+          <main className="min-w-0 flex-1 overflow-x-hidden p-4 sm:p-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </KitchenScopeProvider>
   );
 }

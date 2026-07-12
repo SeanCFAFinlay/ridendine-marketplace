@@ -11,7 +11,7 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,14 +22,14 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: NextRequest) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-inventory-waste',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/inventory/waste',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       .from('inventory_items')
       .select('id, current_quantity, cost_per_unit')
       .eq('id', inventoryItemId)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .maybeSingle();
     if (!item) return errorResponse('NOT_FOUND', 'Inventory item not found', 404);
 
@@ -55,12 +55,12 @@ export async function POST(request: NextRequest) {
     const { data: wasteEvent, error: wasteErr } = await admin
       .from('inventory_waste_events')
       .insert({
-        storefront_id: chefContext.storefrontId,
+        kitchen_id: ctx.kitchenId,
         inventory_item_id: inventoryItemId,
         quantity,
         reason: reason ?? null,
         cost_value: costValue,
-        created_by: chefContext.actor.userId,
+        created_by: ctx.actor.userId,
       })
       .select('*')
       .single();
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     const signedQty = signedMovementQuantity('waste', quantity);
     await admin.from('inventory_stock_movements').insert({
-      storefront_id: chefContext.storefrontId,
+      kitchen_id: ctx.kitchenId,
       inventory_item_id: inventoryItemId,
       movement_type: 'waste',
       quantity: signedQty,
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       reference_type: 'waste_event',
       reference_id: wasteEvent.id,
       note: reason ?? null,
-      created_by: chefContext.actor.userId,
+      created_by: ctx.actor.userId,
     });
 
     const newQuantity = applyMovementToQuantity(Number(item.current_quantity ?? 0), signedQty);
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       .from('inventory_items')
       .update({ current_quantity: newQuantity })
       .eq('id', inventoryItemId)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .select('*')
       .single();
 

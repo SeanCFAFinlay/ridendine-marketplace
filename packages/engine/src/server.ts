@@ -7,7 +7,7 @@
 import { createServerClient, createAdminClient } from '@ridendine/db';
 import { createCentralEngine, type CentralEngine } from './index';
 import type { ActorContext, ActorRole } from '@ridendine/types';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 let engineInstance: CentralEngine | null = null;
 
@@ -116,6 +116,80 @@ export async function getChefBasicContext(): Promise<{ userId: string; chefId: s
     chefId: chefProfile.id,
     chefStatus: chefProfile.status,
     storefrontId: storefront?.id || null,
+  };
+}
+
+// -- Operator (ghost-kitchen commissary) context --
+
+export type GetOperatorKitchenOptions = {
+  /**
+   * When true (default), only `approved` chef profiles receive operator context.
+   */
+  requireApproved?: boolean;
+};
+
+/**
+ * Resolves the ghost-kitchen operator's commissary context.
+ *
+ *   kitchenId    = the chef_kitchen owned by the signed-in operator. SHARED-ops
+ *                  tables (inventory, suppliers, labour, production) scope here.
+ *   storefrontId = the ACTIVE brand, taken from the `x-brand-id` header (cookie
+ *                  fallback) and validated to belong to kitchenId; null when
+ *                  unset/invalid. BRAND-scoped surfaces (menu, recipes, orders)
+ *                  use this.
+ *
+ * Additive to getChefActorContext: independent single-storefront chefs keep
+ * using that helper unchanged. A spoofed x-brand-id can never cross kitchens
+ * because the brand is re-validated against kitchen_id here.
+ */
+export async function getOperatorKitchenContext(
+  options?: GetOperatorKitchenOptions
+): Promise<{ actor: ActorContext; kitchenId: string; storefrontId: string | null } | null> {
+  const requireApproved = options?.requireApproved !== false;
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const adminClient = createAdminClient();
+  const { data: chefProfile } = await adminClient
+    .from('chef_profiles')
+    .select('id, status')
+    .eq('user_id', user.id)
+    .single();
+  if (!chefProfile) return null;
+  if (requireApproved && chefProfile.status !== 'approved') return null;
+
+  // The commissary kitchen this operator owns. Pilot: one kitchen per operator.
+  const { data: kitchen } = await adminClient
+    .from('chef_kitchens')
+    .select('id')
+    .eq('chef_id', chefProfile.id)
+    .limit(1)
+    .maybeSingle();
+  if (!kitchen) return null;
+
+  // Active brand: x-brand-id header wins, cookie is the fallback. Validate it
+  // belongs to this kitchen before trusting it.
+  const headerStore = await headers();
+  const requestedBrandId =
+    headerStore.get('x-brand-id') || cookieStore.get('x-brand-id')?.value || null;
+
+  let storefrontId: string | null = null;
+  if (requestedBrandId) {
+    const { data: brand } = await adminClient
+      .from('chef_storefronts')
+      .select('id')
+      .eq('id', requestedBrandId)
+      .eq('kitchen_id', kitchen.id)
+      .maybeSingle();
+    storefrontId = brand?.id ?? null;
+  }
+
+  return {
+    actor: { userId: user.id, role: 'chef_user', entityId: chefProfile.id },
+    kitchenId: kitchen.id,
+    storefrontId,
   };
 }
 

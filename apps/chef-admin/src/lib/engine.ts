@@ -8,7 +8,9 @@ export { getAdminEngine as getEngine, errorResponse, successResponse } from '@ri
 export {
   getChefActorContext,
   getChefBasicContext,
+  getOperatorKitchenContext,
   verifyChefOwnsStorefront,
   verifyChefOwnsOrder,
   type GetChefActorOptions,
+  type GetOperatorKitchenOptions,
 } from '@ridendine/engine/server';

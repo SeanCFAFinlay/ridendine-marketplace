@@ -10,21 +10,21 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
 /** POST /api/production/prep-tasks — add a persistent prep task. */
 export async function POST(request: NextRequest) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-prep-task-create',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/production/prep-tasks',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -39,14 +39,14 @@ export async function POST(request: NextRequest) {
     const { data: task, error } = await admin
       .from('prep_tasks')
       .insert({
-        storefront_id: chefContext.storefrontId,
+        kitchen_id: ctx.kitchenId,
         title: t.title,
         menu_item_id: t.menuItemId ?? null,
         station_id: t.stationId ?? null,
         target_quantity: t.targetQuantity ?? null,
         plan_date: t.planDate,
         notes: t.notes ?? null,
-        created_by: chefContext.actor.userId,
+        created_by: ctx.actor.userId,
       })
       .select('*')
       .single();

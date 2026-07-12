@@ -11,7 +11,7 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,14 +22,14 @@ const SIGNED_TYPES = new Set(['adjustment', 'count_correction', 'transfer']);
 /** POST /api/inventory/[id]/movement — append to the ledger and update the cached quantity. */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-inventory-movement',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/inventory/[id]/movement',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .from('inventory_items')
       .select('id, current_quantity')
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .maybeSingle();
     if (!item) return errorResponse('NOT_FOUND', 'Inventory item not found', 404);
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { data: movement, error: moveErr } = await admin
       .from('inventory_stock_movements')
       .insert({
-        storefront_id: chefContext.storefrontId,
+        kitchen_id: ctx.kitchenId,
         inventory_item_id: id,
         movement_type: type,
         quantity: signedQty,
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         reference_type: m.referenceType ?? null,
         reference_id: m.referenceId ?? null,
         note: m.note ?? null,
-        created_by: chefContext.actor.userId,
+        created_by: ctx.actor.userId,
       })
       .select('*')
       .single();
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .from('inventory_items')
       .update({ current_quantity: newQuantity })
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .select('*')
       .single();
 

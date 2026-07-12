@@ -4,7 +4,7 @@
 
 import { createAdminClient, type SupabaseClient } from '@ridendine/db';
 import { computeLaborTotals, hoursBetween, type TimeEntryLike } from '@ridendine/engine';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 import { kitchenDateKey } from '@/lib/kitchen';
 
 export const dynamic = 'force-dynamic';
@@ -14,8 +14,8 @@ const LOOKBACK_HOURS = 36;
 /** GET /api/labor/today — who's on the clock + today's hours and labour cost. */
 export async function GET() {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const now = new Date();
     const today = kitchenDateKey(now);
@@ -25,7 +25,7 @@ export async function GET() {
     const { data, error } = await admin
       .from('time_entries')
       .select('id, staff_id, clock_in, clock_out, hourly_rate')
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .gte('clock_in', cutoff.toISOString());
 
     if (error) {

@@ -4,7 +4,7 @@
 
 import { createAdminClient, type SupabaseClient } from '@ridendine/db';
 import { computeInventoryAlerts, computeReorderSuggestion } from '@ridendine/engine';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,14 +15,14 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET() {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const admin = createAdminClient() as unknown as SupabaseClient;
     const { data, error } = await admin
       .from('inventory_items')
       .select('id, name, unit, current_quantity, reorder_point, par_quantity, expiry_date, is_active')
-      .eq('storefront_id', chefContext.storefrontId);
+      .eq('kitchen_id', ctx.kitchenId);
 
     if (error) {
       console.error('Inventory alerts query error:', error);

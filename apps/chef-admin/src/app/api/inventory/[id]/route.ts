@@ -13,7 +13,7 @@ import {
 } from '@ridendine/utils';
 import {
   getEngine,
-  getChefActorContext,
+  getOperatorKitchenContext,
   errorResponse,
   successResponse,
 } from '@/lib/engine';
@@ -25,18 +25,18 @@ type RouteParams = { params: Promise<{ id: string }> };
 /** GET /api/inventory/[id] — item, ledger-derived on-hand, recent movements. */
 export async function GET(_req: NextRequest, { params }: RouteParams) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const { id } = await params;
     const admin = createAdminClient() as unknown as SupabaseClient;
 
-    // Scoping by storefront_id is the ownership check.
+    // Scoping by kitchen_id is the ownership check.
     const { data: item } = await admin
       .from('inventory_items')
       .select('*')
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .maybeSingle();
 
     if (!item) return errorResponse('NOT_FOUND', 'Inventory item not found', 404);
@@ -71,14 +71,14 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 /** PATCH /api/inventory/[id] — update item fields (not quantity; that goes through movements). */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-inventory-update',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'PATCH:/api/inventory/[id]',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -92,12 +92,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const admin = createAdminClient() as unknown as SupabaseClient;
 
-    // Ensure the item exists in this storefront before updating.
+    // Ensure the item exists in this kitchen before updating.
     const { data: existing } = await admin
       .from('inventory_items')
       .select('id')
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .maybeSingle();
     if (!existing) return errorResponse('NOT_FOUND', 'Inventory item not found', 404);
 
@@ -117,7 +117,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .from('inventory_items')
       .update(patch)
       .eq('id', id)
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .select('*')
       .single();
 
@@ -130,7 +130,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       action: 'update',
       entityType: 'inventory_item',
       entityId: id,
-      actor: chefContext.actor,
+      actor: ctx.actor,
       afterState: patch,
     });
 

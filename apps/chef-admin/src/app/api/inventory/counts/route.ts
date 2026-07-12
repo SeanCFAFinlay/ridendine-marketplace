@@ -10,7 +10,7 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
 } from '@ridendine/utils';
-import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
+import { getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,14 +22,14 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: NextRequest) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-inventory-count',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/inventory/counts',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -42,26 +42,26 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient() as unknown as SupabaseClient;
 
-    // Verify every counted item belongs to this storefront.
+    // Verify every counted item belongs to this kitchen.
     const itemIds = [...new Set(lines.map((l) => l.inventoryItemId))];
     const { data: items } = await admin
       .from('inventory_items')
       .select('id, current_quantity')
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .in('id', itemIds);
 
     const itemById = new Map((items ?? []).map((i) => [i.id, i]));
     const unknownIds = itemIds.filter((id) => !itemById.has(id));
     if (unknownIds.length > 0) {
-      return errorResponse('VALIDATION_ERROR', 'One or more items do not belong to your storefront', 400);
+      return errorResponse('VALIDATION_ERROR', 'One or more items do not belong to your kitchen', 400);
     }
 
     const { data: count, error: countErr } = await admin
       .from('inventory_counts')
       .insert({
-        storefront_id: chefContext.storefrontId,
+        kitchen_id: ctx.kitchenId,
         status: 'completed',
-        counted_by: chefContext.actor.userId,
+        counted_by: ctx.actor.userId,
         note: note ?? null,
         completed_at: new Date().toISOString(),
       })
@@ -90,20 +90,20 @@ export async function POST(request: NextRequest) {
       if (variance !== 0) {
         corrections += 1;
         await admin.from('inventory_stock_movements').insert({
-          storefront_id: chefContext.storefrontId,
+          kitchen_id: ctx.kitchenId,
           inventory_item_id: line.inventoryItemId,
           movement_type: 'count_correction',
           quantity: variance,
           reference_type: 'inventory_count',
           reference_id: count.id,
           note: 'Count reconciliation',
-          created_by: chefContext.actor.userId,
+          created_by: ctx.actor.userId,
         });
         await admin
           .from('inventory_items')
           .update({ current_quantity: line.countedQuantity })
           .eq('id', line.inventoryItemId)
-          .eq('storefront_id', chefContext.storefrontId);
+          .eq('kitchen_id', ctx.kitchenId);
       }
     }
 

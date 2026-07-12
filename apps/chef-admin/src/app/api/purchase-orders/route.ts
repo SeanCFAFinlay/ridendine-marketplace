@@ -13,7 +13,7 @@ import {
 } from '@ridendine/utils';
 import {
   getEngine,
-  getChefActorContext,
+  getOperatorKitchenContext,
   errorResponse,
   successResponse,
 } from '@/lib/engine';
@@ -23,14 +23,14 @@ export const dynamic = 'force-dynamic';
 /** GET /api/purchase-orders — the storefront's purchase orders. */
 export async function GET() {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const admin = createAdminClient() as unknown as SupabaseClient;
     const { data, error } = await admin
       .from('purchase_orders')
       .select('*')
-      .eq('storefront_id', chefContext.storefrontId)
+      .eq('kitchen_id', ctx.kitchenId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -47,14 +47,14 @@ export async function GET() {
 /** POST /api/purchase-orders — create a draft purchase order with lines. */
 export async function POST(request: NextRequest) {
   try {
-    const chefContext = await getChefActorContext();
-    if (!chefContext) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    const ctx = await getOperatorKitchenContext();
+    if (!ctx) return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
 
     const limit = await evaluateRateLimit({
       request,
       policy: RATE_LIMIT_POLICIES.chefWrite,
       namespace: 'chef-po-create',
-      userId: chefContext.actor.userId,
+      userId: ctx.actor.userId,
       routeKey: 'POST:/api/purchase-orders',
     });
     if (!limit.allowed) return rateLimitPolicyResponse(limit);
@@ -67,15 +67,16 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient() as unknown as SupabaseClient;
 
-    // If a supplier is named, it must belong to this storefront.
+    // If a supplier is named, it must belong to this kitchen (suppliers are a
+    // shared commissary list, not per-brand).
     if (po.supplierId) {
       const { data: supplier } = await admin
         .from('suppliers')
         .select('id')
         .eq('id', po.supplierId)
-        .eq('storefront_id', chefContext.storefrontId)
+        .eq('kitchen_id', ctx.kitchenId)
         .maybeSingle();
-      if (!supplier) return errorResponse('VALIDATION_ERROR', 'Supplier not found for your storefront', 400);
+      if (!supplier) return errorResponse('VALIDATION_ERROR', 'Supplier not found for your kitchen', 400);
     }
 
     const total = purchaseOrderTotal(po.lines.map((l) => ({ quantity: l.quantity, unitCost: l.unitCost })));
@@ -83,14 +84,14 @@ export async function POST(request: NextRequest) {
     const { data: order, error } = await admin
       .from('purchase_orders')
       .insert({
-        storefront_id: chefContext.storefrontId,
+        kitchen_id: ctx.kitchenId,
         supplier_id: po.supplierId ?? null,
         status: 'draft',
         reference: po.reference ?? null,
         notes: po.notes ?? null,
         total_cost: total,
         expected_at: po.expectedAt ?? null,
-        created_by: chefContext.actor.userId,
+        created_by: ctx.actor.userId,
       })
       .select('*')
       .single();
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
       action: 'create',
       entityType: 'purchase_order',
       entityId: order.id,
-      actor: chefContext.actor,
+      actor: ctx.actor,
       afterState: { total_cost: total, lines: po.lines.length },
     });
 
