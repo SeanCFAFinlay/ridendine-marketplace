@@ -54,8 +54,9 @@ export function allocateLaborByOrderCount(
   const byRemainder = [...rows].sort(
     (a, b) => b.remainder - a.remainder || a.index - b.index,
   );
-  for (let i = 0; i < byRemainder.length && leftover > 0; i++) {
-    byRemainder[i].cents += 1;
+  for (const row of byRemainder) {
+    if (leftover <= 0) break;
+    row.cents += 1;
     leftover--;
   }
 

@@ -192,12 +192,18 @@ coverage — runnable now, ready to wire once types regenerate:
   `allocateLaborByOrderCount(total, brands)` = order-count share with
   largest-remainder whole-cent apportionment so per-brand amounts sum EXACTLY to
   the total (no drift, no invented pennies). 7 tests.
-- Verified: `@ridendine/engine` typecheck clean; full engine vitest **1068
-  passing** (17 new + no regressions).
+- **C.2/C.3 kitchen P&L core** — `services/kitchen-pnl.service.ts`:
+  `allocateBySalesShare` (overhead by sales, exact cents) + `computeKitchenPnl`
+  → per-brand contribution/food%/labour%/prime% and the kitchen rollup with
+  prime-cost % vs a 60% target and best/worst brand. Brands with no recipe/labour
+  data are `needsSetup` with null contribution — never zero-as-fact. 7 tests.
+- Verified: `@ridendine/engine` typecheck clean; full engine vitest **1082
+  passing** (24 new + no regressions).
 
 **Deferred to post-regen (needs applied schema + regenerated types):** B.3 DB
 subscriber on `order.completed` (idempotent on `metadata->>'order_id'`, writes
 `consume_order` movements + keeps `current_quantity` cache in step); B.1
 multi-brand KDS aggregation; B.2 consolidated prep plan; B.4 auto-reorder → draft
-PO; C.1 writer job + C.2/C.3 P&L view/dashboard. These wire the verified pure
-cores into routes/DB, which can't typecheck until `pnpm db:generate` runs.
+PO; C.1 writer job (cron) + C.3 `/api/costs/pnl` route + dashboard page. These
+wire the verified pure cores into routes/DB, which can't typecheck until
+`pnpm db:generate` runs.
