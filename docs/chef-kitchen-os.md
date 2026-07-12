@@ -216,8 +216,28 @@ engine typecheck clean, all 33 order-engine tests still green (the completeOrder
 ledger test exercises the graceful-failure path when the mock lacks inventory
 tables).
 
-**Deferred to post-regen (chef-admin routes on the TYPED client — can't
-typecheck until `pnpm db:generate`):** B.1 multi-brand KDS aggregation; B.2
-consolidated prep plan; B.4 auto-reorder → draft PO; C.1 writer job (cron) + C.3
-`/api/costs/pnl` route + dashboard page. All build on the already-verified pure
-cores + the B.3 writer.
+### Phases B & C — route layer AUTHORED (verify after `pnpm db:generate`)
+Built on the verified pure cores; these use the typed Supabase client so they
+compile only after types regenerate, but are guarded (`audit:guards` 0 unguarded)
+and correct-by-design:
+- **B.1 multi-brand KDS** — `GET /api/kitchen/board` aggregates active
+  `kitchen_tickets` across all brands under the kitchen, groups by station, tags
+  each ticket with brand + colour; `/dashboard/kitchen/board` page (station
+  columns, brand-coloured cards, 10s poll). Additive — per-brand overview
+  untouched.
+- **B.2 consolidated prep** — pure `consolidatePrepDemand` (3 tests) +
+  `GET /api/production/plan/consolidated` (cross-brand demand → one ingredient
+  prep sheet with contributing brands).
+- **B.4 auto-reorder** — `POST /api/inventory/reorder` drafts one PO per
+  preferred supplier at qty-back-to-par for low-stock items (operator submits
+  before send); guarded + rate-limited + audit-logged.
+- **C.2/C.3 P&L** — `GET /api/costs/pnl` (reuses costs/overview data gathering +
+  verified `computeKitchenPnl`/`allocateLaborByOrderCount`) +
+  `/dashboard/kitchen/pnl` page; sidebar "Costs & P&L" repointed.
+
+**Still deferred:** C.1 labour-allocation WRITER cron (persists daily
+`labor_allocations`; the P&L route allocates on-the-fly meanwhile, so this is
+persistence/optimisation, not a blocker); realtime hydration on the KDS board
+(poll for now); **Phase D** (payroll export, clone-a-brand, advisory AI). And the
+owner-gated Phase A sign-off: `pnpm db:migrate && pnpm db:generate` (unblocks
+chef-admin typecheck for every route above) + `supabase db reset` (pgTAP + seed).
