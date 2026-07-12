@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       return errorResponse('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Invalid forecast request', 400);
     }
     const { planDate, lookbackWeeks } = parsed.data;
-    const storefrontId = ctx.storefrontId;
+    const storefrontId = ctx.storefrontId ?? ''; // no active brand → matches nothing (empty state)
     const admin = createAdminClient() as unknown as SupabaseClient;
 
     // Forecast for the plan date's weekday; look back a few weeks of history.

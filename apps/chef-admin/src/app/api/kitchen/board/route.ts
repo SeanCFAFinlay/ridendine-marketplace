@@ -77,7 +77,7 @@ export async function GET() {
       }[];
     };
 
-    const tickets = ((ticketRows ?? []) as TicketRow[]).map((t) => ({
+    const tickets = ((ticketRows ?? []) as unknown as TicketRow[]).map((t) => ({
       ticketId: t.id,
       orderId: t.order_id,
       orderNumber: t.order?.order_number ?? null,

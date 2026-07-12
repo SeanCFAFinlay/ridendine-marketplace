@@ -63,9 +63,9 @@ export async function GET() {
       const recipe: OrderItemRecipe = {
         batchYield: Number(version?.batch_yield ?? 1),
         ingredients: (ings ?? [])
-          .filter((i: { inventory_item_id?: string | null }) => i.inventory_item_id)
-          .map((i: { inventory_item_id: string; quantity?: number; waste_factor?: number }) => ({
-            inventoryItemId: i.inventory_item_id,
+          .filter((i) => Boolean(i.inventory_item_id))
+          .map((i) => ({
+            inventoryItemId: i.inventory_item_id as string,
             quantityPerBatch: Number(i.quantity ?? 0),
             wasteFactor: Number(i.waste_factor ?? 0),
           })),

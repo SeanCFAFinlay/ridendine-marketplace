@@ -1133,45 +1133,11 @@ type MergedTables = Omit<
   instant_payout_requests: InstantPayoutRequestsTable;
   service_areas: ServiceAreasTable;
   promo_code_usages: PromoCodeUsagesTable;
-  storage_locations: StorageLocationsTable;
-  inventory_items: InventoryItemsTable;
-  inventory_stock_movements: InventoryStockMovementsTable;
-  inventory_counts: InventoryCountsTable;
-  inventory_count_lines: InventoryCountLinesTable;
-  inventory_waste_events: InventoryWasteEventsTable;
-  inventory_alerts: InventoryAlertsTable;
-  suppliers: SuppliersTable;
-  supplier_items: SupplierItemsTable;
-  purchase_orders: PurchaseOrdersTable;
-  purchase_order_lines: PurchaseOrderLinesTable;
-  receiving_batches: ReceivingBatchesTable;
-  supplier_price_history: SupplierPriceHistoryTable;
-  prep_tasks: PrepTasksTable;
-  prep_task_events: PrepTaskEventsTable;
-  production_batches: ProductionBatchesTable;
-  production_batch_inputs: ProductionBatchInputsTable;
-  production_batch_outputs: ProductionBatchOutputsTable;
-  kitchen_staff: KitchenStaffTable;
-  kitchen_shifts: KitchenShiftsTable;
-  time_entries: TimeEntriesTable;
-  labor_allocations: LaborAllocationsTable;
-  labor_cost_snapshots: LaborCostSnapshotsTable;
-  kitchen_station_assignments: KitchenStationAssignmentsTable;
-  kitchen_daily_summaries: KitchenDailySummariesTable;
+  // Kitchen OS tables (recipes, inventory, suppliers, production, labour,
+  // tickets, packaging, pay_periods) now come straight from the regenerated
+  // types — they include the ghost-kitchen kitchen_id re-scope. The old
+  // hand-written overrides here predated that and are intentionally dropped.
   chef_storefronts: ChefStorefrontsExtended;
-  recipes: RecipesTable;
-  recipe_versions: RecipeVersionsTable;
-  recipe_ingredients: RecipeIngredientsTable;
-  recipe_steps: RecipeStepsTable;
-  menu_item_recipe_versions: MenuItemRecipeVersionsTable;
-  recipe_cost_snapshots: RecipeCostSnapshotsTable;
-  packaging_items: PackagingItemsTable;
-  menu_item_packaging: MenuItemPackagingTable;
-  kitchen_stations: KitchenStationsTable;
-  kitchen_tickets: KitchenTicketsTable;
-  kitchen_ticket_items: KitchenTicketItemsTable;
-  kitchen_ticket_events: KitchenTicketEventsTable;
-  order_pack_checks: OrderPackChecksTable;
 };
 
 export type Database = Omit<GeneratedDatabase, 'public'> & {

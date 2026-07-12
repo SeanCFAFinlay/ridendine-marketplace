@@ -11,7 +11,10 @@
 
 import type { NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
-import { createAdminClient, type SupabaseClient } from '@ridendine/db';
+import { createAdminClient } from '@ridendine/db';
+// Untyped client: this route copies arbitrary rows (spread + FK remap), so the
+// dynamic insert shapes don't fit the generated table Insert types.
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { evaluateRateLimit, RATE_LIMIT_POLICIES, rateLimitPolicyResponse } from '@ridendine/utils';
 import { getEngine, getOperatorKitchenContext, errorResponse, successResponse } from '@/lib/engine';
 
