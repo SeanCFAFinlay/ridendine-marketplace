@@ -200,10 +200,24 @@ coverage — runnable now, ready to wire once types regenerate:
 - Verified: `@ridendine/engine` typecheck clean; full engine vitest **1082
   passing** (24 new + no regressions).
 
-**Deferred to post-regen (needs applied schema + regenerated types):** B.3 DB
-subscriber on `order.completed` (idempotent on `metadata->>'order_id'`, writes
-`consume_order` movements + keeps `current_quantity` cache in step); B.1
-multi-brand KDS aggregation; B.2 consolidated prep plan; B.4 auto-reorder → draft
-PO; C.1 writer job (cron) + C.3 `/api/costs/pnl` route + dashboard page. These
-wire the verified pure cores into routes/DB, which can't typecheck until
-`pnpm db:generate` runs.
+### Phase B.3 — auto-decrement subscriber WIRED (done & verified)
+`services/order-consumption.writer.ts` (`applyOrderStockConsumption`) loads a
+completed order's lines → active `menu_item_recipe_versions` →
+`recipe_ingredients`, runs the pure consumption core, writes `consume_order`
+movements tagged `{ order_id, storefront_id }`, and keeps `current_quantity` in
+step. Wired into `MasterOrderEngine.completeOrder` right beside the ledger
+capture as a **best-effort, idempotent** side-effect (wrapped so it can never
+undo a completed order). Idempotency is enforced in code (skip if the order
+already has consume_order movements) AND by the DB backstop
+`uq_inventory_movements_consume_order` (unique per order+item, partial on
+`consume_order`) so a duplicate `order.completed` cannot double-decrement.
+Verifiable now because the order engine uses the untyped Supabase client —
+engine typecheck clean, all 33 order-engine tests still green (the completeOrder
+ledger test exercises the graceful-failure path when the mock lacks inventory
+tables).
+
+**Deferred to post-regen (chef-admin routes on the TYPED client — can't
+typecheck until `pnpm db:generate`):** B.1 multi-brand KDS aggregation; B.2
+consolidated prep plan; B.4 auto-reorder → draft PO; C.1 writer job (cron) + C.3
+`/api/costs/pnl` route + dashboard page. All build on the already-verified pure
+cores + the B.3 writer.

@@ -94,9 +94,12 @@ CREATE TABLE IF NOT EXISTS inventory_stock_movements (
 );
 CREATE INDEX IF NOT EXISTS idx_inventory_movements_item ON inventory_stock_movements(inventory_item_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_inventory_movements_kitchen ON inventory_stock_movements(kitchen_id, created_at);
--- Supports Phase B idempotency lookup: "has this order already decremented stock?"
-CREATE INDEX IF NOT EXISTS idx_inventory_movements_order
-  ON inventory_stock_movements ((metadata->>'order_id'))
+-- One consume_order movement per (order, item): the DB backstop that makes
+-- shared-pool auto-decrement idempotent even under a duplicate order.completed
+-- (the writer aggregates to one movement per item, so this never false-conflicts).
+-- Also serves the "has this order already decremented?" lookup.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_inventory_movements_consume_order
+  ON inventory_stock_movements ((metadata->>'order_id'), inventory_item_id)
   WHERE movement_type = 'consume_order';
 
 -- ------------------------------------------------------------------
