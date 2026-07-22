@@ -51,6 +51,51 @@ interface StatusRow {
   new_status: string;
   created_at: string;
 }
+interface DeliveryRow {
+  id: string;
+  order_id: string;
+  driver_id: string | null;
+  status: string | null;
+  eta_dropoff_at: string | null;
+  estimated_dropoff_at: string | null;
+  distance_km: number | null;
+}
+interface DriverRow {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  vehicle_type: string | null;
+}
+
+/**
+ * Build the partner-facing `delivery` block for a webhook payload from the
+ * order's current delivery + assigned driver, or null when no delivery exists
+ * yet (e.g. at order.accepted). `etaMinutes` is relative to the event time.
+ */
+function deliverySnapshot(
+  delivery: DeliveryRow | undefined,
+  driverById: Map<string, DriverRow>,
+  nowMs: number
+): Record<string, unknown> | null {
+  if (!delivery) return null;
+  const driver = delivery.driver_id ? driverById.get(delivery.driver_id) : undefined;
+  const etaIso = delivery.eta_dropoff_at ?? delivery.estimated_dropoff_at ?? null;
+  const etaMs = etaIso ? new Date(etaIso).getTime() : NaN;
+  const etaMinutes = Number.isFinite(etaMs) ? Math.max(0, Math.round((etaMs - nowMs) / 60000)) : null;
+  const driverName = driver
+    ? `${driver.first_name ?? ''} ${driver.last_name ?? ''}`.trim() || null
+    : null;
+  return {
+    status: delivery.status ?? null,
+    driverName,
+    driverPhone: driver?.phone ?? null,
+    vehicleType: driver?.vehicle_type ?? null,
+    etaMinutes,
+    etaDropoffAt: etaIso,
+    distanceKm: delivery.distance_km ?? null,
+  };
+}
 
 /**
  * Create pending delivery rows for new deliverable order events that belong to a
@@ -83,6 +128,29 @@ export async function enqueuePartnerWebhooks(
     new Set(((orders ?? []) as OrderRow[]).map((o) => o.partner_id).filter(Boolean) as string[])
   );
   if (partnerIds.length === 0) return 0;
+
+  // Enrich with the current delivery + assigned driver so partners receive
+  // driver name/phone/ETA on out_for_delivery / delivered events (snapshot at
+  // event time). Absent for pre-dispatch events -> delivery is null.
+  const { data: deliveries } = await (admin as any)
+    .from('deliveries')
+    .select('id, order_id, driver_id, status, eta_dropoff_at, estimated_dropoff_at, distance_km')
+    .in('order_id', orderIds);
+  const deliveryRows = (deliveries ?? []) as DeliveryRow[];
+  const deliveryByOrderId = new Map<string, DeliveryRow>();
+  for (const d of deliveryRows) deliveryByOrderId.set(d.order_id, d);
+
+  const driverIds = Array.from(
+    new Set(deliveryRows.map((d) => d.driver_id).filter(Boolean) as string[])
+  );
+  let driverById = new Map<string, DriverRow>();
+  if (driverIds.length > 0) {
+    const { data: drivers } = await (admin as any)
+      .from('drivers')
+      .select('id, first_name, last_name, phone, vehicle_type')
+      .in('id', driverIds);
+    driverById = new Map<string, DriverRow>(((drivers ?? []) as DriverRow[]).map((d) => [d.id, d]));
+  }
   const { data: partners } = await (admin as any)
     .from('api_partners')
     .select('id, webhook_url, webhook_secret, is_active')
@@ -125,6 +193,7 @@ export async function enqueuePartnerWebhooks(
           engineStatus: order.engine_status,
           total: order.total,
         },
+        delivery: deliverySnapshot(deliveryByOrderId.get(order.id), driverById, nowMs),
         occurredAt: ev.created_at,
       },
       status: 'pending',

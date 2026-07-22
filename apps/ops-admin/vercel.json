@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/engine/processors/partner-webhooks",
-      "schedule": "0 4 * * *"
+      "schedule": "* * * * *"
     }
   ]
 }

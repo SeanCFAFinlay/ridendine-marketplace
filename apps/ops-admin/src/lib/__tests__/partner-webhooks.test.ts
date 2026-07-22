@@ -71,6 +71,40 @@ describe('enqueuePartnerWebhooks', () => {
     expect(inserted[0].payload.order.orderNumber).toBe('RD-1');
   });
 
+  it('enriches out_for_delivery events with the driver + ETA snapshot', async () => {
+    const capture: Record<string, any[]> = {};
+    const admin = makeAdmin(
+      {
+        order_status_history: [
+          { id: 'ev-1', new_status: 'out_for_delivery', order_id: 'order-1', created_at: '2026-06-30T00:00:00Z' },
+        ],
+        orders: [
+          { id: 'order-1', order_number: 'RD-1', partner_id: 'p1', status: 'out_for_delivery', engine_status: 'out_for_delivery', total: 42 },
+        ],
+        api_partners: [{ id: 'p1', webhook_url: 'https://partner.test/hook', webhook_secret: 's', is_active: true }],
+        deliveries: [
+          { id: 'del-1', order_id: 'order-1', driver_id: 'drv-1', status: 'IN_TRANSIT', eta_dropoff_at: '2026-06-30T00:20:00Z', estimated_dropoff_at: null, distance_km: 4.2 },
+        ],
+        drivers: [
+          { id: 'drv-1', first_name: 'Sam', last_name: 'Rider', phone: '+16475551234', vehicle_type: 'car' },
+        ],
+        partner_webhook_deliveries: [],
+      },
+      capture
+    );
+
+    const n = await enqueuePartnerWebhooks(admin, Date.parse('2026-06-30T00:00:00Z'));
+    expect(n).toBe(1);
+    const inserted = capture['partner_webhook_deliveries:insert'][0] as any[];
+    expect(inserted[0].payload.delivery).toMatchObject({
+      status: 'IN_TRANSIT',
+      driverName: 'Sam Rider',
+      driverPhone: '+16475551234',
+      etaMinutes: 20,
+      distanceKm: 4.2,
+    });
+  });
+
   it('inserts nothing when no partner has a webhook_url', async () => {
     const capture: Record<string, any[]> = {};
     const admin = makeAdmin(
