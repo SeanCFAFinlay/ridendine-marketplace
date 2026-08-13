@@ -62,7 +62,28 @@ export const partnerCheckoutSchema = z.object({
   scheduledFor: z.string().datetime({ offset: true }).nullable().optional(),
 });
 
+/**
+ * Quote-only payload. `/checkout/quote` prices items + address and writes
+ * nothing — it never touches the customer — so `customer` is optional here and
+ * ignored when present. (The full object stays REQUIRED at `/checkout`, which
+ * materializes a customer row.) This matches the published partner reference:
+ * "you only need storefrontId, deliveryAddress and items here."
+ *
+ * Requiring `customer` at /quote made every documented quote payload fail with
+ * a bare `VALIDATION_ERROR: "Required"`.
+ */
+export const partnerQuoteSchema = partnerCheckoutSchema.extend({
+  customer: partnerCustomerSchema.optional(),
+});
+
 export type PartnerCustomerInput = z.infer<typeof partnerCustomerSchema>;
 export type PartnerDeliveryAddressInput = z.infer<typeof partnerDeliveryAddressSchema>;
 export type PartnerCheckoutItemInput = z.infer<typeof partnerCheckoutItemSchema>;
 export type PartnerCheckoutInput = z.infer<typeof partnerCheckoutSchema>;
+/**
+ * The parsed /checkout/quote REQUEST BODY. Deliberately not named
+ * `PartnerQuoteInput` — that name is taken by the argument type of
+ * `buildPartnerQuote` in apps/web/src/lib/checkout/quote.ts, which is a
+ * different shape (it carries an adminClient and no tip/promo defaults).
+ */
+export type PartnerQuoteBody = z.infer<typeof partnerQuoteSchema>;

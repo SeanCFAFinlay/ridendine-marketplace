@@ -13,6 +13,8 @@ import {
   evaluateCheckoutRisk,
   assertStripeConfigured,
   getOrCreateStripeCustomer,
+  getStripePublishableKey,
+  isStripeTestModeConfigured,
 } from '@ridendine/engine';
 import type { ActorContext } from '@ridendine/types';
 import { getEngine, errorResponse, successResponse } from '@/lib/engine';
@@ -41,6 +43,17 @@ export interface CheckoutResponsePayload {
   orderId: string;
   orderNumber: string;
   total: number;
+  /**
+   * True when the PaymentIntent was created in Stripe TEST mode (partner test
+   * key). Test cards work; no money moves.
+   */
+  testMode?: boolean;
+  /**
+   * The publishable key the browser must init Stripe.js with to confirm THIS
+   * clientSecret. A test-mode secret cannot be confirmed with the live
+   * publishable key, so callers must read this rather than hard-code one.
+   */
+  publishableKey?: string | null;
   breakdown: {
     subtotal: number;
     deliveryFee: number;
@@ -390,6 +403,18 @@ export async function runCheckout({
 
     assertStripeConfigured();
 
+    // Fail before an order exists rather than at PaymentIntent creation (which
+    // would orphan the order and burn the idempotency key). A test-flagged order
+    // must never silently fall back to the live client — that would put a real
+    // card behind a transaction the caller asked to be fake.
+    if (isTest && !isStripeTestModeConfigured()) {
+      return errorResponse(
+        'STRIPE_TEST_MODE_UNAVAILABLE',
+        'This deployment cannot process test-mode payments (STRIPE_TEST_SECRET_KEY is not set). Contact RideNDine ops to enable test-card checkout for your test key.',
+        503
+      );
+    }
+
     let createdOrderId: string | null = null;
     try {
       // Create order via engine
@@ -452,7 +477,10 @@ export async function runCheckout({
 
       // NOTE: Delivery record is created by dispatch engine when chef marks order ready
       // This ensures delivery is only created for orders that proceed past payment
-      const stripe = getStripeClient();
+      // Test-flagged orders transact against Stripe TEST mode on this same
+      // deployment, so partners can run the 4242 card end to end without a
+      // separate host. Live traffic is untouched.
+      const stripe = getStripeClient({ testMode: isTest });
       const totalCents = Math.round(serverQuote.total * 100);
 
       // Resolve Stripe customer for saved payment method support
@@ -461,12 +489,15 @@ export async function runCheckout({
         .select('email, first_name, last_name')
         .eq('id', customerId)
         .maybeSingle();
+      // Stripe customers are per-mode: a live customer id attached to a test
+      // PaymentIntent fails with `resource_missing`.
       const stripeCustomerId = await getOrCreateStripeCustomer({
         ridendineCustomerId: customerId,
         email: customerRecord.data?.email ?? '',
         name:
           `${customerRecord.data?.first_name ?? ''} ${customerRecord.data?.last_name ?? ''}`.trim() ||
           undefined,
+        testMode: isTest,
       }).catch(() => null);
 
       const piParams: Parameters<typeof stripe.paymentIntents.create>[0] = {
@@ -504,6 +535,10 @@ export async function runCheckout({
         orderId: order.id,
         orderNumber: order.order_number,
         total: serverQuote.total,
+        ...(isTest && {
+          testMode: true,
+          publishableKey: getStripePublishableKey({ testMode: true }),
+        }),
         breakdown: {
           subtotal: serverQuote.subtotal,
           deliveryFee: serverQuote.deliveryFee,

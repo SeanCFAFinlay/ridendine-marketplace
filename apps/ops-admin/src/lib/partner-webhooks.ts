@@ -9,6 +9,7 @@
 
 import { createHmac } from 'crypto';
 import type { SupabaseClient } from '@ridendine/db';
+import { advanceTestOrderLifecycles } from './test-order-lifecycle';
 
 /** order status (new_status) -> partner-facing event name. Only these deliver. */
 const STATUS_EVENTS: Record<string, string> = {
@@ -44,6 +45,7 @@ interface OrderRow {
   status: string | null;
   engine_status: string | null;
   total: number | null;
+  is_test: boolean | null;
 }
 interface StatusRow {
   id: string;
@@ -98,6 +100,32 @@ function deliverySnapshot(
 }
 
 /**
+ * Stand-in `delivery` block for simulated test-mode orders.
+ *
+ * Test orders never get a real `deliveries` row — creating one would put fake
+ * work on the live dispatch board and in the driver app. Without it a partner
+ * would receive `delivery: null` on out_for_delivery/delivered and could not
+ * test the half of their handler that reads driver and ETA fields. So the block
+ * is synthesised here, in the payload only, and is transparently labelled: the
+ * driver is named "Test Driver" and the phone is the reserved 555 range, so it
+ * can never be confused with a real dispatch.
+ */
+function simulatedDeliverySnapshot(event: string, nowMs: number): Record<string, unknown> | null {
+  if (event !== 'order.out_for_delivery' && event !== 'order.delivered') return null;
+  const delivered = event === 'order.delivered';
+  return {
+    status: delivered ? 'DELIVERED' : 'IN_TRANSIT',
+    driverName: 'Test Driver',
+    driverPhone: '+15555550123',
+    vehicleType: 'car',
+    etaMinutes: delivered ? 0 : 12,
+    etaDropoffAt: new Date(nowMs + (delivered ? 0 : 12 * 60_000)).toISOString(),
+    distanceKm: 4.2,
+    simulated: true,
+  };
+}
+
+/**
  * Create pending delivery rows for new deliverable order events that belong to a
  * partner with a webhook_url. Idempotent: domain_event_id is unique.
  */
@@ -120,7 +148,7 @@ export async function enqueuePartnerWebhooks(
   const orderIds = Array.from(new Set(eventRows.map((e) => e.order_id)));
   const { data: orders } = await (admin as any)
     .from('orders')
-    .select('id, order_number, partner_id, status, engine_status, total')
+    .select('id, order_number, partner_id, status, engine_status, total, is_test')
     .in('id', orderIds);
   const orderById = new Map<string, OrderRow>(((orders ?? []) as OrderRow[]).map((o) => [o.id, o]));
 
@@ -193,7 +221,9 @@ export async function enqueuePartnerWebhooks(
           engineStatus: order.engine_status,
           total: order.total,
         },
-        delivery: deliverySnapshot(deliveryByOrderId.get(order.id), driverById, nowMs),
+        delivery:
+          deliverySnapshot(deliveryByOrderId.get(order.id), driverById, nowMs) ??
+          (order.is_test ? simulatedDeliverySnapshot(partnerEvent, nowMs) : null),
         occurredAt: ev.created_at,
       },
       status: 'pending',
@@ -301,8 +331,19 @@ export async function deliverPartnerWebhooks(
 export async function runPartnerWebhookProcessor(
   admin: SupabaseClient,
   nowMs: number
-): Promise<{ enqueued: number; delivered: number; failed: number }> {
+): Promise<{ enqueued: number; delivered: number; failed: number; testAdvanced: number }> {
+  // Advance partner test-mode orders first so a step taken this minute is
+  // enqueued and delivered in the same run rather than waiting for the next.
+  let testAdvanced = 0;
+  try {
+    ({ advanced: testAdvanced } = await advanceTestOrderLifecycles(admin, nowMs));
+  } catch (error) {
+    // Simulation is a convenience for partner integration testing — it must
+    // never block real partners' webhook delivery.
+    console.error('[partner-webhooks] test-order lifecycle simulation failed:', error);
+  }
+
   const enqueued = await enqueuePartnerWebhooks(admin, nowMs);
   const { delivered, failed } = await deliverPartnerWebhooks(admin, nowMs);
-  return { enqueued, delivered, failed };
+  return { enqueued, delivered, failed, testAdvanced };
 }

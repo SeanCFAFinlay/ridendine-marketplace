@@ -4,6 +4,9 @@
 // ==========================================
 
 process.env.STRIPE_SECRET_KEY = 'sk_test_fake';
+// Enables the live→test fallback path; a test-mode PaymentIntent is invisible
+// to the live client, so cancelling one has to retry in test mode.
+process.env.STRIPE_TEST_SECRET_KEY = 'sk_test_fake_test_mode';
 
 jest.mock('stripe', () => {
   const retrieve = jest.fn();
@@ -82,6 +85,54 @@ describe('stripePaymentAdapter', () => {
       mockRetrieve.mockRejectedValue(new Error('Stripe API error'));
 
       await expect(stripePaymentAdapter.cancelPaymentIntent('pi_bad')).rejects.toThrow('Stripe API error');
+    });
+
+    // ==========================================
+    // TEST-MODE ORDERS (partner rdk_test_ keys / 4242 card)
+    // The engine's PaymentAdapter contract passes only a PaymentIntent id, and
+    // live/test ids are indistinguishable — so cancelling a test-mode order has
+    // to discover the mode from Stripe's `resource_missing`.
+    // ==========================================
+    it('retries in test mode when the intent is absent from the live account', async () => {
+      const missing = Object.assign(new Error('No such payment_intent'), {
+        code: 'resource_missing',
+      });
+      mockRetrieve
+        .mockRejectedValueOnce(missing)
+        .mockResolvedValueOnce({ status: 'requires_payment_method' });
+      mockCancel.mockResolvedValue({ status: 'canceled' });
+
+      const result = await stripePaymentAdapter.cancelPaymentIntent('pi_test_mode');
+
+      expect(mockRetrieve).toHaveBeenCalledTimes(2);
+      expect(mockCancel).toHaveBeenCalledWith('pi_test_mode');
+      expect(result).toEqual({ cancelled: true, status: 'canceled' });
+    });
+
+    it('does not retry for errors other than resource_missing', async () => {
+      const rateLimited = Object.assign(new Error('Too many requests'), {
+        code: 'rate_limit',
+      });
+      mockRetrieve.mockRejectedValue(rateLimited);
+
+      await expect(stripePaymentAdapter.cancelPaymentIntent('pi_rl')).rejects.toThrow(
+        'Too many requests'
+      );
+      expect(mockRetrieve).toHaveBeenCalledTimes(1);
+      expect(mockCancel).not.toHaveBeenCalled();
+    });
+
+    it('surfaces the original error when the intent is missing from BOTH modes', async () => {
+      const missing = Object.assign(new Error('No such payment_intent'), {
+        code: 'resource_missing',
+      });
+      mockRetrieve.mockRejectedValue(missing);
+
+      await expect(stripePaymentAdapter.cancelPaymentIntent('pi_nowhere')).rejects.toThrow(
+        'No such payment_intent'
+      );
+      expect(mockRetrieve).toHaveBeenCalledTimes(2);
+      expect(mockCancel).not.toHaveBeenCalled();
     });
   });
 });

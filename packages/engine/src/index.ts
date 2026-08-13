@@ -132,6 +132,9 @@ export {
   assertStripeConfigured,
   STRIPE_API_VERSION,
   getOrCreateStripeCustomer,
+  getStripePublishableKey,
+  isStripeTestModeConfigured,
+  StripeTestModeUnavailableError,
 } from './services/stripe.service';
 
 export {

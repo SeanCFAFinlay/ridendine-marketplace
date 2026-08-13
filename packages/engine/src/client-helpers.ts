@@ -37,15 +37,24 @@ export function resetEngineClient(): void {
 }
 
 /**
- * Standard JSON error response
+ * Standard JSON error response.
+ *
+ * `details` is optional and OMITTED from the body when absent, so existing
+ * responses stay byte-identical. Routes that validate a caller-supplied payload
+ * pass the per-field issues here so an API consumer can see exactly which
+ * fields failed instead of a bare "Required".
  */
 export function errorResponse(
   code: string,
   message: string,
-  status: number = 400
+  status: number = 400,
+  details?: Array<{ field: string; message: string }>
 ): Response {
   return Response.json(
-    { success: false, error: { code, message } },
+    {
+      success: false,
+      error: { code, message, ...(details && details.length > 0 && { details }) },
+    },
     { status }
   );
 }
