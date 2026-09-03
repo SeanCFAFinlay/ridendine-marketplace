@@ -114,12 +114,24 @@ pnpm test:wiring-fixes       # runtime contract + surface classification
 pnpm docs:wiring             # if you added/removed a page or API route
 ```
 
-**Known red at baseline** (pre-existing, not caused by your change — verify
-before "fixing"):
-- `@ridendine/chef-admin` test — Costs page has no sidebar nav entry
-- `pnpm audit:db-boundary` — +52 raw `.from()` calls over baseline
-- `pnpm test:wiring-fixes` — 6 failures; surface counts are 104 pages / 180 API
-  routes but the docs assert 101 / 172
+**All gates above are green as of 2026-09-03.** The three that were red at the
+`b78d8e28` baseline are fixed (see `PROJECT_BASELINE.md` §13-C1/C2/C3). If one
+goes red now, it is most likely your change.
+
+**Two traps to know about:**
+
+- **Do not run `pnpm docs:wiring` casually.** It succeeds, but the regenerated
+  docs then fail `verify-known-wiring-fixes.cjs`, which runs *first* in
+  `pnpm test:wiring-fixes` — 76 `| PARTIAL |` rows appear because
+  `generate-wiring-docs.cjs:317` marks any surface with undetectable auth as
+  PARTIAL and there is no allowlist. Refreshing these docs is a real project
+  (auth metadata for ~76 surfaces + missing phase-9 contracts), not a chore. The
+  committed docs are knowingly stale at 91 pages / 124 APIs. See §13-C3a.
+- **`pnpm audit:db-boundary` was re-baselined, not fixed.** 398 raw `.from()`
+  calls are accepted. The ratchet still blocks *new* ones — if it fails, you added
+  a call. Use a repository. If your domain has none (recipes, inventory,
+  production, purchasing, suppliers, labor, kitchen all lack one), that missing
+  repository is the actual task; do not just bump the baseline again.
 
 ## Testing requirements
 

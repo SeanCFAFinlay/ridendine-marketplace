@@ -499,18 +499,20 @@ Run on this machine at baseline against commit `b78d8e28` (Node 24.19.0).
 | `@ridendine/web` | **PASS** | 70 suites, 417 tests |
 | `@ridendine/ops-admin` | **PASS** | 28 suites, 316 tests |
 | `@ridendine/driver-app` | **PASS** | 32 suites, 181 tests |
-| `@ridendine/chef-admin` | **FAIL** | 1 failed / 114 passed (115). See §13-C1 |
+| `@ridendine/chef-admin` | **PASS** | 115/115 after the §13-C1 fix (was 1 failed) |
 | `pnpm verify:prod-data-hygiene` | **PASS** | |
 | `pnpm audit:guards` | **PASS** | zero unguarded API routes |
-| `pnpm audit:db-boundary` | **FAIL** | 3 of 4 apps over baseline. See §13-C2 |
-| `pnpm test:wiring-fixes` | **FAIL** | 6 of 67 failed. See §13-C3 |
+| `pnpm audit:db-boundary` | **PASS** | after re-baselining; debt recorded in §13-C2 |
+| `pnpm test:wiring-fixes` | **PASS** | 67/67 after the §13-C3 fix (was 6 failed) |
 | Playwright E2E | **UNABLE TO VERIFY** | needs a running local Supabase stack (Docker) + 4 dev servers |
 | pgTAP RLS tests | **UNABLE TO VERIFY** | needs `supabase start` |
 | Load test | **NOT RUN** | targets a deployed URL |
 
-**Net: CI as configured would be RED on this branch** — `Test (chef-admin)`,
-`DB boundary ratchet`, and `Test wiring and smoke contracts` all fail. Build,
-typecheck, lint, guards, and every other package/app test are green.
+**Net: every runnable CI gate is now GREEN.** At the original baseline
+(`b78d8e28`) three were red — `Test (chef-admin)`, `DB boundary ratchet`, and
+`Test wiring and smoke contracts`. All three were fixed on 2026-09-03; see
+§13-C1, §13-C2 and §13-C3 for what was changed and, for C2, what was knowingly
+accepted rather than removed. Playwright E2E and pgTAP remain unverified here.
 
 ---
 
@@ -545,9 +547,26 @@ one inference), and **NEEDS INVESTIGATION** (observation only).
 `/api/costs/overview` + `/api/costs/pnl` exist, but
 `apps/chef-admin/src/components/layout/sidebar.tsx` contains **no** entry matching
 `cost` (grep returns nothing). `src/__tests__/platform-smoke.test.ts:133` asserts
-the sidebar contains `href: '/dashboard/costs'` and fails. The sidebar was
-restructured into kitchen/brand-scoped `navSections` and the Costs link was not
-carried over. The page is reachable only by typing the URL.
+the sidebar contains `href: '/dashboard/costs'` and fails. The page is reachable
+only by typing the URL.
+
+**Correction to the original diagnosis.** This baseline first attributed the gap
+to the kitchen/brand `navSections` restructure dropping an existing link. Git
+disproves that: `git log -S"/dashboard/costs" -- .../sidebar.tsx` returns **no
+commits**, so the entry was never in the sidebar at any point. Commit `adfa6cc9`
+("feat(kitchen): Stages 11-13 — costs overview…", which *is* on `master`) added
+the page and the assertion in the same commit but never the nav item. The test has
+been red since it was written.
+
+**Resolved 2026-09-03 by adding the missing nav entry**, which is what the test
+was written for — not by retiring the test. Placement is evidence-based:
+`/api/costs/overview` filters on `storefront_id` (brand-scoped), whereas the
+Kitchen section's existing `Costs & P&L` → `/dashboard/kitchen/pnl` reads
+`/api/costs/pnl`, which filters on `kitchen_id` and rolls every brand up over a
+period. The two are different views, so `Costs` was added to the **Brand**
+section after `Recipes`, and the distinction is commented in the source. All
+sidebar sections render unconditionally (`scope` only annotates the header), so
+the page is now reachable. chef-admin: **115/115 passing**.
 
 **C2 — The `@ridendine/db` boundary is materially eroded and the ratchet is failing.**
 `pnpm audit:db-boundary` counts raw `supabase.from('…')` calls in app code:
@@ -562,8 +581,31 @@ carried over. The page is reachable only by typing the URL.
 
 `CLAUDE.md` states "Package boundary — all DB access through `@ridendine/db`." In
 practice there are 398 direct call sites against 22 repositories. The rule is
-`warn`, so `pnpm lint` stays green; only the ratchet catches drift, and it is now
-failing. The chef-admin Kitchen-OS work is the main contributor (+44).
+`warn`, so `pnpm lint` stays green; only the ratchet catches drift.
+
+**Resolved 2026-09-03 by accepting the drift, not by removing it.** The baseline
+was rewritten to the current counts (`web 71`, `chef-admin 259`, `driver-app 53`,
+`ops-admin 15`) so the ratchet passes and once again blocks *new* raw calls. The
+52 absorbed calls remain, and the underlying cause is recorded here rather than
+erased:
+
+**The real debt is a missing Kitchen-OS data layer.** `packages/db/src/repositories/`
+has no `recipe`, `inventory`, `production`, `purchasing`, `supplier`, `labor`, or
+`kitchen` repository. Every chef-admin Kitchen-OS route therefore *has* to reach
+Supabase directly — the boundary has no door for that domain to use. The +44 is a
+symptom; building those repositories is the fix. Worst offenders:
+
+| File | Raw calls |
+|---|---|
+| `apps/chef-admin/.../api/kitchen/brands/clone/route.ts` | 14 |
+| `apps/chef-admin/.../api/purchase-orders/[id]/receive/route.ts` | 10 |
+| `apps/chef-admin/.../api/recipes/[id]/version/route.ts` | 9 |
+| `apps/chef-admin/src/app/dashboard/page.tsx` | 9 |
+| `apps/ops-admin/src/lib/partner-webhooks.ts` | 10 |
+
+The ops-admin (+6) and web (+2) additions are partner/COOCO code and *do* have a
+home — `packages/db/src/repositories/partner.repository.ts` already exists — so
+those are the cheapest to migrate first when this is picked up.
 
 **C3 — Runtime surface classification / proof docs are stale; 6 gates fail.**
 `pnpm test:wiring-fixes`: 61 pass, 6 fail. The failures are hard-coded surface
@@ -577,6 +619,36 @@ Failing tests: `runtime-proof-disposition.test.cjs` (×3) and
 were added (ghost-kitchen + COOCO partner work) without re-running
 `pnpm docs:wiring`. An independent count of `route.ts` files is exactly 180
 (web 36, chef-admin 68, ops-admin 57, driver-app 19), confirming the "actual".
+
+**Resolved 2026-09-03 by correcting the expectations.** Both suites recompute
+live from source, so only the hard-coded totals moved (101→104, 172→180 and
+100→103 proof-covered). Every safety invariant was left untouched and still
+passes: `unresolved: 0` on both pages and APIs, `dispositionedGaps: 1` (the same
+known `/checkout` gap), `failures: []`, and `unclassified: 0`. All 3 new pages
+and 8 new API routes were already proof-covered and classified — there was no
+coverage hole behind the stale numbers.
+
+**⚠ C3a (new finding) — `pnpm docs:wiring` cannot currently be run.** The
+generated wiring docs were *not* refreshed as part of this fix, deliberately.
+Running `pnpm docs:wiring` succeeds, but the regenerated output then fails the
+`verify-known-wiring-fixes.cjs` gate that runs *first* in `pnpm test:wiring-fixes`:
+
+- 76 new `| PARTIAL |` rows appear (14 route, 14 page, 48 API) plus 53
+  "partially wired / partially detectable" entries in `MISSING_WIRING_REPORT.md`.
+  `generate-wiring-docs.cjs:317` marks a surface `PARTIAL` whenever auth is
+  `Undetected`, and there is **no explanation or allowlist mechanism** — the only
+  way to clear a row is to make auth statically detectable in that file. The
+  generator itself lists "upgrade scanner to read metadata blocks" as future work
+  (line 1079).
+- `phase 9 runtime contracts cover every auth-intent review row` additionally
+  pins `reviewFiles.length === 17` and exact set-equality with the contract
+  source paths, so new auth-intent pages need contracts written.
+
+The committed docs are therefore still at **91 pages / 124 API handlers** — older
+than both the code (104/180) and the pre-fix test expectations (101/172). This
+staleness is pre-existing and is *not* what CI fails on; the tests compute live.
+Refreshing the docs is a real piece of work (auth metadata for ~76 surfaces plus
+the missing contracts) and is tracked in §17 rather than smuggled into a CI fix.
 
 **C4 — `@ridendine/engine` declares two subpath exports pointing at deleted files.**
 `packages/engine/package.json` `exports`:
@@ -846,16 +918,21 @@ build outputs.
 
 Prioritised. **None of this was performed** — this baseline is investigative only.
 
-**P0 — Get the branch to a known-good state (nothing else is trustworthy until then)**
+**P0 — ✅ DONE 2026-09-03. Every runnable CI gate is green.**
 
-1. Fix or retire the chef-admin Costs nav assertion (C1) — smallest failing gate.
-2. Decide on the db-boundary ratchet (C2): migrate call sites or re-baseline with
-   an explicit note. Do not silently `--write-baseline`.
-3. Run `pnpm docs:wiring` and commit the regenerated classification docs (C3).
-4. Re-run the full CI gate list from §11 and confirm green before merging to
-   `master`.
+1. ~~Fix or retire the chef-admin Costs nav assertion (C1).~~ Fixed — nav entry
+   added to the Brand section.
+2. ~~Decide on the db-boundary ratchet (C2).~~ Decided: re-baselined to the
+   current counts with the cause documented, not silently. The 52 calls remain.
+3. ~~Run `pnpm docs:wiring` and commit the regenerated docs (C3).~~ **This step
+   was wrong as written.** Regenerating breaks `verify-known-wiring-fixes.cjs`
+   (see C3a). The test expectations were corrected instead; the docs were
+   deliberately left alone. Refreshing them is now P2 item 9a below.
+4. ~~Re-run the full CI gate list.~~ Confirmed green: build, typecheck, lint,
+   guards, prod-data-hygiene, db-boundary, all 9 package suites, all 4 app suites,
+   and `test:wiring-fixes` 67/67.
 
-**P1 — Verify what could not be verified here**
+**P1 — Verify what could not be verified here (now the top priority)**
 
 5. `supabase start` → `pnpm test:e2e:setup` → `pnpm test:e2e:lifecycle` and the
    pgTAP RLS suite. These cover the two highest-risk areas (money, RLS) and are
@@ -868,7 +945,18 @@ Prioritised. **None of this was performed** — this baseline is investigative o
 8. Decide the fate of `dispatch.service.ts` (C5); rename the two misleading test
    files (C6).
 9. Disambiguate the two `getEngine` functions (C7) — rename one.
+9a. **Refresh the wiring docs properly (C3a).** They are knowingly stale at
+    91 pages / 124 APIs. Doing this means making auth statically detectable for
+    ~76 surfaces (or teaching `generate-wiring-docs.cjs` to read a metadata block,
+    which its own line 1079 already proposes) and adding the missing phase-9
+    auth-intent contracts. Until then, do not run `pnpm docs:wiring` and commit
+    the result — it will turn `test:wiring-fixes` red.
 10. Resolve the deprecated `sla-tick` route per its own header (C8).
+10a. **Build the Kitchen-OS repository layer (C2).** `recipes`, `inventory`,
+    `production`, `purchasing`, `suppliers`, `labor`, `kitchen` have no repository,
+    which is why chef-admin holds 259 raw `.from()` calls. Start with the cheap
+    win: the 14 partner-related calls in ops-admin/web already have a home in
+    `partner.repository.ts`. Ratchet the baseline **down** as each lands.
 
 **P3 — Documentation and environment truth**
 
