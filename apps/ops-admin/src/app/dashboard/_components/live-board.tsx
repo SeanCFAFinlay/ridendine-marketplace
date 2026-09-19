@@ -18,7 +18,7 @@ const IN_FLIGHT = new Set([
 ]);
 
 export function LiveBoard() {
-  const { orders, drivers, chefs, lastEventAt, pressure, realtimeConnected } = useOpsLiveFeed();
+  const { orders, drivers, chefs, lastEventAt, pressure, realtimeConnected, loading, error, refetch } = useOpsLiveFeed();
   const [highlightDeliveryId, setHighlightDeliveryId] = useState<string | null>(null);
 
   const highlightOrderId = useMemo(() => {
@@ -72,6 +72,7 @@ export function LiveBoard() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-[#121c2c] px-4 py-3 text-sm">
         <span className="text-textMuted">Live feed</span>
+        {loading && <span className="text-textMuted">Loading snapshot…</span>}
         <Badge className={realtimeConnected ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}>
           {realtimeConnected ? 'Realtime' : 'Reconnecting · 60s backup'}
         </Badge>
@@ -88,6 +89,15 @@ export function LiveBoard() {
           </>
         )}
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-danger/30 bg-dangerSoft px-4 py-3 text-sm text-danger">
+          Live board snapshot failed: {error}{' '}
+          <button className="font-semibold underline" onClick={() => void refetch()}>
+            Retry
+          </button>
+        </div>
+      )}
 
       <OrdersColumn orders={orders} highlightedOrderId={highlightOrderId} />
 

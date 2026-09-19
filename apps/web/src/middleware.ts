@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createAuthMiddleware } from '@ridendine/auth/middleware';
+import {
+  createAuthMiddleware,
+  buildContentSecurityPolicy,
+} from '@ridendine/auth/middleware';
 
 // Cache maintenance state for 30 seconds to avoid a DB call on every request.
 let maintenanceCacheValue = false;
@@ -21,11 +24,12 @@ async function getMaintenanceMode(): Promise<boolean> {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const failClosed = process.env.NODE_ENV === 'production';
 
   if (!supabaseUrl || !serviceKey) {
-    maintenanceCacheValue = false;
+    maintenanceCacheValue = failClosed;
     maintenanceCacheExpiry = now + CACHE_TTL_MS;
-    return false;
+    return maintenanceCacheValue;
   }
 
   try {
@@ -40,15 +44,17 @@ async function getMaintenanceMode(): Promise<boolean> {
       }
     );
     if (!res.ok) {
-      maintenanceCacheValue = false;
+      maintenanceCacheValue = failClosed;
       maintenanceCacheExpiry = now + CACHE_TTL_MS;
-      return false;
+      return maintenanceCacheValue;
     }
     const rows = (await res.json()) as Array<{ setting_value?: Record<string, unknown> }>;
     maintenanceCacheValue = rows[0]?.setting_value?.['maintenance_mode'] === true;
   } catch {
-    // Fail open: allow traffic when DB is unreachable
-    maintenanceCacheValue = false;
+    // Fail closed in production so checkout/customer traffic does not proceed
+    // during an unknown maintenance-state outage. Local/test environments stay
+    // fail-open to avoid blocking development without Supabase env vars.
+    maintenanceCacheValue = failClosed;
   }
 
   maintenanceCacheExpiry = now + CACHE_TTL_MS;
@@ -56,41 +62,13 @@ async function getMaintenanceMode(): Promise<boolean> {
 }
 
 /**
- * Per-request Content-Security-Policy. Uses a nonce + `'strict-dynamic'` for
- * scripts so we no longer need `'unsafe-inline'`/`'unsafe-eval'` (the main
- * weakness from the security review). `'unsafe-eval'` is allowed in dev only.
- * style-src keeps `'unsafe-inline'` (Next.js injects inline styles; inline
- * style injection is far lower risk than inline scripts).
+ * Per-request CSP. Now delegates to the shared builder in @ridendine/auth so
+ * all four apps have one implementation — previously only this app had a CSP
+ * at all, and its hand-rolled connect-src omitted an explicit `wss:` source
+ * for Supabase Realtime.
  */
-function buildCsp(nonce: string): string {
-  const isDev = process.env.NODE_ENV !== 'production';
-  const scriptSrc = [
-    "'self'",
-    `'nonce-${nonce}'`,
-    "'strict-dynamic'",
-    // Ignored by modern browsers when 'strict-dynamic' is present; kept as a
-    // fallback for older browsers without strict-dynamic support.
-    'js.stripe.com',
-    'va.vercel-scripts.com',
-    isDev ? "'unsafe-eval'" : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-
-  return [
-    "default-src 'self'",
-    `script-src ${scriptSrc}`,
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: *.supabase.co images.unsplash.com",
-    "font-src 'self'",
-    "connect-src 'self' *.supabase.co api.stripe.com *.sentry.io vitals.vercel-insights.com *.vercel-insights.com",
-    "frame-src js.stripe.com",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-  ].join('; ');
-}
+const buildCsp = (nonce: string) =>
+  buildContentSecurityPolicy(nonce, { stripe: true, vercelAnalytics: true });
 
 const authMiddleware = createAuthMiddleware({
   publicRoutes: ['/auth/login', '/auth/signup'],

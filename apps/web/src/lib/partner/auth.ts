@@ -2,8 +2,9 @@
 // PARTNER API AUTH
 // Resolves a presented key to a partner identity. Keys are DB-backed
 // (api_partner_keys, stored as sha256 hashes), individually revocable, scoped,
-// and carry a test_mode flag. A legacy env PARTNER_API_KEY is still accepted as
-// a fallback during rollout (resolves to an anonymous, non-test context).
+// and carry a test_mode flag. A legacy env PARTNER_API_KEY can still be
+// accepted during rollout, but only when paired with PARTNER_API_SIGNING_SECRET
+// so bearer-only partner traffic cannot bypass request signing.
 // ==========================================
 
 import { createHash, timingSafeEqual } from 'crypto';
@@ -63,14 +64,24 @@ export async function resolvePartnerContext(
       scopes: resolved.scopes,
       keyId: resolved.keyId,
       rateLimitPerMin: resolved.rateLimitPerMin,
-      requireSignature: resolved.requireSignature,
-      signingSecret: resolved.signingSecret,
+      requireSignature: !!resolved.requireSignature,
+      signingSecret: resolved.signingSecret ?? null,
     };
   }
 
-  // Legacy fallback: single shared env secret (fail-closed if unset/weak).
+  // Legacy fallback: single shared env secret (fail-closed if unset/weak). The
+  // fallback is intentionally signed-only to avoid an anonymous bearer token
+  // bypassing replay protection. Prefer DB-backed api_partner_keys for all new
+  // integrations.
   const expected = process.env.PARTNER_API_KEY;
-  if (expected && expected.length >= 16 && safeEqual(provided, expected)) {
+  const legacySigningSecret = process.env.PARTNER_API_SIGNING_SECRET;
+  if (
+    expected &&
+    expected.length >= 16 &&
+    legacySigningSecret &&
+    legacySigningSecret.length >= 16 &&
+    safeEqual(provided, expected)
+  ) {
     return {
       partnerId: null,
       partnerName: 'legacy-env-key',
@@ -78,8 +89,8 @@ export async function resolvePartnerContext(
       scopes: ['quote', 'checkout'],
       keyId: null,
       rateLimitPerMin: 120,
-      requireSignature: false,
-      signingSecret: null,
+      requireSignature: true,
+      signingSecret: legacySigningSecret,
     };
   }
 

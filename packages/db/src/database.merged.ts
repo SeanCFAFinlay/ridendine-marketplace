@@ -238,6 +238,10 @@ type MergedFunctions = GenFunctions & {
     Args: { p_limit?: number };
     Returns: LiabilitySummaryReturns;
   };
+  prune_expired_data: {
+    Args: { dry_run?: boolean };
+    Returns: Array<{ table_name: string; rows_affected: number }>;
+  };
 };
 
 // customers.user_id was made nullable by migration 00030 purely so dev/staging

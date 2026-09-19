@@ -1,7 +1,14 @@
 // ==========================================
 // SLA PROCESSOR ENDPOINT
-// Called by Vercel Cron every minute to process SLA timers
-// and enforce timeout automation.
+// Scheduled by apps/ops-admin/vercel.json. Processes SLA timers and enforces
+// timeout automation (chef acceptance, driver assignment, stale preparing).
+//
+// METHOD CONTRACT — do not narrow this without reading the note.
+// Vercel Cron invokes a scheduled path with GET. scripts/local-cron.mjs and
+// manual `curl` use POST. Both MUST perform the work, or the processor runs
+// in development and silently does nothing in production. `?mode=status`
+// keeps the old lightweight readiness ping available for monitors.
+// Regression-tested by scripts/smoke/processor-method-contract.test.cjs.
 // ==========================================
 
 import type { NextRequest } from 'next/server';
@@ -14,6 +21,7 @@ import {
 } from '@ridendine/db';
 import { createCentralEngine } from '@ridendine/engine';
 import {
+  checkAbandonedCheckouts,
   checkChefAcceptanceTimeout,
   checkDriverAssignmentTimeout,
   checkStalePreparingOrders,
@@ -21,7 +29,7 @@ import {
 import { validateEngineProcessorHeaders } from '@ridendine/utils';
 import { claimProcessorRun, finishProcessorRun } from '@/lib/processor-runs';
 
-export async function POST(request: NextRequest) {
+async function runSlaProcessor(request: NextRequest) {
   if (!validateEngineProcessorHeaders(request.headers)) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized' },
@@ -100,6 +108,37 @@ export async function POST(request: NextRequest) {
       staleAlerts++;
     }
 
+    // Step 5: Cancel orders abandoned before payment. Without this they sit in
+    // `checkout_pending` forever — nothing else in the system ever resolves them.
+    let abandonedCancelled = 0;
+    const abandoned = await checkAbandonedCheckouts(client, 60);
+    for (const v of abandoned) {
+      try {
+        const { data: current } = await client
+          .from('orders')
+          .select('engine_status,payment_status')
+          .eq('id', v.entityId)
+          .maybeSingle();
+        if (
+          !current ||
+          current.engine_status !== 'checkout_pending' ||
+          current.payment_status === 'completed'
+        ) {
+          continue;
+        }
+
+        await engine.masterOrder.cancelOrder({
+          orderId: v.entityId,
+          actorId: 'system',
+          actorType: 'system',
+          reason: 'Checkout abandoned before payment (60 min)',
+        });
+        abandonedCancelled++;
+      } catch {
+        console.warn(`[sla-processor] Failed to cancel abandoned checkout ${v.entityId}`);
+      }
+    }
+
     // Flush queued domain events
     await engine.events.flush();
 
@@ -116,6 +155,7 @@ export async function POST(request: NextRequest) {
           chefTimeoutsCancelled,
           driverEscalations,
           staleAlerts,
+          abandonedCancelled,
         },
       },
     };
@@ -134,7 +174,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Health check
+export async function POST(request: NextRequest) {
+  // Checked here as well as in the runner so each exported entry point is
+  // self-evidently guarded when read in isolation.
+  if (!validateEngineProcessorHeaders(request.headers)) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+  return runSlaProcessor(request);
+}
+
+/**
+ * Vercel Cron sends GET, so GET performs the work. `?mode=status` returns the
+ * readiness ping instead, for uptime monitors that must not trigger a run.
+ */
 export async function GET(request: NextRequest) {
   if (!validateEngineProcessorHeaders(request.headers)) {
     return NextResponse.json(
@@ -143,10 +195,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({
-    success: true,
-    processor: 'sla',
-    status: 'ready',
-    timestamp: new Date().toISOString(),
-  });
+  if (new URL(request.url).searchParams.get('mode') === 'status') {
+    return NextResponse.json({
+      success: true,
+      processor: 'sla',
+      status: 'ready',
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  return runSlaProcessor(request);
 }

@@ -54,9 +54,10 @@ export async function POST() {
       return successResponse({ referral: existing });
     }
 
-    const code = await svc.generateCode(context.actor.userId, 'customer');
+    await svc.generateCode(context.actor.userId, 'customer');
+    const stats = await svc.getMyReferrals(context.actor.userId);
 
-    return successResponse({ referral: code }, 201);
+    return successResponse({ referral: stats }, 201);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to generate referral code';
     return errorResponse('REFERRAL_GENERATE_ERROR', message, 500);

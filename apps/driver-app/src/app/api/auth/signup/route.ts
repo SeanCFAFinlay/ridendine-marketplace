@@ -136,11 +136,10 @@ export async function POST(request: Request) {
         last_name: lastName,
         phone,
         email,
-        // Closed-beta: drivers are self-serve. They still have to upload
-        // drivers licence, vehicle registration, and vehicle insurance docs
-        // (gated by driver_documents review) before dispatch readiness clears.
-        // Ops can flip this to 'suspended' to block a driver post-signup.
-        status: 'approved',
+        // Self-serve driver accounts require ops approval and document review
+        // before dispatch readiness clears. Do not grant approved status at
+        // signup time.
+        status: 'pending',
         vehicle_type: vehicleType ?? null,
         profile_image_url: null,
         rating: null,

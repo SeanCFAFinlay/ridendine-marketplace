@@ -54,7 +54,7 @@ BEGIN
   FOREACH t IN ARRAY ARRAY['storage_locations','inventory_items','suppliers','kitchen_stations']
   LOOP
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_'||t||'_kitchen_name') THEN
-      EXECUTE format('ALTER TABLE %I ADD CONSTRAINT %I UNIQUE (kitchen_id, name)', 'uq_'||t||'_kitchen_name', t);
+      EXECUTE format('ALTER TABLE %I ADD CONSTRAINT %I UNIQUE (kitchen_id, name)', t, 'uq_'||t||'_kitchen_name');
     END IF;
   END LOOP;
 END $$;

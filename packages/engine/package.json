@@ -7,9 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./core": "./src/core/index.ts",
-    "./orders": "./src/orchestrators/order.orchestrator.ts",
     "./kitchen": "./src/orchestrators/kitchen.engine.ts",
-    "./dispatch": "./src/orchestrators/dispatch.engine.ts",
     "./commerce": "./src/orchestrators/commerce.engine.ts",
     "./support": "./src/orchestrators/support.engine.ts",
     "./master-order": "./src/orchestrators/master-order-engine.ts",
@@ -20,7 +18,6 @@
     "./services/customers": "./src/services/customers.service.ts",
     "./services/permissions": "./src/services/permissions.service.ts",
     "./services/storage": "./src/services/storage.service.ts",
-    "./services/dispatch": "./src/services/dispatch.service.ts",
     "./constants": "./src/constants.ts",
     "./server": "./src/server.ts"
   },

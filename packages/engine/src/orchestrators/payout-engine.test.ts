@@ -225,6 +225,11 @@ describe('PayoutEngine.markPayoutEligible', () => {
 
   function makeLedgerInsert(entryId: string, captured?: { payload: unknown }) {
     return {
+      select: () => ({
+        eq: () => ({
+          maybeSingle: () => Promise.resolve({ data: null, error: null }),
+        }),
+      }),
       insert: (payload: unknown) => {
         if (captured) captured.payload = payload;
         return {

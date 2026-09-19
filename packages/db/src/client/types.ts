@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { SupabaseClient as SupabaseJsClient } from '@supabase/supabase-js';
 import type { Database } from '../database.merged';
 
@@ -11,17 +10,10 @@ type TypedSupabaseClient = SupabaseJsClient<Database>;
  * Both @supabase/supabase-js (`createClient`) and @supabase/ssr
  * (`createServerClient` / `createBrowserClient`) clients satisfy this type,
  * so repositories and consumers get fully typed `from()` / `rpc()` calls
- * against the merged Database schema.
- *
- * DELIBERATE LOOSENESS: `from('driver_presence')` returns an untyped builder.
- * packages/engine/src/services/dispatch.service.ts indexes the result rows in
- * a way that is incompatible with `noUncheckedIndexedAccess` under the typed
- * builder, and that package cannot be modified from here. Every other table
- * is fully typed. Remove the loose overload once dispatch.service handles the
- * possibly-undefined element itself.
+ * against the merged Database schema. Keep this as a structural Omit wrapper so
+ * Supabase SSR/browser client specializations remain assignable without adding
+ * relation-specific `any` overloads.
  */
 export type SupabaseClient = Omit<TypedSupabaseClient, 'from'> & {
-  from(relation: 'driver_presence'): any;
-} & {
   from: TypedSupabaseClient['from'];
 };
