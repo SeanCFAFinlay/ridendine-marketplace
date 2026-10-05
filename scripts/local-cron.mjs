@@ -3,10 +3,10 @@
 // Simulates Vercel cron jobs during local development.
 // Runs sla-tick and expired-offers on configurable intervals.
 //
-// Skipped (run rarely, trigger manually):
-//   /api/cron/payouts-chef-preview
-//   /api/cron/payouts-driver-preview
-//   /api/cron/reconciliation-daily
+// Reconciliation and retention run on their own daily Vercel schedules and are
+// not simulated here. Trigger them manually if needed:
+//   POST /api/engine/processors/reconciliation
+//   POST /api/engine/processors/retention
 // ==========================================
 
 const CRON_SECRET = process.env.CRON_SECRET ?? 'dev-cron-secret';
@@ -14,8 +14,7 @@ const OPS_ADMIN_URL = process.env.OPS_ADMIN_URL ?? 'http://localhost:3002';
 
 const ROUTES = [
   // Canonical SLA processor (writes ops_processor_runs). The legacy
-  // /api/cron/sla-tick route is deprecated; see the header comment in
-  // apps/ops-admin/src/app/api/cron/sla-tick/route.ts.
+  // /api/cron/* wrapper routes were unscheduled duplicates and have been removed.
   { path: '/api/engine/processors/sla', intervalMs: 60_000 },
   { path: '/api/engine/processors/expired-offers', intervalMs: 30_000 },
 ];

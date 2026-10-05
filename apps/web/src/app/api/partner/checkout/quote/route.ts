@@ -6,7 +6,11 @@
 // ==========================================
 
 import { createAdminClient, type SupabaseClient } from '@ridendine/db';
-import { partnerCheckoutSchema } from '@ridendine/validation';
+import {
+  partnerQuoteSchema,
+  formatValidationMessage,
+  formatIssueDetails,
+} from '@ridendine/validation';
 import {
   evaluateRateLimit,
   RATE_LIMIT_POLICIES,
@@ -57,12 +61,15 @@ export async function POST(request: Request): Promise<Response> {
     return errorResponse('VALIDATION_ERROR', 'Invalid JSON body', 400);
   }
 
-  const validationResult = partnerCheckoutSchema.safeParse(body);
+  // Quote prices items + address only; `customer` is optional here (see
+  // partnerQuoteSchema) and ignored when sent.
+  const validationResult = partnerQuoteSchema.safeParse(body);
   if (!validationResult.success) {
     return errorResponse(
       'VALIDATION_ERROR',
-      validationResult.error.issues[0]?.message || 'Invalid request body',
-      400
+      formatValidationMessage(validationResult.error),
+      400,
+      formatIssueDetails(validationResult.error)
     );
   }
   const data = validationResult.data;

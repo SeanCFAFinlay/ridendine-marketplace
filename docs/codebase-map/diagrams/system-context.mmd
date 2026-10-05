@@ -1,0 +1,63 @@
+%% RIDENDINE — System Context
+%% Legend: solid = caller-initiated · dashed = callback/scheduled
+%% grey dashed node = UNKNOWN or CONTRADICTED (see 21-contradictions-and-unknowns.md)
+flowchart TD
+    CUST["Customer<br/>browser"]
+    CHEF["Chef /<br/>kitchen operator"]
+    DRV["Driver<br/>phone PWA"]
+    OPS["Ridendine staff<br/>ops · support · finance"]
+    PARTNER["Partner storefront<br/>server-to-server"]
+
+    subgraph RND["RIDENDINE PLATFORM · Vercel"]
+        direction TB
+        WEB["C-01 apps/web<br/>ridendine.ca"]
+        CHEFAPP["C-05 apps/chef-admin<br/>chef.ridendine.ca"]
+        OPSAPP["C-07 apps/ops-admin<br/>ops.ridendine.ca"]
+        DRVAPP["C-10 apps/driver-app<br/>driver.ridendine.ca"]
+    end
+
+    SUPA[("C-20 Supabase<br/>Postgres 17 · Auth<br/>Storage · Realtime")]
+    STRIPE["Stripe<br/>payments · Connect"]
+    OSM["OpenStreetMap public<br/>Nominatim · OSRM<br/>no key · no SLA"]
+    COMMS["Resend · Twilio<br/>optional"]
+    REDIS["Upstash Redis<br/>optional"]
+    CRON["Vercel Cron"]
+
+    CUST -->|NET-001| WEB
+    CHEF -->|NET-002| CHEFAPP
+    DRV -->|NET-003| DRVAPP
+    OPS -->|NET-004| OPSAPP
+    PARTNER -->|"NET-005 x-api-key + HMAC"| WEB
+
+    WEB --> SUPA
+    CHEFAPP --> SUPA
+    OPSAPP --> SUPA
+    DRVAPP --> SUPA
+
+    WEB -->|"NET-010 PaymentIntent"| STRIPE
+    OPSAPP -->|"NET-011 refunds · transfers"| STRIPE
+    CHEFAPP -->|"NET-012 Connect onboarding"| STRIPE
+    DRVAPP -->|"NET-013 instant payout"| STRIPE
+
+    STRIPE -.->|"NET-014 payment_intent.*"| WEB
+    STRIPE -.->|"NET-015 transfer · payout"| OPSAPP
+
+    CRON -.->|"NET-020 GET x3<br/>WORK IS IN POST — R-01"| OPSAPP
+    OPSAPP -.->|"NET-021 HMAC webhook out"| PARTNER
+
+    WEB --> OSM
+    OPSAPP --> OSM
+    WEB --> COMMS
+    OPSAPP --> COMMS
+    WEB -.-> REDIS
+
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef app fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef human fill:#fdf0f0,stroke:#a85c5c,color:#3a1212
+    classDef broken fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class STRIPE,OSM,PARTNER ext
+    class WEB,CHEFAPP,OPSAPP,DRVAPP app
+    class SUPA store
+    class CUST,CHEF,DRV,OPS human
+    class CRON,COMMS,REDIS broken

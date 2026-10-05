@@ -6,14 +6,22 @@
   "crons": [
     {
       "path": "/api/engine/processors/sla",
-      "schedule": "0 2 * * *"
+      "schedule": "*/2 * * * *"
     },
     {
       "path": "/api/engine/processors/expired-offers",
-      "schedule": "0 3 * * *"
+      "schedule": "* * * * *"
     },
     {
       "path": "/api/engine/processors/partner-webhooks",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/engine/processors/reconciliation",
+      "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/engine/processors/retention",
       "schedule": "0 4 * * *"
     }
   ]

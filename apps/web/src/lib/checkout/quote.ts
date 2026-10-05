@@ -1,7 +1,7 @@
 import { getCartWithItems, type SupabaseClient } from '@ridendine/db';
 import { roundMoney } from '@/lib/cart-summary';
 import {
-  BASE_DELIVERY_FEE,
+  DELIVERY_BASE_FEE_CENTS,
   buildAddressString,
   calculateDeliveryFee,
   createTaxConfigService,
@@ -153,8 +153,13 @@ function computeServerQuote(
   rates: { hstRate: number; serviceFeePercent: number },
   deliveryFeeCents?: number
 ): CheckoutQuoteBreakdown {
+  // Fallback when distance could not be computed (geocoding or OSRM failed).
+  // This previously used the @deprecated BASE_DELIVERY_FEE ($5.00) while the
+  // distance path uses DELIVERY_BASE_FEE_CENTS ($3.99), so a customer whose
+  // address failed to geocode was silently charged $1.01 more for the same
+  // delivery. Both paths now start from the same base fee.
   const deliveryFee =
-    deliveryFeeCents !== undefined ? deliveryFeeCents / 100 : BASE_DELIVERY_FEE / 100;
+    deliveryFeeCents !== undefined ? deliveryFeeCents / 100 : DELIVERY_BASE_FEE_CENTS / 100;
   const serviceFee = roundMoney(subtotal * (rates.serviceFeePercent / 100));
   const tax = roundMoney((subtotal + deliveryFee + serviceFee) * (rates.hstRate / 100));
   const preDiscountTotal = subtotal + deliveryFee + serviceFee + tax + tip;

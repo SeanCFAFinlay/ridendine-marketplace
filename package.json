@@ -51,6 +51,7 @@
     "audit:sean-super-admin": "node scripts/audit/sean-super-admin-fixture.cjs",
     "audit:db-hardening": "node scripts/audit/verify-db-hardening.mjs",
     "audit:db-boundary": "node scripts/audit/db-boundary-ratchet.mjs",
+    "audit:migrations": "node scripts/audit/verify-migration-immutability.mjs",
     "ui:screenshots": "tsx scripts/ui/generate-ui-screenshots.ts",
     "ui:registry": "tsx scripts/ui/build-page-registry.ts",
     "ui:screenshots:sync": "tsx scripts/ui/sync-ui-screenshots.ts",
@@ -60,7 +61,7 @@
     "docs:api-guard-snapshot": "powershell -ExecutionPolicy Bypass -File scripts/docs/generate-api-guard-snapshot.ps1",
     "docs:wiring": "node scripts/wiring/generate-wiring-docs.cjs && pnpm smoke:surface-classification -- --write-docs && pnpm smoke:runtime-coverage -- --write-docs && pnpm smoke:proof-disposition -- --write-docs && pnpm smoke:non-admin-role-fixture -- --contracts-only --write-docs && pnpm docs:supabase",
     "docs:supabase": "node scripts/wiring/generate-supabase-diagrams.cjs",
-    "test:wiring-fixes": "node scripts/wiring/verify-known-wiring-fixes.cjs && node --test scripts/smoke/runtime-contract-smoke.test.cjs scripts/smoke/live-role-fixture-smoke.test.cjs scripts/smoke/non-admin-role-fixture-smoke.test.cjs scripts/smoke/runtime-surface-classification.test.cjs scripts/smoke/runtime-coverage-audit.test.cjs scripts/smoke/runtime-proof-disposition.test.cjs scripts/smoke/ops-export-audit-smoke.test.cjs scripts/smoke/runtime-proof-action-smoke.test.cjs scripts/smoke/runtime-sample-fixtures.test.cjs scripts/smoke/driver-shift-mutation-smoke.test.cjs scripts/smoke/production-smoke.test.cjs scripts/smoke/responsive-production-smoke.test.cjs scripts/audit/sean-super-admin-fixture.test.cjs scripts/audit/high-risk-ops-authz-contracts.test.cjs scripts/audit/high-risk-ops-negative-authz.test.cjs",
+    "test:wiring-fixes": "node scripts/wiring/verify-known-wiring-fixes.cjs && node --test scripts/smoke/processor-method-contract.test.cjs scripts/smoke/runtime-contract-smoke.test.cjs scripts/smoke/live-role-fixture-smoke.test.cjs scripts/smoke/non-admin-role-fixture-smoke.test.cjs scripts/smoke/runtime-surface-classification.test.cjs scripts/smoke/runtime-coverage-audit.test.cjs scripts/smoke/runtime-proof-disposition.test.cjs scripts/smoke/ops-export-audit-smoke.test.cjs scripts/smoke/runtime-proof-action-smoke.test.cjs scripts/smoke/runtime-sample-fixtures.test.cjs scripts/smoke/driver-shift-mutation-smoke.test.cjs scripts/smoke/production-smoke.test.cjs scripts/smoke/responsive-production-smoke.test.cjs scripts/audit/sean-super-admin-fixture.test.cjs scripts/audit/high-risk-ops-authz-contracts.test.cjs scripts/audit/high-risk-ops-negative-authz.test.cjs",
     "audit:guards": "node scripts/audit/check-api-route-guards.mjs",
     "e2e:validate-seed": "node scripts/e2e/validate-seed-uuids.mjs",
     "test:e2e:setup": "supabase db reset && pnpm db:seed",
@@ -89,5 +90,19 @@
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.58.0",
     "wait-on": "^8.0.0"
+  },
+  "pnpm": {
+    "auditConfig": {
+      "ignoreCves": [
+        "CVE-2026-93687",
+        "GHSA-vfj7-8cjw-p6xm",
+        "GHSA-qhr7-859c-m2p7",
+        "GHSA-6j4f-fj2g-mc7p"
+      ]
+    },
+    "overrides": {
+      "brace-expansion": ">=2.1.5",
+      "axios": ">=1.20.0"
+    }
   }
 }

@@ -1,0 +1,37 @@
+# Dependency scanning — previously there was none of any kind (no Dependabot,
+# no Renovate, no `pnpm audit`, no CodeQL) in a repository that processes
+# payments. Security updates are grouped and raised weekly; the CI gate in
+# ci.yml ("Dependency audit") is the blocking half of this.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # One PR per concern keeps review tractable in a 15-workspace monorepo.
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+      dev-dependencies:
+        dependency-type: development
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      # Majors for the framework and the payment SDK are deliberate migrations,
+      # not dependency chores. Raise those by hand.
+      - dependency-name: next
+        update-types: ["version-update:semver-major"]
+      - dependency-name: react
+        update-types: ["version-update:semver-major"]
+      - dependency-name: react-dom
+        update-types: ["version-update:semver-major"]
+      - dependency-name: stripe
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

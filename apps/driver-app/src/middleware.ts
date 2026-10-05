@@ -1,4 +1,14 @@
-import { createAuthMiddleware } from '@ridendine/auth/middleware';
+import {
+  createAuthMiddleware,
+  buildContentSecurityPolicy,
+} from '@ridendine/auth/middleware';
+
+/**
+ * This app previously shipped no Content-Security-Policy at all — only
+ * apps/web had one. Leaflet route map loads OSM tiles plus marker images and CSS from cdnjs
+ * (apps/driver-app/src/components/map/route-map.tsx).
+ */
+const cspBuilder = (nonce: string) => buildContentSecurityPolicy(nonce, { maps: true, cdnjsLeaflet: true });
 
 export const middleware = createAuthMiddleware({
   publicRoutes: [
@@ -13,6 +23,7 @@ export const middleware = createAuthMiddleware({
     '/terms',
   ],
   loginRoute: '/auth/login',
+  cspBuilder,
   authenticatedRedirect: '/',
 });
 

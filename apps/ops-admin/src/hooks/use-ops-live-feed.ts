@@ -109,20 +109,35 @@ export function useOpsLiveFeed() {
   const [state, dispatch] = useReducer(liveFeedReducer, undefined, createEmptyLiveFeedState);
   const [pressure, setPressure] = useState<OpsLiveBoardPressure | null>(null);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastSnapshotError, setLastSnapshotError] = useState<string | null>(null);
   const supabaseRef = useRef(createBrowserClient());
   const fallbackRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchSnapshot = useCallback(async () => {
-    const res = await fetch('/api/ops/live-board', { credentials: 'include' });
-    if (!res.ok) return;
-    const body = (await res.json()) as { success?: boolean; data?: SnapshotResponse };
-    const data = body.data;
-    if (!data) return;
-    setPressure(data.pressure);
-    dispatch({
-      type: 'HYDRATE',
-      payload: { orders: data.orders, drivers: data.drivers, chefs: data.chefs },
-    });
+    try {
+      const res = await fetch('/api/ops/live-board', { credentials: 'include' });
+      const body = (await res.json()) as { success?: boolean; data?: SnapshotResponse; error?: string };
+      if (!res.ok || body.success === false) {
+        throw new Error(body.error || `Snapshot fetch failed (${res.status})`);
+      }
+      const data = body.data;
+      if (!data) throw new Error('Snapshot response was missing data');
+      setPressure(data.pressure);
+      dispatch({
+        type: 'HYDRATE',
+        payload: { orders: data.orders, drivers: data.drivers, chefs: data.chefs },
+      });
+      setError(null);
+      setLastSnapshotError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load live board snapshot';
+      setError(message);
+      setLastSnapshotError(message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -255,6 +270,9 @@ export function useOpsLiveFeed() {
     chefs,
     lastEventAt,
     pressure,
+    loading,
+    error,
+    lastSnapshotError,
     realtimeConnected,
     refetch: fetchSnapshot,
   };

@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import { getChefActorContext } from '@/lib/engine';
 import {
-  canonicalImageExtensionForMime,
+  resolveVerifiedImageType,
   evaluateRateLimit,
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
@@ -113,19 +113,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ext = canonicalImageExtensionForMime(file.type);
-    if (!ext) {
-      return NextResponse.json(
-        { error: 'Invalid file type. Use JPEG, PNG, WebP, or GIF' },
-        { status: 400 }
-      );
-    }
-
     const client = createAdminClient();
-    const fileName = `${context.chefId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const buffer = new Uint8Array(await file.arrayBuffer());
 
-    const result = await uploadToStorage(client, BUCKETS[bucket], fileName, buffer, file.type);
+    // Verify magic bytes rather than trusting the declared Content-Type.
+    const verified = resolveVerifiedImageType(file.type, buffer, ALLOWED_TYPES);
+    if (!verified.ok) {
+      return NextResponse.json({ error: verified.reason }, { status: 400 });
+    }
+
+    const fileName = `${context.chefId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${verified.ext}`;
+
+    const result = await uploadToStorage(
+      client,
+      BUCKETS[bucket],
+      fileName,
+      buffer,
+      verified.contentType
+    );
 
     if ('error' in result) {
       return NextResponse.json({ error: result.error }, { status: 500 });

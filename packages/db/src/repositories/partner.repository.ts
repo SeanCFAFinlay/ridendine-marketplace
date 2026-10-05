@@ -30,7 +30,7 @@ export async function resolvePartnerByKeyHash(
 ): Promise<ResolvedPartner | null> {
   const { data, error } = await (client as any)
     .from('api_partner_keys')
-    .select('id, scopes, is_active, revoked_at, require_signature, signing_secret, api_partners!inner(id, name, is_active, test_mode, rate_limit_per_min)')
+    .select('id, scopes, is_active, revoked_at, require_signature, signing_secret, test_mode, api_partners!inner(id, name, is_active, test_mode, rate_limit_per_min)')
     .eq('key_hash', keyHash)
     .eq('is_active', true)
     .is('revoked_at', null)
@@ -44,7 +44,11 @@ export async function resolvePartnerByKeyHash(
   return {
     partnerId: partner.id as string,
     partnerName: partner.name as string,
-    testMode: !!partner.test_mode,
+    // Test mode is per-partner OR per-key: a live partner can hold a staging
+    // (rdk_test_) key whose orders are recorded but kept out of the kitchen,
+    // without flipping the whole partner into test mode. The OR is one-way —
+    // a key can never promote a test partner's traffic to live.
+    testMode: !!partner.test_mode || !!(data as any).test_mode,
     scopes: Array.isArray((data as any).scopes) ? ((data as any).scopes as string[]) : ['quote', 'checkout'],
     keyId: (data as any).id as string,
     rateLimitPerMin: Number.isFinite(rateLimit) && rateLimit > 0 ? rateLimit : 120,

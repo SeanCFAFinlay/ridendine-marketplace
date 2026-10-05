@@ -22,8 +22,33 @@ interface NominatimResult {
   lon: string;
 }
 
-// In-memory cache: address string -> coordinates or null
+/**
+ * Nominatim has no timeout by default, so a slow upstream could stall a
+ * checkout indefinitely — geocoding sits inline in the checkout quote. 5s is
+ * generous for this endpoint and well inside any serverless function budget.
+ */
+const GEOCODE_TIMEOUT_MS = 5_000;
+
+/**
+ * In-memory cache: address string -> coordinates or null.
+ *
+ * Bounded. This was previously an unbounded Map that was never evicted, so a
+ * long-lived warm instance accumulated one entry per distinct address string
+ * forever. Simple FIFO eviction — recency matters little here because a given
+ * address's coordinates do not change.
+ */
 export const geocodingCache = new Map<string, Coordinates | null>();
+
+const GEOCODE_CACHE_MAX = 5_000;
+
+function cacheGeocode(address: string, value: Coordinates | null): void {
+  if (geocodingCache.size >= GEOCODE_CACHE_MAX) {
+    // Map preserves insertion order, so the first key is the oldest.
+    const oldest = geocodingCache.keys().next();
+    if (!oldest.done) geocodingCache.delete(oldest.value);
+  }
+  geocodingCache.set(address, value);
+}
 
 export async function geocodeAddress(address: string): Promise<Coordinates | null> {
   if (geocodingCache.has(address)) {
@@ -41,10 +66,11 @@ export async function geocodeAddress(address: string): Promise<Coordinates | nul
         'User-Agent': USER_AGENT,
         'Accept-Language': 'en',
       },
+      signal: AbortSignal.timeout(GEOCODE_TIMEOUT_MS),
     });
 
     if (!response.ok) {
-      geocodingCache.set(address, null);
+      cacheGeocode(address, null);
       return null;
     }
 
@@ -52,7 +78,7 @@ export async function geocodeAddress(address: string): Promise<Coordinates | nul
 
     const firstResult = results[0];
     if (!firstResult) {
-      geocodingCache.set(address, null);
+      cacheGeocode(address, null);
       return null;
     }
 
@@ -61,10 +87,10 @@ export async function geocodeAddress(address: string): Promise<Coordinates | nul
       longitude: parseFloat(firstResult.lon),
     };
 
-    geocodingCache.set(address, coords);
+    cacheGeocode(address, coords);
     return coords;
   } catch {
-    geocodingCache.set(address, null);
+    cacheGeocode(address, null);
     return null;
   }
 }

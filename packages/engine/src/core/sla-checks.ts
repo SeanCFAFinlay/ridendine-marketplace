@@ -59,6 +59,56 @@ export async function checkChefAcceptanceTimeout(
 }
 
 /**
+ * Orders abandoned BEFORE payment.
+ *
+ * `runCheckout` creates the order row and the Stripe PaymentIntent, then hands
+ * a clientSecret to the browser. If the customer simply closes the tab, the
+ * order sits in `checkout_pending` forever: nothing ever advances it and
+ * nothing ever cancels it. checkChefAcceptanceTimeout does not cover this —
+ * it only looks at orders that already reached `pending`/`payment_authorized`.
+ *
+ * The result was permanently unresolved rows that inflate order counts and
+ * make "how many orders did we take today" unanswerable.
+ *
+ * The threshold is deliberately generous. A customer can legitimately sit on
+ * the card form for several minutes, and a Stripe webhook that arrives late
+ * must never race a cancellation. 60 minutes is far beyond both.
+ */
+export async function checkAbandonedCheckouts(
+  client: SupabaseClient,
+  thresholdMinutes = 60,
+): Promise<SLAViolation[]> {
+  const { data, error } = await client
+    .from('orders')
+    .select('id, engine_status, payment_status, created_at')
+    .eq('engine_status', 'checkout_pending')
+    .lt('created_at', cutoffISO(thresholdMinutes));
+
+  if (error || !data) return [];
+
+  return (
+    data as Array<{
+      id: string;
+      engine_status: string;
+      payment_status: string | null;
+      created_at: string;
+    }>
+  )
+    // Never touch an order whose payment actually completed — that is a
+    // webhook-processing problem, not an abandonment, and cancelling it would
+    // strand a paying customer.
+    .filter((row) => row.payment_status !== 'completed')
+    .map((row) => ({
+      entityType: 'order',
+      entityId: row.id,
+      violationType: 'checkout_abandoned',
+      elapsedMinutes: elapsedMinutes(row.created_at),
+      thresholdMinutes,
+      details: { engine_status: row.engine_status, payment_status: row.payment_status },
+    }));
+}
+
+/**
  * Deliveries with status='pending', older than thresholdMinutes, not yet escalated.
  */
 export async function checkDriverAssignmentTimeout(

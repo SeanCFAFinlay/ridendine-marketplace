@@ -9,12 +9,23 @@ import { getOpsActorContext, guardPlatformApi } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Must match the cron entries in apps/ops-admin/vercel.json exactly — enforced
+ * by scripts/smoke/processor-method-contract.test.cjs.
+ *
+ * Previously this list also carried 'payouts-chef-preview' and
+ * 'payouts-driver-preview', which nothing schedules and which never write
+ * ops_processor_runs, so their lastSuccessAt was permanently null. A readiness
+ * signal that always looks broken gets ignored, so they are gone. Meanwhile
+ * 'partner-webhooks' was scheduled but untracked, which is the opposite
+ * failure — a real job nobody could see.
+ */
 const TRACKED_PROCESSORS = [
   'sla',
   'expired-offers',
-  'payouts-chef-preview',
-  'payouts-driver-preview',
+  'partner-webhooks',
   'reconciliation-daily',
+  'retention',
 ] as const;
 
 function envReadiness() {
@@ -28,9 +39,26 @@ function envReadiness() {
     'ENGINE_PROCESSOR_TOKEN',
   ];
 
-  return Object.fromEntries(
-    required.map((key) => [key, { configured: Boolean(process.env[key]) }])
-  );
+  // Not required to boot, but their absence silently degrades a capability the
+  // platform appears to have: no outbound email/SMS, per-instance rate limits
+  // instead of global ones, and an unverified finance webhook.
+  const optional = [
+    'STRIPE_WEBHOOK_SECRET_OPS',
+    'UPSTASH_REDIS_REST_URL',
+    'UPSTASH_REDIS_REST_TOKEN',
+    'RESEND_API_KEY',
+    'TWILIO_ACCOUNT_SID',
+    'NEXT_PUBLIC_SENTRY_DSN',
+  ];
+
+  return {
+    ...Object.fromEntries(
+      required.map((key) => [key, { configured: Boolean(process.env[key]), required: true }])
+    ),
+    ...Object.fromEntries(
+      optional.map((key) => [key, { configured: Boolean(process.env[key]), required: false }])
+    ),
+  };
 }
 
 async function processorRunsReadiness(
@@ -74,9 +102,9 @@ export async function GET() {
       processorRoutes: {
         sla: '/api/engine/processors/sla',
         expiredOffers: '/api/engine/processors/expired-offers',
-        payoutChefPreview: '/api/cron/payouts-chef-preview',
-        payoutDriverPreview: '/api/cron/payouts-driver-preview',
-        reconciliationDaily: '/api/cron/reconciliation-daily',
+        partnerWebhooks: '/api/engine/processors/partner-webhooks',
+        reconciliationDaily: '/api/engine/processors/reconciliation',
+        retention: '/api/engine/processors/retention',
       },
       processorRuns,
     };

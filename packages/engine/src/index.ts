@@ -25,6 +25,7 @@ export * from './orchestrators/payout-engine';
 // Phase 3 extractions
 export { OrderCreationService, createOrderCreationService, type CreateOrderInput } from './orchestrators/order-creation.service';
 export type { PaymentAdapter } from './types/payment-adapter';
+export { stripePaymentAdapter } from './services/stripe-payment-adapter';
 
 // Phase 2 dispatch split (Stage 2)
 export {
@@ -124,7 +125,6 @@ export * from './services/chefs.service';
 export * from './services/customers.service';
 export * from './services/permissions.service';
 export * from './services/storage.service';
-export * from './services/dispatch.service';
 
 // Stripe (IRR-007 / IRR-018) — server-only secret; safe to import from route handlers
 export {
@@ -132,6 +132,9 @@ export {
   assertStripeConfigured,
   STRIPE_API_VERSION,
   getOrCreateStripeCustomer,
+  getStripePublishableKey,
+  isStripeTestModeConfigured,
+  StripeTestModeUnavailableError,
 } from './services/stripe.service';
 
 export {

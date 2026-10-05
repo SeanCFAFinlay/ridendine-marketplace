@@ -8,7 +8,11 @@
 // ==========================================
 
 import { createAdminClient, type SupabaseClient } from '@ridendine/db';
-import { partnerCheckoutSchema } from '@ridendine/validation';
+import {
+  partnerCheckoutSchema,
+  formatValidationMessage,
+  formatIssueDetails,
+} from '@ridendine/validation';
 import {
   evaluateRateLimit,
   RATE_LIMIT_POLICIES,
@@ -64,8 +68,9 @@ export async function POST(request: Request): Promise<Response> {
   if (!validationResult.success) {
     return errorResponse(
       'VALIDATION_ERROR',
-      validationResult.error.issues[0]?.message || 'Invalid request body',
-      400
+      formatValidationMessage(validationResult.error),
+      400,
+      formatIssueDetails(validationResult.error)
     );
   }
   const data = validationResult.data;

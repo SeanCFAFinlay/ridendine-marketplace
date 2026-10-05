@@ -59,7 +59,7 @@ describe('enqueuePartnerWebhooks', () => {
 
     const n = await enqueuePartnerWebhooks(admin, NOW);
     expect(n).toBe(1);
-    const inserted = capture['partner_webhook_deliveries:insert'][0] as any[];
+    const inserted = capture['partner_webhook_deliveries:insert']![0] as any[];
     expect(inserted).toHaveLength(1);
     expect(inserted[0]).toMatchObject({
       partner_id: 'p1',
@@ -69,6 +69,116 @@ describe('enqueuePartnerWebhooks', () => {
       status: 'pending',
     });
     expect(inserted[0].payload.order.orderNumber).toBe('RD-1');
+  });
+
+  it('enriches out_for_delivery events with the driver + ETA snapshot', async () => {
+    const capture: Record<string, any[]> = {};
+    const admin = makeAdmin(
+      {
+        order_status_history: [
+          { id: 'ev-1', new_status: 'out_for_delivery', order_id: 'order-1', created_at: '2026-06-30T00:00:00Z' },
+        ],
+        orders: [
+          { id: 'order-1', order_number: 'RD-1', partner_id: 'p1', status: 'out_for_delivery', engine_status: 'out_for_delivery', total: 42 },
+        ],
+        api_partners: [{ id: 'p1', webhook_url: 'https://partner.test/hook', webhook_secret: 's', is_active: true }],
+        deliveries: [
+          { id: 'del-1', order_id: 'order-1', driver_id: 'drv-1', status: 'IN_TRANSIT', eta_dropoff_at: '2026-06-30T00:20:00Z', estimated_dropoff_at: null, distance_km: 4.2 },
+        ],
+        drivers: [
+          { id: 'drv-1', first_name: 'Sam', last_name: 'Rider', phone: '+16475551234', vehicle_type: 'car' },
+        ],
+        partner_webhook_deliveries: [],
+      },
+      capture
+    );
+
+    const n = await enqueuePartnerWebhooks(admin, Date.parse('2026-06-30T00:00:00Z'));
+    expect(n).toBe(1);
+    const inserted = capture['partner_webhook_deliveries:insert']![0] as any[];
+    expect(inserted[0].payload.delivery).toMatchObject({
+      status: 'IN_TRANSIT',
+      driverName: 'Sam Rider',
+      driverPhone: '+16475551234',
+      etaMinutes: 20,
+      distanceKm: 4.2,
+    });
+  });
+
+  // A simulated test order has no `deliveries` row (creating one would put fake
+  // work on the live dispatch board), but the partner still needs a populated
+  // delivery block to test that half of their handler.
+  it('synthesises a labelled delivery block for a simulated test order', async () => {
+    const capture: Record<string, any[]> = {};
+    const admin = makeAdmin(
+      {
+        order_status_history: [
+          { id: 'ev-t1', new_status: 'out_for_delivery', order_id: 'order-test', created_at: '2026-06-30T00:00:00Z' },
+        ],
+        orders: [
+          { id: 'order-test', order_number: 'RD-TEST', partner_id: 'p1', status: 'out_for_delivery', engine_status: 'out_for_delivery', total: 42, is_test: true },
+        ],
+        api_partners: [{ id: 'p1', webhook_url: 'https://partner.test/hook', webhook_secret: 's', is_active: true }],
+        deliveries: [], // no real dispatch exists for a test order
+        partner_webhook_deliveries: [],
+      },
+      capture
+    );
+
+    const n = await enqueuePartnerWebhooks(admin, Date.parse('2026-06-30T00:00:00Z'));
+    expect(n).toBe(1);
+    const inserted = capture['partner_webhook_deliveries:insert']![0] as any[];
+    expect(inserted[0].payload.delivery).toMatchObject({
+      status: 'IN_TRANSIT',
+      driverName: 'Test Driver',
+      vehicleType: 'car',
+      simulated: true,
+    });
+  });
+
+  it('leaves delivery null for a test order on a pre-dispatch event', async () => {
+    const capture: Record<string, any[]> = {};
+    const admin = makeAdmin(
+      {
+        order_status_history: [
+          { id: 'ev-t2', new_status: 'accepted', order_id: 'order-test', created_at: '2026-06-30T00:00:00Z' },
+        ],
+        orders: [
+          { id: 'order-test', order_number: 'RD-TEST', partner_id: 'p1', status: 'accepted', engine_status: 'accepted', total: 42, is_test: true },
+        ],
+        api_partners: [{ id: 'p1', webhook_url: 'https://partner.test/hook', webhook_secret: 's', is_active: true }],
+        deliveries: [],
+        partner_webhook_deliveries: [],
+      },
+      capture
+    );
+
+    await enqueuePartnerWebhooks(admin, Date.parse('2026-06-30T00:00:00Z'));
+    const inserted = capture['partner_webhook_deliveries:insert']![0] as any[];
+    expect(inserted[0].payload.event).toBe('order.accepted');
+    expect(inserted[0].payload.delivery).toBeNull();
+  });
+
+  it('never synthesises a delivery block for a real order', async () => {
+    const capture: Record<string, any[]> = {};
+    const admin = makeAdmin(
+      {
+        order_status_history: [
+          { id: 'ev-r1', new_status: 'out_for_delivery', order_id: 'order-real', created_at: '2026-06-30T00:00:00Z' },
+        ],
+        orders: [
+          { id: 'order-real', order_number: 'RD-REAL', partner_id: 'p1', status: 'out_for_delivery', engine_status: 'out_for_delivery', total: 42, is_test: false },
+        ],
+        api_partners: [{ id: 'p1', webhook_url: 'https://partner.test/hook', webhook_secret: 's', is_active: true }],
+        deliveries: [],
+        partner_webhook_deliveries: [],
+      },
+      capture
+    );
+
+    await enqueuePartnerWebhooks(admin, Date.parse('2026-06-30T00:00:00Z'));
+    const inserted = capture['partner_webhook_deliveries:insert']![0] as any[];
+    expect(inserted[0].payload.delivery).toBeNull();
   });
 
   it('inserts nothing when no partner has a webhook_url', async () => {
@@ -113,7 +223,7 @@ describe('deliverPartnerWebhooks', () => {
     global.fetch = fetchMock as any;
 
     const res = await deliverPartnerWebhooks(admin, NOW);
-    expect(res).toEqual({ delivered: 1, failed: 0 });
+    expect(res).toEqual({ delivered: 1, failed: 0, blocked: 0 });
 
     const [url, opts] = fetchMock.mock.calls[0];
     expect(url).toBe('https://partner.test/hook');
@@ -140,7 +250,7 @@ describe('deliverPartnerWebhooks', () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 }) as any;
 
     const res = await deliverPartnerWebhooks(admin, NOW);
-    expect(res).toEqual({ delivered: 0, failed: 1 });
+    expect(res).toEqual({ delivered: 0, failed: 1, blocked: 0 });
     expect(capture['partner_webhook_deliveries:update'][0]).toMatchObject({ status: 'dead', attempts: 6, response_code: 500 });
   });
 });

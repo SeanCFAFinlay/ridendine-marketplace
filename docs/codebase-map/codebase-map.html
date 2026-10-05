@@ -1,0 +1,1157 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ridendine &mdash; Codebase Map</title>
+<style>
+:root {
+  --bg:#fbfaf8; --fg:#1c1a17; --muted:#6b6560; --line:#e2ddd6;
+  --card:#ffffff; --accent:#3f6ea8; --warn:#b58900;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#16181b; --fg:#e8e6e3; --muted:#9b958e; --line:#2c3035;
+          --card:#1d2024; --accent:#7aa8db; }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg);
+  font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+header { padding:2.5rem 1.5rem 1.25rem; border-bottom:1px solid var(--line); }
+h1 { margin:0 0 .35rem; font-size:1.7rem; letter-spacing:-.01em; }
+.sub { color:var(--muted); font-size:.9rem; }
+nav { position:sticky; top:0; z-index:10; background:var(--bg);
+  border-bottom:1px solid var(--line); padding:.6rem 1.5rem; overflow-x:auto; white-space:nowrap; }
+nav a { display:inline-block; margin-right:.9rem; color:var(--accent);
+  text-decoration:none; font-size:.82rem; }
+nav a:hover { text-decoration:underline; }
+main { max-width:1180px; margin:0 auto; padding:1.5rem; }
+section { margin:0 0 3rem; }
+h2 { font-size:1.15rem; margin:0 0 .3rem; padding-top:.5rem; }
+.purpose { color:var(--muted); margin:0 0 .9rem; max-width:70ch; font-size:.92rem; }
+.diagram { background:var(--card); border:1px solid var(--line); border-radius:10px;
+  padding:1.1rem; overflow-x:auto; }
+.mermaid { margin:0; }
+details { margin-top:.6rem; }
+summary { cursor:pointer; color:var(--muted); font-size:.82rem; }
+pre.src { background:var(--card); border:1px solid var(--line); border-radius:8px;
+  padding:.9rem; overflow-x:auto; font-size:.76rem; line-height:1.45; }
+ul.docs { list-style:none; padding:0; columns:2; column-gap:2rem; }
+ul.docs li { break-inside:avoid; margin:.25rem 0; font-size:.9rem; }
+ul.docs code { color:var(--muted); font-size:.78rem; }
+a { color:var(--accent); }
+.note { background:var(--card); border:1px solid var(--line); border-left:3px solid var(--warn);
+  border-radius:6px; padding:.8rem 1rem; font-size:.88rem; margin:1rem 0 2rem; }
+@media print {
+  nav { display:none; }
+  section { page-break-after:always; }
+  details { display:none; }
+  body { background:#fff; color:#000; }
+}
+</style>
+</head><body>
+<header>
+  <h1>Ridendine &mdash; Codebase Map</h1>
+  <div class="sub">Architecture &amp; documentation pass &middot; 2026-09-08 &middot; branch <code>feat/cooco-partner-webhooks-realtime</code> @ <code>c8b9049d</code> &middot; read-only analysis, no product code changed</div>
+</header>
+<nav><a href="#system-context">System Context</a> <a href="#repository-map">Repository Map</a> <a href="#runtime-wiring">Runtime Wiring</a> <a href="#primary-workflow">Primary Workflow</a> <a href="#startup-sequence">Startup Sequence</a> <a href="#data-and-source-of-truth">Data and Source of Truth</a> <a href="#trust-boundaries">Trust Boundaries</a> <a href="#deployment-local">Deployment - Local</a> <a href="#deployment-production">Deployment - Production</a> <a href="#failure-and-recovery">Failure and Recovery</a> <a href="#docs">Documents</a></nav>
+<main>
+<div class="note"><strong>Read the executive summary first.</strong> The single most important finding is <strong>R-01</strong>: all three Vercel-scheduled processors implement their work in <code>POST</code> while the scheduler invokes them with <code>GET</code>, so background automation appears not to run in production. Confirm with one query against <code>ops_processor_runs</code>.</div>
+<section id="system-context">
+  <h2>System Context</h2>
+  <p class="purpose">Users, operators and external systems around the platform. Dashed arrows are callbacks or scheduled invocations. Grey dashed nodes are UNKNOWN or CONTRADICTED.</p>
+  <div class="diagram"><pre class="mermaid">%% RIDENDINE — System Context
+%% Legend: solid = caller-initiated · dashed = callback/scheduled
+%% grey dashed node = UNKNOWN or CONTRADICTED (see 21-contradictions-and-unknowns.md)
+flowchart TD
+    CUST[&quot;Customer&lt;br/&gt;browser&quot;]
+    CHEF[&quot;Chef /&lt;br/&gt;kitchen operator&quot;]
+    DRV[&quot;Driver&lt;br/&gt;phone PWA&quot;]
+    OPS[&quot;Ridendine staff&lt;br/&gt;ops · support · finance&quot;]
+    PARTNER[&quot;Partner storefront&lt;br/&gt;server-to-server&quot;]
+
+    subgraph RND[&quot;RIDENDINE PLATFORM · Vercel&quot;]
+        direction TB
+        WEB[&quot;C-01 apps/web&lt;br/&gt;ridendine.ca&quot;]
+        CHEFAPP[&quot;C-05 apps/chef-admin&lt;br/&gt;chef.ridendine.ca&quot;]
+        OPSAPP[&quot;C-07 apps/ops-admin&lt;br/&gt;ops.ridendine.ca&quot;]
+        DRVAPP[&quot;C-10 apps/driver-app&lt;br/&gt;driver.ridendine.ca&quot;]
+    end
+
+    SUPA[(&quot;C-20 Supabase&lt;br/&gt;Postgres 17 · Auth&lt;br/&gt;Storage · Realtime&quot;)]
+    STRIPE[&quot;Stripe&lt;br/&gt;payments · Connect&quot;]
+    OSM[&quot;OpenStreetMap public&lt;br/&gt;Nominatim · OSRM&lt;br/&gt;no key · no SLA&quot;]
+    COMMS[&quot;Resend · Twilio&lt;br/&gt;optional&quot;]
+    REDIS[&quot;Upstash Redis&lt;br/&gt;optional&quot;]
+    CRON[&quot;Vercel Cron&quot;]
+
+    CUST --&gt;|NET-001| WEB
+    CHEF --&gt;|NET-002| CHEFAPP
+    DRV --&gt;|NET-003| DRVAPP
+    OPS --&gt;|NET-004| OPSAPP
+    PARTNER --&gt;|&quot;NET-005 x-api-key + HMAC&quot;| WEB
+
+    WEB --&gt; SUPA
+    CHEFAPP --&gt; SUPA
+    OPSAPP --&gt; SUPA
+    DRVAPP --&gt; SUPA
+
+    WEB --&gt;|&quot;NET-010 PaymentIntent&quot;| STRIPE
+    OPSAPP --&gt;|&quot;NET-011 refunds · transfers&quot;| STRIPE
+    CHEFAPP --&gt;|&quot;NET-012 Connect onboarding&quot;| STRIPE
+    DRVAPP --&gt;|&quot;NET-013 instant payout&quot;| STRIPE
+
+    STRIPE -.-&gt;|&quot;NET-014 payment_intent.*&quot;| WEB
+    STRIPE -.-&gt;|&quot;NET-015 transfer · payout&quot;| OPSAPP
+
+    CRON -.-&gt;|&quot;NET-020 GET x3&lt;br/&gt;WORK IS IN POST — R-01&quot;| OPSAPP
+    OPSAPP -.-&gt;|&quot;NET-021 HMAC webhook out&quot;| PARTNER
+
+    WEB --&gt; OSM
+    OPSAPP --&gt; OSM
+    WEB --&gt; COMMS
+    OPSAPP --&gt; COMMS
+    WEB -.-&gt; REDIS
+
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef app fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef human fill:#fdf0f0,stroke:#a85c5c,color:#3a1212
+    classDef broken fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class STRIPE,OSM,PARTNER ext
+    class WEB,CHEFAPP,OPSAPP,DRVAPP app
+    class SUPA store
+    class CUST,CHEF,DRV,OPS human
+    class CRON,COMMS,REDIS broken
+</pre></div>
+  <details><summary>Mermaid source &mdash; <code>diagrams/system-context.mmd</code></summary><pre class="src">%% RIDENDINE — System Context
+%% Legend: solid = caller-initiated · dashed = callback/scheduled
+%% grey dashed node = UNKNOWN or CONTRADICTED (see 21-contradictions-and-unknowns.md)
+flowchart TD
+    CUST[&quot;Customer&lt;br/&gt;browser&quot;]
+    CHEF[&quot;Chef /&lt;br/&gt;kitchen operator&quot;]
+    DRV[&quot;Driver&lt;br/&gt;phone PWA&quot;]
+    OPS[&quot;Ridendine staff&lt;br/&gt;ops · support · finance&quot;]
+    PARTNER[&quot;Partner storefront&lt;br/&gt;server-to-server&quot;]
+
+    subgraph RND[&quot;RIDENDINE PLATFORM · Vercel&quot;]
+        direction TB
+        WEB[&quot;C-01 apps/web&lt;br/&gt;ridendine.ca&quot;]
+        CHEFAPP[&quot;C-05 apps/chef-admin&lt;br/&gt;chef.ridendine.ca&quot;]
+        OPSAPP[&quot;C-07 apps/ops-admin&lt;br/&gt;ops.ridendine.ca&quot;]
+        DRVAPP[&quot;C-10 apps/driver-app&lt;br/&gt;driver.ridendine.ca&quot;]
+    end
+
+    SUPA[(&quot;C-20 Supabase&lt;br/&gt;Postgres 17 · Auth&lt;br/&gt;Storage · Realtime&quot;)]
+    STRIPE[&quot;Stripe&lt;br/&gt;payments · Connect&quot;]
+    OSM[&quot;OpenStreetMap public&lt;br/&gt;Nominatim · OSRM&lt;br/&gt;no key · no SLA&quot;]
+    COMMS[&quot;Resend · Twilio&lt;br/&gt;optional&quot;]
+    REDIS[&quot;Upstash Redis&lt;br/&gt;optional&quot;]
+    CRON[&quot;Vercel Cron&quot;]
+
+    CUST --&gt;|NET-001| WEB
+    CHEF --&gt;|NET-002| CHEFAPP
+    DRV --&gt;|NET-003| DRVAPP
+    OPS --&gt;|NET-004| OPSAPP
+    PARTNER --&gt;|&quot;NET-005 x-api-key + HMAC&quot;| WEB
+
+    WEB --&gt; SUPA
+    CHEFAPP --&gt; SUPA
+    OPSAPP --&gt; SUPA
+    DRVAPP --&gt; SUPA
+
+    WEB --&gt;|&quot;NET-010 PaymentIntent&quot;| STRIPE
+    OPSAPP --&gt;|&quot;NET-011 refunds · transfers&quot;| STRIPE
+    CHEFAPP --&gt;|&quot;NET-012 Connect onboarding&quot;| STRIPE
+    DRVAPP --&gt;|&quot;NET-013 instant payout&quot;| STRIPE
+
+    STRIPE -.-&gt;|&quot;NET-014 payment_intent.*&quot;| WEB
+    STRIPE -.-&gt;|&quot;NET-015 transfer · payout&quot;| OPSAPP
+
+    CRON -.-&gt;|&quot;NET-020 GET x3&lt;br/&gt;WORK IS IN POST — R-01&quot;| OPSAPP
+    OPSAPP -.-&gt;|&quot;NET-021 HMAC webhook out&quot;| PARTNER
+
+    WEB --&gt; OSM
+    OPSAPP --&gt; OSM
+    WEB --&gt; COMMS
+    OPSAPP --&gt; COMMS
+    WEB -.-&gt; REDIS
+
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef app fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef human fill:#fdf0f0,stroke:#a85c5c,color:#3a1212
+    classDef broken fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class STRIPE,OSM,PARTNER ext
+    class WEB,CHEFAPP,OPSAPP,DRVAPP app
+    class SUPA store
+    class CUST,CHEF,DRV,OPS human
+    class CRON,COMMS,REDIS broken
+</pre></details>
+</section>
+<section id="repository-map">
+  <h2>Repository Map</h2>
+  <p class="purpose">Active source areas and their dependency direction: apps -&gt; engine -&gt; db -&gt; Supabase. Nothing else in the tree is source.</p>
+  <div class="diagram"><pre class="mermaid">%% RIDENDINE — Repository / package map (active source areas only)
+flowchart TD
+    subgraph APPS[&quot;apps/ — 4 deployable units&quot;]
+        direction LR
+        A1[&quot;web&lt;br/&gt;144 src · 23 pages · 36 API&quot;]
+        A2[&quot;chef-admin&lt;br/&gt;161 src · 30 pages · 68 API&quot;]
+        A3[&quot;ops-admin&lt;br/&gt;191 src · 40 pages · 57 API&quot;]
+        A4[&quot;driver-app&lt;br/&gt;89 src · 11 pages · 19 API&quot;]
+    end
+
+    subgraph PKGS[&quot;packages/ — shared libraries&quot;]
+        direction TB
+        P1[&quot;engine&lt;br/&gt;business logic · 133 src · 62 tests&quot;]
+        P2[&quot;db&lt;br/&gt;3 clients · 22 repositories&quot;]
+        P3[&quot;auth&lt;br/&gt;middleware factory&quot;]
+        P4[&quot;routing&lt;br/&gt;OSRM · Mapbox(unused)&quot;]
+        P5[&quot;types · validation · utils&lt;br/&gt;ui · notifications · config&quot;]
+    end
+
+    DB[(&quot;supabase/&lt;br/&gt;62 migrations · 112 tables&lt;br/&gt;316 policies&quot;)]
+    SC[&quot;scripts/&lt;br/&gt;CI gates · smoke · doc generators&quot;]
+    E2E[&quot;e2e/&lt;br/&gt;Playwright · 8 specs&quot;]
+    CI[&quot;.github/workflows/&lt;br/&gt;ci · e2e · load · post-deploy&quot;]
+
+    A1 --&gt; P1 &amp; P2 &amp; P3 &amp; P4 &amp; P5
+    A2 --&gt; P1 &amp; P2 &amp; P3 &amp; P5
+    A3 --&gt; P1 &amp; P2 &amp; P3 &amp; P4 &amp; P5
+    A4 --&gt; P1 &amp; P2 &amp; P3 &amp; P5
+
+    P1 --&gt; P2 &amp; P4 &amp; P5
+    P2 --&gt; DB
+    P3 --&gt; P2
+
+    SC -.-&gt; A1 &amp; A2 &amp; A3 &amp; A4
+    E2E -.-&gt; A1 &amp; A2 &amp; A3 &amp; A4
+    CI --&gt; SC &amp; E2E
+
+    NOTE[&quot;NOT SOURCE — never edit&lt;br/&gt;archive/ · 8x graphify-out/ · .gitnexus/ 309MB&lt;br/&gt;.local-tools/ 152MB · .turbo/ · apps/*/.next/&lt;br/&gt;packages/db/src/generated/database.types.ts&quot;]
+
+    classDef app fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef pkg fill:#f3ecf7,stroke:#7a5c95,color:#2b1a35
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef tool fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef warn fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class A1,A2,A3,A4 app
+    class P1,P2,P3,P4,P5 pkg
+    class DB store
+    class SC,E2E,CI tool
+    class NOTE warn
+</pre></div>
+  <details><summary>Mermaid source &mdash; <code>diagrams/repository-map.mmd</code></summary><pre class="src">%% RIDENDINE — Repository / package map (active source areas only)
+flowchart TD
+    subgraph APPS[&quot;apps/ — 4 deployable units&quot;]
+        direction LR
+        A1[&quot;web&lt;br/&gt;144 src · 23 pages · 36 API&quot;]
+        A2[&quot;chef-admin&lt;br/&gt;161 src · 30 pages · 68 API&quot;]
+        A3[&quot;ops-admin&lt;br/&gt;191 src · 40 pages · 57 API&quot;]
+        A4[&quot;driver-app&lt;br/&gt;89 src · 11 pages · 19 API&quot;]
+    end
+
+    subgraph PKGS[&quot;packages/ — shared libraries&quot;]
+        direction TB
+        P1[&quot;engine&lt;br/&gt;business logic · 133 src · 62 tests&quot;]
+        P2[&quot;db&lt;br/&gt;3 clients · 22 repositories&quot;]
+        P3[&quot;auth&lt;br/&gt;middleware factory&quot;]
+        P4[&quot;routing&lt;br/&gt;OSRM · Mapbox(unused)&quot;]
+        P5[&quot;types · validation · utils&lt;br/&gt;ui · notifications · config&quot;]
+    end
+
+    DB[(&quot;supabase/&lt;br/&gt;62 migrations · 112 tables&lt;br/&gt;316 policies&quot;)]
+    SC[&quot;scripts/&lt;br/&gt;CI gates · smoke · doc generators&quot;]
+    E2E[&quot;e2e/&lt;br/&gt;Playwright · 8 specs&quot;]
+    CI[&quot;.github/workflows/&lt;br/&gt;ci · e2e · load · post-deploy&quot;]
+
+    A1 --&gt; P1 &amp; P2 &amp; P3 &amp; P4 &amp; P5
+    A2 --&gt; P1 &amp; P2 &amp; P3 &amp; P5
+    A3 --&gt; P1 &amp; P2 &amp; P3 &amp; P4 &amp; P5
+    A4 --&gt; P1 &amp; P2 &amp; P3 &amp; P5
+
+    P1 --&gt; P2 &amp; P4 &amp; P5
+    P2 --&gt; DB
+    P3 --&gt; P2
+
+    SC -.-&gt; A1 &amp; A2 &amp; A3 &amp; A4
+    E2E -.-&gt; A1 &amp; A2 &amp; A3 &amp; A4
+    CI --&gt; SC &amp; E2E
+
+    NOTE[&quot;NOT SOURCE — never edit&lt;br/&gt;archive/ · 8x graphify-out/ · .gitnexus/ 309MB&lt;br/&gt;.local-tools/ 152MB · .turbo/ · apps/*/.next/&lt;br/&gt;packages/db/src/generated/database.types.ts&quot;]
+
+    classDef app fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef pkg fill:#f3ecf7,stroke:#7a5c95,color:#2b1a35
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef tool fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef warn fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class A1,A2,A3,A4 app
+    class P1,P2,P3,P4,P5 pkg
+    class DB store
+    class SC,E2E,CI tool
+    class NOTE warn
+</pre></details>
+</section>
+<section id="runtime-wiring">
+  <h2>Runtime Wiring</h2>
+  <p class="purpose">Active components and named connections. The engine is constructed per request on the service-role client, so RLS is bypassed on every API path.</p>
+  <div class="diagram"><pre class="mermaid">%% RIDENDINE — Runtime component wiring (active components + named connections)
+flowchart TD
+    subgraph EDGE[&quot;Request edge&quot;]
+        MW[&quot;C-18 middleware&lt;br/&gt;auth.getUser + CSP(web only)&quot;]
+        RT[&quot;Route handler&lt;br/&gt;rate limit → actor → capability&quot;]
+    end
+
+    subgraph ENGINE[&quot;C-11..C-16 @ridendine/engine — constructed PER REQUEST on the service-role client&quot;]
+        direction TB
+        MOE[&quot;C-11 MasterOrderEngine&lt;br/&gt;sole writer of order state&quot;]
+        DE[&quot;C-12 DeliveryEngine&quot;]
+        DISP[&quot;C-13 Dispatch trio&lt;br/&gt;DriverMatching → OfferManagement → DispatchOrchestrator&quot;]
+        MONEY[&quot;C-14 Money&lt;br/&gt;Ledger · Payout · Commerce · Reconciliation&quot;]
+        SLA[&quot;C-15 SLA · Notifications · Events&quot;]
+        GW[&quot;C-16 OperationsCommandGateway&quot;]
+        SM[&quot;order-state-machine&lt;br/&gt;ORDER · DELIVERY · PAYOUT maps&quot;]
+    end
+
+    DAL[&quot;C-17 @ridendine/db&lt;br/&gt;22 repositories + 398 raw .from() calls&quot;]
+    PG[(&quot;C-20 Supabase Postgres&quot;)]
+    STRIPE[&quot;Stripe&quot;]
+    OSRM[&quot;C-19 routing → OSRM public&quot;]
+
+    MW --&gt;|&quot;NET-001..004&quot;| RT
+    RT --&gt;|&quot;NET-030 getAdminEngine()&quot;| ENGINE
+    RT --&gt;|&quot;NET-031/032 runCheckout&quot;| MONEY
+
+    MOE --&gt; SM
+    DE --&gt; SM
+    DISP --&gt; DE
+    DISP --&gt; MOE
+    DISP --&gt; OSRM
+    GW --&gt; MOE &amp; DISP &amp; MONEY &amp; SLA
+
+    ENGINE --&gt;|&quot;NET-040 service role — RLS BYPASSED&quot;| DAL --&gt; PG
+    MONEY --&gt;|&quot;NET-043/044&quot;| STRIPE
+    STRIPE -.-&gt;|&quot;NET-014 → C-04&quot;| MOE
+    STRIPE -.-&gt;|&quot;NET-015 → C-09&quot;| MONEY
+
+    CRON[&quot;Vercel Cron&quot;] -.-&gt;|&quot;NET-020 GET — R-01&quot;| PROC[&quot;C-08 processors&lt;br/&gt;sla · expired-offers · partner-webhooks&lt;br/&gt;work is in POST&quot;]
+    PROC --&gt; SLA &amp; DISP
+
+    DEAD[&quot;INACTIVE&lt;br/&gt;dispatch.service.ts · MapboxProvider&lt;br/&gt;core.getEngine · server.getEngine&lt;br/&gt;5 legacy /api/cron/* routes&quot;]
+
+    classDef eng fill:#f3ecf7,stroke:#7a5c95,color:#2b1a35
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef edge fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef broken fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class MOE,DE,DISP,MONEY,SLA,GW,SM eng
+    class PG,DAL store
+    class STRIPE,OSRM ext
+    class MW,RT edge
+    class CRON,PROC,DEAD broken
+</pre></div>
+  <details><summary>Mermaid source &mdash; <code>diagrams/runtime-wiring.mmd</code></summary><pre class="src">%% RIDENDINE — Runtime component wiring (active components + named connections)
+flowchart TD
+    subgraph EDGE[&quot;Request edge&quot;]
+        MW[&quot;C-18 middleware&lt;br/&gt;auth.getUser + CSP(web only)&quot;]
+        RT[&quot;Route handler&lt;br/&gt;rate limit → actor → capability&quot;]
+    end
+
+    subgraph ENGINE[&quot;C-11..C-16 @ridendine/engine — constructed PER REQUEST on the service-role client&quot;]
+        direction TB
+        MOE[&quot;C-11 MasterOrderEngine&lt;br/&gt;sole writer of order state&quot;]
+        DE[&quot;C-12 DeliveryEngine&quot;]
+        DISP[&quot;C-13 Dispatch trio&lt;br/&gt;DriverMatching → OfferManagement → DispatchOrchestrator&quot;]
+        MONEY[&quot;C-14 Money&lt;br/&gt;Ledger · Payout · Commerce · Reconciliation&quot;]
+        SLA[&quot;C-15 SLA · Notifications · Events&quot;]
+        GW[&quot;C-16 OperationsCommandGateway&quot;]
+        SM[&quot;order-state-machine&lt;br/&gt;ORDER · DELIVERY · PAYOUT maps&quot;]
+    end
+
+    DAL[&quot;C-17 @ridendine/db&lt;br/&gt;22 repositories + 398 raw .from() calls&quot;]
+    PG[(&quot;C-20 Supabase Postgres&quot;)]
+    STRIPE[&quot;Stripe&quot;]
+    OSRM[&quot;C-19 routing → OSRM public&quot;]
+
+    MW --&gt;|&quot;NET-001..004&quot;| RT
+    RT --&gt;|&quot;NET-030 getAdminEngine()&quot;| ENGINE
+    RT --&gt;|&quot;NET-031/032 runCheckout&quot;| MONEY
+
+    MOE --&gt; SM
+    DE --&gt; SM
+    DISP --&gt; DE
+    DISP --&gt; MOE
+    DISP --&gt; OSRM
+    GW --&gt; MOE &amp; DISP &amp; MONEY &amp; SLA
+
+    ENGINE --&gt;|&quot;NET-040 service role — RLS BYPASSED&quot;| DAL --&gt; PG
+    MONEY --&gt;|&quot;NET-043/044&quot;| STRIPE
+    STRIPE -.-&gt;|&quot;NET-014 → C-04&quot;| MOE
+    STRIPE -.-&gt;|&quot;NET-015 → C-09&quot;| MONEY
+
+    CRON[&quot;Vercel Cron&quot;] -.-&gt;|&quot;NET-020 GET — R-01&quot;| PROC[&quot;C-08 processors&lt;br/&gt;sla · expired-offers · partner-webhooks&lt;br/&gt;work is in POST&quot;]
+    PROC --&gt; SLA &amp; DISP
+
+    DEAD[&quot;INACTIVE&lt;br/&gt;dispatch.service.ts · MapboxProvider&lt;br/&gt;core.getEngine · server.getEngine&lt;br/&gt;5 legacy /api/cron/* routes&quot;]
+
+    classDef eng fill:#f3ecf7,stroke:#7a5c95,color:#2b1a35
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef edge fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef broken fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class MOE,DE,DISP,MONEY,SLA,GW,SM eng
+    class PG,DAL store
+    class STRIPE,OSRM ext
+    class MW,RT edge
+    class CRON,PROC,DEAD broken
+</pre></details>
+</section>
+<section id="primary-workflow">
+  <h2>Primary Workflow</h2>
+  <p class="purpose">Checkout to payment to kitchen to dispatch to delivery to money, with every gate and failure branch. Amber = gate, red = failure, green = success.</p>
+  <div class="diagram"><pre class="mermaid">%% RIDENDINE — Primary workflow: trigger → outcome, with gates and failure branches
+flowchart TD
+    S[&quot;Customer submits&lt;br/&gt;POST /api/checkout&quot;] --&gt; G1{&quot;Session?&lt;br/&gt;middleware&quot;}
+    G1 --&gt;|no| E1[&quot;307 → /auth/login&quot;]
+    G1 --&gt;|yes| G2{&quot;Rate limit&lt;br/&gt;3 / 60s · fail CLOSED&quot;}
+    G2 --&gt;|exceeded| E2[&quot;429&quot;]
+    G2 --&gt;|ok| Q[&quot;buildCheckoutQuote&lt;br/&gt;cart · distance · surge · fees · 13% HST&lt;br/&gt;client numbers COMPARED, never used&quot;]
+
+    Q --&gt; G3{&quot;Risk&lt;br/&gt;customer · cart · amount · currency&quot;}
+    G3 --&gt;|blocked| E3[&quot;403 RISK_BLOCKED&lt;br/&gt;+ audit entry&quot;]
+    G3 --&gt;|ok| G4{&quot;Kitchen ready?&lt;br/&gt;open · not paused · items available&quot;}
+    G4 --&gt;|no| E4[&quot;400 engine code&quot;]
+    G4 --&gt;|yes| G5{&quot;Idempotency claim&lt;br/&gt;checkout_idempotency_keys&quot;}
+
+    G5 --&gt;|&quot;hash differs&quot;| E5[&quot;409 CONFLICT&quot;]
+    G5 --&gt;|&quot;completed&quot;| R1[&quot;200 — replay stored payload&quot;]
+    G5 --&gt;|&quot;processing, under 120s&quot;| E5
+    G5 --&gt;|&quot;processing, over 120s&quot;| RC[&quot;conditional reclaim&quot;] --&gt; G6
+    G5 --&gt;|&quot;new claim&quot;| G6{&quot;Stripe configured?&lt;br/&gt;test order → test key present?&quot;}
+
+    G6 --&gt;|no| E6[&quot;500 PAYMENT_CONFIG_ERROR&lt;br/&gt;/ 503 TEST_MODE_UNAVAILABLE&lt;br/&gt;never falls back to the live key&quot;]
+    G6 --&gt;|yes| C1[&quot;engine.orderCreation.createOrder&lt;br/&gt;→ orders + order_items&quot;]
+    C1 --&gt; C2[&quot;persist quote snapshot&lt;br/&gt;stamp partner_id · is_test · scheduled_for&quot;]
+    C2 --&gt; C3[&quot;stripe.paymentIntents.create&lt;br/&gt;idem key checkout:{cust}:{key}&quot;]
+    C3 --&gt; C4[&quot;idempotency row → completed&quot;]
+    C4 --&gt; R2[&quot;200 clientSecret + publishableKey&quot;]
+
+    C1 -.-&gt;|fail| CL
+    C2 -.-&gt;|fail| CL
+    C3 -.-&gt;|fail| CL
+    CL[&quot;CLEANUP — single path&lt;br/&gt;cancelOrder(payment_failed)&lt;br/&gt;+ mark row failed&quot;] --&gt; E7[&quot;typed 4xx/5xx&lt;br/&gt;customer can retry cleanly&quot;]
+
+    R2 --&gt; B[&quot;Browser confirms card&lt;br/&gt;Stripe.js — card never touches Ridendine&quot;]
+    B -.-&gt;|&quot;NET-014 webhook&quot;| W{&quot;Signature valid?&lt;br/&gt;live secret → test secret&quot;}
+    W --&gt;|no| E8[&quot;400&quot;]
+    W --&gt;|yes| W2{&quot;Event already claimed?&quot;}
+    W2 --&gt;|yes| R3[&quot;200 idempotentReplay&quot;]
+    W2 --&gt;|no| W3{&quot;paid cents == round(order.total*100)?&quot;}
+    W3 --&gt;|no| E9[&quot;THROW — never marked paid&quot;]
+    W3 --&gt;|yes| W4{&quot;is_test OR test-signed?&quot;}
+    W4 --&gt;|yes| T1[&quot;payment_status=completed ONLY&lt;br/&gt;no kitchen · no ledger · no loyalty · no payout&quot;]
+    W4 --&gt;|no| K1[&quot;authorizePayment → PENDING&lt;br/&gt;→ submitToKitchen&lt;br/&gt;→ clear cart · award loyalty&quot;]
+
+    K1 --&gt; K2[&quot;Chef ACCEPTED → PREPARING → READY&quot;]
+    K2 --&gt; D1[&quot;onOrderReadyForPickup&lt;br/&gt;DELIVERY ROW CREATED HERE&quot;]
+    D1 --&gt; D2[&quot;findEligibleDrivers&lt;br/&gt;presence &lt; 90s · radius 10km&quot;]
+    D2 --&gt; D3[&quot;score + rank by OSRM ETA&quot;]
+    D3 --&gt; D4{&quot;Driver accepts?&quot;}
+    D4 --&gt;|&quot;declines / expires&quot;| D2
+    D4 --&gt;|yes| D5[&quot;ASSIGNED → EN_ROUTE_PICKUP&lt;br/&gt;→ PICKED_UP → EN_ROUTE_DROPOFF&lt;br/&gt;→ DELIVERED&quot;]
+    D5 --&gt; F1[&quot;COMPLETED&lt;br/&gt;ledger_entries: platform 15% · driver 80% of fee · chef remainder · tip&quot;]
+    F1 --&gt; F2[&quot;Customer review&quot;]
+
+    classDef gate fill:#fdf6e3,stroke:#b58900,color:#3a2f12
+    classDef err fill:#fdf0f0,stroke:#a85c5c,color:#3a1212
+    classDef ok fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef act fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    class G1,G2,G3,G4,G5,G6,W,W2,W3,W4,D4 gate
+    class E1,E2,E3,E4,E5,E6,E7,E8,E9,CL err
+    class R1,R2,R3,F1,F2,T1 ok
+    class S,Q,C1,C2,C3,C4,B,K1,K2,D1,D2,D3,D5,RC act
+</pre></div>
+  <details><summary>Mermaid source &mdash; <code>diagrams/primary-workflow.mmd</code></summary><pre class="src">%% RIDENDINE — Primary workflow: trigger → outcome, with gates and failure branches
+flowchart TD
+    S[&quot;Customer submits&lt;br/&gt;POST /api/checkout&quot;] --&gt; G1{&quot;Session?&lt;br/&gt;middleware&quot;}
+    G1 --&gt;|no| E1[&quot;307 → /auth/login&quot;]
+    G1 --&gt;|yes| G2{&quot;Rate limit&lt;br/&gt;3 / 60s · fail CLOSED&quot;}
+    G2 --&gt;|exceeded| E2[&quot;429&quot;]
+    G2 --&gt;|ok| Q[&quot;buildCheckoutQuote&lt;br/&gt;cart · distance · surge · fees · 13% HST&lt;br/&gt;client numbers COMPARED, never used&quot;]
+
+    Q --&gt; G3{&quot;Risk&lt;br/&gt;customer · cart · amount · currency&quot;}
+    G3 --&gt;|blocked| E3[&quot;403 RISK_BLOCKED&lt;br/&gt;+ audit entry&quot;]
+    G3 --&gt;|ok| G4{&quot;Kitchen ready?&lt;br/&gt;open · not paused · items available&quot;}
+    G4 --&gt;|no| E4[&quot;400 engine code&quot;]
+    G4 --&gt;|yes| G5{&quot;Idempotency claim&lt;br/&gt;checkout_idempotency_keys&quot;}
+
+    G5 --&gt;|&quot;hash differs&quot;| E5[&quot;409 CONFLICT&quot;]
+    G5 --&gt;|&quot;completed&quot;| R1[&quot;200 — replay stored payload&quot;]
+    G5 --&gt;|&quot;processing, under 120s&quot;| E5
+    G5 --&gt;|&quot;processing, over 120s&quot;| RC[&quot;conditional reclaim&quot;] --&gt; G6
+    G5 --&gt;|&quot;new claim&quot;| G6{&quot;Stripe configured?&lt;br/&gt;test order → test key present?&quot;}
+
+    G6 --&gt;|no| E6[&quot;500 PAYMENT_CONFIG_ERROR&lt;br/&gt;/ 503 TEST_MODE_UNAVAILABLE&lt;br/&gt;never falls back to the live key&quot;]
+    G6 --&gt;|yes| C1[&quot;engine.orderCreation.createOrder&lt;br/&gt;→ orders + order_items&quot;]
+    C1 --&gt; C2[&quot;persist quote snapshot&lt;br/&gt;stamp partner_id · is_test · scheduled_for&quot;]
+    C2 --&gt; C3[&quot;stripe.paymentIntents.create&lt;br/&gt;idem key checkout:{cust}:{key}&quot;]
+    C3 --&gt; C4[&quot;idempotency row → completed&quot;]
+    C4 --&gt; R2[&quot;200 clientSecret + publishableKey&quot;]
+
+    C1 -.-&gt;|fail| CL
+    C2 -.-&gt;|fail| CL
+    C3 -.-&gt;|fail| CL
+    CL[&quot;CLEANUP — single path&lt;br/&gt;cancelOrder(payment_failed)&lt;br/&gt;+ mark row failed&quot;] --&gt; E7[&quot;typed 4xx/5xx&lt;br/&gt;customer can retry cleanly&quot;]
+
+    R2 --&gt; B[&quot;Browser confirms card&lt;br/&gt;Stripe.js — card never touches Ridendine&quot;]
+    B -.-&gt;|&quot;NET-014 webhook&quot;| W{&quot;Signature valid?&lt;br/&gt;live secret → test secret&quot;}
+    W --&gt;|no| E8[&quot;400&quot;]
+    W --&gt;|yes| W2{&quot;Event already claimed?&quot;}
+    W2 --&gt;|yes| R3[&quot;200 idempotentReplay&quot;]
+    W2 --&gt;|no| W3{&quot;paid cents == round(order.total*100)?&quot;}
+    W3 --&gt;|no| E9[&quot;THROW — never marked paid&quot;]
+    W3 --&gt;|yes| W4{&quot;is_test OR test-signed?&quot;}
+    W4 --&gt;|yes| T1[&quot;payment_status=completed ONLY&lt;br/&gt;no kitchen · no ledger · no loyalty · no payout&quot;]
+    W4 --&gt;|no| K1[&quot;authorizePayment → PENDING&lt;br/&gt;→ submitToKitchen&lt;br/&gt;→ clear cart · award loyalty&quot;]
+
+    K1 --&gt; K2[&quot;Chef ACCEPTED → PREPARING → READY&quot;]
+    K2 --&gt; D1[&quot;onOrderReadyForPickup&lt;br/&gt;DELIVERY ROW CREATED HERE&quot;]
+    D1 --&gt; D2[&quot;findEligibleDrivers&lt;br/&gt;presence &lt; 90s · radius 10km&quot;]
+    D2 --&gt; D3[&quot;score + rank by OSRM ETA&quot;]
+    D3 --&gt; D4{&quot;Driver accepts?&quot;}
+    D4 --&gt;|&quot;declines / expires&quot;| D2
+    D4 --&gt;|yes| D5[&quot;ASSIGNED → EN_ROUTE_PICKUP&lt;br/&gt;→ PICKED_UP → EN_ROUTE_DROPOFF&lt;br/&gt;→ DELIVERED&quot;]
+    D5 --&gt; F1[&quot;COMPLETED&lt;br/&gt;ledger_entries: platform 15% · driver 80% of fee · chef remainder · tip&quot;]
+    F1 --&gt; F2[&quot;Customer review&quot;]
+
+    classDef gate fill:#fdf6e3,stroke:#b58900,color:#3a2f12
+    classDef err fill:#fdf0f0,stroke:#a85c5c,color:#3a1212
+    classDef ok fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef act fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    class G1,G2,G3,G4,G5,G6,W,W2,W3,W4,D4 gate
+    class E1,E2,E3,E4,E5,E6,E7,E8,E9,CL err
+    class R1,R2,R3,F1,F2,T1 ok
+    class S,Q,C1,C2,C3,C4,B,K1,K2,D1,D2,D3,D5,RC act
+</pre></details>
+</section>
+<section id="startup-sequence">
+  <h2>Startup Sequence</h2>
+  <p class="purpose">What happens on every request, in order. Middleware runs before anything else; the engine is built per request.</p>
+  <div class="diagram"><pre class="mermaid">%% RIDENDINE — Startup / request initialisation sequence
+sequenceDiagram
+    autonumber
+    participant B as Browser / caller
+    participant MW as src/middleware.ts
+    participant SB as Supabase Auth
+    participant RT as Route handler
+    participant EN as createCentralEngine
+    participant DB as Supabase Postgres
+
+    B-&gt;&gt;MW: HTTPS request
+    Note over MW: nothing in the app runs before this
+    MW-&gt;&gt;MW: build CSP nonce  (apps/web ONLY — V-02)
+    alt apps/web, non-bypassed path
+        MW-&gt;&gt;DB: GET platform_settings (30s cache, 1.5s timeout)
+        Note over MW: maintenance ⇒ redirect /maintenance&lt;br/&gt;lookup fails ⇒ FAIL OPEN
+    end
+    MW-&gt;&gt;SB: auth.getUser()   ← JWT verified server-side, not getSession()
+    SB--&gt;&gt;MW: user | null
+    alt protected route and no user
+        MW--&gt;&gt;B: 307 → login
+    end
+    MW-&gt;&gt;RT: forward + x-nonce + CSP
+    RT-&gt;&gt;RT: evaluateRateLimit(policy)
+    RT-&gt;&gt;EN: getAdminEngine()
+    EN-&gt;&gt;EN: createAdminClient()  ← SERVICE ROLE, bypasses RLS
+    EN-&gt;&gt;EN: construct ~25 orchestrators and services
+    Note over EN: registerProvider(Resend) · registerProvider(Twilio)&lt;br/&gt;both inert unless env keys are present
+    RT-&gt;&gt;EN: getXActorContext()
+    EN-&gt;&gt;DB: profile lookup (admin client)
+    DB--&gt;&gt;EN: actor | null
+    RT-&gt;&gt;RT: guardPlatformApi(actor, capability)   [ops only]
+    RT-&gt;&gt;EN: business call
+    EN-&gt;&gt;DB: reads / writes
+    EN-&gt;&gt;EN: audit.log() · events.flush()
+    RT--&gt;&gt;B: successResponse | errorResponse
+</pre></div>
+  <details><summary>Mermaid source &mdash; <code>diagrams/startup-sequence.mmd</code></summary><pre class="src">%% RIDENDINE — Startup / request initialisation sequence
+sequenceDiagram
+    autonumber
+    participant B as Browser / caller
+    participant MW as src/middleware.ts
+    participant SB as Supabase Auth
+    participant RT as Route handler
+    participant EN as createCentralEngine
+    participant DB as Supabase Postgres
+
+    B-&gt;&gt;MW: HTTPS request
+    Note over MW: nothing in the app runs before this
+    MW-&gt;&gt;MW: build CSP nonce  (apps/web ONLY — V-02)
+    alt apps/web, non-bypassed path
+        MW-&gt;&gt;DB: GET platform_settings (30s cache, 1.5s timeout)
+        Note over MW: maintenance ⇒ redirect /maintenance&lt;br/&gt;lookup fails ⇒ FAIL OPEN
+    end
+    MW-&gt;&gt;SB: auth.getUser()   ← JWT verified server-side, not getSession()
+    SB--&gt;&gt;MW: user | null
+    alt protected route and no user
+        MW--&gt;&gt;B: 307 → login
+    end
+    MW-&gt;&gt;RT: forward + x-nonce + CSP
+    RT-&gt;&gt;RT: evaluateRateLimit(policy)
+    RT-&gt;&gt;EN: getAdminEngine()
+    EN-&gt;&gt;EN: createAdminClient()  ← SERVICE ROLE, bypasses RLS
+    EN-&gt;&gt;EN: construct ~25 orchestrators and services
+    Note over EN: registerProvider(Resend) · registerProvider(Twilio)&lt;br/&gt;both inert unless env keys are present
+    RT-&gt;&gt;EN: getXActorContext()
+    EN-&gt;&gt;DB: profile lookup (admin client)
+    DB--&gt;&gt;EN: actor | null
+    RT-&gt;&gt;RT: guardPlatformApi(actor, capability)   [ops only]
+    RT-&gt;&gt;EN: business call
+    EN-&gt;&gt;DB: reads / writes
+    EN-&gt;&gt;EN: audit.log() · events.flush()
+    RT--&gt;&gt;B: successResponse | errorResponse
+</pre></details>
+</section>
+<section id="data-and-source-of-truth">
+  <h2>Data and Source of Truth</h2>
+  <p class="purpose">Who writes what. Bold borders mark the authoritative owner; dashed borders mark caches and derived mirrors.</p>
+  <div class="diagram"><pre class="mermaid">%% RIDENDINE — Data flow and source of truth
+%% Bold border = authoritative owner · dashed = cache/derived · grey dashed = external truth
+flowchart TD
+    subgraph WRITERS[&quot;Sanctioned writers&quot;]
+        RC[&quot;runCheckout&quot;]
+        MOE[&quot;MasterOrderEngine&lt;br/&gt;SOLE writer of order state&quot;]
+        DE[&quot;DeliveryEngine · DispatchOrchestrator&quot;]
+        LS[&quot;LedgerService&lt;br/&gt;SOLE writer of money&quot;]
+        PS[&quot;PayoutService&quot;]
+        WH[&quot;Stripe webhooks&quot;]
+        KOS[&quot;Kitchen OS routes&lt;br/&gt;raw .from() — no repository&quot;]
+    end
+
+    subgraph TRUTH[&quot;Supabase Postgres — 112 tables, the single store of record&quot;]
+        O[(&quot;orders&lt;br/&gt;engine_status CANONICAL&quot;)]
+        OL[(&quot;orders.status&lt;br/&gt;legacy mirror — LOSSY&quot;)]
+        D[(&quot;deliveries + assignment_attempts&quot;)]
+        L[(&quot;ledger_entries&lt;br/&gt;unique idempotency_key&quot;)]
+        PR[(&quot;payout_runs · payouts&lt;br/&gt;one &#x27;processing&#x27; per type&quot;)]
+        CI[(&quot;checkout_idempotency_keys&quot;)]
+        SE[(&quot;stripe_events_processed&quot;)]
+        OPR[(&quot;ops_processor_runs&quot;)]
+        INV[(&quot;inventory_stock_movements&lt;br/&gt;ON-HAND = SIGNED SUM&quot;)]
+        INVC[(&quot;inventory_items.current_quantity&lt;br/&gt;CACHE — no reconciliation job&quot;)]
+        AU[(&quot;audit_logs · ops_override_logs&lt;br/&gt;domain_events · system_alerts&quot;)]
+        ID[(&quot;auth.users → customers · chef_profiles&lt;br/&gt;drivers · platform_users&quot;)]
+    end
+
+    STRIPE[&quot;Stripe&lt;br/&gt;owns the charge&quot;]
+    CACHE[&quot;In-memory, per-lambda&lt;br/&gt;tax 60s · maintenance 30s&lt;br/&gt;geocode UNBOUNDED&quot;]
+
+    RC --&gt; O &amp; CI
+    MOE --&gt; O --&gt; OL
+    DE --&gt; D
+    D --&gt;|syncFromDelivery| O
+    WH --&gt; SE &amp; O
+    WH --&gt; LS --&gt; L
+    PS --&gt; PR --&gt; L
+    KOS --&gt; INV
+    KOS --&gt; INVC
+    INV -.-&gt;|&quot;authoritative — drift possible&quot;| INVC
+    MOE --&gt; AU
+    DE --&gt; AU
+
+    STRIPE -.-&gt;|&quot;reconciliation — NOT SCHEDULED (R-02)&quot;| L
+    O --&gt; CACHE
+
+    PROC[&quot;Processors sla · expired-offers&quot;] --&gt; OPR
+    PW[&quot;partner-webhooks&quot;] -.-&gt;|&quot;does NOT claim a run&quot;| OPR
+
+    classDef truth fill:#eaf5ec,stroke:#3f7d52,stroke-width:3px,color:#123420
+    classDef derived fill:#eaf5ec,stroke:#3f7d52,stroke-dasharray:4 3,color:#123420
+    classDef writer fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef warn fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class O,D,L,PR,CI,SE,OPR,INV,AU,ID truth
+    class OL,INVC derived
+    class RC,MOE,DE,LS,PS,WH,KOS,PROC writer
+    class STRIPE ext
+    class CACHE,PW warn
+</pre></div>
+  <details><summary>Mermaid source &mdash; <code>diagrams/data-and-source-of-truth.mmd</code></summary><pre class="src">%% RIDENDINE — Data flow and source of truth
+%% Bold border = authoritative owner · dashed = cache/derived · grey dashed = external truth
+flowchart TD
+    subgraph WRITERS[&quot;Sanctioned writers&quot;]
+        RC[&quot;runCheckout&quot;]
+        MOE[&quot;MasterOrderEngine&lt;br/&gt;SOLE writer of order state&quot;]
+        DE[&quot;DeliveryEngine · DispatchOrchestrator&quot;]
+        LS[&quot;LedgerService&lt;br/&gt;SOLE writer of money&quot;]
+        PS[&quot;PayoutService&quot;]
+        WH[&quot;Stripe webhooks&quot;]
+        KOS[&quot;Kitchen OS routes&lt;br/&gt;raw .from() — no repository&quot;]
+    end
+
+    subgraph TRUTH[&quot;Supabase Postgres — 112 tables, the single store of record&quot;]
+        O[(&quot;orders&lt;br/&gt;engine_status CANONICAL&quot;)]
+        OL[(&quot;orders.status&lt;br/&gt;legacy mirror — LOSSY&quot;)]
+        D[(&quot;deliveries + assignment_attempts&quot;)]
+        L[(&quot;ledger_entries&lt;br/&gt;unique idempotency_key&quot;)]
+        PR[(&quot;payout_runs · payouts&lt;br/&gt;one &#x27;processing&#x27; per type&quot;)]
+        CI[(&quot;checkout_idempotency_keys&quot;)]
+        SE[(&quot;stripe_events_processed&quot;)]
+        OPR[(&quot;ops_processor_runs&quot;)]
+        INV[(&quot;inventory_stock_movements&lt;br/&gt;ON-HAND = SIGNED SUM&quot;)]
+        INVC[(&quot;inventory_items.current_quantity&lt;br/&gt;CACHE — no reconciliation job&quot;)]
+        AU[(&quot;audit_logs · ops_override_logs&lt;br/&gt;domain_events · system_alerts&quot;)]
+        ID[(&quot;auth.users → customers · chef_profiles&lt;br/&gt;drivers · platform_users&quot;)]
+    end
+
+    STRIPE[&quot;Stripe&lt;br/&gt;owns the charge&quot;]
+    CACHE[&quot;In-memory, per-lambda&lt;br/&gt;tax 60s · maintenance 30s&lt;br/&gt;geocode UNBOUNDED&quot;]
+
+    RC --&gt; O &amp; CI
+    MOE --&gt; O --&gt; OL
+    DE --&gt; D
+    D --&gt;|syncFromDelivery| O
+    WH --&gt; SE &amp; O
+    WH --&gt; LS --&gt; L
+    PS --&gt; PR --&gt; L
+    KOS --&gt; INV
+    KOS --&gt; INVC
+    INV -.-&gt;|&quot;authoritative — drift possible&quot;| INVC
+    MOE --&gt; AU
+    DE --&gt; AU
+
+    STRIPE -.-&gt;|&quot;reconciliation — NOT SCHEDULED (R-02)&quot;| L
+    O --&gt; CACHE
+
+    PROC[&quot;Processors sla · expired-offers&quot;] --&gt; OPR
+    PW[&quot;partner-webhooks&quot;] -.-&gt;|&quot;does NOT claim a run&quot;| OPR
+
+    classDef truth fill:#eaf5ec,stroke:#3f7d52,stroke-width:3px,color:#123420
+    classDef derived fill:#eaf5ec,stroke:#3f7d52,stroke-dasharray:4 3,color:#123420
+    classDef writer fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef warn fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class O,D,L,PR,CI,SE,OPR,INV,AU,ID truth
+    class OL,INVC derived
+    class RC,MOE,DE,LS,PS,WH,KOS,PROC writer
+    class STRIPE ext
+    class CACHE,PW warn
+</pre></details>
+</section>
+<section id="trust-boundaries">
+  <h2>Trust Boundaries</h2>
+  <p class="purpose">Six boundaries from public internet to database. Note that RLS protects only direct client access - the API tier runs as service role.</p>
+  <div class="diagram"><pre class="mermaid">%% RIDENDINE — Trust boundaries and privilege escalation path
+flowchart TD
+    subgraph Z0[&quot;TB-0 · PUBLIC INTERNET — zero trust&quot;]
+        ANON[&quot;Anonymous browser&quot;]
+        ATK[&quot;Attacker&quot;]
+        PART[&quot;Partner system&quot;]
+        STR[&quot;Stripe&quot;]
+        CR[&quot;Vercel Cron&quot;]
+    end
+
+    subgraph Z1[&quot;TB-1 · EDGE — TLS + security headers&quot;]
+        HDR[&quot;HSTS 2y · X-Frame-Options DENY&lt;br/&gt;nosniff · Referrer-Policy · Permissions-Policy&lt;br/&gt;CSP nonce + strict-dynamic — apps/web ONLY (V-02)&quot;]
+    end
+
+    subgraph Z2[&quot;TB-2 · SESSION&quot;]
+        MW[&quot;middleware: auth.getUser()&lt;br/&gt;JWT verified server-side&quot;]
+        DEVBP[&quot;ALLOW_DEV_AUTOLOGIN&lt;br/&gt;requires NODE_ENV != production&quot;]
+    end
+
+    subgraph Z3[&quot;TB-3 · AUTHORISATION&quot;]
+        AC[&quot;Actor resolvers&lt;br/&gt;approved status required&quot;]
+        CAP[&quot;guardPlatformApi&lt;br/&gt;30 capabilities x 8 roles · FAIL CLOSED&quot;]
+        LAY[&quot;ops /dashboard layout&lt;br/&gt;active platform_users row&quot;]
+    end
+
+    subgraph Z4[&quot;TB-4 · OWNERSHIP&quot;]
+        OWN[&quot;verifyChefOwnsOrder · verifyDriverOwnsDelivery&lt;br/&gt;verifyChefOwnsStorefront · verifyMenuItemOwnership&lt;br/&gt;x-brand-id revalidated against kitchen_id&quot;]
+    end
+
+    subgraph Z5[&quot;TB-5 · MACHINE CALLERS&quot;]
+        PK[&quot;Partner: sha256 key + scopes&lt;br/&gt;+ per-key limit + optional HMAC&quot;]
+        SW[&quot;Stripe: HMAC over raw body&quot;]
+        PT[&quot;Cron: Bearer CRON_SECRET&lt;br/&gt;or x-processor-token · fails closed&quot;]
+    end
+
+    subgraph Z6[&quot;TB-6 · DATA — SERVICE ROLE, RLS BYPASSED&quot;]
+        ENG[&quot;Engine on createAdminClient()&quot;]
+        PG[(&quot;Postgres · 112 tables · 316 RLS policies&lt;br/&gt;policies protect DIRECT client access only&quot;)]
+    end
+
+    ANON --&gt; HDR --&gt; MW --&gt; AC --&gt; CAP --&gt; LAY --&gt; OWN --&gt; ENG --&gt; PG
+    ATK -.-&gt;|&quot;blocked at TB-2/TB-3&quot;| MW
+    PART --&gt; PK --&gt; ENG
+    STR --&gt; SW --&gt; ENG
+    CR --&gt; PT --&gt; ENG
+
+    BROWSER[&quot;Browser direct read&lt;br/&gt;anon key&quot;] --&gt;|&quot;RLS ENFORCED&quot;| PG
+    SSR[&quot;Server component&lt;br/&gt;user JWT&quot;] --&gt;|&quot;RLS ENFORCED&quot;| PG
+
+    classDef public fill:#fdf0f0,stroke:#a85c5c,color:#3a1212
+    classDef ctrl fill:#fdf6e3,stroke:#b58900,color:#3a2f12
+    classDef priv fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    class ANON,ATK,PART,STR,CR public
+    class HDR,MW,AC,CAP,LAY,OWN,PK,SW,PT,DEVBP ctrl
+    class ENG,PG,BROWSER,SSR priv
+</pre></div>
+  <details><summary>Mermaid source &mdash; <code>diagrams/trust-boundaries.mmd</code></summary><pre class="src">%% RIDENDINE — Trust boundaries and privilege escalation path
+flowchart TD
+    subgraph Z0[&quot;TB-0 · PUBLIC INTERNET — zero trust&quot;]
+        ANON[&quot;Anonymous browser&quot;]
+        ATK[&quot;Attacker&quot;]
+        PART[&quot;Partner system&quot;]
+        STR[&quot;Stripe&quot;]
+        CR[&quot;Vercel Cron&quot;]
+    end
+
+    subgraph Z1[&quot;TB-1 · EDGE — TLS + security headers&quot;]
+        HDR[&quot;HSTS 2y · X-Frame-Options DENY&lt;br/&gt;nosniff · Referrer-Policy · Permissions-Policy&lt;br/&gt;CSP nonce + strict-dynamic — apps/web ONLY (V-02)&quot;]
+    end
+
+    subgraph Z2[&quot;TB-2 · SESSION&quot;]
+        MW[&quot;middleware: auth.getUser()&lt;br/&gt;JWT verified server-side&quot;]
+        DEVBP[&quot;ALLOW_DEV_AUTOLOGIN&lt;br/&gt;requires NODE_ENV != production&quot;]
+    end
+
+    subgraph Z3[&quot;TB-3 · AUTHORISATION&quot;]
+        AC[&quot;Actor resolvers&lt;br/&gt;approved status required&quot;]
+        CAP[&quot;guardPlatformApi&lt;br/&gt;30 capabilities x 8 roles · FAIL CLOSED&quot;]
+        LAY[&quot;ops /dashboard layout&lt;br/&gt;active platform_users row&quot;]
+    end
+
+    subgraph Z4[&quot;TB-4 · OWNERSHIP&quot;]
+        OWN[&quot;verifyChefOwnsOrder · verifyDriverOwnsDelivery&lt;br/&gt;verifyChefOwnsStorefront · verifyMenuItemOwnership&lt;br/&gt;x-brand-id revalidated against kitchen_id&quot;]
+    end
+
+    subgraph Z5[&quot;TB-5 · MACHINE CALLERS&quot;]
+        PK[&quot;Partner: sha256 key + scopes&lt;br/&gt;+ per-key limit + optional HMAC&quot;]
+        SW[&quot;Stripe: HMAC over raw body&quot;]
+        PT[&quot;Cron: Bearer CRON_SECRET&lt;br/&gt;or x-processor-token · fails closed&quot;]
+    end
+
+    subgraph Z6[&quot;TB-6 · DATA — SERVICE ROLE, RLS BYPASSED&quot;]
+        ENG[&quot;Engine on createAdminClient()&quot;]
+        PG[(&quot;Postgres · 112 tables · 316 RLS policies&lt;br/&gt;policies protect DIRECT client access only&quot;)]
+    end
+
+    ANON --&gt; HDR --&gt; MW --&gt; AC --&gt; CAP --&gt; LAY --&gt; OWN --&gt; ENG --&gt; PG
+    ATK -.-&gt;|&quot;blocked at TB-2/TB-3&quot;| MW
+    PART --&gt; PK --&gt; ENG
+    STR --&gt; SW --&gt; ENG
+    CR --&gt; PT --&gt; ENG
+
+    BROWSER[&quot;Browser direct read&lt;br/&gt;anon key&quot;] --&gt;|&quot;RLS ENFORCED&quot;| PG
+    SSR[&quot;Server component&lt;br/&gt;user JWT&quot;] --&gt;|&quot;RLS ENFORCED&quot;| PG
+
+    classDef public fill:#fdf0f0,stroke:#a85c5c,color:#3a1212
+    classDef ctrl fill:#fdf6e3,stroke:#b58900,color:#3a2f12
+    classDef priv fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    class ANON,ATK,PART,STR,CR public
+    class HDR,MW,AC,CAP,LAY,OWN,PK,SW,PT,DEVBP ctrl
+    class ENG,PG,BROWSER,SSR priv
+</pre></details>
+</section>
+<section id="deployment-local">
+  <h2>Deployment - Local</h2>
+  <p class="purpose">Four dev servers against a Docker Supabase stack. Note the cron method: POST.</p>
+  <div class="diagram"><pre class="mermaid">%% RIDENDINE — LOCAL development topology
+flowchart TD
+    DEV[&quot;Developer · pnpm dev&quot;]
+
+    subgraph TURBO[&quot;Turborepo — 4 Next dev servers&quot;]
+        direction LR
+        W[&quot;web :3000&quot;]
+        C[&quot;chef-admin :3001&quot;]
+        O[&quot;ops-admin :3002&quot;]
+        D[&quot;driver-app :3003&quot;]
+    end
+
+    subgraph SUPA[&quot;Supabase local — Docker&quot;]
+        API[&quot;PostgREST :54321&quot;]
+        PG[(&quot;Postgres 17 :54322&quot;)]
+        ST[&quot;Studio :54323&quot;]
+        MAIL[&quot;Inbucket :54324&quot;]
+    end
+
+    CRON[&quot;pnpm local-cron&lt;br/&gt;POST every 30-60s&lt;br/&gt;DIFFERS FROM PRODUCTION&quot;]
+    STRIPE[&quot;Stripe TEST keys&lt;br/&gt;stripe listen&quot;]
+    OSM[&quot;OSRM · Nominatim public&quot;]
+
+    DEV --&gt; W &amp; C &amp; O &amp; D
+    W &amp; C &amp; O &amp; D --&gt; API --&gt; PG
+    CRON --&gt;|&quot;POST /api/engine/processors/*&quot;| O
+    W --&gt; STRIPE
+    W &amp; O --&gt; OSM
+
+    classDef app fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef warn fill:#fdf6e3,stroke:#b58900,color:#3a2f12
+    class W,C,O,D app
+    class API,PG,ST,MAIL store
+    class STRIPE,OSM ext
+    class CRON warn
+</pre></div>
+  <details><summary>Mermaid source &mdash; <code>diagrams/deployment-local.mmd</code></summary><pre class="src">%% RIDENDINE — LOCAL development topology
+flowchart TD
+    DEV[&quot;Developer · pnpm dev&quot;]
+
+    subgraph TURBO[&quot;Turborepo — 4 Next dev servers&quot;]
+        direction LR
+        W[&quot;web :3000&quot;]
+        C[&quot;chef-admin :3001&quot;]
+        O[&quot;ops-admin :3002&quot;]
+        D[&quot;driver-app :3003&quot;]
+    end
+
+    subgraph SUPA[&quot;Supabase local — Docker&quot;]
+        API[&quot;PostgREST :54321&quot;]
+        PG[(&quot;Postgres 17 :54322&quot;)]
+        ST[&quot;Studio :54323&quot;]
+        MAIL[&quot;Inbucket :54324&quot;]
+    end
+
+    CRON[&quot;pnpm local-cron&lt;br/&gt;POST every 30-60s&lt;br/&gt;DIFFERS FROM PRODUCTION&quot;]
+    STRIPE[&quot;Stripe TEST keys&lt;br/&gt;stripe listen&quot;]
+    OSM[&quot;OSRM · Nominatim public&quot;]
+
+    DEV --&gt; W &amp; C &amp; O &amp; D
+    W &amp; C &amp; O &amp; D --&gt; API --&gt; PG
+    CRON --&gt;|&quot;POST /api/engine/processors/*&quot;| O
+    W --&gt; STRIPE
+    W &amp; O --&gt; OSM
+
+    classDef app fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef warn fill:#fdf6e3,stroke:#b58900,color:#3a2f12
+    class W,C,O,D app
+    class API,PG,ST,MAIL store
+    class STRIPE,OSM ext
+    class CRON warn
+</pre></details>
+</section>
+<section id="deployment-production">
+  <h2>Deployment - Production</h2>
+  <p class="purpose">Four Vercel projects against Supabase Cloud. Note the cron method: GET - this is R-01.</p>
+  <div class="diagram"><pre class="mermaid">%% RIDENDINE — PRODUCTION topology
+%% grey dashed = UNKNOWN from repository evidence (see 21 · U-02)
+flowchart TD
+    U[&quot;Users&quot;]
+    PARTNER[&quot;Partner servers&quot;]
+    STRIPEX[&quot;Stripe&quot;]
+
+    subgraph VERCEL[&quot;Vercel — 4 separate projects, each builds the whole monorepo&quot;]
+        direction TB
+        W[&quot;ridendine.ca&lt;br/&gt;apps/web&quot;]
+        C[&quot;chef.ridendine.ca&lt;br/&gt;apps/chef-admin&quot;]
+        O[&quot;ops.ridendine.ca&lt;br/&gt;apps/ops-admin&quot;]
+        D[&quot;driver.ridendine.ca&lt;br/&gt;apps/driver-app&quot;]
+        CRON[&quot;Vercel Cron — 3 entries&lt;br/&gt;ops-admin only&quot;]
+    end
+
+    subgraph SUPAC[&quot;Supabase Cloud — SINGLE POINT OF FAILURE&quot;]
+        PG[(&quot;Postgres 17&lt;br/&gt;112 tables · RLS&quot;)]
+        AUTH[&quot;Auth&quot;]
+        STG[&quot;Storage · bucket profiles&quot;]
+        RT[&quot;Realtime&quot;]
+    end
+
+    OSM[&quot;OSRM · Nominatim&lt;br/&gt;public, unkeyed, no SLA&quot;]
+    COMMS[&quot;Resend · Twilio&lt;br/&gt;UNKNOWN if configured&quot;]
+    REDIS[&quot;Upstash&lt;br/&gt;UNKNOWN if configured&quot;]
+    SENTRY[&quot;Sentry&lt;br/&gt;INSTALLED BUT NEVER INITIALISED&quot;]
+
+    U --&gt; W &amp; C &amp; O &amp; D
+    PARTNER --&gt; W
+    W &amp; C &amp; O &amp; D --&gt; PG &amp; AUTH &amp; STG &amp; RT
+    STRIPEX -.-&gt;|&quot;webhook payment_intent.*&quot;| W
+    STRIPEX -.-&gt;|&quot;webhook transfer/payout&quot;| O
+    W &amp; O &amp; C &amp; D --&gt; STRIPEX
+    CRON -.-&gt;|&quot;GET — work is in POST · R-01&quot;| O
+    W &amp; O --&gt; OSM
+    W &amp; O -.-&gt; COMMS
+    W -.-&gt; REDIS
+    W &amp; C &amp; O &amp; D -.-&gt; SENTRY
+
+    ROLLBACK[&quot;App rollback: instant via Vercel&lt;br/&gt;DB rollback: NONE — migrations forward-only&lt;br/&gt;Backups: UNEVIDENCED (U-04)&quot;]
+
+    classDef app fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef unk fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class W,C,O,D app
+    class PG,AUTH,STG,RT store
+    class OSM,STRIPEX ext
+    class COMMS,REDIS,SENTRY,CRON,ROLLBACK unk
+</pre></div>
+  <details><summary>Mermaid source &mdash; <code>diagrams/deployment-production.mmd</code></summary><pre class="src">%% RIDENDINE — PRODUCTION topology
+%% grey dashed = UNKNOWN from repository evidence (see 21 · U-02)
+flowchart TD
+    U[&quot;Users&quot;]
+    PARTNER[&quot;Partner servers&quot;]
+    STRIPEX[&quot;Stripe&quot;]
+
+    subgraph VERCEL[&quot;Vercel — 4 separate projects, each builds the whole monorepo&quot;]
+        direction TB
+        W[&quot;ridendine.ca&lt;br/&gt;apps/web&quot;]
+        C[&quot;chef.ridendine.ca&lt;br/&gt;apps/chef-admin&quot;]
+        O[&quot;ops.ridendine.ca&lt;br/&gt;apps/ops-admin&quot;]
+        D[&quot;driver.ridendine.ca&lt;br/&gt;apps/driver-app&quot;]
+        CRON[&quot;Vercel Cron — 3 entries&lt;br/&gt;ops-admin only&quot;]
+    end
+
+    subgraph SUPAC[&quot;Supabase Cloud — SINGLE POINT OF FAILURE&quot;]
+        PG[(&quot;Postgres 17&lt;br/&gt;112 tables · RLS&quot;)]
+        AUTH[&quot;Auth&quot;]
+        STG[&quot;Storage · bucket profiles&quot;]
+        RT[&quot;Realtime&quot;]
+    end
+
+    OSM[&quot;OSRM · Nominatim&lt;br/&gt;public, unkeyed, no SLA&quot;]
+    COMMS[&quot;Resend · Twilio&lt;br/&gt;UNKNOWN if configured&quot;]
+    REDIS[&quot;Upstash&lt;br/&gt;UNKNOWN if configured&quot;]
+    SENTRY[&quot;Sentry&lt;br/&gt;INSTALLED BUT NEVER INITIALISED&quot;]
+
+    U --&gt; W &amp; C &amp; O &amp; D
+    PARTNER --&gt; W
+    W &amp; C &amp; O &amp; D --&gt; PG &amp; AUTH &amp; STG &amp; RT
+    STRIPEX -.-&gt;|&quot;webhook payment_intent.*&quot;| W
+    STRIPEX -.-&gt;|&quot;webhook transfer/payout&quot;| O
+    W &amp; O &amp; C &amp; D --&gt; STRIPEX
+    CRON -.-&gt;|&quot;GET — work is in POST · R-01&quot;| O
+    W &amp; O --&gt; OSM
+    W &amp; O -.-&gt; COMMS
+    W -.-&gt; REDIS
+    W &amp; C &amp; O &amp; D -.-&gt; SENTRY
+
+    ROLLBACK[&quot;App rollback: instant via Vercel&lt;br/&gt;DB rollback: NONE — migrations forward-only&lt;br/&gt;Backups: UNEVIDENCED (U-04)&quot;]
+
+    classDef app fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef unk fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class W,C,O,D app
+    class PG,AUTH,STG,RT store
+    class OSM,STRIPEX ext
+    class COMMS,REDIS,SENTRY,CRON,ROLLBACK unk
+</pre></details>
+</section>
+<section id="failure-and-recovery">
+  <h2>Failure and Recovery</h2>
+  <p class="purpose">What recovers automatically, what is blocked by R-01, and what has no procedure at all.</p>
+  <div class="diagram"><pre class="mermaid">%% RIDENDINE — Failure detection, recovery and escalation
+flowchart TD
+    subgraph SELF[&quot;Automatic recovery — works today&quot;]
+        A1[&quot;Checkout fails after order creation&quot;] --&gt; A2[&quot;catch: cancelOrder + release idempotency row&quot;] --&gt; A3[&quot;Customer retries cleanly&quot;]
+        B1[&quot;Server crashed mid-checkout&quot;] --&gt; B2[&quot;stale processing row over 120s&quot;] --&gt; B3[&quot;conditional reclaim&quot;]
+        C1[&quot;Stripe webhook 5xx&quot;] --&gt; C2[&quot;Stripe retries&quot;] --&gt; C3[&quot;stripe_events_processed prevents double-processing&quot;]
+        D1[&quot;submitToKitchen fails after payment&quot;] --&gt; D2[&quot;guarded direct advance to pending&quot;]
+    end
+
+    subgraph BLOCKED[&quot;Designed recovery — BLOCKED BY R-01&quot;]
+        E1[&quot;Chef never accepts&quot;] -.-&gt; E2[&quot;checkChefAcceptanceTimeout 5min → auto-cancel&quot;]
+        F1[&quot;No driver after 10 min&quot;] -.-&gt; F2[&quot;escalate + system_alerts&quot;]
+        G1[&quot;Offer expires&quot;] -.-&gt; G2[&quot;offer to next ranked driver&quot;]
+        H1[&quot;Partner event queued&quot;] -.-&gt; H2[&quot;HMAC webhook delivery + retry&quot;]
+    end
+
+    subgraph MANUAL[&quot;Manual only&quot;]
+        I1[&quot;Ledger != Stripe&quot;] --&gt; I2[&quot;POST /api/engine/reconciliation&lt;br/&gt;NOT SCHEDULED — R-02&quot;]
+        J1[&quot;Payout run stuck in &#x27;processing&#x27;&quot;] --&gt; J2[&quot;blocks ALL future runs of that type&lt;br/&gt;NO UI · NO PROCEDURE — O-04&quot;]
+        K1[&quot;Inventory cache drifts from movement ledger&quot;] --&gt; K2[&quot;manual stock count · NO reconciliation job — F-14&quot;]
+        L1[&quot;Abandoned checkout_pending orders&quot;] --&gt; L2[&quot;NO SWEEPER — I-05&quot;]
+        M1[&quot;Batch payout run needed&quot;] --&gt; M2[&quot;hand-crafted HTTP request — R-04&quot;]
+    end
+
+    subgraph DETECT[&quot;Detection&quot;]
+        N1[&quot;Unhandled exception&quot;] --&gt; N2[&quot;NOTHING — Sentry not initialised · R-03&quot;]
+        N3[&quot;Any of the above&quot;] --&gt; N4[&quot;someone has to look&lt;br/&gt;/dashboard/health · /dashboard/exceptions&lt;br/&gt;post-deploy smoke every 6h&quot;]
+    end
+
+    classDef ok fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef blocked fill:#fdf6e3,stroke:#b58900,stroke-dasharray:4 3,color:#3a2f12
+    classDef bad fill:#fdf0f0,stroke:#a85c5c,color:#3a1212
+    class A1,A2,A3,B1,B2,B3,C1,C2,C3,D1,D2 ok
+    class E1,E2,F1,F2,G1,G2,H1,H2 blocked
+    class I1,I2,J1,J2,K1,K2,L1,L2,M1,M2,N1,N2,N3,N4 bad
+</pre></div>
+  <details><summary>Mermaid source &mdash; <code>diagrams/failure-and-recovery.mmd</code></summary><pre class="src">%% RIDENDINE — Failure detection, recovery and escalation
+flowchart TD
+    subgraph SELF[&quot;Automatic recovery — works today&quot;]
+        A1[&quot;Checkout fails after order creation&quot;] --&gt; A2[&quot;catch: cancelOrder + release idempotency row&quot;] --&gt; A3[&quot;Customer retries cleanly&quot;]
+        B1[&quot;Server crashed mid-checkout&quot;] --&gt; B2[&quot;stale processing row over 120s&quot;] --&gt; B3[&quot;conditional reclaim&quot;]
+        C1[&quot;Stripe webhook 5xx&quot;] --&gt; C2[&quot;Stripe retries&quot;] --&gt; C3[&quot;stripe_events_processed prevents double-processing&quot;]
+        D1[&quot;submitToKitchen fails after payment&quot;] --&gt; D2[&quot;guarded direct advance to pending&quot;]
+    end
+
+    subgraph BLOCKED[&quot;Designed recovery — BLOCKED BY R-01&quot;]
+        E1[&quot;Chef never accepts&quot;] -.-&gt; E2[&quot;checkChefAcceptanceTimeout 5min → auto-cancel&quot;]
+        F1[&quot;No driver after 10 min&quot;] -.-&gt; F2[&quot;escalate + system_alerts&quot;]
+        G1[&quot;Offer expires&quot;] -.-&gt; G2[&quot;offer to next ranked driver&quot;]
+        H1[&quot;Partner event queued&quot;] -.-&gt; H2[&quot;HMAC webhook delivery + retry&quot;]
+    end
+
+    subgraph MANUAL[&quot;Manual only&quot;]
+        I1[&quot;Ledger != Stripe&quot;] --&gt; I2[&quot;POST /api/engine/reconciliation&lt;br/&gt;NOT SCHEDULED — R-02&quot;]
+        J1[&quot;Payout run stuck in &#x27;processing&#x27;&quot;] --&gt; J2[&quot;blocks ALL future runs of that type&lt;br/&gt;NO UI · NO PROCEDURE — O-04&quot;]
+        K1[&quot;Inventory cache drifts from movement ledger&quot;] --&gt; K2[&quot;manual stock count · NO reconciliation job — F-14&quot;]
+        L1[&quot;Abandoned checkout_pending orders&quot;] --&gt; L2[&quot;NO SWEEPER — I-05&quot;]
+        M1[&quot;Batch payout run needed&quot;] --&gt; M2[&quot;hand-crafted HTTP request — R-04&quot;]
+    end
+
+    subgraph DETECT[&quot;Detection&quot;]
+        N1[&quot;Unhandled exception&quot;] --&gt; N2[&quot;NOTHING — Sentry not initialised · R-03&quot;]
+        N3[&quot;Any of the above&quot;] --&gt; N4[&quot;someone has to look&lt;br/&gt;/dashboard/health · /dashboard/exceptions&lt;br/&gt;post-deploy smoke every 6h&quot;]
+    end
+
+    classDef ok fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef blocked fill:#fdf6e3,stroke:#b58900,stroke-dasharray:4 3,color:#3a2f12
+    classDef bad fill:#fdf0f0,stroke:#a85c5c,color:#3a1212
+    class A1,A2,A3,B1,B2,B3,C1,C2,C3,D1,D2 ok
+    class E1,E2,F1,F2,G1,G2,H1,H2 blocked
+    class I1,I2,J1,J2,K1,K2,L1,L2,M1,M2,N1,N2,N3,N4 bad
+</pre></details>
+</section>
+
+<section id="docs">
+  <h2>Documents</h2>
+  <p class="purpose">The full written analysis. Diagrams above are drawn only from the evidence register in <code>25-evidence-index.md</code>.</p>
+  <ul class="docs"><li><a href="00-analysis-scope-and-method.md">Scope &amp; Method</a> <code>00-analysis-scope-and-method.md</code></li>
+<li><a href="01-executive-summary.md">Executive Summary</a> <code>01-executive-summary.md</code></li>
+<li><a href="02-plain-language-codebase-explainer.md">Plain Language</a> <code>02-plain-language-codebase-explainer.md</code></li>
+<li><a href="03-repository-inventory.md">Repository Inventory</a> <code>03-repository-inventory.md</code></li>
+<li><a href="04-system-context.md">System Context</a> <code>04-system-context.md</code></li>
+<li><a href="05-component-catalog.md">Component Catalog</a> <code>05-component-catalog.md</code></li>
+<li><a href="06-connection-register.md">Connection Register</a> <code>06-connection-register.md</code></li>
+<li><a href="07-startup-and-runtime-sequences.md">Startup &amp; Runtime</a> <code>07-startup-and-runtime-sequences.md</code></li>
+<li><a href="08-workflows-and-domain-logic.md">Workflows &amp; Domain Logic</a> <code>08-workflows-and-domain-logic.md</code></li>
+<li><a href="09-data-state-and-source-of-truth.md">Data &amp; Source of Truth</a> <code>09-data-state-and-source-of-truth.md</code></li>
+<li><a href="10-interfaces-and-user-journeys.md">Interfaces &amp; Journeys</a> <code>10-interfaces-and-user-journeys.md</code></li>
+<li><a href="11-external-dependencies.md">External Dependencies</a> <code>11-external-dependencies.md</code></li>
+<li><a href="12-configuration-and-environments.md">Configuration</a> <code>12-configuration-and-environments.md</code></li>
+<li><a href="13-security-and-trust-boundaries.md">Security &amp; Trust</a> <code>13-security-and-trust-boundaries.md</code></li>
+<li><a href="14-reliability-and-failure-modes.md">Reliability</a> <code>14-reliability-and-failure-modes.md</code></li>
+<li><a href="15-tests-and-verification-coverage.md">Tests</a> <code>15-tests-and-verification-coverage.md</code></li>
+<li><a href="16-deployment-and-operations.md">Deployment</a> <code>16-deployment-and-operations.md</code></li>
+<li><a href="17-observability-runbook.md">Observability</a> <code>17-observability-runbook.md</code></li>
+<li><a href="18-performance-and-capacity.md">Performance</a> <code>18-performance-and-capacity.md</code></li>
+<li><a href="19-cost-driver-map.md">Cost Drivers</a> <code>19-cost-driver-map.md</code></li>
+<li><a href="20-legacy-duplicate-and-dead-code.md">Legacy &amp; Dead Code</a> <code>20-legacy-duplicate-and-dead-code.md</code></li>
+<li><a href="21-contradictions-and-unknowns.md">Contradictions &amp; Unknowns</a> <code>21-contradictions-and-unknowns.md</code></li>
+<li><a href="22-risk-and-improvement-register.md">Risk Register</a> <code>22-risk-and-improvement-register.md</code></li>
+<li><a href="23-developer-onboarding-guide.md">Onboarding</a> <code>23-developer-onboarding-guide.md</code></li>
+<li><a href="24-operator-runbook.md">Operator Runbook</a> <code>24-operator-runbook.md</code></li>
+<li><a href="25-evidence-index.md">Evidence Index</a> <code>25-evidence-index.md</code></li>
+<li><a href="26-glossary.md">Glossary</a> <code>26-glossary.md</code></li></ul>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  mermaid.initialize({ startOnLoad:true, theme: dark ? 'dark' : 'neutral',
+    flowchart:{ curve:'basis', useMaxWidth:true },
+    sequence:{ useMaxWidth:true } });
+</script>
+</body></html>

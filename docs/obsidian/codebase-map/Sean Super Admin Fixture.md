@@ -1,6 +1,6 @@
 # Sean Super Admin Fixture
 
-Generated: 2026-06-07T17:15:24.048Z
+Generated: 2026-10-05T17:14:36.621Z
 
 This generated audit proves the seeded test account is documented as a full multi-app admin fixture in source control. It checks the local seed, the dedicated idempotent promotion seed, and the bootstrap script so the same account can exercise the Customer marketplace, Chef admin, Driver app, and Ops admin during verification.
 

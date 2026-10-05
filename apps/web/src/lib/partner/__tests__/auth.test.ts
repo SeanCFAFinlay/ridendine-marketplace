@@ -20,13 +20,18 @@ function reqWith(headers: Record<string, string>): Request {
 }
 
 describe('resolvePartnerContext', () => {
-  const ORIGINAL = process.env.PARTNER_API_KEY;
+  const ORIGINAL_KEY = process.env.PARTNER_API_KEY;
+  const ORIGINAL_SIGNING_SECRET = process.env.PARTNER_API_SIGNING_SECRET;
   beforeEach(() => {
     jest.clearAllMocks();
     mockResolveByHash.mockResolvedValue(null);
-    process.env.PARTNER_API_KEY = ORIGINAL;
+    process.env.PARTNER_API_KEY = ORIGINAL_KEY;
+    process.env.PARTNER_API_SIGNING_SECRET = ORIGINAL_SIGNING_SECRET;
   });
-  afterEach(() => { process.env.PARTNER_API_KEY = ORIGINAL; });
+  afterEach(() => {
+    process.env.PARTNER_API_KEY = ORIGINAL_KEY;
+    process.env.PARTNER_API_SIGNING_SECRET = ORIGINAL_SIGNING_SECRET;
+  });
 
   it('returns null when no key is present', async () => {
     expect(await resolvePartnerContext(reqWith({}), admin)).toBeNull();
@@ -59,10 +64,23 @@ describe('resolvePartnerContext', () => {
     expect(ctx?.testMode).toBe(true);
   });
 
-  it('falls back to the legacy env key (anonymous, non-test) when DB misses', async () => {
+  it('requires a signing secret for the legacy env key fallback', async () => {
     process.env.PARTNER_API_KEY = KEY;
+    delete process.env.PARTNER_API_SIGNING_SECRET;
+    expect(await resolvePartnerContext(reqWith({ 'x-api-key': KEY }), admin)).toBeNull();
+  });
+
+  it('falls back to the legacy env key only with request signing enabled', async () => {
+    process.env.PARTNER_API_KEY = KEY;
+    process.env.PARTNER_API_SIGNING_SECRET = 'legacy_signing_secret_123';
     const ctx = await resolvePartnerContext(reqWith({ 'x-api-key': KEY }), admin);
-    expect(ctx).toMatchObject({ partnerId: null, partnerName: 'legacy-env-key', testMode: false });
+    expect(ctx).toMatchObject({
+      partnerId: null,
+      partnerName: 'legacy-env-key',
+      testMode: false,
+      requireSignature: true,
+      signingSecret: 'legacy_signing_secret_123',
+    });
   });
 
   it('returns null when DB misses and the env key does not match', async () => {

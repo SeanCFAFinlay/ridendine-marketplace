@@ -1,0 +1,61 @@
+%% RIDENDINE — Primary workflow: trigger → outcome, with gates and failure branches
+flowchart TD
+    S["Customer submits<br/>POST /api/checkout"] --> G1{"Session?<br/>middleware"}
+    G1 -->|no| E1["307 → /auth/login"]
+    G1 -->|yes| G2{"Rate limit<br/>3 / 60s · fail CLOSED"}
+    G2 -->|exceeded| E2["429"]
+    G2 -->|ok| Q["buildCheckoutQuote<br/>cart · distance · surge · fees · 13% HST<br/>client numbers COMPARED, never used"]
+
+    Q --> G3{"Risk<br/>customer · cart · amount · currency"}
+    G3 -->|blocked| E3["403 RISK_BLOCKED<br/>+ audit entry"]
+    G3 -->|ok| G4{"Kitchen ready?<br/>open · not paused · items available"}
+    G4 -->|no| E4["400 engine code"]
+    G4 -->|yes| G5{"Idempotency claim<br/>checkout_idempotency_keys"}
+
+    G5 -->|"hash differs"| E5["409 CONFLICT"]
+    G5 -->|"completed"| R1["200 — replay stored payload"]
+    G5 -->|"processing, under 120s"| E5
+    G5 -->|"processing, over 120s"| RC["conditional reclaim"] --> G6
+    G5 -->|"new claim"| G6{"Stripe configured?<br/>test order → test key present?"}
+
+    G6 -->|no| E6["500 PAYMENT_CONFIG_ERROR<br/>/ 503 TEST_MODE_UNAVAILABLE<br/>never falls back to the live key"]
+    G6 -->|yes| C1["engine.orderCreation.createOrder<br/>→ orders + order_items"]
+    C1 --> C2["persist quote snapshot<br/>stamp partner_id · is_test · scheduled_for"]
+    C2 --> C3["stripe.paymentIntents.create<br/>idem key checkout:{cust}:{key}"]
+    C3 --> C4["idempotency row → completed"]
+    C4 --> R2["200 clientSecret + publishableKey"]
+
+    C1 -.->|fail| CL
+    C2 -.->|fail| CL
+    C3 -.->|fail| CL
+    CL["CLEANUP — single path<br/>cancelOrder(payment_failed)<br/>+ mark row failed"] --> E7["typed 4xx/5xx<br/>customer can retry cleanly"]
+
+    R2 --> B["Browser confirms card<br/>Stripe.js — card never touches Ridendine"]
+    B -.->|"NET-014 webhook"| W{"Signature valid?<br/>live secret → test secret"}
+    W -->|no| E8["400"]
+    W -->|yes| W2{"Event already claimed?"}
+    W2 -->|yes| R3["200 idempotentReplay"]
+    W2 -->|no| W3{"paid cents == round(order.total*100)?"}
+    W3 -->|no| E9["THROW — never marked paid"]
+    W3 -->|yes| W4{"is_test OR test-signed?"}
+    W4 -->|yes| T1["payment_status=completed ONLY<br/>no kitchen · no ledger · no loyalty · no payout"]
+    W4 -->|no| K1["authorizePayment → PENDING<br/>→ submitToKitchen<br/>→ clear cart · award loyalty"]
+
+    K1 --> K2["Chef ACCEPTED → PREPARING → READY"]
+    K2 --> D1["onOrderReadyForPickup<br/>DELIVERY ROW CREATED HERE"]
+    D1 --> D2["findEligibleDrivers<br/>presence < 90s · radius 10km"]
+    D2 --> D3["score + rank by OSRM ETA"]
+    D3 --> D4{"Driver accepts?"}
+    D4 -->|"declines / expires"| D2
+    D4 -->|yes| D5["ASSIGNED → EN_ROUTE_PICKUP<br/>→ PICKED_UP → EN_ROUTE_DROPOFF<br/>→ DELIVERED"]
+    D5 --> F1["COMPLETED<br/>ledger_entries: platform 15% · driver 80% of fee · chef remainder · tip"]
+    F1 --> F2["Customer review"]
+
+    classDef gate fill:#fdf6e3,stroke:#b58900,color:#3a2f12
+    classDef err fill:#fdf0f0,stroke:#a85c5c,color:#3a1212
+    classDef ok fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef act fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    class G1,G2,G3,G4,G5,G6,W,W2,W3,W4,D4 gate
+    class E1,E2,E3,E4,E5,E6,E7,E8,E9,CL err
+    class R1,R2,R3,F1,F2,T1 ok
+    class S,Q,C1,C2,C3,C4,B,K1,K2,D1,D2,D3,D5,RC act

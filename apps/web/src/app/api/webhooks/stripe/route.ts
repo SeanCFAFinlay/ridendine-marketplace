@@ -32,6 +32,42 @@ function getWebhookSecret() {
   return process.env.STRIPE_WEBHOOK_SECRET;
 }
 
+/**
+ * Verify against the live secret, then the test one.
+ *
+ * Stripe's live and test dashboards each hold their OWN endpoint for this URL
+ * with its own signing secret, so a test-mode event (partner test key) is signed
+ * with a secret the live endpoint has never seen. Without the second attempt
+ * every test payment silently fails signature verification and the order never
+ * leaves `pending` — the failure looks identical to an attack, which is why it
+ * is worth being explicit about.
+ *
+ * Signature verification is pure HMAC over the raw body; the client's API key
+ * plays no part, so one client can verify both. Trying live first keeps real
+ * traffic on a single comparison.
+ */
+function constructWebhookEvent(
+  stripe: ReturnType<typeof getStripeClient>,
+  body: string,
+  signature: string
+): { event: Stripe.Event; source: 'primary' | 'partner-test' } {
+  try {
+    return {
+      event: stripe.webhooks.constructEvent(body, signature, getWebhookSecret()),
+      source: 'primary',
+    };
+  } catch (liveErr) {
+    const testSecret = process.env.STRIPE_WEBHOOK_SECRET_TEST?.trim();
+    if (!testSecret) throw liveErr;
+    // Throws its own error if this doesn't match either — a genuinely bad
+    // signature still ends up rejected below.
+    return {
+      event: stripe.webhooks.constructEvent(body, signature, testSecret),
+      source: 'partner-test',
+    };
+  }
+}
+
 function orderIdFromPaymentIntent(pi: Stripe.PaymentIntent): string | null {
   const id = pi.metadata?.order_id;
   return id && String(id).length > 0 ? String(id) : null;
@@ -88,11 +124,24 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   let event: Stripe.Event;
+  /**
+   * True when the event was signed by the TEST-mode endpoint secret, i.e. it
+   * belongs to a partner test-key order. Never touch finance, ledgers, payouts
+   * or the engine's money paths for these — the payment is fake.
+   *
+   * Derived from which secret verified the signature rather than
+   * `event.livemode`, because a staging deployment runs entirely on Stripe test
+   * keys and every event there is `livemode:false` — staging must keep
+   * exercising the real finance paths. Only a deployment that has BOTH secrets
+   * configured can produce a 'partner-test' event.
+   */
+  let isPartnerTestEvent = false;
 
   try {
     const stripe = getStripeClient();
-    const webhookSecret = getWebhookSecret();
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    const verified = constructWebhookEvent(stripe, body, signature);
+    event = verified.event;
+    isPartnerTestEvent = verified.source === 'partner-test';
   } catch (err) {
     console.error('Webhook signature verification failed:', safeWebhookLog(err));
     return withCorrelationId(
@@ -195,9 +244,11 @@ export async function POST(request: Request): Promise<Response> {
             );
           }
 
-          // Test-mode order (partner with test_mode): record the payment but keep
-          // it OUT of the kitchen queue, finance, loyalty, and payouts.
-          if (orderSnapshot.is_test) {
+          // Test-mode order (partner test key): record the payment but keep it
+          // OUT of the kitchen queue, finance, loyalty, and payouts.
+          // Either signal is sufficient — a test-signed event must never reach
+          // the money paths even if the order row somehow lacks the flag.
+          if (orderSnapshot.is_test || isPartnerTestEvent) {
             if (orderSnapshot.payment_status !== 'completed') {
               await (admin as any)
                 .from('orders')
@@ -314,6 +365,25 @@ export async function POST(request: Request): Promise<Response> {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         const orderId = orderIdFromPaymentIntent(paymentIntent);
 
+        // A declined TEST card (partners are told to try 4000…9995) must not
+        // run the live payment-failure path or write reconciliation rows.
+        // Record the outcome on the order and stop.
+        if (isPartnerTestEvent) {
+          if (orderId) {
+            await (admin as any)
+              .from('orders')
+              .update({
+                payment_status: 'failed',
+                payment_intent_id: paymentIntent.id,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', orderId)
+              .eq('is_test', true);
+          }
+          await finalizeStripeWebhookSuccess(admin, event.id, orderId);
+          break;
+        }
+
         if (orderId) {
           const result = await engine.platform.handlePaymentFailure(
             {
@@ -345,6 +415,20 @@ export async function POST(request: Request): Promise<Response> {
           typeof charge.payment_intent === 'string'
             ? charge.payment_intent
             : charge.payment_intent?.id;
+
+        // Refund of a test payment (e.g. a partner cancelling a test order).
+        // No real money moved, so no ledger or reconciliation entry should exist.
+        if (isPartnerTestEvent) {
+          if (paymentIntentId) {
+            await (admin as any)
+              .from('orders')
+              .update({ payment_status: 'refunded', updated_at: new Date().toISOString() })
+              .eq('payment_intent_id', paymentIntentId)
+              .eq('is_test', true);
+          }
+          await finalizeStripeWebhookSuccess(admin, event.id, null);
+          break;
+        }
 
         if (paymentIntentId) {
           const result = await engine.platform.handleExternalRefund(

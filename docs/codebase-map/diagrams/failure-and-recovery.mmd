@@ -1,0 +1,35 @@
+%% RIDENDINE — Failure detection, recovery and escalation
+flowchart TD
+    subgraph SELF["Automatic recovery — works today"]
+        A1["Checkout fails after order creation"] --> A2["catch: cancelOrder + release idempotency row"] --> A3["Customer retries cleanly"]
+        B1["Server crashed mid-checkout"] --> B2["stale processing row over 120s"] --> B3["conditional reclaim"]
+        C1["Stripe webhook 5xx"] --> C2["Stripe retries"] --> C3["stripe_events_processed prevents double-processing"]
+        D1["submitToKitchen fails after payment"] --> D2["guarded direct advance to pending"]
+    end
+
+    subgraph BLOCKED["Designed recovery — BLOCKED BY R-01"]
+        E1["Chef never accepts"] -.-> E2["checkChefAcceptanceTimeout 5min → auto-cancel"]
+        F1["No driver after 10 min"] -.-> F2["escalate + system_alerts"]
+        G1["Offer expires"] -.-> G2["offer to next ranked driver"]
+        H1["Partner event queued"] -.-> H2["HMAC webhook delivery + retry"]
+    end
+
+    subgraph MANUAL["Manual only"]
+        I1["Ledger != Stripe"] --> I2["POST /api/engine/reconciliation<br/>NOT SCHEDULED — R-02"]
+        J1["Payout run stuck in 'processing'"] --> J2["blocks ALL future runs of that type<br/>NO UI · NO PROCEDURE — O-04"]
+        K1["Inventory cache drifts from movement ledger"] --> K2["manual stock count · NO reconciliation job — F-14"]
+        L1["Abandoned checkout_pending orders"] --> L2["NO SWEEPER — I-05"]
+        M1["Batch payout run needed"] --> M2["hand-crafted HTTP request — R-04"]
+    end
+
+    subgraph DETECT["Detection"]
+        N1["Unhandled exception"] --> N2["NOTHING — Sentry not initialised · R-03"]
+        N3["Any of the above"] --> N4["someone has to look<br/>/dashboard/health · /dashboard/exceptions<br/>post-deploy smoke every 6h"]
+    end
+
+    classDef ok fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef blocked fill:#fdf6e3,stroke:#b58900,stroke-dasharray:4 3,color:#3a2f12
+    classDef bad fill:#fdf0f0,stroke:#a85c5c,color:#3a1212
+    class A1,A2,A3,B1,B2,B3,C1,C2,C3,D1,D2 ok
+    class E1,E2,F1,F2,G1,G2,H1,H2 blocked
+    class I1,I2,J1,J2,K1,K2,L1,L2,M1,M2,N1,N2,N3,N4 bad

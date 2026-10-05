@@ -64,6 +64,10 @@ function getPayoutSummary(payoutAccount: PayoutAccount | null, loading: boolean)
   return { value: 'Pending', detail: 'Verification in progress', tone: 'info' as SummaryTone };
 }
 
+function getPayoutErrorSummary() {
+  return { value: 'Unavailable', detail: 'Could not load payout account', tone: 'danger' as SummaryTone };
+}
+
 function maskStripeAccount(accountId: string) {
   return `${accountId.slice(0, 14)}...`;
 }
@@ -107,6 +111,7 @@ export default function ProfileView({ driver }: ProfileViewProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [payoutAccount, setPayoutAccount] = useState<PayoutAccount | null>(null);
   const [payoutLoading, setPayoutLoading] = useState(true);
+  const [payoutError, setPayoutError] = useState<string | null>(null);
   const [setupLoading, setSetupLoading] = useState(false);
   const [formData, setFormData] = useState({
     first_name: driver.first_name,
@@ -125,13 +130,21 @@ export default function ProfileView({ driver }: ProfileViewProps) {
     const client = supabase;
 
     async function loadPayoutAccount() {
-      const { data } = await client
-        .from('driver_payout_accounts')
-        .select('id, stripe_account_id, status')
-        .eq('driver_id', driver.id)
-        .maybeSingle();
-      setPayoutAccount(data as PayoutAccount | null);
-      setPayoutLoading(false);
+      try {
+        const { data, error } = await client
+          .from('driver_payout_accounts')
+          .select('id, stripe_account_id, status')
+          .eq('driver_id', driver.id)
+          .maybeSingle();
+        if (error) throw error;
+        setPayoutAccount(data as PayoutAccount | null);
+        setPayoutError(null);
+      } catch (err) {
+        setPayoutAccount(null);
+        setPayoutError(err instanceof Error ? err.message : 'Could not load payout account');
+      } finally {
+        setPayoutLoading(false);
+      }
     }
 
     void loadPayoutAccount();
@@ -142,7 +155,7 @@ export default function ProfileView({ driver }: ProfileViewProps) {
   const statusTone = getDriverStatusTone(driver.status);
   const contactComplete = Boolean(driver.email && driver.phone);
   const vehicleComplete = Boolean(driver.vehicle_type && driver.vehicle_description);
-  const payoutSummary = getPayoutSummary(payoutAccount, payoutLoading);
+  const payoutSummary = payoutError ? getPayoutErrorSummary() : getPayoutSummary(payoutAccount, payoutLoading);
 
   const handleSetupPayouts = async () => {
     setSetupLoading(true);
@@ -355,6 +368,17 @@ export default function ProfileView({ driver }: ProfileViewProps) {
 
             {payoutLoading ? (
               <div className="mt-4 h-12 animate-pulse rounded bg-surfaceMuted" />
+            ) : payoutError ? (
+              <div className="mt-4 rounded-lg border border-danger/30 bg-dangerSoft p-4">
+                <p className="text-sm font-medium text-danger">Could not load payout account</p>
+                <p className="mt-1 text-xs text-danger">{payoutError}</p>
+                <Button
+                  onClick={() => router.refresh()}
+                  className="mt-3 w-full rounded-lg bg-primary py-2.5 text-[14px] font-semibold text-white hover:bg-primaryHover"
+                >
+                  Retry
+                </Button>
+              </div>
             ) : payoutSetupSuccess && !payoutAccount ? (
               <div className="mt-4 rounded-lg border border-success/30 bg-successSoft p-4">
                 <p className="text-sm font-medium text-success">Payout account setup initiated!</p>

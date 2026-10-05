@@ -132,18 +132,13 @@ const endpointNegativeContracts = [
 
   processor('/api/engine/processors/expired-offers', 'GET', 'Processor'),
   processor('/api/engine/processors/expired-offers', 'POST', 'Processor'),
+  processor('/api/engine/processors/reconciliation', 'GET', 'Processor'),
+  processor('/api/engine/processors/reconciliation', 'POST', 'Processor'),
+  processor('/api/engine/processors/retention', 'GET', 'Processor'),
+  processor('/api/engine/processors/retention', 'POST', 'Processor'),
   processor('/api/engine/processors/sla', 'GET', 'Processor'),
   processor('/api/engine/processors/sla', 'POST', 'Processor'),
 
-  processor('/api/cron/expired-offers', 'GET', 'Cron wrapper'),
-  processor('/api/cron/expired-offers', 'POST', 'Cron wrapper'),
-  processor('/api/cron/payouts-chef-preview', 'GET', 'Cron wrapper'),
-  processor('/api/cron/payouts-chef-preview', 'POST', 'Cron wrapper'),
-  processor('/api/cron/payouts-driver-preview', 'GET', 'Cron wrapper'),
-  processor('/api/cron/payouts-driver-preview', 'POST', 'Cron wrapper'),
-  processor('/api/cron/reconciliation-daily', 'GET', 'Cron wrapper'),
-  processor('/api/cron/reconciliation-daily', 'POST', 'Cron wrapper'),
-  processor('/api/cron/sla-tick', 'POST', 'Cron wrapper'),
 
   commandCenter('/api/internal/command-center/change-requests', 'GET'),
   commandCenter('/api/internal/command-center/change-requests', 'POST'),

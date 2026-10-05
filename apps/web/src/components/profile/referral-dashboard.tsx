@@ -3,10 +3,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { ReferralStats } from '@ridendine/engine';
 
-const BASE_URL = 'https://ridendine.com';
+/**
+ * Referral links were previously hard-coded to `https://ridendine.com/signup`,
+ * which was wrong twice over: production is `ridendine.ca`, and `/signup` does
+ * not exist — the signup page is `/auth/signup`. Every shared link 404'd on a
+ * domain the company may not control, so the whole referral channel was dead
+ * while the capture side (`/auth/signup?ref=`) worked perfectly.
+ *
+ * Derived from NEXT_PUBLIC_APP_URL so it follows the deployment, and pointed at
+ * the real signup route. Asserted by referral-dashboard.test.tsx.
+ */
+const REFERRAL_SIGNUP_PATH = '/auth/signup';
 
-function buildReferralLink(code: string): string {
-  return `${BASE_URL}/signup?ref=${code}`;
+function referralBaseUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (configured) return configured.replace(/\/+$/, '');
+  // Client-side fallback: the page the customer is already on is the right origin.
+  if (typeof window !== 'undefined') return window.location.origin;
+  return '';
+}
+
+export function buildReferralLink(code: string): string {
+  return `${referralBaseUrl()}${REFERRAL_SIGNUP_PATH}?ref=${encodeURIComponent(code)}`;
 }
 
 function copyToClipboard(text: string): Promise<void> {
@@ -96,9 +114,17 @@ export function ReferralDashboard(_props: Props) {
     try {
       const res = await fetch('/api/referrals');
       const body = await res.json();
+      if (!res.ok || body.success === false) {
+        if (res.status === 401 && typeof window !== 'undefined') {
+          window.location.href = '/auth/login?redirect=/profile';
+          return;
+        }
+        throw new Error(body.error?.message || body.error || 'Failed to load referral data');
+      }
       setStats(body.data?.referral ?? null);
-    } catch {
-      setError('Failed to load referral data');
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load referral data');
     } finally {
       setLoading(false);
     }
@@ -113,9 +139,17 @@ export function ReferralDashboard(_props: Props) {
     try {
       const res = await fetch('/api/referrals', { method: 'POST' });
       const body = await res.json();
+      if (!res.ok || body.success === false) {
+        if (res.status === 401 && typeof window !== 'undefined') {
+          window.location.href = '/auth/login?redirect=/profile';
+          return;
+        }
+        throw new Error(body.error?.message || body.error || 'Failed to generate referral code');
+      }
       setStats(body.data?.referral ?? null);
-    } catch {
-      setError('Failed to generate referral code');
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate referral code');
     } finally {
       setGenerating(false);
     }

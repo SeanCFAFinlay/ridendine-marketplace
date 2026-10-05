@@ -55,6 +55,8 @@ function formatStatus(status: string): string {
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [mutatingOrderId, setMutatingOrderId] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('all');
 
   useEffect(() => {
@@ -62,9 +64,13 @@ export default function OrdersPage() {
   }, []);
 
   async function fetchOrders() {
+    setError(null);
     try {
       const response = await fetch('/api/orders');
       const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.error || 'Failed to fetch orders');
+      }
       const payload = result?.data;
       const items = Array.isArray(payload)
         ? payload
@@ -74,6 +80,7 @@ export default function OrdersPage() {
       setOrders(items);
     } catch (error) {
       console.error('Failed to fetch orders:', error);
+      setError(error instanceof Error ? error.message : 'Failed to fetch orders');
     } finally {
       setLoading(false);
     }
@@ -82,6 +89,9 @@ export default function OrdersPage() {
   // Workflow progression actions come from the shared kitchen workflow
   // (@ridendine/utils); cancel is an ops-only override and stays local.
   async function handleWorkflowAction(orderId: string, action: OrderWorkflowApiAction) {
+    if (mutatingOrderId) return;
+    setMutatingOrderId(orderId);
+    setError(null);
     try {
       const response = await fetch(`/api/engine/orders/${orderId}`, {
         method: 'PATCH',
@@ -94,13 +104,16 @@ export default function OrdersPage() {
       });
 
       if (response.ok) {
-        fetchOrders();
+        await fetchOrders();
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to update order status');
+        setError(error.error || 'Failed to update order status');
       }
     } catch (error) {
       console.error('Failed to update order:', error);
+      setError(error instanceof Error ? error.message : 'Failed to update order status');
+    } finally {
+      setMutatingOrderId(null);
     }
   }
 
@@ -162,6 +175,15 @@ export default function OrdersPage() {
           ))}
         </div>
 
+        {error && (
+          <div className="mb-4 rounded-lg border border-danger/30 bg-dangerSoft px-4 py-3 text-sm text-danger">
+            {error}{' '}
+            <button className="font-semibold underline" onClick={() => void fetchOrders()}>
+              Retry
+            </button>
+          </div>
+        )}
+
         <Card className="border-border bg-surface">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -176,7 +198,9 @@ export default function OrdersPage() {
                 </tr>
               </thead>
               <tbody className="text-sm">
-                {filteredOrders.map((order) => (
+                {filteredOrders.map((order) => {
+                  const isMutating = mutatingOrderId === order.id;
+                  return (
                   <tr key={order.id} className="border-b border-border/50">
                     <td className="py-4 pl-6 font-mono font-medium text-white">
                       {order.order_number}
@@ -212,38 +236,43 @@ export default function OrdersPage() {
                           <>
                             <button
                               onClick={() => handleWorkflowAction(order.id, KITCHEN_NEXT_TRANSITION.pending.action)}
-                              className="rounded bg-success px-3 py-1 text-xs text-white transition-colors hover:bg-success"
+                              disabled={isMutating}
+                              className="rounded bg-success px-3 py-1 text-xs text-white transition-colors hover:bg-success disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              Accept
+                              {isMutating ? 'Saving…' : 'Accept'}
                             </button>
                             <button
                               onClick={() => handleWorkflowAction(order.id, 'cancel')}
-                              className="rounded bg-danger px-3 py-1 text-xs text-white transition-colors hover:bg-danger"
+                              disabled={isMutating}
+                              className="rounded bg-danger px-3 py-1 text-xs text-white transition-colors hover:bg-danger disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              Cancel
+                              {isMutating ? 'Saving…' : 'Cancel'}
                             </button>
                           </>
                         )}
                         {order.status === 'accepted' && (
                           <button
                             onClick={() => handleWorkflowAction(order.id, KITCHEN_NEXT_TRANSITION.accepted.action)}
-                            className="rounded bg-info px-3 py-1 text-xs text-white transition-colors hover:bg-info"
+                            disabled={isMutating}
+                            className="rounded bg-info px-3 py-1 text-xs text-white transition-colors hover:bg-info disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            Start Prep
+                            {isMutating ? 'Saving…' : 'Start Prep'}
                           </button>
                         )}
                         {order.status === 'preparing' && (
                           <button
                             onClick={() => handleWorkflowAction(order.id, KITCHEN_NEXT_TRANSITION.preparing.action)}
-                            className="rounded bg-success px-3 py-1 text-xs text-white transition-colors hover:bg-success"
+                            disabled={isMutating}
+                            className="rounded bg-success px-3 py-1 text-xs text-white transition-colors hover:bg-success disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            Mark Ready
+                            {isMutating ? 'Saving…' : 'Mark Ready'}
                           </button>
                         )}
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
             {filteredOrders.length === 0 && (

@@ -175,7 +175,11 @@ function CheckoutContent() {
 
   useEffect(() => {
     async function loadData() {
-      if (!storefrontId) return;
+      if (!storefrontId) {
+        setError('Checkout link is missing a storefront. Return to your cart and try again.');
+        setLoading(false);
+        return;
+      }
 
       try {
         const cartRes = await fetch(`/api/cart?storefrontId=${storefrontId}`);

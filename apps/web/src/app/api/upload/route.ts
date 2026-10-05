@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { createAdminClient, createServerClient } from '@ridendine/db';
 import { cookies } from 'next/headers';
 import {
-  canonicalImageExtensionForMime,
+  resolveVerifiedImageType,
   evaluateRateLimit,
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
@@ -101,15 +101,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File too large. Maximum 5MB' }, { status: 400 });
     }
 
-    const ext = canonicalImageExtensionForMime(file.type);
-    if (!ext) {
-      return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
-    }
-
     const client = createAdminClient();
     const buffer = new Uint8Array(await file.arrayBuffer());
 
-    const result = await uploadProfileImage(client, user.id, buffer, file.type, ext);
+    // Verify the file's magic bytes rather than trusting the browser-declared
+    // Content-Type. Previously a file could be stored under an extension and
+    // MIME that did not match its actual contents.
+    const verified = resolveVerifiedImageType(file.type, buffer, ALLOWED_TYPES);
+    if (!verified.ok) {
+      return NextResponse.json({ error: verified.reason }, { status: 400 });
+    }
+
+    const result = await uploadProfileImage(
+      client,
+      user.id,
+      buffer,
+      verified.contentType,
+      verified.ext
+    );
 
     if ('error' in result) {
       return NextResponse.json({ error: result.error }, { status: 500 });

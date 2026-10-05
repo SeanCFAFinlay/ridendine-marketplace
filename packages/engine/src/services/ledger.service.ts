@@ -25,6 +25,17 @@ export function makeLedgerIdempotencyKey(entryType: string, sourceId: string): s
   return `${entryType}:${sourceId}`;
 }
 
+/**
+ * PostgreSQL unique-violation. Supabase surfaces the SQLSTATE on `code`, but
+ * some client paths only carry the message, so both are checked.
+ */
+function isUniqueViolation(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === '23505') return true;
+  const m = error.message ?? '';
+  return m.includes('23505') || m.toLowerCase().includes('duplicate key value');
+}
+
 export class LedgerService {
   constructor(private readonly client: SupabaseClient) {}
 
@@ -62,6 +73,23 @@ export class LedgerService {
       .single();
 
     if (error || !data) {
+      // A concurrent writer won the race for this idempotency key. The unique
+      // index (uq_ledger_entries_idempotency_key) already guarantees no
+      // duplicate row exists, so this is a SUCCESS for the caller — the entry
+      // they wanted is present. Returning an error here made a money-write path
+      // report failure for an operation that had in fact already succeeded,
+      // which is how a retry loop turns one ledger entry into a support ticket.
+      // Mirrors the 23505 handling in apps/web/src/lib/checkout/run-checkout.ts.
+      if (isUniqueViolation(error)) {
+        const { data: raced } = await this.client
+          .from('ledger_entries')
+          .select('id')
+          .eq('idempotency_key', row.idempotency_key)
+          .maybeSingle();
+        if (raced?.id) {
+          return { id: raced.id as string, inserted: false };
+        }
+      }
       return { id: '', inserted: false, error: error?.message ?? 'insert failed' };
     }
     return { id: data.id as string, inserted: true };
@@ -186,6 +214,27 @@ export class LedgerService {
       entity_id: input.driverId,
       metadata: input.driverId ? { driver_id: input.driverId } : null,
       idempotency_key: makeLedgerIdempotencyKey('tip_payable', input.orderId),
+    });
+  }
+
+  async recordPayoutEligible(input: {
+    orderId: string;
+    payeeType: 'chef' | 'driver';
+    payeeId: string;
+    amountCents: number;
+    currency: string;
+  }): Promise<{ id: string; inserted: boolean; error?: string }> {
+    const entryType = input.payeeType === 'chef' ? 'chef_payable' : 'driver_payable';
+    const label = input.payeeType === 'chef' ? 'Chef' : 'Driver';
+    return this.insertIdempotent({
+      order_id: input.orderId,
+      entry_type: entryType,
+      amount_cents: input.amountCents,
+      currency: input.currency,
+      entity_type: input.payeeType,
+      entity_id: input.payeeId,
+      description: `${label} payout eligible`,
+      idempotency_key: `payout_eligible:${input.orderId}:${input.payeeType}:${input.payeeId}`,
     });
   }
 

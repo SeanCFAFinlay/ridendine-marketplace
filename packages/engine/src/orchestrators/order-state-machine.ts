@@ -32,6 +32,7 @@ const ORDER_TRANSITION_MAP: Record<string, Set<string>> = {
   [EngineOrderStatus.CHECKOUT_PENDING]: new Set([
     EngineOrderStatus.PAYMENT_AUTHORIZED,
     EngineOrderStatus.PAYMENT_FAILED,
+    EngineOrderStatus.CANCELLED,
   ]),
 
   // Payment -> Kitchen

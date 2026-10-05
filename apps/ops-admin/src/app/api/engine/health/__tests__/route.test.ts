@@ -61,14 +61,41 @@ describe('GET /api/engine/health readiness', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.readiness.env.CRON_SECRET).toEqual({ configured: false });
-    expect(body.readiness.env.ENGINE_PROCESSOR_TOKEN).toEqual({ configured: false });
+    // `required` distinguishes secrets that must be present to boot from the
+    // optional ones (Upstash, Resend, Twilio, Sentry) whose absence silently
+    // degrades a capability the platform appears to have.
+    expect(body.readiness.env.CRON_SECRET).toEqual({ configured: false, required: true });
+    expect(body.readiness.env.ENGINE_PROCESSOR_TOKEN).toEqual({ configured: false, required: true });
+    expect(body.readiness.env.UPSTASH_REDIS_REST_URL).toEqual(
+      expect.objectContaining({ required: false })
+    );
     expect(body.readiness.processorRoutes).toEqual(
       expect.objectContaining({
         sla: '/api/engine/processors/sla',
         expiredOffers: '/api/engine/processors/expired-offers',
+        partnerWebhooks: '/api/engine/processors/partner-webhooks',
+        reconciliationDaily: '/api/engine/processors/reconciliation',
+        retention: '/api/engine/processors/retention',
       })
     );
+  });
+
+  it('tracks exactly the processors that vercel.json schedules', async () => {
+    // Readiness previously listed three processors nothing scheduled (their
+    // lastSuccessAt was permanently null) while omitting partner-webhooks,
+    // which runs every minute. A signal that always looks broken gets ignored.
+    const res = await GET();
+    const body = await res.json();
+
+    expect(Object.keys(body.readiness.processorRuns).sort()).toEqual([
+      'expired-offers',
+      'partner-webhooks',
+      'reconciliation-daily',
+      'retention',
+      'sla',
+    ]);
+    expect(body.readiness.processorRuns).not.toHaveProperty('payouts-chef-preview');
+    expect(body.readiness.processorRuns).not.toHaveProperty('payouts-driver-preview');
   });
 
   it('reports lastSuccessAt per processor from ops_processor_runs', async () => {

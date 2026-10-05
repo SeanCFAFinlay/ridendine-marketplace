@@ -5,6 +5,7 @@
 // ==========================================
 
 import { createAdminClient } from '@ridendine/db';
+import { stripePaymentAdapter } from './services/stripe-payment-adapter';
 import { createCentralEngine, type CentralEngine } from './core/engine.factory';
 import type { PaymentAdapter } from './types/payment-adapter';
 
@@ -26,7 +27,11 @@ export function registerPaymentAdapter(adapter: PaymentAdapter): void {
  */
 export function getAdminEngine(): CentralEngine {
   const client = createAdminClient();
-  return createCentralEngine(client, registeredPaymentAdapter);
+  // Default to the real Stripe adapter. Previously only apps/web called
+  // registerPaymentAdapter, so the other three apps built the engine with
+  // `undefined` and could not void a payment on reject/cancel. An explicit
+  // registerPaymentAdapter() call still overrides this (used by tests).
+  return createCentralEngine(client, registeredPaymentAdapter ?? stripePaymentAdapter);
 }
 
 /**
@@ -37,15 +42,24 @@ export function resetEngineClient(): void {
 }
 
 /**
- * Standard JSON error response
+ * Standard JSON error response.
+ *
+ * `details` is optional and OMITTED from the body when absent, so existing
+ * responses stay byte-identical. Routes that validate a caller-supplied payload
+ * pass the per-field issues here so an API consumer can see exactly which
+ * fields failed instead of a bare "Required".
  */
 export function errorResponse(
   code: string,
   message: string,
-  status: number = 400
+  status: number = 400,
+  details?: Array<{ field: string; message: string }>
 ): Response {
   return Response.json(
-    { success: false, error: { code, message } },
+    {
+      success: false,
+      error: { code, message, ...(details && details.length > 0 && { details }) },
+    },
     { status }
   );
 }

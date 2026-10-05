@@ -477,16 +477,60 @@ export async function getPayoutRunById(
 export async function getProcessingPayoutRun(
   client: SupabaseClient,
   runType: 'chef' | 'driver'
-): Promise<{ id: string } | null> {
+): Promise<{ id: string; updated_at?: string | null; created_at?: string | null } | null> {
   const { data, error } = await client
     .from('payout_runs')
-    .select('id')
+    .select('id, updated_at, created_at')
     .eq('run_type', runType)
     .eq('status', 'processing')
     .limit(1)
     .maybeSingle();
 
   if (error) throw error;
+  return (data as { id: string; updated_at?: string | null; created_at?: string | null } | null) ?? null;
+}
+
+/**
+ * A payout run left in 'processing' by a crashed or timed-out invocation blocks
+ * EVERY future run of that type, because payout_runs_one_processing_per_type is
+ * a partial unique index on status='processing' (migration 00032). Previously
+ * there was no UI control and no documented remediation, so clearing it meant a
+ * manual UPDATE against production.
+ *
+ * A run older than this window cannot still be executing — Vercel serverless
+ * functions are capped far below it — so it is safe to mark abandoned.
+ * Deliberately generous: a live run must never be killed mid-payout.
+ */
+export const PAYOUT_RUN_STALE_MS = 15 * 60 * 1000;
+
+/**
+ * Atomically mark an abandoned 'processing' run as failed, freeing the partial
+ * unique index. The update is conditional on the row STILL being 'processing'
+ * and STILL older than the cutoff, so two concurrent reclaims cannot both win
+ * and a run that resumed in the meantime is left alone.
+ *
+ * Returns the reclaimed run id, or null if nothing was eligible.
+ */
+export async function reclaimStalePayoutRun(
+  client: SupabaseClient,
+  runType: 'chef' | 'driver',
+  staleMs: number = PAYOUT_RUN_STALE_MS
+): Promise<{ id: string } | null> {
+  const cutoff = new Date(Date.now() - staleMs).toISOString();
+
+  const { data, error } = await client
+    .from('payout_runs')
+    .update({
+      status: 'failed',
+      updated_at: new Date().toISOString(),
+    } as never)
+    .eq('run_type', runType)
+    .eq('status', 'processing')
+    .lt('updated_at', cutoff)
+    .select('id')
+    .maybeSingle();
+
+  if (error) return null;
   return (data as { id: string } | null) ?? null;
 }
 

@@ -55,7 +55,10 @@ describe('Phase 12 high-risk Ops negative authorization matrix', () => {
 
   it('is internally valid and covers every Phase 11 method row', () => {
     expect(validateNegativeContracts().failures).toEqual([]);
-    expect(endpointNegativeContracts.length).toBeGreaterThanOrEqual(30);
+    // Floor lowered 30 -> 27: the nine /api/cron/* wrapper rows were removed with
+    // those unscheduled duplicate routes, and four rows were added for the new
+    // reconciliation and retention processors.
+    expect(endpointNegativeContracts.length).toBeGreaterThanOrEqual(27);
   });
 
   describe.each(endpointNegativeContracts.filter((contract) => contract.guard === 'platform'))(

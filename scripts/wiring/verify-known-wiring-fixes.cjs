@@ -201,7 +201,12 @@ const checks = [
         validateContracts,
       } = require(path.join(root, 'scripts/audit/high-risk-ops-authz-contracts.cjs'));
       const result = validateContracts({ root });
-      return contracts.length >= 19 &&
+      // Floor lowered 19 -> 16 when the five unscheduled /api/cron/* wrapper
+      // routes were deleted (they duplicated the canonical processors and were
+      // absent from vercel.json). Coverage of LIVE routes went up over the same
+      // change: the reconciliation and retention processors were added. The
+      // floor tracks contracts, and there are simply fewer routes to contract.
+      return contracts.length >= 16 &&
         result.failures.length === 0 &&
         result.passed === contracts.length &&
         exists('docs/wiring/HIGH_RISK_OPS_AUTHZ.md') &&
@@ -217,7 +222,9 @@ const checks = [
         validateNegativeContracts,
       } = require(path.join(root, 'scripts/audit/high-risk-ops-negative-authz.cjs'));
       const result = validateNegativeContracts();
-      return endpointNegativeContracts.length >= 32 &&
+      // Floor lowered 32 -> 27 alongside the phase 11 floor: nine cron-wrapper
+      // rows removed with those routes, four added for the two new processors.
+      return endpointNegativeContracts.length >= 27 &&
         result.failures.length === 0 &&
         result.passed === endpointNegativeContracts.length &&
         exists('docs/wiring/HIGH_RISK_OPS_NEGATIVE_AUTHZ.md') &&

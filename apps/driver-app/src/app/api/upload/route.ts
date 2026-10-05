@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
 import {
-  canonicalImageExtensionForMime,
+  resolveVerifiedImageType,
   evaluateRateLimit,
   RATE_LIMIT_POLICIES,
   rateLimitPolicyResponse,
@@ -115,17 +115,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
-    const extension = canonicalImageExtensionForMime(parsed.mimeType);
-    if (!extension) {
-      return NextResponse.json({ error: 'Invalid file type. Use JPEG, PNG, or WebP' }, { status: 400 });
+    // Verify magic bytes rather than trusting the data-URL's declared MIME.
+    // Delivery proof is evidence in a dispute — it must actually be an image.
+    const verified = resolveVerifiedImageType(parsed.mimeType, parsed.buffer, ALLOWED_TYPES);
+    if (!verified.ok) {
+      return NextResponse.json({ error: verified.reason }, { status: 400 });
     }
 
     const client = createAdminClient();
     const fileName = `${context.driverId}/${deliveryId}/${proofContext}-${Date.now()}-${Math.random()
       .toString(36)
-      .slice(2, 8)}.${extension}`;
+      .slice(2, 8)}.${verified.ext}`;
 
-    const upload = await uploadImage(client, fileName, parsed.buffer, parsed.mimeType);
+    const upload = await uploadImage(client, fileName, parsed.buffer, verified.contentType);
     if ('error' in upload) {
       return NextResponse.json({ error: upload.error }, { status: 500 });
     }

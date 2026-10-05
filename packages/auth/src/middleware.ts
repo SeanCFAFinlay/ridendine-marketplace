@@ -8,6 +8,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
+export { buildContentSecurityPolicy, type CspOptions } from './csp';
+
 type CookieOptions = Record<string, unknown>;
 type CookieToSet = {
   name: string;

@@ -1,0 +1,36 @@
+%% RIDENDINE — Startup / request initialisation sequence
+sequenceDiagram
+    autonumber
+    participant B as Browser / caller
+    participant MW as src/middleware.ts
+    participant SB as Supabase Auth
+    participant RT as Route handler
+    participant EN as createCentralEngine
+    participant DB as Supabase Postgres
+
+    B->>MW: HTTPS request
+    Note over MW: nothing in the app runs before this
+    MW->>MW: build CSP nonce  (apps/web ONLY — V-02)
+    alt apps/web, non-bypassed path
+        MW->>DB: GET platform_settings (30s cache, 1.5s timeout)
+        Note over MW: maintenance ⇒ redirect /maintenance<br/>lookup fails ⇒ FAIL OPEN
+    end
+    MW->>SB: auth.getUser()   ← JWT verified server-side, not getSession()
+    SB-->>MW: user | null
+    alt protected route and no user
+        MW-->>B: 307 → login
+    end
+    MW->>RT: forward + x-nonce + CSP
+    RT->>RT: evaluateRateLimit(policy)
+    RT->>EN: getAdminEngine()
+    EN->>EN: createAdminClient()  ← SERVICE ROLE, bypasses RLS
+    EN->>EN: construct ~25 orchestrators and services
+    Note over EN: registerProvider(Resend) · registerProvider(Twilio)<br/>both inert unless env keys are present
+    RT->>EN: getXActorContext()
+    EN->>DB: profile lookup (admin client)
+    DB-->>EN: actor | null
+    RT->>RT: guardPlatformApi(actor, capability)   [ops only]
+    RT->>EN: business call
+    EN->>DB: reads / writes
+    EN->>EN: audit.log() · events.flush()
+    RT-->>B: successResponse | errorResponse

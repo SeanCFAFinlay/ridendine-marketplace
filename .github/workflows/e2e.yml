@@ -103,6 +103,37 @@ jobs:
             -v ON_ERROR_STOP=1 \
             -f supabase/seeds/seed.sql 2>&1 | tee /tmp/seed.log
 
+      - name: Run pgTAP RLS suite
+        run: |
+          set -o pipefail
+          # 316 RLS policies across 112 tables were entirely unverified: these
+          # two pgTAP files existed but no workflow ever executed them. This is
+          # the only place a real Postgres with the real migrations is running,
+          # so it is the right place to assert the policy model.
+          #
+          # pgTAP ships with the Supabase local image but is not enabled by a
+          # migration (it is a test-only dependency and must not reach prod),
+          # so it is created here against the ephemeral runner database only.
+          DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;' 2>&1 | tee /tmp/pgtap-setup.log
+
+          status=0
+          for f in supabase/tests/rls/*.sql; do
+            echo "--- pgTAP: $f ---"
+            # Each file wraps itself in BEGIN/ROLLBACK, so fixtures do not persist.
+            if ! PGOPTIONS="-c search_path=public,extensions" psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$f" 2>&1 | tee -a /tmp/pgtap.log; then
+              status=1
+            fi
+          done
+
+          # pg_prove-style output: any "not ok" line is a failed assertion even
+          # when psql itself exits 0.
+          if grep -qE '^not ok' /tmp/pgtap.log; then
+            echo "::error::pgTAP assertions failed — see the 'not ok' lines above"
+            status=1
+          fi
+          exit $status
+
       - name: Upload DB step diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
@@ -135,6 +166,7 @@ jobs:
             echo "STRIPE_WEBHOOK_SECRET=whsec_placeholder"
             echo "CRON_SECRET=ci-e2e-cron-secret"
             echo "ENGINE_PROCESSOR_TOKEN=ci-e2e-processor-token"
+            echo "E2E_FIXTURE_RESET_ENABLED=true"
           } > .env.test
           if [ -n "${STRIPE_SECRET_KEY}" ]; then
             echo "STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}" >> .env.test
