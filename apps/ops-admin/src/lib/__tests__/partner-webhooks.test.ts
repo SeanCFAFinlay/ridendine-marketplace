@@ -223,7 +223,7 @@ describe('deliverPartnerWebhooks', () => {
     global.fetch = fetchMock as any;
 
     const res = await deliverPartnerWebhooks(admin, NOW);
-    expect(res).toEqual({ delivered: 1, failed: 0 });
+    expect(res).toEqual({ delivered: 1, failed: 0, blocked: 0 });
 
     const [url, opts] = fetchMock.mock.calls[0];
     expect(url).toBe('https://partner.test/hook');
@@ -250,7 +250,7 @@ describe('deliverPartnerWebhooks', () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 }) as any;
 
     const res = await deliverPartnerWebhooks(admin, NOW);
-    expect(res).toEqual({ delivered: 0, failed: 1 });
+    expect(res).toEqual({ delivered: 0, failed: 1, blocked: 0 });
     expect(capture['partner_webhook_deliveries:update'][0]).toMatchObject({ status: 'dead', attempts: 6, response_code: 500 });
   });
 });

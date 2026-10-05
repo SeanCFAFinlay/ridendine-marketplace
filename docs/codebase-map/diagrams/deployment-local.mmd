@@ -1,0 +1,37 @@
+%% RIDENDINE — LOCAL development topology
+flowchart TD
+    DEV["Developer · pnpm dev"]
+
+    subgraph TURBO["Turborepo — 4 Next dev servers"]
+        direction LR
+        W["web :3000"]
+        C["chef-admin :3001"]
+        O["ops-admin :3002"]
+        D["driver-app :3003"]
+    end
+
+    subgraph SUPA["Supabase local — Docker"]
+        API["PostgREST :54321"]
+        PG[("Postgres 17 :54322")]
+        ST["Studio :54323"]
+        MAIL["Inbucket :54324"]
+    end
+
+    CRON["pnpm local-cron<br/>POST every 30-60s<br/>DIFFERS FROM PRODUCTION"]
+    STRIPE["Stripe TEST keys<br/>stripe listen"]
+    OSM["OSRM · Nominatim public"]
+
+    DEV --> W & C & O & D
+    W & C & O & D --> API --> PG
+    CRON -->|"POST /api/engine/processors/*"| O
+    W --> STRIPE
+    W & O --> OSM
+
+    classDef app fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef warn fill:#fdf6e3,stroke:#b58900,color:#3a2f12
+    class W,C,O,D app
+    class API,PG,ST,MAIL store
+    class STRIPE,OSM ext
+    class CRON warn

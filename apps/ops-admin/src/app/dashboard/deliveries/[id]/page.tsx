@@ -6,6 +6,12 @@ import { createAdminClient, listOpsDrivers, type SupabaseClient } from '@ridendi
 import { formatCurrency, formatCurrencyFromCents } from '@ridendine/utils';
 import { notFound } from 'next/navigation';
 import { DeliveryActions } from './delivery-actions';
+import dynamicImport from 'next/dynamic';
+
+const DeliveryDetailMap = dynamicImport(
+  () => import('@/components/map/delivery-detail-map').then((mod) => mod.DeliveryDetailMap),
+  { ssr: false, loading: () => <div className="h-[360px] rounded-lg bg-surface animate-pulse" /> }
+);
 
 export const dynamic = 'force-dynamic';
 
@@ -139,6 +145,14 @@ export default async function DeliveryDetailPage({
             </div>
           </Card>
         </div>
+
+        <DeliveryDetailMap
+          pickup={detail.pickup}
+          dropoff={detail.dropoff}
+          trackingBreadcrumbs={detail.trackingBreadcrumbs}
+          driverName={detail.driver?.name}
+          status={detail.status}
+        />
 
         <div className="grid gap-6 xl:grid-cols-[2fr,1fr]">
           <Card className="border-border bg-surface p-6">

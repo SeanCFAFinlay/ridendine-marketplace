@@ -1,3 +1,6 @@
+// Coverage floors were lowered when the five unscheduled /api/cron/* wrapper
+// routes were deleted; two new processor contracts were added over the same
+// change, so coverage of routes that actually exist increased.
 const assert = require('node:assert/strict');
 const test = require('node:test');
 
@@ -8,7 +11,7 @@ const {
 } = require('./high-risk-ops-authz-contracts.cjs');
 
 test('declares high-risk Ops authorization contracts for critical route families', () => {
-  assert.ok(contracts.length >= 18, `expected at least 18 contracts, got ${contracts.length}`);
+  assert.ok(contracts.length >= 16, `expected at least 16 contracts, got ${contracts.length}`);
 
   const combined = JSON.stringify(contracts);
   for (const token of [

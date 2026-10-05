@@ -141,11 +141,8 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
   const locationTracker = useLocationTracker({
     driverId: delivery.driver_id || '',
     isOnline: true,
-    deliveryId:
-      status === 'picked_up' || status === 'en_route_to_dropoff' || status === 'arrived_at_dropoff'
-        ? delivery.id
-        : null,
-    updateInterval: 15000,
+    deliveryId: delivery.id,
+    updateInterval: 10000,
   });
 
   const getLocationMetadata = () => {
@@ -305,6 +302,17 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
     } else {
       window.open(url, '_blank');
     }
+  };
+
+  // Open Apple Maps navigation (iOS / macOS)
+  const openAppleMaps = (address: string, lat?: number | null, lng?: number | null) => {
+    const hasCoords =
+      typeof lat === 'number' &&
+      Number.isFinite(lat) &&
+      typeof lng === 'number' &&
+      Number.isFinite(lng);
+    const destination = hasCoords ? `${lat},${lng}` : encodeURIComponent(address);
+    window.open(`https://maps.apple.com/?daddr=${destination}&dirflg=d`, '_blank');
   };
 
   const handleIssueSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -858,41 +866,110 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
     );
   };
 
-  const renderRoutePanel = () => (
-    <>
-      <div className="p-4">
-        <Button
-          variant="outline"
-          className="w-full rounded-lg border-info text-info hover:bg-infoSoft"
-          onClick={() => {
-            if (isPickupWork) {
-              openNavigation(delivery.pickup_address, delivery.pickup_lat, delivery.pickup_lng);
-            } else {
-              openNavigation(delivery.dropoff_address, delivery.dropoff_lat, delivery.dropoff_lng);
-            }
-          }}
-        >
-          <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          Open in Google Maps
-        </Button>
-      </div>
+  const renderRoutePanel = () => {
+    const activePolyline = isPickupWork
+      ? (delivery.route_to_pickup_polyline || delivery.route_to_dropoff_polyline)
+      : delivery.route_to_dropoff_polyline;
 
-      <div className="p-4 pt-0">
-        <RouteMap
-          pickupLat={delivery.pickup_lat}
-          pickupLng={delivery.pickup_lng}
-          pickupAddress={delivery.pickup_address}
-          dropoffLat={delivery.dropoff_lat}
-          dropoffLng={delivery.dropoff_lng}
-          dropoffAddress={delivery.dropoff_address}
-          className="h-52 w-full rounded-2xl overflow-hidden border border-divider shadow-sm"
-        />
-      </div>
-    </>
-  );
+    const hasDriverGps =
+      typeof locationTracker.lastLocation?.lat === 'number' &&
+      typeof locationTracker.lastLocation?.lng === 'number';
+
+    return (
+      <>
+        <div className="p-4">
+          <div className="mb-2.5 flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span
+                  className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    hasDriverGps ? 'animate-ping bg-[#22c55e]' : 'animate-pulse bg-[#f59e0b]'
+                  }`}
+                />
+                <span
+                  className={`relative inline-flex h-2.5 w-2.5 rounded-full ${
+                    hasDriverGps ? 'bg-[#22c55e]' : 'bg-[#f59e0b]'
+                  }`}
+                />
+              </span>
+              <span className="text-xs font-semibold text-[#1a1a1a]">
+                {locationTracker.isPosting
+                  ? 'Updating GPS...'
+                  : hasDriverGps
+                  ? 'GPS Active & Broadcasting'
+                  : 'Acquiring GPS Signal...'}
+              </span>
+              {hasDriverGps && locationTracker.lastLocation && (
+                <span className="hidden font-mono text-[11px] text-[#6b7280] sm:inline">
+                  ({locationTracker.lastLocation.lat.toFixed(4)}, {locationTracker.lastLocation.lng.toFixed(4)})
+                </span>
+              )}
+            </div>
+            {locationTracker.locationError && (
+              <button
+                type="button"
+                onClick={locationTracker.startTracking}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                Retry GPS
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              className="w-full rounded-lg border-info py-2.5 text-xs font-semibold text-info hover:bg-infoSoft sm:text-sm"
+              onClick={() => {
+                if (isPickupWork) {
+                  openNavigation(delivery.pickup_address, delivery.pickup_lat, delivery.pickup_lng);
+                } else {
+                  openNavigation(delivery.dropoff_address, delivery.dropoff_lat, delivery.dropoff_lng);
+                }
+              }}
+            >
+              <svg className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Google Maps
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full rounded-lg border-border py-2.5 text-xs font-semibold text-text hover:bg-surfaceMuted sm:text-sm"
+              onClick={() => {
+                if (isPickupWork) {
+                  openAppleMaps(delivery.pickup_address, delivery.pickup_lat, delivery.pickup_lng);
+                } else {
+                  openAppleMaps(delivery.dropoff_address, delivery.dropoff_lat, delivery.dropoff_lng);
+                }
+              }}
+            >
+              <svg className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+              Apple Maps
+            </Button>
+          </div>
+        </div>
+
+        <div className="p-4 pt-0">
+          <RouteMap
+            pickupLat={delivery.pickup_lat}
+            pickupLng={delivery.pickup_lng}
+            pickupAddress={delivery.pickup_address}
+            dropoffLat={delivery.dropoff_lat}
+            dropoffLng={delivery.dropoff_lng}
+            dropoffAddress={delivery.dropoff_address}
+            driverLat={locationTracker.lastLocation?.lat}
+            driverLng={locationTracker.lastLocation?.lng}
+            polyline={activePolyline}
+            className="h-60 w-full overflow-hidden rounded-2xl border border-divider shadow-sm"
+          />
+        </div>
+      </>
+    );
+  };
 
   const renderContactPanel = () => (
     <div className="p-4 pt-0">

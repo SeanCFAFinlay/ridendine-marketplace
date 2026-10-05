@@ -1,4 +1,13 @@
-import { createAuthMiddleware } from '@ridendine/auth/middleware';
+import {
+  createAuthMiddleware,
+  buildContentSecurityPolicy,
+} from '@ridendine/auth/middleware';
+
+/**
+ * This app previously shipped no Content-Security-Policy at all — only
+ * apps/web had one. Stripe Connect onboarding runs in this app (apps/chef-admin/src/app/api/payouts/setup).
+ */
+const cspBuilder = (nonce: string) => buildContentSecurityPolicy(nonce, { stripe: true });
 
 export const middleware = createAuthMiddleware({
   publicRoutes: [
@@ -17,6 +26,7 @@ export const middleware = createAuthMiddleware({
     '/api/auth/forgot-password',
   ],
   loginRoute: '/auth/login',
+  cspBuilder,
   authenticatedRedirect: '/',
 });
 

@@ -1,0 +1,54 @@
+%% RIDENDINE — Runtime component wiring (active components + named connections)
+flowchart TD
+    subgraph EDGE["Request edge"]
+        MW["C-18 middleware<br/>auth.getUser + CSP(web only)"]
+        RT["Route handler<br/>rate limit → actor → capability"]
+    end
+
+    subgraph ENGINE["C-11..C-16 @ridendine/engine — constructed PER REQUEST on the service-role client"]
+        direction TB
+        MOE["C-11 MasterOrderEngine<br/>sole writer of order state"]
+        DE["C-12 DeliveryEngine"]
+        DISP["C-13 Dispatch trio<br/>DriverMatching → OfferManagement → DispatchOrchestrator"]
+        MONEY["C-14 Money<br/>Ledger · Payout · Commerce · Reconciliation"]
+        SLA["C-15 SLA · Notifications · Events"]
+        GW["C-16 OperationsCommandGateway"]
+        SM["order-state-machine<br/>ORDER · DELIVERY · PAYOUT maps"]
+    end
+
+    DAL["C-17 @ridendine/db<br/>22 repositories + 398 raw .from() calls"]
+    PG[("C-20 Supabase Postgres")]
+    STRIPE["Stripe"]
+    OSRM["C-19 routing → OSRM public"]
+
+    MW -->|"NET-001..004"| RT
+    RT -->|"NET-030 getAdminEngine()"| ENGINE
+    RT -->|"NET-031/032 runCheckout"| MONEY
+
+    MOE --> SM
+    DE --> SM
+    DISP --> DE
+    DISP --> MOE
+    DISP --> OSRM
+    GW --> MOE & DISP & MONEY & SLA
+
+    ENGINE -->|"NET-040 service role — RLS BYPASSED"| DAL --> PG
+    MONEY -->|"NET-043/044"| STRIPE
+    STRIPE -.->|"NET-014 → C-04"| MOE
+    STRIPE -.->|"NET-015 → C-09"| MONEY
+
+    CRON["Vercel Cron"] -.->|"NET-020 GET — R-01"| PROC["C-08 processors<br/>sla · expired-offers · partner-webhooks<br/>work is in POST"]
+    PROC --> SLA & DISP
+
+    DEAD["INACTIVE<br/>dispatch.service.ts · MapboxProvider<br/>core.getEngine · server.getEngine<br/>5 legacy /api/cron/* routes"]
+
+    classDef eng fill:#f3ecf7,stroke:#7a5c95,color:#2b1a35
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef edge fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef broken fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class MOE,DE,DISP,MONEY,SLA,GW,SM eng
+    class PG,DAL store
+    class STRIPE,OSRM ext
+    class MW,RT edge
+    class CRON,PROC,DEAD broken

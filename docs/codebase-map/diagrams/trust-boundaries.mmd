@@ -1,0 +1,55 @@
+%% RIDENDINE — Trust boundaries and privilege escalation path
+flowchart TD
+    subgraph Z0["TB-0 · PUBLIC INTERNET — zero trust"]
+        ANON["Anonymous browser"]
+        ATK["Attacker"]
+        PART["Partner system"]
+        STR["Stripe"]
+        CR["Vercel Cron"]
+    end
+
+    subgraph Z1["TB-1 · EDGE — TLS + security headers"]
+        HDR["HSTS 2y · X-Frame-Options DENY<br/>nosniff · Referrer-Policy · Permissions-Policy<br/>CSP nonce + strict-dynamic — apps/web ONLY (V-02)"]
+    end
+
+    subgraph Z2["TB-2 · SESSION"]
+        MW["middleware: auth.getUser()<br/>JWT verified server-side"]
+        DEVBP["ALLOW_DEV_AUTOLOGIN<br/>requires NODE_ENV != production"]
+    end
+
+    subgraph Z3["TB-3 · AUTHORISATION"]
+        AC["Actor resolvers<br/>approved status required"]
+        CAP["guardPlatformApi<br/>30 capabilities x 8 roles · FAIL CLOSED"]
+        LAY["ops /dashboard layout<br/>active platform_users row"]
+    end
+
+    subgraph Z4["TB-4 · OWNERSHIP"]
+        OWN["verifyChefOwnsOrder · verifyDriverOwnsDelivery<br/>verifyChefOwnsStorefront · verifyMenuItemOwnership<br/>x-brand-id revalidated against kitchen_id"]
+    end
+
+    subgraph Z5["TB-5 · MACHINE CALLERS"]
+        PK["Partner: sha256 key + scopes<br/>+ per-key limit + optional HMAC"]
+        SW["Stripe: HMAC over raw body"]
+        PT["Cron: Bearer CRON_SECRET<br/>or x-processor-token · fails closed"]
+    end
+
+    subgraph Z6["TB-6 · DATA — SERVICE ROLE, RLS BYPASSED"]
+        ENG["Engine on createAdminClient()"]
+        PG[("Postgres · 112 tables · 316 RLS policies<br/>policies protect DIRECT client access only")]
+    end
+
+    ANON --> HDR --> MW --> AC --> CAP --> LAY --> OWN --> ENG --> PG
+    ATK -.->|"blocked at TB-2/TB-3"| MW
+    PART --> PK --> ENG
+    STR --> SW --> ENG
+    CR --> PT --> ENG
+
+    BROWSER["Browser direct read<br/>anon key"] -->|"RLS ENFORCED"| PG
+    SSR["Server component<br/>user JWT"] -->|"RLS ENFORCED"| PG
+
+    classDef public fill:#fdf0f0,stroke:#a85c5c,color:#3a1212
+    classDef ctrl fill:#fdf6e3,stroke:#b58900,color:#3a2f12
+    classDef priv fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    class ANON,ATK,PART,STR,CR public
+    class HDR,MW,AC,CAP,LAY,OWN,PK,SW,PT,DEVBP ctrl
+    class ENG,PG,BROWSER,SSR priv

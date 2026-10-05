@@ -1,0 +1,50 @@
+%% RIDENDINE — PRODUCTION topology
+%% grey dashed = UNKNOWN from repository evidence (see 21 · U-02)
+flowchart TD
+    U["Users"]
+    PARTNER["Partner servers"]
+    STRIPEX["Stripe"]
+
+    subgraph VERCEL["Vercel — 4 separate projects, each builds the whole monorepo"]
+        direction TB
+        W["ridendine.ca<br/>apps/web"]
+        C["chef.ridendine.ca<br/>apps/chef-admin"]
+        O["ops.ridendine.ca<br/>apps/ops-admin"]
+        D["driver.ridendine.ca<br/>apps/driver-app"]
+        CRON["Vercel Cron — 3 entries<br/>ops-admin only"]
+    end
+
+    subgraph SUPAC["Supabase Cloud — SINGLE POINT OF FAILURE"]
+        PG[("Postgres 17<br/>112 tables · RLS")]
+        AUTH["Auth"]
+        STG["Storage · bucket profiles"]
+        RT["Realtime"]
+    end
+
+    OSM["OSRM · Nominatim<br/>public, unkeyed, no SLA"]
+    COMMS["Resend · Twilio<br/>UNKNOWN if configured"]
+    REDIS["Upstash<br/>UNKNOWN if configured"]
+    SENTRY["Sentry<br/>INSTALLED BUT NEVER INITIALISED"]
+
+    U --> W & C & O & D
+    PARTNER --> W
+    W & C & O & D --> PG & AUTH & STG & RT
+    STRIPEX -.->|"webhook payment_intent.*"| W
+    STRIPEX -.->|"webhook transfer/payout"| O
+    W & O & C & D --> STRIPEX
+    CRON -.->|"GET — work is in POST · R-01"| O
+    W & O --> OSM
+    W & O -.-> COMMS
+    W -.-> REDIS
+    W & C & O & D -.-> SENTRY
+
+    ROLLBACK["App rollback: instant via Vercel<br/>DB rollback: NONE — migrations forward-only<br/>Backups: UNEVIDENCED (U-04)"]
+
+    classDef app fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef unk fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class W,C,O,D app
+    class PG,AUTH,STG,RT store
+    class OSM,STRIPEX ext
+    class COMMS,REDIS,SENTRY,CRON,ROLLBACK unk

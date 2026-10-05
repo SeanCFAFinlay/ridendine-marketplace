@@ -1,6 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { AuditAction } from '@ridendine/types';
-import { createAdminClient, getProcessingPayoutRun, type SupabaseClient } from '@ridendine/db';
+import {
+  createAdminClient,
+  getProcessingPayoutRun,
+  reclaimStalePayoutRun,
+  PAYOUT_RUN_STALE_MS,
+  type SupabaseClient,
+} from '@ridendine/db';
 import { bankPayoutCommandSchema } from '@ridendine/validation';
 import { getEngine, getOpsActorContext, guardPlatformApi, successResponse, errorResponse, finalizeOpsActor } from '@/lib/engine';
 
@@ -45,11 +51,35 @@ export async function POST(request: NextRequest) {
   const adminClient = createAdminClient() as unknown as SupabaseClient;
   const inProgress = await getProcessingPayoutRun(adminClient, runType);
   if (inProgress) {
-    return errorResponse(
-      'PAYOUT_RUN_IN_PROGRESS',
-      `A ${runType} payout run is already processing (id=${inProgress.id}). Wait for it to finish before triggering another.`,
-      409
-    );
+    // A run left in 'processing' by a crashed or timed-out invocation blocks
+    // EVERY future run of this type via the partial unique index. Reclaim it if
+    // it is older than the staleness window; a genuinely live run is untouched.
+    const claimedAt = inProgress.updated_at ?? inProgress.created_at ?? null;
+    const isStale =
+      claimedAt !== null && Date.now() - new Date(claimedAt).getTime() > PAYOUT_RUN_STALE_MS;
+
+    const reclaimed = isStale ? await reclaimStalePayoutRun(adminClient, runType) : null;
+
+    if (!reclaimed) {
+      return errorResponse(
+        'PAYOUT_RUN_IN_PROGRESS',
+        `A ${runType} payout run is already processing (id=${inProgress.id}). Wait for it to finish before triggering another.`,
+        409
+      );
+    }
+
+    await getEngine().audit.log({
+      action: 'override',
+      entityType: 'payout_run',
+      entityId: reclaimed.id,
+      actor: opsActor,
+      metadata: {
+        code: 'STALE_PAYOUT_RUN_RECLAIMED',
+        runType,
+        claimedAt,
+        staleMs: PAYOUT_RUN_STALE_MS,
+      },
+    });
   }
 
   const engine = getEngine();

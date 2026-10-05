@@ -5,6 +5,7 @@ import { getOpsActorContext, hasRequiredRole } from '@/lib/engine';
 import { PageHeader, EmptyState, StatusBadge } from '@ridendine/ui';
 import { FinanceSubnav } from '../_components/FinanceSubnav';
 import { FinanceAccessDenied } from '../_components/FinanceAccessDenied';
+import { PayoutRunControls } from './payout-run-controls';
 import { FINANCE_PAGE_ROLES } from '../_lib/roles';
 
 export const dynamic = 'force-dynamic';
@@ -54,6 +55,8 @@ export default async function FinancePayoutRunsPage() {
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-6">
         <FinanceSubnav />
+
+        <PayoutRunControls />
 
         <PageHeader
           title="Payout Runs"

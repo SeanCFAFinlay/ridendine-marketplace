@@ -1,3 +1,6 @@
+// Coverage floors were lowered when the five unscheduled /api/cron/* wrapper
+// routes were deleted; two new processor contracts were added over the same
+// change, so coverage of routes that actually exist increased.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
@@ -9,7 +12,7 @@ test('declares negative authorization contracts for every high-risk Phase 11 met
 
   const result = validateNegativeContracts();
   assert.equal(result.failures.length, 0);
-  assert.ok(endpointNegativeContracts.length >= 30);
+  assert.ok(endpointNegativeContracts.length >= 27);
 });
 
 test('documents platform, processor, command-center, and Stripe denial models', () => {

@@ -1,0 +1,60 @@
+%% RIDENDINE — Data flow and source of truth
+%% Bold border = authoritative owner · dashed = cache/derived · grey dashed = external truth
+flowchart TD
+    subgraph WRITERS["Sanctioned writers"]
+        RC["runCheckout"]
+        MOE["MasterOrderEngine<br/>SOLE writer of order state"]
+        DE["DeliveryEngine · DispatchOrchestrator"]
+        LS["LedgerService<br/>SOLE writer of money"]
+        PS["PayoutService"]
+        WH["Stripe webhooks"]
+        KOS["Kitchen OS routes<br/>raw .from() — no repository"]
+    end
+
+    subgraph TRUTH["Supabase Postgres — 112 tables, the single store of record"]
+        O[("orders<br/>engine_status CANONICAL")]
+        OL[("orders.status<br/>legacy mirror — LOSSY")]
+        D[("deliveries + assignment_attempts")]
+        L[("ledger_entries<br/>unique idempotency_key")]
+        PR[("payout_runs · payouts<br/>one 'processing' per type")]
+        CI[("checkout_idempotency_keys")]
+        SE[("stripe_events_processed")]
+        OPR[("ops_processor_runs")]
+        INV[("inventory_stock_movements<br/>ON-HAND = SIGNED SUM")]
+        INVC[("inventory_items.current_quantity<br/>CACHE — no reconciliation job")]
+        AU[("audit_logs · ops_override_logs<br/>domain_events · system_alerts")]
+        ID[("auth.users → customers · chef_profiles<br/>drivers · platform_users")]
+    end
+
+    STRIPE["Stripe<br/>owns the charge"]
+    CACHE["In-memory, per-lambda<br/>tax 60s · maintenance 30s<br/>geocode UNBOUNDED"]
+
+    RC --> O & CI
+    MOE --> O --> OL
+    DE --> D
+    D -->|syncFromDelivery| O
+    WH --> SE & O
+    WH --> LS --> L
+    PS --> PR --> L
+    KOS --> INV
+    KOS --> INVC
+    INV -.->|"authoritative — drift possible"| INVC
+    MOE --> AU
+    DE --> AU
+
+    STRIPE -.->|"reconciliation — NOT SCHEDULED (R-02)"| L
+    O --> CACHE
+
+    PROC["Processors sla · expired-offers"] --> OPR
+    PW["partner-webhooks"] -.->|"does NOT claim a run"| OPR
+
+    classDef truth fill:#eaf5ec,stroke:#3f7d52,stroke-width:3px,color:#123420
+    classDef derived fill:#eaf5ec,stroke:#3f7d52,stroke-dasharray:4 3,color:#123420
+    classDef writer fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef ext fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef warn fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class O,D,L,PR,CI,SE,OPR,INV,AU,ID truth
+    class OL,INVC derived
+    class RC,MOE,DE,LS,PS,WH,KOS,PROC writer
+    class STRIPE ext
+    class CACHE,PW warn

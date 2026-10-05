@@ -36,8 +36,8 @@ test('dispositions every remaining API proof gap', () => {
   const { collectProofDisposition } = require('./runtime-proof-disposition.cjs');
   const summary = collectProofDisposition({ root: repoRoot });
 
-  assert.equal(summary.apiTotals.total, 180);
-  assert.equal(summary.apiTotals.proofCovered, 180);
+  assert.equal(summary.apiTotals.total, 177);
+  assert.equal(summary.apiTotals.proofCovered, 177);
   assert.equal(summary.apiTotals.dispositionedGaps, 0);
   assert.equal(summary.apiTotals.unresolved, 0);
 
@@ -71,7 +71,7 @@ test('generates markdown proof disposition docs with zero unresolved gaps', () =
 
   assert.ok(markdown.includes('# Runtime Proof Disposition'));
   assert.ok(markdown.includes('| Pages | 104 | 103 | 1 | 1 | 0 |'));
-  assert.ok(markdown.includes('| API route handlers | 180 | 180 | 0 | 0 | 0 |'));
+  assert.ok(markdown.includes('| API route handlers | 177 | 177 | 0 | 0 | 0 |'));
   assert.ok(markdown.includes('## Page Proof Gap Disposition'));
   assert.ok(markdown.includes('## API Proof Gap Disposition'));
 });

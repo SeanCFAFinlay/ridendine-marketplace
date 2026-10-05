@@ -15,6 +15,11 @@ import type {
 import { DomainEventEmitter } from '../core/event-emitter';
 import { AuditLogger } from '../core/audit-logger';
 import {
+  toCents,
+  platformFeeCents as sharedPlatformFeeCents,
+  driverPayoutCents as sharedDriverPayoutCents,
+} from '../services/order-split';
+import {
   PLATFORM_FEE_PERCENT,
   SERVICE_FEE_PERCENT,
   DRIVER_PAYOUT_PERCENT,
@@ -204,7 +209,10 @@ export class CommerceLedgerEngine {
     });
 
     // Platform fee
-    const platformFeeCents = Math.round(order.subtotal * (PLATFORM_FEE_PERCENT / 100) * 100);
+    // Shared split arithmetic — this was previously an inline copy that
+    // rounded in a different order to payout-engine.ts and could disagree by a
+    // cent. See services/order-split.ts.
+    const platformFeeCents = sharedPlatformFeeCents(toCents(order.subtotal));
     entries.push({
       orderId,
       type: 'platform_fee' as LedgerEntryType,
@@ -246,7 +254,7 @@ export class CommerceLedgerEngine {
     });
 
     // Driver payable
-    const driverPayableCents = Math.round(deliveryFeeCents * (DRIVER_PAYOUT_PERCENT / 100));
+    const driverPayableCents = sharedDriverPayoutCents(deliveryFeeCents);
     if (delivery?.driver_id) {
       entries.push({
         orderId,

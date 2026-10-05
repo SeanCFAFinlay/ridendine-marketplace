@@ -8,6 +8,7 @@ import { DELIVERY_STATUS_LABELS } from '@ridendine/ui';
 import { formatCurrency } from '@ridendine/utils';
 import { OfferAlert } from '@/components/offer-alert';
 import { useLocationTracker } from '@/hooks/use-location-tracker';
+import { RouteMap } from '@/components/map/route-map';
 
 interface DriverDashboardProps {
   driver: Driver;
@@ -668,6 +669,22 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
                       <p className="text-sm text-textMuted">{currentDelivery.dropoff_address}</p>
                     </div>
                   </div>
+                </div>
+
+                {/* Active delivery route map preview */}
+                <div className="mt-4 overflow-hidden rounded-xl border border-divider">
+                  <RouteMap
+                    pickupLat={currentDelivery.pickup_lat}
+                    pickupLng={currentDelivery.pickup_lng}
+                    pickupAddress={currentDelivery.pickup_address}
+                    dropoffLat={currentDelivery.dropoff_lat}
+                    dropoffLng={currentDelivery.dropoff_lng}
+                    dropoffAddress={currentDelivery.dropoff_address}
+                    driverLat={locationTracker.lastLocation?.lat}
+                    driverLng={locationTracker.lastLocation?.lng}
+                    polyline={currentDelivery.route_to_dropoff_polyline}
+                    className="h-44 w-full"
+                  />
                 </div>
 
                 <div className="mt-4 flex items-center justify-between rounded-xl bg-surfaceMuted p-3">

@@ -1,7 +1,13 @@
 // ==========================================
 // EXPIRED OFFERS PROCESSOR ENDPOINT
-// Called by external cron to expire stale delivery assignment offers
-// FND-014 fix: automated expired offer processing
+// Scheduled by apps/ops-admin/vercel.json. Expires stale delivery offers so
+// they can be re-offered to the next ranked driver.//
+// METHOD CONTRACT — do not narrow this without reading the note.
+// Vercel Cron invokes a scheduled path with GET. scripts/local-cron.mjs and
+// manual `curl` use POST. Both MUST perform the work, or the processor runs
+// in development and silently does nothing in production. `?mode=status`
+// keeps the old lightweight readiness ping available for monitors.
+// Regression-tested by scripts/smoke/processor-method-contract.test.cjs.
 // ==========================================
 
 import type { NextRequest } from 'next/server';
@@ -11,7 +17,7 @@ import { createCentralEngine } from '@ridendine/engine';
 import { validateEngineProcessorHeaders } from '@ridendine/utils';
 import { claimProcessorRun, finishProcessorRun } from '@/lib/processor-runs';
 
-export async function POST(request: NextRequest) {
+async function runExpiredOffersProcessor(request: NextRequest) {
   if (!validateEngineProcessorHeaders(request.headers)) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized' },
@@ -64,6 +70,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  // Checked here as well as in the runner so each exported entry point is
+  // self-evidently guarded when read in isolation.
+  if (!validateEngineProcessorHeaders(request.headers)) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+  return runExpiredOffersProcessor(request);
+}
+
+/**
+ * Vercel Cron sends GET, so GET performs the work. `?mode=status` returns the
+ * readiness ping instead, for uptime monitors that must not trigger a run.
+ */
 export async function GET(request: NextRequest) {
   if (!validateEngineProcessorHeaders(request.headers)) {
     return NextResponse.json(
@@ -72,10 +91,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({
-    success: true,
-    processor: 'expired-offers',
-    status: 'ready',
-    timestamp: new Date().toISOString(),
-  });
+  if (new URL(request.url).searchParams.get('mode') === 'status') {
+    return NextResponse.json({
+      success: true,
+      processor: 'expired-offers',
+      status: 'ready',
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  return runExpiredOffersProcessor(request);
 }

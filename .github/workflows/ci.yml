@@ -41,6 +41,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Production data hygiene (IRR-015)
         run: pnpm verify:prod-data-hygiene
+      # There was previously no dependency scanning of any kind in a repository
+      # that handles payments. Fails on high/critical advisories only, so a
+      # low-severity transitive advisory cannot block a hotfix.
+      - name: Dependency audit
+        run: pnpm audit --audit-level=high
+      - name: Migration immutability
+        run: pnpm audit:migrations
       - name: Typecheck
         run: pnpm typecheck
       - name: Lint
@@ -57,6 +64,19 @@ jobs:
         run: pnpm --filter @ridendine/auth test
       - name: Test (utils)
         run: pnpm --filter @ridendine/utils test
+      # These five packages had test files that no CI job ever executed.
+      # @ridendine/validation is the important one: its Zod schemas are the
+      # validation boundary for every API route.
+      - name: Test (validation)
+        run: pnpm --filter @ridendine/validation test
+      - name: Test (routing)
+        run: pnpm --filter @ridendine/routing test
+      - name: Test (types)
+        run: pnpm --filter @ridendine/types test
+      - name: Test (ui)
+        run: pnpm --filter @ridendine/ui test
+      - name: Test (notifications)
+        run: pnpm --filter @ridendine/notifications test
       - name: Test (web)
         run: pnpm --filter @ridendine/web test
       - name: Test (ops-admin)

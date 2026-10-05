@@ -1,9 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Badge, Card } from '@ridendine/ui';
-import { DeliveryMap } from '@/components/map/delivery-map';
 import { useOpsLiveFeed } from '@/hooks/use-ops-live-feed';
+
+const DeliveryMap = dynamic(
+  () => import('@/components/map/delivery-map').then((mod) => mod.DeliveryMap),
+  { ssr: false, loading: () => <div className="h-full min-h-[380px] rounded-lg bg-surface animate-pulse" /> }
+);
 import { computeOrderSlaFlags } from '@/lib/ops-sla';
 import { ChefsColumn } from './chefs-column';
 import { DriversColumn } from './drivers-column';

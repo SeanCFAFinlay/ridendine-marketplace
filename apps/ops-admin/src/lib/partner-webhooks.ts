@@ -1,6 +1,13 @@
 // ==========================================
 // PARTNER WEBHOOK DELIVERY
 // Delivers order-lifecycle events to partners that registered a webhook_url.
+//
+// Outbound safety: webhook_url is chosen by an operator when onboarding a
+// partner, so it is the only outbound request in this system aimed at an
+// address the codebase does not control. assertSafeWebhookTarget() below
+// requires HTTPS and rejects loopback / link-local / private ranges so a
+// mis-typed or malicious registration cannot turn the processor into an
+// internal-network probe.
 // Enqueues from order_status_history (the persistent status-transition log;
 // domain_events is volatile/pruned), idempotent on the history row id, then
 // delivers pending/failed rows with HMAC-signed bodies and exponential-backoff
@@ -25,6 +32,61 @@ const STATUS_EVENTS: Record<string, string> = {
 
 const ENQUEUE_WINDOW_MS = 48 * 60 * 60 * 1000;
 const DELIVER_BATCH = 100;
+/**
+ * Reject webhook destinations that are not safe to call from a server.
+ *
+ * Blocks plaintext HTTP (partner payloads are signed but not encrypted in
+ * transit otherwise) and any literal address inside a private, loopback or
+ * link-local range — including IPv6 forms and the cloud metadata endpoint.
+ *
+ * Honest limitation: this validates the URL, not the DNS resolution. A hostname
+ * that resolves to a private address still passes. Closing that requires
+ * resolving and pinning the IP before connecting, which Node's fetch does not
+ * expose. Given the URL is operator-registered rather than caller-supplied,
+ * this is a proportionate first barrier, not a complete SSRF defence.
+ */
+export function assertSafeWebhookTarget(
+  rawUrl: string
+): { ok: true; url: URL } | { ok: false; reason: string } {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return { ok: false, reason: 'malformed URL' };
+  }
+
+  if (url.protocol !== 'https:') {
+    return { ok: false, reason: `protocol ${url.protocol} is not https` };
+  }
+
+  const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+
+  if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.internal')) {
+    return { ok: false, reason: 'loopback or internal hostname' };
+  }
+
+  // IPv6 loopback / unique-local / link-local
+  if (host === '::1' || /^f[cd][0-9a-f]{2}:/i.test(host) || /^fe80:/i.test(host)) {
+    return { ok: false, reason: 'private IPv6 address' };
+  }
+
+  const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (v4) {
+    const [a, b] = [Number(v4[1]), Number(v4[2])];
+    const isPrivate =
+      a === 10 ||
+      a === 127 ||
+      a === 0 ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 169 && b === 254) || // link-local, incl. 169.254.169.254 metadata
+      (a === 100 && b >= 64 && b <= 127); // carrier-grade NAT
+    if (isPrivate) return { ok: false, reason: `private IPv4 address ${host}` };
+  }
+
+  return { ok: true, url };
+}
+
 const REQUEST_TIMEOUT_MS = 8000;
 
 function backoffMs(attempts: number): number {
@@ -244,7 +306,7 @@ export async function enqueuePartnerWebhooks(
 export async function deliverPartnerWebhooks(
   admin: SupabaseClient,
   nowMs: number
-): Promise<{ delivered: number; failed: number }> {
+): Promise<{ delivered: number; failed: number; blocked: number }> {
   const nowIso = new Date(nowMs).toISOString();
   const { data: due } = await (admin as any)
     .from('partner_webhook_deliveries')
@@ -265,10 +327,17 @@ export async function deliverPartnerWebhooks(
 
   let delivered = 0;
   let failed = 0;
+  let blocked = 0;
 
   for (const row of rows) {
     const url = row.api_partners?.webhook_url;
     if (!url) continue;
+
+    // Partner webhook URLs are operator-registered, not caller-supplied, so
+    // this is a low-likelihood SSRF surface — but it is still the one place
+    // this server makes an HTTPS request to an address someone else chose.
+    // Refuse plaintext and refuse anything that resolves to a private range.
+    const destination = assertSafeWebhookTarget(url);
     const body = JSON.stringify({ id: row.id, ...row.payload });
     const signature = createHmac('sha256', row.api_partners.webhook_secret || '')
       .update(body)
@@ -278,6 +347,12 @@ export async function deliverPartnerWebhooks(
     let responseCode: number | null = null;
     let errorMsg: string | null = null;
     try {
+      if (!destination.ok) {
+        // Recorded through the normal failure path so it retries/exhausts
+        // like any other delivery problem and stays visible in the table.
+        blocked++;
+        throw new Error(`blocked destination: ${destination.reason}`);
+      }
       const res = await fetch(url, {
         method: 'POST',
         headers: {
@@ -325,13 +400,22 @@ export async function deliverPartnerWebhooks(
     }
   }
 
-  return { delivered, failed };
+  // `blocked` is reported separately from `failed`: a blocked destination is a
+  // configuration problem with the partner's registered URL, not a transient
+  // delivery failure, and it will never succeed on retry.
+  return { delivered, failed, blocked };
 }
 
 export async function runPartnerWebhookProcessor(
   admin: SupabaseClient,
   nowMs: number
-): Promise<{ enqueued: number; delivered: number; failed: number; testAdvanced: number }> {
+): Promise<{
+  enqueued: number;
+  delivered: number;
+  failed: number;
+  blocked: number;
+  testAdvanced: number;
+}> {
   // Advance partner test-mode orders first so a step taken this minute is
   // enqueued and delivered in the same run rather than waiting for the next.
   let testAdvanced = 0;
@@ -344,6 +428,6 @@ export async function runPartnerWebhookProcessor(
   }
 
   const enqueued = await enqueuePartnerWebhooks(admin, nowMs);
-  const { delivered, failed } = await deliverPartnerWebhooks(admin, nowMs);
-  return { enqueued, delivered, failed, testAdvanced };
+  const { delivered, failed, blocked } = await deliverPartnerWebhooks(admin, nowMs);
+  return { enqueued, delivered, failed, blocked, testAdvanced };
 }

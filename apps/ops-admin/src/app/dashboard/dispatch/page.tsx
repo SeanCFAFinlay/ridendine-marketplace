@@ -5,9 +5,14 @@ import Link from 'next/link';
 import type { DispatchCommandCenterReadModel, DispatchQueueItem } from '@ridendine/types';
 import { Button, Card, Modal, PageHeader, DataTable, EmptyState, StatusBadge } from '@ridendine/ui';
 import type { ColumnDef } from '@ridendine/ui';
+import dynamic from 'next/dynamic';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { DeliveryMap } from '@/components/map/delivery-map';
 import { Clock, Truck, Users } from 'lucide-react';
+
+const DeliveryMap = dynamic(
+  () => import('@/components/map/delivery-map').then((mod) => mod.DeliveryMap),
+  { ssr: false, loading: () => <div className="h-full min-h-[380px] rounded-lg bg-surface animate-pulse" /> }
+);
 
 function formatEtaMinutes(distanceKm: number | null | undefined) {
   if (distanceKm == null || !Number.isFinite(distanceKm)) return '—';

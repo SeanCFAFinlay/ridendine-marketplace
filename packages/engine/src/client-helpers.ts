@@ -5,6 +5,7 @@
 // ==========================================
 
 import { createAdminClient } from '@ridendine/db';
+import { stripePaymentAdapter } from './services/stripe-payment-adapter';
 import { createCentralEngine, type CentralEngine } from './core/engine.factory';
 import type { PaymentAdapter } from './types/payment-adapter';
 
@@ -26,7 +27,11 @@ export function registerPaymentAdapter(adapter: PaymentAdapter): void {
  */
 export function getAdminEngine(): CentralEngine {
   const client = createAdminClient();
-  return createCentralEngine(client, registeredPaymentAdapter);
+  // Default to the real Stripe adapter. Previously only apps/web called
+  // registerPaymentAdapter, so the other three apps built the engine with
+  // `undefined` and could not void a payment on reject/cancel. An explicit
+  // registerPaymentAdapter() call still overrides this (used by tests).
+  return createCentralEngine(client, registeredPaymentAdapter ?? stripePaymentAdapter);
 }
 
 /**

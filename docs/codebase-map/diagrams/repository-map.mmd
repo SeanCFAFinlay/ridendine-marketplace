@@ -1,0 +1,49 @@
+%% RIDENDINE — Repository / package map (active source areas only)
+flowchart TD
+    subgraph APPS["apps/ — 4 deployable units"]
+        direction LR
+        A1["web<br/>144 src · 23 pages · 36 API"]
+        A2["chef-admin<br/>161 src · 30 pages · 68 API"]
+        A3["ops-admin<br/>191 src · 40 pages · 57 API"]
+        A4["driver-app<br/>89 src · 11 pages · 19 API"]
+    end
+
+    subgraph PKGS["packages/ — shared libraries"]
+        direction TB
+        P1["engine<br/>business logic · 133 src · 62 tests"]
+        P2["db<br/>3 clients · 22 repositories"]
+        P3["auth<br/>middleware factory"]
+        P4["routing<br/>OSRM · Mapbox(unused)"]
+        P5["types · validation · utils<br/>ui · notifications · config"]
+    end
+
+    DB[("supabase/<br/>62 migrations · 112 tables<br/>316 policies")]
+    SC["scripts/<br/>CI gates · smoke · doc generators"]
+    E2E["e2e/<br/>Playwright · 8 specs"]
+    CI[".github/workflows/<br/>ci · e2e · load · post-deploy"]
+
+    A1 --> P1 & P2 & P3 & P4 & P5
+    A2 --> P1 & P2 & P3 & P5
+    A3 --> P1 & P2 & P3 & P4 & P5
+    A4 --> P1 & P2 & P3 & P5
+
+    P1 --> P2 & P4 & P5
+    P2 --> DB
+    P3 --> P2
+
+    SC -.-> A1 & A2 & A3 & A4
+    E2E -.-> A1 & A2 & A3 & A4
+    CI --> SC & E2E
+
+    NOTE["NOT SOURCE — never edit<br/>archive/ · 8x graphify-out/ · .gitnexus/ 309MB<br/>.local-tools/ 152MB · .turbo/ · apps/*/.next/<br/>packages/db/src/generated/database.types.ts"]
+
+    classDef app fill:#e8f0fb,stroke:#3f6ea8,color:#12243a
+    classDef pkg fill:#f3ecf7,stroke:#7a5c95,color:#2b1a35
+    classDef store fill:#eaf5ec,stroke:#3f7d52,color:#123420
+    classDef tool fill:#f6f1e7,stroke:#8a7a5c,color:#2b2b2b
+    classDef warn fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#444
+    class A1,A2,A3,A4 app
+    class P1,P2,P3,P4,P5 pkg
+    class DB store
+    class SC,E2E,CI tool
+    class NOTE warn

@@ -61,6 +61,10 @@ jest.mock('@/hooks/use-location-tracker', () => ({
   useLocationTracker: jest.fn(),
 }));
 
+jest.mock('@/components/map/route-map', () => ({
+  RouteMap: () => <div data-testid="route-map" />,
+}));
+
 const mockUseLocationTracker = useLocationTracker as jest.Mock;
 
 // Keep default hydration pending for assertions that do not care about async dashboard data.
