@@ -174,6 +174,14 @@ export {
   createTaxConfigService,
   type TaxRates,
 } from './services/tax-config.service';
+export {
+  reconcileItemStock,
+  reconcileKitchenInventory,
+  type InventoryItemStock,
+  type StockMovementEntry,
+  type ItemReconciliationDiscrepancy,
+  type InventoryReconciliationReport,
+} from './services/inventory-reconciliation.service';
 
 // Referral system
 export {

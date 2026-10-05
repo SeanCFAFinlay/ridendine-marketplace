@@ -568,6 +568,31 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
           </div>
         )}
 
+      {isOnline &&
+        locationTracker.isLocationStale &&
+        locationTracker.permissionState !== 'denied' &&
+        !locationTracker.locationError && (
+          <div
+            role="alert"
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-warning/30 bg-warningSoft p-4 text-sm font-semibold text-warning"
+          >
+            <div>
+              <p className="font-bold">GPS signal paused in background</p>
+              <p className="mt-0.5 text-xs font-normal text-textMuted">
+                Your location has not refreshed in over 90 seconds. Refresh your GPS to stay active in the dispatch offer queue.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={locationTracker.startTracking}
+              disabled={locationTracker.isPosting}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-warning text-white hover:bg-warning/90 transition-colors shrink-0 disabled:opacity-50"
+            >
+              {locationTracker.isPosting ? 'Refreshing GPS...' : 'Refresh GPS Now'}
+            </button>
+          </div>
+        )}
+
       <section className="rounded-2xl border border-divider bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>

@@ -168,4 +168,68 @@ describe('useLocationTracker', () => {
     });
     expect(result.current.permissionState).toBe('denied');
   });
+
+  it('marks location as stale when lastPostedAt is older than 90 seconds', async () => {
+    jest.useFakeTimers();
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+    }) as jest.Mock;
+
+    const { result } = renderHook(() =>
+      useLocationTracker({
+        driverId: 'driver-1',
+        isOnline: true,
+        updateInterval: 60_000,
+      })
+    );
+
+    // Initial post succeeds - flush microtasks
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.lastPostedAt).toBeTruthy();
+    expect(result.current.isLocationStale).toBe(false);
+
+    // Fast-forward past 90s dispatch TTL + periodic check interval
+    act(() => {
+      jest.advanceTimersByTime(100_000);
+    });
+
+    expect(result.current.isLocationStale).toBe(true);
+    jest.useRealTimers();
+  });
+
+  it('re-queries position and pings location when visibility returns to visible', async () => {
+    const { geolocation } = installLocationMocks();
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+    }) as jest.Mock;
+
+    renderHook(() =>
+      useLocationTracker({
+        driverId: 'driver-1',
+        isOnline: true,
+        updateInterval: 60_000,
+      })
+    );
+
+    // Initial post
+    expect(geolocation.getCurrentPosition).toHaveBeenCalledTimes(1);
+
+    // Simulate returning to foreground
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    });
+
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    expect(geolocation.getCurrentPosition).toHaveBeenCalledTimes(2);
+  });
 });

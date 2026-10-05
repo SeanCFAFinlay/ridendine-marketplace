@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { DRIVER_DISPATCH_LOCATION_TTL_MS } from '@/lib/driver-readiness';
 
 interface UseLocationTrackerProps {
   driverId: string | null;
@@ -95,6 +96,7 @@ export function useLocationTracker({
   const [permissionState, setPermissionState] = useState<LocationPermissionState>('unknown');
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
+  const [isLocationStale, setIsLocationStale] = useState(false);
   deliveryIdRef.current = deliveryId;
 
   const isActiveSession = useCallback((session: number) => {
@@ -311,12 +313,66 @@ export function useLocationTracker({
     };
   }, [isOnline, driverId, startTracking, stopTracking]);
 
+  // Track location staleness against dispatch TTL (90s)
+  useEffect(() => {
+    if (!isOnline) {
+      setIsLocationStale(false);
+      return;
+    }
+
+    const checkStaleness = () => {
+      if (!lastPostedAt) {
+        setIsLocationStale(false);
+        return;
+      }
+      const ageMs = Date.now() - new Date(lastPostedAt).getTime();
+      setIsLocationStale(ageMs > DRIVER_DISPATCH_LOCATION_TTL_MS);
+    };
+
+    checkStaleness();
+    const interval = setInterval(checkStaleness, 10_000);
+    return () => clearInterval(interval);
+  }, [isOnline, lastPostedAt]);
+
+  // Immediate foreground GPS re-sync when returning from background
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isOnline && driverId && activeRef.current) {
+        if (typeof navigator !== 'undefined' && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              if (!mountedRef.current || !activeRef.current) return;
+              const { latitude, longitude } = position.coords;
+              lastLocationRef.current = { lat: latitude, lng: longitude };
+              setLastLocation(lastLocationRef.current);
+              setLocationError(null);
+              void updateLocation(latitude, longitude, sessionRef.current);
+            },
+            (error) => {
+              if (!mountedRef.current || !activeRef.current) return;
+              console.warn('Foreground restore location query failed:', error);
+            },
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+          );
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [driverId, isOnline, updateLocation]);
+
   return {
     lastLocation,
     lastPostedAt,
     permissionState,
     locationError,
     isPosting,
+    isLocationStale,
     startTracking,
     stopTracking,
   };
