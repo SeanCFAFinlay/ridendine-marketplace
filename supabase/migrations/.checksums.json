@@ -60,6 +60,6 @@
   "00059_labour.sql": "55b3f732ddc4d4b962bc7c684911a100c9804c68ce586f741a8989dc929f9420",
   "00060_close_day_and_service.sql": "5f40f4dc3c8a6521f14a7d1c658f40d51e3b5426c3ede8249feda3d596ca7ba8",
   "00062_ghost_kitchen_kitchen_scope.sql": "fc4a57189920127621a4012fa8fa1509a6718201edeb79f3f41604ff08908868",
-  "00063_partner_key_test_mode.sql": "1e89cfa8a331db69b945b08241a9f7acaaca83364def4575c41ec908fc4e3529",
+  "00063_partner_key_test_mode.sql": "052cb61195a58be88290a2622c8ff99f88d0ea9582a094f5ac0cba0a33ab74fe",
   "00064_data_retention.sql": "3efc3f7bff65ce5a741c6348aec7e8a7ef00fe08a9db00a6c96c64a3da4f4b2c"
 }

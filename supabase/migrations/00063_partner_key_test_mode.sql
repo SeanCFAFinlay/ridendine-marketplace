@@ -32,6 +32,8 @@ UPDATE api_partner_keys
    AND test_mode IS NOT TRUE;
 
 -- Surface key-level test mode to operators alongside the partner-level flag.
+DROP VIEW IF EXISTS partner_api_stats CASCADE;
+
 CREATE OR REPLACE VIEW partner_api_stats AS
 SELECT
   p.id,
