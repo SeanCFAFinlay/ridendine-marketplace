@@ -166,6 +166,7 @@ jobs:
             echo "STRIPE_WEBHOOK_SECRET=whsec_placeholder"
             echo "CRON_SECRET=ci-e2e-cron-secret"
             echo "ENGINE_PROCESSOR_TOKEN=ci-e2e-processor-token"
+            echo "E2E_FIXTURE_RESET_ENABLED=true"
           } > .env.test
           if [ -n "${STRIPE_SECRET_KEY}" ]; then
             echo "STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}" >> .env.test
