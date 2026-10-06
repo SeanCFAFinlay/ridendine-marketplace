@@ -94,7 +94,9 @@ async function getChefOrder(orderId: string): Promise<OrderDetail | null> {
     .from('chef_storefronts')
     .select('id')
     .eq('chef_id', chefProfile.id)
-    .single();
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
 
   if (!storefront) return null;
 

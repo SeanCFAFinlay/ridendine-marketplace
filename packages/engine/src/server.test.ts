@@ -29,14 +29,20 @@ import {
 type QueryChain = {
   select: () => QueryChain;
   eq: () => QueryChain;
+  order: () => QueryChain;
+  limit: () => QueryChain;
   single: () => Promise<{ data: unknown; error: null }>;
+  maybeSingle: () => Promise<{ data: unknown; error: null }>;
 };
 
 function tableQuery(data: unknown): QueryChain {
   const chain: QueryChain = {
     select: vi.fn(() => chain),
     eq: vi.fn(() => chain),
+    order: vi.fn(() => chain),
+    limit: vi.fn(() => chain),
     single: vi.fn(async () => ({ data, error: null })),
+    maybeSingle: vi.fn(async () => ({ data, error: null })),
   };
   return chain;
 }

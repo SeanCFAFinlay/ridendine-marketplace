@@ -80,9 +80,8 @@ test.describe('customer lifecycle @lifecycle', () => {
     await page.goto('/chefs');
     await expect(page.getByRole('heading', { name: /browse chefs/i })).toBeVisible();
     // Seed storefront must appear
-    const storefrontLink = page.getByRole('link', { name: /every bite yum/i });
+    const storefrontLink = page.locator(`a[href="/chefs/${SEED_STOREFRONT_SLUG}"]`);
     await expect(storefrontLink).toBeVisible();
-    await expect(storefrontLink).toHaveAttribute('href', `/chefs/${SEED_STOREFRONT_SLUG}`);
     await page.goto(`/chefs/${SEED_STOREFRONT_SLUG}`);
     await expect(page).toHaveURL(new RegExp(SEED_STOREFRONT_SLUG));
   });

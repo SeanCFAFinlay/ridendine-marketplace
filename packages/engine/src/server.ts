@@ -81,7 +81,9 @@ export async function getChefActorContext(
     .from('chef_storefronts')
     .select('id')
     .eq('chef_id', chefProfile.id)
-    .single();
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
   if (!storefront) return null;
 
   return {
@@ -109,7 +111,9 @@ export async function getChefBasicContext(): Promise<{ userId: string; chefId: s
     .from('chef_storefronts')
     .select('id')
     .eq('chef_id', chefProfile.id)
-    .single();
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
 
   return {
     userId: user.id,

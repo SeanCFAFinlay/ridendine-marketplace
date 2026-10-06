@@ -56,7 +56,9 @@ export default function ReviewsPage() {
         .from('chef_storefronts')
         .select('id, average_rating, total_reviews')
         .eq('chef_id', chefProfile.id)
-        .single() as { data: { id: string; average_rating: number | null; total_reviews: number | null } | null };
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle() as { data: { id: string; average_rating: number | null; total_reviews: number | null } | null };
 
       if (!storefront) return;
 

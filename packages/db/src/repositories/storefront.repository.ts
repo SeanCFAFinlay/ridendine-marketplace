@@ -150,7 +150,9 @@ export async function getStorefrontByChefId(
     .from('chef_storefronts')
     .select('*')
     .eq('chef_id', chefId)
-    .single();
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
     if (error.code === 'PGRST116') return null;
