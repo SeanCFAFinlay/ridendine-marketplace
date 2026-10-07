@@ -22,7 +22,7 @@
     "@ridendine/ui": "workspace:*",
     "@ridendine/utils": "workspace:*",
     "@ridendine/validation": "workspace:*",
-    "@sentry/nextjs": "^9.0.0",
+    "@sentry/nextjs": "^11.4.0",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.45.0",
     "leaflet": "^1.9.4",
