@@ -20,6 +20,7 @@
     "db:migrate": "supabase db push",
     "db:seed": "supabase db seed",
     "db:reset": "supabase db reset",
+    "db:purge-demo": "node scripts/purge-demo-data.mjs",
     "local-cron": "node scripts/local-cron.mjs",
     "verify:prod-data-hygiene": "node scripts/verify-prod-data-hygiene.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
