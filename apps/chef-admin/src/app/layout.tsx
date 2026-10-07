@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { AuthProvider } from '@ridendine/auth';
 import { ErrorBoundary } from '@ridendine/ui';
@@ -15,6 +15,15 @@ const display = Plus_Jakarta_Sans({
   variable: '--font-display',
   display: 'swap',
 });
+
+export const dynamic = 'force-dynamic';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#EA5B26',
+};
 
 export const metadata: Metadata = {
   title: 'Chef Dashboard - RideNDine',
