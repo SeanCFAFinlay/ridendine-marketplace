@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Button, Input } from '@ridendine/ui';
 import { AuthLayout } from '../../../components/auth/auth-layout';
+import { resolveChefRedirectTarget } from './redirect-target';
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,12 +32,10 @@ export default function LoginPage() {
         throw new Error(data.error || 'Failed to sign in');
       }
 
-      const redirect = searchParams.get('redirect');
-      router.push(redirect || '/dashboard');
-      router.refresh();
+      const target = resolveChefRedirectTarget(searchParams.get('redirect'));
+      window.location.assign(target);
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : 'Failed to sign in');
-    } finally {
       setLoading(false);
     }
   };

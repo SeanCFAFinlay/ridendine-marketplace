@@ -1,15 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button, Card, Input } from '@ridendine/ui';
 import { ShieldCheck } from 'lucide-react';
+import { resolveOpsRedirectTarget } from './redirect-target';
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectPath = searchParams.get('redirect') || '/dashboard';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,11 +32,10 @@ export default function LoginPage() {
         throw new Error(data.error || 'Failed to sign in');
       }
 
-      router.push(redirectPath);
-      router.refresh();
+      const target = resolveOpsRedirectTarget(searchParams.get('redirect'));
+      window.location.assign(target);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign in');
-    } finally {
       setLoading(false);
     }
   };
@@ -118,6 +116,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
+              loading={loading}
               className="w-full mt-6 bg-primary hover:bg-[#D04D16] text-white font-semibold"
               size="lg"
             >

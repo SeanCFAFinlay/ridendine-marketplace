@@ -27,7 +27,7 @@ export const middleware = createAuthMiddleware({
   ],
   loginRoute: '/auth/login',
   cspBuilder,
-  authenticatedRedirect: '/',
+  authenticatedRedirect: '/dashboard',
 });
 
 export const config = {
