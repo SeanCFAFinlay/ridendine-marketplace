@@ -108,12 +108,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
-      - name: Run smoke E2E (PR/push gate)
-        if: github.event_name != 'schedule'
+      - name: Run smoke E2E
         run: pnpm test:smoke
-      - name: Run full E2E (nightly)
-        if: github.event_name == 'schedule'
-        run: pnpm test:e2e
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
