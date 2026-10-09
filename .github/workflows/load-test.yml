@@ -59,7 +59,7 @@ jobs:
       LOAD_BASE_URL: ${{ inputs.base_url || 'https://ridendine.ca' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 9.15.0
       - uses: actions/setup-node@v4
