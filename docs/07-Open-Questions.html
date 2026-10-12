@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>07 – Open Questions &amp; Risk Registry | RideNDine Documentation</title>
+  <style>
+    
+  :root {
+    --color-brand-primary: #0f3d2e;
+    --color-brand-primary-light: #165b45;
+    --color-brand-accent: #d97706;
+    --color-brand-accent-hover: #b45309;
+    --color-bg-base: #0f172a;
+    --color-bg-surface: #1e293b;
+    --color-bg-surface-elevated: #334155;
+    --color-text-main: #f8fafc;
+    --color-text-muted: #94a3b8;
+    --color-border: #334155;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-bg-base);
+    color: var(--color-text-main);
+    line-height: 1.6;
+  }
+  a { color: #38bdf8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  h1 {
+    font-size: 2.2rem; font-weight: 800; color: #ffffff;
+    margin-bottom: 1rem; border-bottom: 2px solid var(--color-border);
+    padding-bottom: 0.5rem; letter-spacing: -0.03em;
+  }
+  h2 { font-size: 1.5rem; font-weight: 700; color: #ffffff; margin-top: 2rem; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+  h3 { font-size: 1.2rem; font-weight: 600; color: #cbd5e1; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+  h4 { font-size: 1rem; font-weight: 600; color: #94a3b8; margin-top: 1.25rem; margin-bottom: 0.25rem; }
+  p { margin-bottom: 1.2rem; font-size: 0.95rem; color: #cbd5e1; }
+  blockquote {
+    border-left: 4px solid var(--color-brand-accent);
+    background-color: rgba(217, 119, 6, 0.1);
+    padding: 12px 18px; margin: 1.5rem 0; border-radius: 0 8px 8px 0;
+    font-size: 0.9rem; color: #e2e8f0;
+  }
+  hr.divider { border: 0; height: 1px; background-color: var(--color-border); margin: 2rem 0; }
+  ul, ol { margin: 0 0 1.5rem 1.5rem; color: #cbd5e1; font-size: 0.95rem; }
+  li { margin-bottom: 0.4rem; }
+
+  /* Badges */
+  .badge { display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin: 0 2px; vertical-align: middle; }
+  .badge-confirmed { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+  .badge-inferred { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+  .badge-unknown { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+  /* Tables */
+  .table-container { overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--color-border); border-radius: 8px; background-color: var(--color-bg-surface); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; text-align: left; }
+  th { background-color: rgba(0, 0, 0, 0.3); color: #e2e8f0; font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--color-border); color: #cbd5e1; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
+
+  /* Code & Mermaid */
+  code { font-family: var(--font-mono); font-size: 0.85em; background-color: rgba(0, 0, 0, 0.4); padding: 2px 5px; border-radius: 4px; color: #fca5a5; }
+  .code-block, .mermaid-wrapper { margin: 1.5rem 0; background-color: #0b1120; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; }
+  .code-header, .mermaid-label { display: flex; justify-content: space-between; align-items: center; background-color: rgba(0, 0, 0, 0.4); padding: 6px 12px; font-size: 0.75rem; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); font-family: var(--font-mono); }
+  .copy-btn { background-color: var(--color-bg-surface-elevated); border: 1px solid var(--color-border); color: var(--color-text-main); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
+  .copy-btn:hover { background-color: var(--color-brand-accent); }
+  pre { padding: 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.85rem; color: #e2e8f0; line-height: 1.5; }
+  pre code { background: none; padding: 0; color: inherit; }
+  .mermaid { padding: 16px; overflow-x: auto; background-color: #0f172a; text-align: center; }
+
+  @media print {
+    body { background: #ffffff !important; color: #000000 !important; }
+    .topbar, .copy-btn, .header-nav { display: none !important; }
+    h1, h2, h3 { color: #000000 !important; }
+    p, td, li { color: #222222 !important; }
+    table, th, td { border-color: #cccccc !important; }
+  }
+
+    .header-nav {
+      background-color: var(--color-bg-surface);
+      border-bottom: 1px solid var(--color-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-nav .brand {
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-nav .links {
+      display: flex;
+      gap: 16px;
+      font-size: 0.875rem;
+    }
+    .container {
+      max-width: 1024px;
+      margin: 32px auto;
+      padding: 0 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-nav">
+    <div class="brand">
+      <a href="index.html" style="color: #ffffff; text-decoration: none;">RideNDine Documentation</a>
+      <span class="badge badge-confirmed">Commit: 5599c2e5</span>
+    </div>
+    <div class="links">
+      <a href="index.html">← Back to Portal</a>
+      <a href="AUDIT-REPORT.html">Executive Summary</a>
+      <a href="01-PRD.html">01-PRD</a>
+      <a href="02-TRD.html">02-TRD</a>
+      <a href="05-Backend-Schema.html">Schema</a>
+      <button class="copy-btn" onclick="window.print()" style="padding: 4px 10px;">Print / PDF</button>
+    </div>
+  </div>
+
+  <main class="container">
+    <h1 id="ridendine-open-questions-assumptions-registry">RideNDine Open Questions &amp; Assumptions Registry</h1>
+<blockquote><strong>Document 07 – Open Questions &amp; Assumptions Registry</strong> | Project: RideNDine Marketplace | Date: October 7, 2026 | Commit: <code>5599c2e5</code> | Author: AI-generated from codebase audit | Confidence Summary: 0 CONFIRMED / 0 INFERRED / 16 UNKNOWN</blockquote>
+<hr class="divider" />
+<h2 id="1-overview-purpose">1. Overview &amp; Purpose</h2>
+<p>This document serves as the master repository of <strong>open business questions, external regulatory assumptions, and unconfirmed operational parameters</strong> that cannot be definitively answered from codebase inspection alone.</p>
+<p>While the software architecture, transactional money flows, database schema, and UI interfaces are fully implemented and verified in the code, real-world marketplace operations require explicit executive, legal, and operational decisions before public traffic is routed to the platform.</p>
+<p>Each item below is tagged with a unique identifier (<code>Q-001</code> through <code>Q-016</code>), its associated codebase context, the operational risk of leaving it unresolved, a recommended default action, and the designated stakeholder responsible for sign-off.</p>
+<hr class="divider" />
+<h2 id="2-summary-status-matrix">2. Summary Status Matrix</h2>
+<div class="table-container"><table><thead><tr><th>ID</th><th>Domain</th><th>Open Question / Assumption</th><th>Priority</th><th>Assigned Stakeholder</th><th>Status</th></tr></thead><tbody><tr><td>:---:</td><td>:---</td><td>:---</td><td>:---:</td><td>:---</td><td>:---:</td></tr><tr><td><strong>Q-001</strong></td><td>Legal / Health</td><td>Kitchen Health Inspection Certification (Ontario Reg 493/17)</td><td><strong>CRITICAL</strong></td><td>Legal Counsel / Ops Lead</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-002</strong></td><td>Legal / AGCO</td><td>AGCO Liquor Delivery License &amp; Smart Serve Enforcement</td><td><strong>CRITICAL</strong></td><td>Legal Counsel / CEO</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-003</strong></td><td>Legal / Tax</td><td>Canadian Federal &amp; Provincial HST Registration Number</td><td><strong>HIGH</strong></td><td>Chief Financial Officer</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-004</strong></td><td>Finance / Stripe</td><td>Chargeback &amp; Fraud Dispute Liability Allocation Policy</td><td><strong>HIGH</strong></td><td>CFO / Head of Risk</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-005</strong></td><td>Finance / Stripe</td><td>Minimum Payout Balance &amp; Automatic Transfer Thresholds</td><td><strong>MEDIUM</strong></td><td>CFO / Operations</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-006</strong></td><td>Finance / Tax</td><td>Courier T4A Independent Contractor Annual Tax Reporting</td><td><strong>HIGH</strong></td><td>Finance / Accounting</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-007</strong></td><td>Hardware / Kitchen</td><td>Physical Thermal Receipt Printer Standard (ESC/POS)</td><td><strong>MEDIUM</strong></td><td>Kitchen Operations Lead</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-008</strong></td><td>Hardware / Kitchen</td><td>KDS Tablet Hardware Specification &amp; Mounting Standards</td><td><strong>LOW</strong></td><td>Kitchen Operations Lead</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-009</strong></td><td>Operations / Fleet</td><td>Courier Vehicle Inspection &amp; Commercial Insurance Policy</td><td><strong>HIGH</strong></td><td>Ops Lead / Insurance Broker</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-010</strong></td><td>Operations / Fleet</td><td>Thermal Delivery Bag Issuance &amp; Verification Protocol</td><td><strong>MEDIUM</strong></td><td>Operations Lead</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-011</strong></td><td>Customer Support</td><td>Customer Service Live Escalation &amp; Operating Hours</td><td><strong>HIGH</strong></td><td>Head of Customer Experience</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-012</strong></td><td>Customer Support</td><td>Autonomous Refund Authorization Dollar Cap</td><td><strong>MEDIUM</strong></td><td>CFO / Customer Experience</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-013</strong></td><td>Telecom / Twilio</td><td>Twilio A2P 10DLC Registration &amp; Dedicated Local Area Code</td><td><strong>HIGH</strong></td><td>Technical Operations</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-014</strong></td><td>Email / DNS</td><td>Production DMARC / SPF / DKIM DNS Enforcement for Resend</td><td><strong>HIGH</strong></td><td>Lead DevOps Engineer</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-015</strong></td><td>Marketing / Geo</td><td>Official Launch Geographic Bounding Box &amp; Expansion Tiers</td><td><strong>HIGH</strong></td><td>CEO / Marketing Director</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr><tr><td><strong>Q-016</strong></td><td>Partner / COOCO</td><td>Partner Platform Service Level Agreement (SLA) &amp; Pricing</td><td><strong>MEDIUM</strong></td><td>Head of Partnerships</td><td><code><span class="badge badge-unknown">UNKNOWN: Needs confirmation</span></code></td></tr></tbody></table></div>
+<hr class="divider" />
+<h2 id="3-exhaustive-domain-question-catalog">3. Exhaustive Domain Question Catalog</h2>
+<h3 id="domain-a-legal-compliance-health-regulations">Domain A: Legal, Compliance &amp; Health Regulations</h3>
+<h4 id="q-001-kitchen-health-inspection-certification-ontario-reg-493-17">Q-001: Kitchen Health Inspection Certification (Ontario Reg 493/17)</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> <code>apps/chef-admin/src/app/dashboard/settings/page.tsx</code> captures kitchen address, operating hours, and basic profile data, but does not enforce an mandatory upload of a Municipal DineSafe / Public Health Inspection Certificate.</li>
+<li><strong>Operational Risk:</strong> Operating an unlicensed commercial food establishment or facilitating uninspected home food sales violates Ontario Public Health regulations and exposes the platform to municipal cease-and-desist orders.</li>
+<li><strong>Recommended Default:</strong> Require all pilot kitchens to upload a valid municipal DineSafe inspection report or certified Commercial Kitchen Lease Agreement during the onboarding checklist before the storefront can be marked <code>active</code>.</li>
+<li><strong>Stakeholder:</strong> Legal Counsel &amp; Kitchen Operations Lead</li>
+</ul>
+<h4 id="q-002-agco-liquor-delivery-license-smart-serve-enforcement">Q-002: AGCO Liquor Delivery License &amp; Smart Serve Enforcement</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> <code>apps/web/src/app/checkout/page.tsx</code> checks for <code>contains_alcohol: true</code> and renders an age verification modal (19+). <code>apps/driver-app/src/app/orders/[id]/page.tsx</code> instructs couriers to verify physical photo ID at the door.</li>
+<li><strong>Operational Risk:</strong> Under Alcohol and Gaming Commission of Ontario (AGCO) regulations, delivering liquor requires a Liquor Delivery Service Licence, and all delivery drivers must hold active Smart Serve certification.</li>
+<li><strong>Recommended Default:</strong> Block alcohol-tagged items from public customer menus until RideNDine's AGCO Delivery Licence number is issued and recorded in <code>platform_settings</code>. Require couriers to enter their Smart Serve certification number in <code>apps/driver-app/src/app/profile/documents</code>.</li>
+<li><strong>Stakeholder:</strong> Legal Counsel &amp; CEO</li>
+</ul>
+<h4 id="q-003-canadian-federal-provincial-hst-registration-number">Q-003: Canadian Federal &amp; Provincial HST Registration Number</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> <code>packages/engine/src/checkout.ts</code> calculates a 13.00% HST rate on platform service fees and delivery fees <code><span class="badge badge-confirmed">CONFIRMED: </span></code>. <code>apps/web/src/app/orders/[id]/receipt/page.tsx</code> renders tax line items but displays a placeholder or empty string for the corporate HST Registration Number.</li>
+<li><strong>Operational Risk:</strong> Canadian tax regulations require businesses collecting HST exceeding $30,000 in gross revenue to display their registered 9-digit Business Number (<code>BN / RT0001</code>) on all customer tax invoices and receipts.</li>
+<li><strong>Recommended Default:</strong> Add <code>tax_registration_number</code> column to <code>platform_settings</code> and render the official CRA registration number on all generated PDF receipts and email confirmations.</li>
+<li><strong>Stakeholder:</strong> Chief Financial Officer (CFO)</li>
+</ul>
+<hr class="divider" />
+<h3 id="domain-b-financial-banking-stripe-connect-policies">Domain B: Financial, Banking &amp; Stripe Connect Policies</h3>
+<h4 id="q-004-chargeback-fraud-dispute-liability-allocation-policy">Q-004: Chargeback &amp; Fraud Dispute Liability Allocation Policy</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> Stripe Connect charges use Direct Charges with Destination (<code>transfer_data.destination = chef_stripe_account_id</code>) or Separate Charges and Transfers <code><span class="badge badge-confirmed">CONFIRMED: apps/web/src/app/api/checkout/route.ts</span></code>.</li>
+<li><strong>Operational Risk:</strong> When a customer disputes a credit card charge (claiming non-delivery or fraud), Stripe assesses a $15.00 dispute administrative fee and claws back the full transaction amount. The codebase does not specify whether this clawback is debited from the chef's Connected Account balance or absorbed by RideNDine's platform treasury.</li>
+<li><strong>Recommended Default:</strong> If the dispute is culinary (e.g., incorrect food, missing item, food quality), the chef absorbs the food cost. If the dispute is delivery-related (e.g., driver stolen food or GPS verified arrival), the platform absorbs the loss or deducts from the courier payout ledger.</li>
+<li><strong>Stakeholder:</strong> CFO &amp; Head of Risk</li>
+</ul>
+<h4 id="q-005-minimum-payout-balance-automatic-transfer-thresholds">Q-005: Minimum Payout Balance &amp; Automatic Transfer Thresholds</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> <code>apps/chef-admin/src/app/dashboard/payouts/page.tsx</code> and <code>apps/driver-app/src/app/earnings/page.tsx</code> display weekly payouts.</li>
+<li><strong>Operational Risk:</strong> Initiating bank transfers (EFT / ACH) via Stripe Connect for micro-amounts (e.g., $4.50) incurs fixed per-transfer processing costs (e.g., $0.25 to $2.00) that erode platform margins.</li>
+<li><strong>Recommended Default:</strong> Establish a minimum payout balance threshold of $25.00 CAD for automated weekly disbursements. Balances below $25.00 roll over into the following payout cycle.</li>
+<li><strong>Stakeholder:</strong> CFO &amp; Operations</li>
+</ul>
+<h4 id="q-006-courier-t4a-independent-contractor-annual-tax-reporting">Q-006: Courier T4A Independent Contractor Annual Tax Reporting</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> <code>driver_payouts</code> logs cumulative gross courier earnings <code><span class="badge badge-confirmed">CONFIRMED: packages/db schema</span></code>, but there is no automated batch export for Canadian CRA T4A Box 048 (Fees for Services) or T5018 forms.</li>
+<li><strong>Operational Risk:</strong> Canadian tax law requires platform operators to report independent contractor earnings over $500 annually to the Canada Revenue Agency.</li>
+<li><strong>Recommended Default:</strong> Add a year-end accounting CSV export in <code>apps/ops-admin/src/app/dashboard/finance/tax-reports</code> aggregating annual earnings per courier SIN/BN.</li>
+<li><strong>Stakeholder:</strong> Finance &amp; Corporate Accounting</li>
+</ul>
+<hr class="divider" />
+<h3 id="domain-c-kitchen-hardware-commissary-operations">Domain C: Kitchen Hardware &amp; Commissary Operations</h3>
+<h4 id="q-007-physical-thermal-receipt-printer-standard-esc-pos">Q-007: Physical Thermal Receipt Printer Standard (ESC/POS)</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> <code>apps/chef-admin/src/app/dashboard/kitchen/page.tsx</code> features an interactive digital KDS board with acoustic web audio notifications <code><span class="badge badge-confirmed">CONFIRMED: </span></code>. Physical receipt printing currently invokes standard browser <code>window.print()</code>.</li>
+<li><strong>Operational Risk:</strong> Commercial kitchen environments are noisy, humid, and greasy. Relying solely on browser screens or consumer desktop printers leads to missed tickets and paper jams.</li>
+<li><strong>Recommended Default:</strong> Standardize on Epson TM-T88VI or Star Micronics TSP143III receipt printers utilizing network LAN or Bluetooth connectivity. Provide a lightweight local ESC/POS print gateway or direct WebUSB integration in <code>apps/chef-admin</code>.</li>
+<li><strong>Stakeholder:</strong> Kitchen Operations Lead</li>
+</ul>
+<h4 id="q-008-kds-tablet-hardware-specification-mounting-standards">Q-008: KDS Tablet Hardware Specification &amp; Mounting Standards</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> The KDS interface adapts responsively down to 768px tablet viewports <code><span class="badge badge-confirmed">CONFIRMED: apps/chef-admin/src/components/kitchen/KDSBoard.tsx</span></code>.</li>
+<li><strong>Operational Risk:</strong> Fragile consumer tablets mounted near commercial fryers or steam tables experience thermal shutdowns and screen cracking.</li>
+<li><strong>Recommended Default:</strong> Recommend ruggedized 10.1" Android or iPad (9th/10th Gen) tablets housed in IP54-rated water-resistant commercial silicone cases with heavy-duty VESA magnetic or clamp mounts.</li>
+<li><strong>Stakeholder:</strong> Kitchen Operations Lead</li>
+</ul>
+<hr class="divider" />
+<h3 id="domain-d-delivery-fleet-field-operations">Domain D: Delivery Fleet &amp; Field Operations</h3>
+<h4 id="q-009-courier-vehicle-inspection-commercial-insurance-policy">Q-009: Courier Vehicle Inspection &amp; Commercial Insurance Policy</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> <code>apps/driver-app/src/app/profile/documents/page.tsx</code> permits drivers to upload Driver's License and Vehicle Insurance documents <code><span class="badge badge-confirmed">CONFIRMED: </span></code>. However, personal auto insurance policies in Ontario generally exclude commercial food delivery activities unless an endorsement is purchased.</li>
+<li><strong>Operational Risk:</strong> If an active courier causes a collision while on a delivery dispatch without commercial coverage, the personal insurer may deny the claim, creating vicarious liability exposure for RideNDine.</li>
+<li><strong>Recommended Default:</strong> Secure a corporate Contingent Commercial Automobile Insurance Policy covering couriers during the delivery window (from offer acceptance to order drop-off).</li>
+<li><strong>Stakeholder:</strong> Operations Lead &amp; Corporate Insurance Broker</li>
+</ul>
+<h4 id="q-010-thermal-delivery-bag-issuance-verification-protocol">Q-010: Thermal Delivery Bag Issuance &amp; Verification Protocol</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> Courier onboarding requires basic profile submission, but does not enforce physical proof of equipment possession.</li>
+<li><strong>Operational Risk:</strong> Delivering hot prepared food without commercial-grade insulated thermal delivery bags leads to food arriving cold, high customer refund rates, and food safety temperature violations.</li>
+<li><strong>Recommended Default:</strong> Require couriers to upload a photograph of an insulated thermal hot bag during registration before granting <code>active</code> dispatch status.</li>
+<li><strong>Stakeholder:</strong> Operations Lead</li>
+</ul>
+<hr class="divider" />
+<h3 id="domain-e-customer-support-escalation-service-levels">Domain E: Customer Support, Escalation &amp; Service Levels</h3>
+<h4 id="q-011-customer-service-live-escalation-operating-hours">Q-011: Customer Service Live Escalation &amp; Operating Hours</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> <code>apps/web/src/app/support/page.tsx</code> provides an email contact form submitting to <code>support_tickets</code> in the database <code><span class="badge badge-confirmed">CONFIRMED: </span></code>.</li>
+<li><strong>Operational Risk:</strong> In food delivery, diners and drivers require immediate response times (&lt; 2 minutes) for missing orders, gate codes, or delivery delays. Email ticket turnaround times of several hours are fatal to customer retention.</li>
+<li><strong>Recommended Default:</strong> Implement an emergency operations telephone routing line (via Twilio Voice) forwarding directly to on-duty operations personnel during active kitchen operating hours (e.g. 11:00 AM – 11:00 PM EST).</li>
+<li><strong>Stakeholder:</strong> Head of Customer Experience</li>
+</ul>
+<h4 id="q-012-autonomous-refund-authorization-dollar-cap">Q-012: Autonomous Refund Authorization Dollar Cap</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> <code>apps/ops-admin/src/app/dashboard/orders/[id]/page.tsx</code> includes an administrative "Issue Refund" button that invokes <code>apps/ops-admin/src/app/api/orders/[id]/refund/route.ts</code> <code><span class="badge badge-confirmed">CONFIRMED: </span></code>.</li>
+<li><strong>Operational Risk:</strong> Inexperienced support agents could issue large or fraudulent refunds without executive oversight.</li>
+<li><strong>Recommended Default:</strong> Establish code-enforced refund authorization tiers:</li>
+<li>Up to $30.00: Automated tier-1 support agent approval.</li>
+<li>$30.01 to $100.00: Requires Ops Manager approval.</li>
+<li>Over $100.00: Requires Super-Admin password re-authentication.</li>
+<li><strong>Stakeholder:</strong> CFO &amp; Head of Customer Experience</li>
+</ul>
+<hr class="divider" />
+<h3 id="domain-f-telecommunications-messaging-marketing">Domain F: Telecommunications, Messaging &amp; Marketing</h3>
+<h4 id="q-013-twilio-a2p-10dlc-registration-dedicated-local-area-code">Q-013: Twilio A2P 10DLC Registration &amp; Dedicated Local Area Code</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> <code>packages/notifications/src/sms.ts</code> utilizes Twilio SDK with <code>TWILIO_FROM_NUMBER</code> <code><span class="badge badge-confirmed">CONFIRMED: </span></code>.</li>
+<li><strong>Operational Risk:</strong> North American telecommunication carriers block unregistered Application-to-Person (A2P) 10DLC SMS traffic as spam. Failure to register RideNDine's EIN/BN with the Campaign Registry will result in 100% of dispatch and OTP SMS messages being filtered and dropped.</li>
+<li><strong>Recommended Default:</strong> Complete the Twilio A2P 10DLC Brand and Campaign registration immediately under the "Customer Care / Delivery Alerts" category using a local Ontario area code (e.g., 905, 289, or 365).</li>
+<li><strong>Stakeholder:</strong> Technical Operations &amp; Lead Developer</li>
+</ul>
+<h4 id="q-014-production-dmarc-spf-dkim-dns-enforcement-for-resend">Q-014: Production DMARC / SPF / DKIM DNS Enforcement for Resend</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> <code>packages/notifications/src/email.ts</code> sends order receipts from <code>orders@ridendine.ca</code> using Resend <code><span class="badge badge-confirmed">CONFIRMED: </span></code>.</li>
+<li><strong>Operational Risk:</strong> Major email providers (Gmail, Yahoo, Outlook) reject transactional emails without strict SPF, DKIM, and DMARC alignment records configured on the <code>ridendine.ca</code> root domain.</li>
+<li><strong>Recommended Default:</strong> Verify and publish the Resend DNS validation CNAME and TXT records on the domain registrar DNS management console.</li>
+<li><strong>Stakeholder:</strong> Lead DevOps Engineer</li>
+</ul>
+<h4 id="q-015-official-launch-geographic-bounding-box-expansion-tiers">Q-015: Official Launch Geographic Bounding Box &amp; Expansion Tiers</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> Default search and dispatch radius is hardcoded to 15.0 km centered on kitchen coordinates <code><span class="badge badge-confirmed">CONFIRMED: platform_settings</span></code>.</li>
+<li><strong>Operational Risk:</strong> A 15 km radius in certain geographic areas (e.g. crossing waterways or international borders near Niagara) could create delivery requests that are physically unreachable or economically unfeasible.</li>
+<li><strong>Recommended Default:</strong> Define explicit polygon geofences in PostGIS bounding the active launch corridor (e.g., Niagara Falls / St. Catharines / Hamilton urban core) and restrict order placement to addresses strictly within the verified polygon.</li>
+<li><strong>Stakeholder:</strong> CEO &amp; Marketing Director</li>
+</ul>
+<h4 id="q-016-partner-platform-service-level-agreement-sla-pricing">Q-016: Partner Platform Service Level Agreement (SLA) &amp; Pricing</h4>
+<ul>
+<li><strong>Status:</strong> Not found in code – needs confirmation <code><span class="badge badge-unknown">UNKNOWN: </span></code></li>
+<li><strong>Code Context:</strong> <code>/api/partner/*</code> routes allow external partner platforms (COOCO) to submit orders with custom billing parameters <code><span class="badge badge-confirmed">CONFIRMED: apps/web/src/app/api/partner/orders/route.ts</span></code>.</li>
+<li><strong>Operational Risk:</strong> Unclear contractual terms regarding delivery failure compensation, food spoilage liability, and data privacy between RideNDine and partner merchants.</li>
+<li><strong>Recommended Default:</strong> Execute a formal bilateral B2B Master Services Agreement (MSA) detailing 30-minute delivery SLAs, data sharing protocols, and billing settlement terms prior to enabling partner production API keys.</li>
+<li><strong>Stakeholder:</strong> Head of Strategic Partnerships</li>
+</ul>
+  </main>
+
+  
+  <script>
+    function copySnippet(button) {
+      const code = button.closest('.code-block').querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const originalText = button.innerText;
+        button.innerText = 'Copied!';
+        setTimeout(() => { button.innerText = originalText; }, 2000);
+      });
+    }
+  </script>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    if (typeof mermaid !== 'undefined') {
+      mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    }
+  </script>
+
+</body>
+</html>

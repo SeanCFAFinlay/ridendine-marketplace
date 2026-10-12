@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>01 – Product Requirements Document | RideNDine Documentation</title>
+  <style>
+    
+  :root {
+    --color-brand-primary: #0f3d2e;
+    --color-brand-primary-light: #165b45;
+    --color-brand-accent: #d97706;
+    --color-brand-accent-hover: #b45309;
+    --color-bg-base: #0f172a;
+    --color-bg-surface: #1e293b;
+    --color-bg-surface-elevated: #334155;
+    --color-text-main: #f8fafc;
+    --color-text-muted: #94a3b8;
+    --color-border: #334155;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-bg-base);
+    color: var(--color-text-main);
+    line-height: 1.6;
+  }
+  a { color: #38bdf8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  h1 {
+    font-size: 2.2rem; font-weight: 800; color: #ffffff;
+    margin-bottom: 1rem; border-bottom: 2px solid var(--color-border);
+    padding-bottom: 0.5rem; letter-spacing: -0.03em;
+  }
+  h2 { font-size: 1.5rem; font-weight: 700; color: #ffffff; margin-top: 2rem; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+  h3 { font-size: 1.2rem; font-weight: 600; color: #cbd5e1; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+  h4 { font-size: 1rem; font-weight: 600; color: #94a3b8; margin-top: 1.25rem; margin-bottom: 0.25rem; }
+  p { margin-bottom: 1.2rem; font-size: 0.95rem; color: #cbd5e1; }
+  blockquote {
+    border-left: 4px solid var(--color-brand-accent);
+    background-color: rgba(217, 119, 6, 0.1);
+    padding: 12px 18px; margin: 1.5rem 0; border-radius: 0 8px 8px 0;
+    font-size: 0.9rem; color: #e2e8f0;
+  }
+  hr.divider { border: 0; height: 1px; background-color: var(--color-border); margin: 2rem 0; }
+  ul, ol { margin: 0 0 1.5rem 1.5rem; color: #cbd5e1; font-size: 0.95rem; }
+  li { margin-bottom: 0.4rem; }
+
+  /* Badges */
+  .badge { display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin: 0 2px; vertical-align: middle; }
+  .badge-confirmed { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+  .badge-inferred { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+  .badge-unknown { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+  /* Tables */
+  .table-container { overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--color-border); border-radius: 8px; background-color: var(--color-bg-surface); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; text-align: left; }
+  th { background-color: rgba(0, 0, 0, 0.3); color: #e2e8f0; font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--color-border); color: #cbd5e1; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
+
+  /* Code & Mermaid */
+  code { font-family: var(--font-mono); font-size: 0.85em; background-color: rgba(0, 0, 0, 0.4); padding: 2px 5px; border-radius: 4px; color: #fca5a5; }
+  .code-block, .mermaid-wrapper { margin: 1.5rem 0; background-color: #0b1120; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; }
+  .code-header, .mermaid-label { display: flex; justify-content: space-between; align-items: center; background-color: rgba(0, 0, 0, 0.4); padding: 6px 12px; font-size: 0.75rem; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); font-family: var(--font-mono); }
+  .copy-btn { background-color: var(--color-bg-surface-elevated); border: 1px solid var(--color-border); color: var(--color-text-main); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
+  .copy-btn:hover { background-color: var(--color-brand-accent); }
+  pre { padding: 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.85rem; color: #e2e8f0; line-height: 1.5; }
+  pre code { background: none; padding: 0; color: inherit; }
+  .mermaid { padding: 16px; overflow-x: auto; background-color: #0f172a; text-align: center; }
+
+  @media print {
+    body { background: #ffffff !important; color: #000000 !important; }
+    .topbar, .copy-btn, .header-nav { display: none !important; }
+    h1, h2, h3 { color: #000000 !important; }
+    p, td, li { color: #222222 !important; }
+    table, th, td { border-color: #cccccc !important; }
+  }
+
+    .header-nav {
+      background-color: var(--color-bg-surface);
+      border-bottom: 1px solid var(--color-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-nav .brand {
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-nav .links {
+      display: flex;
+      gap: 16px;
+      font-size: 0.875rem;
+    }
+    .container {
+      max-width: 1024px;
+      margin: 32px auto;
+      padding: 0 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-nav">
+    <div class="brand">
+      <a href="index.html" style="color: #ffffff; text-decoration: none;">RideNDine Documentation</a>
+      <span class="badge badge-confirmed">Commit: 5599c2e5</span>
+    </div>
+    <div class="links">
+      <a href="index.html">← Back to Portal</a>
+      <a href="AUDIT-REPORT.html">Executive Summary</a>
+      <a href="01-PRD.html">01-PRD</a>
+      <a href="02-TRD.html">02-TRD</a>
+      <a href="05-Backend-Schema.html">Schema</a>
+      <button class="copy-btn" onclick="window.print()" style="padding: 4px 10px;">Print / PDF</button>
+    </div>
+  </div>
+
+  <main class="container">
+    <h1 id="ridendine-product-requirements-document-prd">RideNDine Product Requirements Document (PRD)</h1>
+<blockquote><strong>Document 01 – Product Requirements Document</strong> | Project: RideNDine Marketplace | Date: October 7, 2026 | Commit: <code>5599c2e5</code> | Author: AI-generated from codebase audit | Confidence Summary: 46 CONFIRMED / 4 INFERRED / 0 UNKNOWN</blockquote>
+<hr class="divider" />
+<h2 id="1-overview">1. Overview</h2>
+<p>RideNDine is an on-demand, multi-sided food delivery platform that connects independent culinary chefs who prepare fresh, small-batch meals with local diners seeking authentic, non-factory restaurant alternatives <code><span class="badge badge-confirmed">CONFIRMED: apps/web/src/app/page.tsx#L40-L65</span></code>. The ecosystem operates across four dedicated web applications: a customer discovery marketplace, an operations management command center, a chef kitchen portal, and a driver mobile dispatch Progressive Web App (PWA) <code><span class="badge badge-confirmed">CONFIRMED: apps/*/package.json</span></code>.</p>
+<h3 id="target-audience-users">Target Audience &amp; Users</h3>
+<ul>
+<li><strong>Diners / Consumers:</strong> Local consumers seeking chef-prepared, scratch-cooked ethnic and artisanal meals delivered hot to their doorsteps <code><span class="badge badge-confirmed">CONFIRMED: apps/web/src/app/page.tsx</span></code>.</li>
+<li><strong>Independent Chefs / Ghost Kitchens:</strong> Professional home cooks, culinary entrepreneurs, and catering kitchens seeking a turn-key storefront, payment infrastructure, and delivery fleet without predatory aggregate marketplace commissions <code><span class="badge badge-confirmed">CONFIRMED: apps/chef-admin/src/app/page.tsx</span></code>.</li>
+<li><strong>Delivery Drivers:</strong> Local courier contractors managing flexible shifts, vehicle availability, order dispatch offers, and earnings payouts <code><span class="badge badge-confirmed">CONFIRMED: apps/driver-app/src/app/page.tsx</span></code>.</li>
+<li><strong>Operations &amp; Support Staff:</strong> Central dispatchers, support agents, and finance managers who oversee order fulfillment, manage service level agreements (SLAs), review driver/chef onboarding, and resolve customer issues <code><span class="badge badge-confirmed">CONFIRMED: apps/ops-admin/src/app/dashboard/page.tsx</span></code>.</li>
+</ul>
+<h3 id="problem-statement-value-proposition">Problem Statement &amp; Value Proposition</h3>
+<p>Traditional food delivery platforms impose exorbitant commission fees (often 30%+) on small culinary creators while prioritizing mass-market fast-food chains <code><span class="badge badge-inferred">INFERRED: platform_settings platform_fee_percent = 15.00%</span></code>. RideNDine provides independent culinary creators with direct access to local markets at a sustainable 15% platform commission, built-in kitchen prep management, integrated delivery dispatch within a 15 km delivery radius, and direct Stripe Connect weekly payouts <code><span class="badge badge-confirmed">CONFIRMED: packages/db schema platform_settings &amp; apps/chef-admin/src/app/dashboard/payouts/page.tsx</span></code>.</p>
+<h3 id="public-branding-positioning">Public Branding &amp; Positioning</h3>
+<ul>
+<li><strong>Public Name:</strong> RideNDine <code><span class="badge badge-confirmed">CONFIRMED: apps/web/src/app/layout.tsx#L12</span></code></li>
+<li><strong>Official Tagline:</strong> <em>"Chef-First Food Delivery"</em> / <em>"Real Chefs. Real Kitchens."</em> <code><span class="badge badge-confirmed">CONFIRMED: apps/web/src/app/page.tsx#L55-L75</span></code></li>
+<li><strong>Landing Hero Headline:</strong> <em>"Find chef-made meals near you."</em> <code><span class="badge badge-confirmed">CONFIRMED: apps/web/src/app/page.tsx#L48</span></code></li>
+<li><strong>Theme Color Palette:</strong> Primary Brand Orange (<code>#EA5B26</code>), Charcoal Ink (<code>#1A1D20</code>), Soft Warm Canvas (<code>#FFF8F5</code>) <code><span class="badge badge-confirmed">CONFIRMED: packages/ui/src/styles/tokens.ts &amp; tailwind.config.ts</span></code>.</li>
+</ul>
+<hr class="divider" />
+<h2 id="2-product-goals-outcomes">2. Product Goals &amp; Outcomes</h2>
+<h3 id="primary-goals">Primary Goals</h3>
+<ol>
+<li><strong>Enable Seamless Multi-Role Fulfillment:</strong> Successfully transition customer orders from initial placement through chef kitchen preparation, automated driver dispatch, live transit, and verified doorstep delivery <code><span class="badge badge-confirmed">CONFIRMED: packages/engine/src/order-lifecycle.ts</span></code>.</li>
+<li><strong>Protect Platform Unit Economics:</strong> Enforce automated mathematical fee splits (15% platform commission, 8% customer service fee, $3.99 base delivery fee, 80% driver delivery payout, 13% Ontario HST) on every transaction <code><span class="badge badge-confirmed">CONFIRMED: packages/engine/src/pricing-calculator.ts &amp; platform_settings table</span></code>.</li>
+<li><strong>Guarantee Delivery Reliability:</strong> Maintain strict automated operational SLAs (5-minute chef acceptance window, 10-minute dispatch escalation timeout, 60-second driver offer acceptance) to minimize order cancellations <code><span class="badge badge-confirmed">CONFIRMED: platform_settings table &amp; packages/engine/src/sla-monitor.ts</span></code>.</li>
+</ol>
+<h3 id="secondary-goals">Secondary Goals</h3>
+<ul>
+<li>Provide comprehensive commercial kitchen inventory, recipe batching, and food cost analysis tools for independent chefs <code><span class="badge badge-confirmed">CONFIRMED: apps/chef-admin/src/app/dashboard/inventory &amp; recipes</span></code>.</li>
+<li>Provide automated Stripe reconciliation, ledger balance verification, and dispute resolution for platform accountants <code><span class="badge badge-confirmed">CONFIRMED: apps/ops-admin/src/app/dashboard/finance</span></code>.</li>
+</ul>
+<h3 id="success-metrics-supported-in-code">Success Metrics Supported in Code</h3>
+<ul>
+<li><strong>Order Conversion &amp; Completion Rate:</strong> Measured via <code>orders.status</code> state transitions (<code>placed</code> -&gt; <code>accepted</code> -&gt; <code>preparing</code> -&gt; <code>ready_for_pickup</code> -&gt; <code>picked_up</code> -&gt; <code>delivered</code>) <code><span class="badge badge-confirmed">CONFIRMED: packages/types/src/orders.ts</span></code>.</li>
+<li><strong>Delivery Time SLA Compliance:</strong> Recorded in <code>orders.actual_prep_minutes</code>, <code>deliveries.picked_up_at</code>, and <code>deliveries.delivered_at</code> <code><span class="badge badge-confirmed">CONFIRMED: deliveries table</span></code>.</li>
+<li><strong>Gross Merchandise Value (GMV) &amp; Net Revenue:</strong> Calculated from <code>ledger_entries</code> and <code>kitchen_daily_summaries</code> <code><span class="badge badge-confirmed">CONFIRMED: ledger_entries table</span></code>.</li>
+<li><strong>System Exception Rate:</strong> Tracked automatically via <code>order_exceptions</code> and <code>system_alerts</code> tables <code><span class="badge badge-confirmed">CONFIRMED: order_exceptions table</span></code>.</li>
+</ul>
+<hr class="divider" />
+<h2 id="3-user-types-and-roles">3. User Types and Roles</h2>
+<div class="table-container"><table><thead><tr><th>:---</th><th>:---</th><th>:---</th><th>:---</th></tr></thead><tbody><tr><td><strong>Anonymous Visitor</strong></td><td>Unauthenticated public visitor exploring the marketplace.</td><td>Open web access (<code>ridendine.ca</code>).</td><td>Browse active chef storefronts, search menus by cuisine, view dishes, add items to cart <code><span class="badge badge-confirmed">CONFIRMED: apps/web/src/app/page.tsx</span></code>.</td></tr><tr><td><strong>Customer</strong></td><td>Authenticated dining customer.</td><td>Email/password signup or Google OAuth via Supabase Auth <code><span class="badge badge-confirmed">CONFIRMED: apps/web/src/app/auth/signup/page.tsx</span></code>.</td><td>Save delivery addresses, place orders, complete Stripe checkouts, track live driver map, view history, rate meals <code><span class="badge badge-confirmed">CONFIRMED: apps/web/src/app/checkout/page.tsx</span></code>.</td></tr><tr><td><strong>Chef / Kitchen Partner</strong></td><td>Approved food creator operating a commercial or home kitchen.</td><td>Public registration (<code>chef.ridendine.ca/auth/signup</code>), verified and approved by Ops Admin <code><span class="badge badge-confirmed">CONFIRMED: apps/chef-admin/src/app/api/auth/login/route.ts#L46-L60</span></code>.</td><td>Manage menus, update inventory/recipes, set hours, accept/reject incoming orders, request weekly Stripe payouts <code><span class="badge badge-confirmed">CONFIRMED: apps/chef-admin/src/app/dashboard/page.tsx</span></code>.</td></tr><tr><td><strong>Delivery Driver</strong></td><td>Fleet courier transporting food from kitchen to customer.</td><td>Public registration (<code>driver.ridendine.ca/auth/signup</code>), document verification by Ops <code><span class="badge badge-confirmed">CONFIRMED: apps/driver-app/src/app/page.tsx</span></code>.</td><td>Toggle online shifts, receive 60s dispatch offers, follow GPS turn-by-turn routes, upload proof of delivery photo <code><span class="badge badge-confirmed">CONFIRMED: apps/driver-app/src/components</span></code>.</td></tr><tr><td><strong>Ops Agent</strong></td><td>First-line operations dispatcher and support representative.</td><td>Created by Super Admin in <code>platform_users</code> (<code>role = 'ops_agent'</code>) <code><span class="badge badge-confirmed">CONFIRMED: platform_users table</span></code>.</td><td>Monitor live order board, reassign delivery drivers, review incoming tickets, acknowledge SLA warnings <code><span class="badge badge-confirmed">CONFIRMED: apps/ops-admin/src/app/dashboard</span></code>.</td></tr><tr><td><strong>Finance Manager</strong></td><td>Operational accountant overseeing revenue and disbursements.</td><td>Created by Super Admin in <code>platform_users</code> (<code>role = 'finance_manager'</code>) <code><span class="badge badge-confirmed">CONFIRMED: platform_users table</span></code>.</td><td>Run payout batches, view ledger entries, audit Stripe payouts, approve large refund cases <code><span class="badge badge-confirmed">CONFIRMED: apps/ops-admin/src/app/dashboard/finance</span></code>.</td></tr><tr><td><strong>Super Admin</strong></td><td>Platform executive with unrestricted administrative access.</td><td>Bootstrapped via CLI script (<code>scripts/bootstrap-super-admin.mjs</code>) or <code>platform_users.role = 'super_admin'</code> <code><span class="badge badge-confirmed">CONFIRMED: packages/auth/src/roles.ts</span></code>.</td><td>Modify global commission settings, edit delivery radius, promote platform staff, access raw audit logs <code><span class="badge badge-confirmed">CONFIRMED: apps/ops-admin/src/app/dashboard/settings</span></code>.</td></tr><tr><td><strong>API Partner</strong></td><td>External third-party ordering system or point-of-sale integration.</td><td>API Key provisioning (<code>rdk_live_<em></code> / <code>rdk_test_</em></code>) via Ops Admin <code><span class="badge badge-confirmed">CONFIRMED: api_partners table</span></code>.</td><td>Programmatically inject orders, receive delivery tracking webhooks, query menu catalogs <code><span class="badge badge-confirmed">CONFIRMED: docs/partner-integration/hoang-gia-pho</span></code>.</td></tr></tbody></table></div>
+<hr class="divider" />
+<h2 id="4-exhaustive-feature-catalog">4. Exhaustive Feature Catalog</h2>
+<div class="table-container"><table><thead><tr><th>ID</th><th>Feature</th><th>Description</th><th>Expected Behavior</th><th>User Role</th><th>Status</th><th>Source File(s)</th></tr></thead><tbody><tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr><tr><td><strong>F-001</strong></td><td>Storefront Discovery</td><td>Homepage directory of all active kitchens.</td><td>Displays featured and open storefronts filtered by 15 km delivery radius; shows cuisine badges, review ratings, and prep estimates.</td><td>Public / Customer</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/page.tsx" ><code>apps/web/src/app/page.tsx</code></a></td></tr><tr><td><strong>F-002</strong></td><td>Menu Browsing</td><td>Storefront menu listing categorized by dishes.</td><td>Renders categorized menu items with prices, descriptions, allergen tags, daily limits, and availability badges.</td><td>Public / Customer</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/chefs/[slug]/page.tsx" ><code>apps/web/src/app/chefs/[slug]/page.tsx</code></a></td></tr><tr><td><strong>F-003</strong></td><td>Dish Customization</td><td>Modal to customize dish modifiers and instructions.</td><td>Allows selecting required and optional modifier groups (e.g. spice level, sides) with dynamic price calculation.</td><td>Public / Customer</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/components/dish-detail-modal.tsx" ><code>apps/web/src/components/dish-detail-modal.tsx</code></a></td></tr><tr><td><strong>F-004</strong></td><td>Client Cart Drawer</td><td>Persistent shopping cart for single-storefront orders.</td><td>Stores selected items in localStorage and Supabase <code>carts</code> table; prevents multi-storefront mixing with warning modal.</td><td>Customer</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/components/cart/cart-drawer.tsx" ><code>apps/web/src/components/cart/cart-drawer.tsx</code></a></td></tr><tr><td><strong>F-005</strong></td><td>Delivery Address Validation</td><td>Address selection with distance checks.</td><td>Geocodes customer address, calculates distance to chef kitchen using Haversine formula; blocks checkout if &gt; 15 km.</td><td>Customer</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/checkout/page.tsx" ><code>apps/web/src/app/checkout/page.tsx</code></a></td></tr><tr><td><strong>F-006</strong></td><td>Stripe Elements Checkout</td><td>Secure card payments via Stripe Payment Intents.</td><td>Mounts Stripe Payment Element; processes authorization, applies promo codes, handles 3D Secure verification.</td><td>Customer</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/checkout/payment-form.tsx" ><code>apps/web/src/app/checkout/payment-form.tsx</code></a></td></tr><tr><td><strong>F-007</strong></td><td>Live Order Tracking</td><td>Real-time map and progress status tracker.</td><td>Connects via Supabase Realtime to order and delivery updates; shows preparation timeline and live driver map marker.</td><td>Customer</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/orders/[id]/page.tsx" ><code>apps/web/src/app/orders/[id]/page.tsx</code></a></td></tr><tr><td><strong>F-008</strong></td><td>Customer Order History</td><td>Historical listing of all customer orders.</td><td>Displays past orders with re-order button, status breakdown, receipt breakdown, and review submission trigger.</td><td>Customer</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/account/orders/page.tsx" ><code>apps/web/src/app/account/orders/page.tsx</code></a></td></tr><tr><td><strong>F-009</strong></td><td>Customer Profile &amp; Addresses</td><td>Saved delivery address management.</td><td>Allows adding, editing, and deleting multiple delivery addresses with default selection and buzzer code notes.</td><td>Customer</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/account/addresses/page.tsx" ><code>apps/web/src/app/account/addresses/page.tsx</code></a></td></tr><tr><td><strong>F-010</strong></td><td>Chef Live Action Queue</td><td>Real-time incoming order dashboard for kitchens.</td><td>Audio ping on new order; displays orders requiring immediate action (Accept/Reject within 5-min SLA window).</td><td>Chef</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/page.tsx" ><code>apps/chef-admin/src/app/dashboard/page.tsx</code></a></td></tr><tr><td><strong>F-011</strong></td><td>Kitchen Prep Management</td><td>Interactive order status transition controls.</td><td>Allows chefs to mark orders as Preparing, adjust estimated ready time, and trigger "Ready for Pickup" for dispatch.</td><td>Chef</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/orders/[id]/page.tsx" ><code>apps/chef-admin/src/app/dashboard/orders/[id]/page.tsx</code></a></td></tr><tr><td><strong>F-012</strong></td><td>Menu Catalog Editor</td><td>Full CRUD menu item and category manager.</td><td>Create/edit categories, items, pricing, photos, daily availability caps, and instant "86/Sold Out" toggles.</td><td>Chef</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/menu/page.tsx" ><code>apps/chef-admin/src/app/dashboard/menu/page.tsx</code></a></td></tr><tr><td><strong>F-013</strong></td><td>Storefront Profile Editor</td><td>Public storefront branding and operating details.</td><td>Configure kitchen name, bio, cuisine categories, cover banner, logo, prep buffer minutes, and pause toggle.</td><td>Chef</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/storefront/page.tsx" ><code>apps/chef-admin/src/app/dashboard/storefront/page.tsx</code></a></td></tr><tr><td><strong>F-014</strong></td><td>Weekly Schedule &amp; Hours</td><td>Day-by-day kitchen operating hours scheduler.</td><td>Define opening and closing hours per day of week; system automatically reflects open/closed status in marketplace.</td><td>Chef</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/availability/page.tsx" ><code>apps/chef-admin/src/app/dashboard/availability/page.tsx</code></a></td></tr><tr><td><strong>F-015</strong></td><td>Commercial Recipe Scaling</td><td>Recipe ingredient tracking and food costing.</td><td>Define batch recipes, ingredient quantities, cost per portion, and calculate target profit margins.</td><td>Chef</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/recipes/page.tsx" ><code>apps/chef-admin/src/app/dashboard/recipes/page.tsx</code></a></td></tr><tr><td><strong>F-016</strong></td><td>Raw Inventory Tracking</td><td>Stock movements, waste events, and low-stock alerts.</td><td>Track supplier items, receiving batches, wastage reasons, and trigger low-stock alerts when portions deplete.</td><td>Chef</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/inventory/page.tsx" ><code>apps/chef-admin/src/app/dashboard/inventory/page.tsx</code></a></td></tr><tr><td><strong>F-017</strong></td><td>Kitchen Stations &amp; Tickets</td><td>KDS (Kitchen Display System) station routing.</td><td>Routes specific menu items to designated prep stations (e.g. Grill, Fryer, Salad) with ticket timing.</td><td>Chef</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/kitchen/page.tsx" ><code>apps/chef-admin/src/app/dashboard/kitchen/page.tsx</code></a></td></tr><tr><td><strong>F-018</strong></td><td>Stripe Connect Onboarding</td><td>Direct chef payout account linking via Stripe Express.</td><td>Redirects chef to Stripe Connect onboarding; checks <code>payouts_enabled</code> status; displays bank deposit account.</td><td>Chef</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/payouts/page.tsx" ><code>apps/chef-admin/src/app/dashboard/payouts/page.tsx</code></a></td></tr><tr><td><strong>F-019</strong></td><td>Chef Customer Reviews</td><td>View customer ratings and feedback.</td><td>Displays verified order ratings (1–5 stars) and comments with chef response capabilities.</td><td>Chef</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/reviews/page.tsx" ><code>apps/chef-admin/src/app/dashboard/reviews/page.tsx</code></a></td></tr><tr><td><strong>F-020</strong></td><td>Driver Shift Toggle</td><td>Online / Offline shift presence manager.</td><td>Toggles driver availability in <code>driver_presence</code>; captures battery level, current location, and vehicle type.</td><td>Driver</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/page.tsx" ><code>apps/driver-app/src/app/page.tsx</code></a></td></tr><tr><td><strong>F-021</strong></td><td>60-Second Dispatch Offer</td><td>Timed modal offering order delivery to nearest driver.</td><td>Displays pickup location, delivery address, estimated payout, distance; auto-expires in 60 seconds if unaccepted.</td><td>Driver</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/components/delivery/dispatch-offer-modal.tsx" ><code>apps/driver-app/src/components/delivery/dispatch-offer-modal.tsx</code></a></td></tr><tr><td><strong>F-022</strong></td><td>Turn-by-Turn Navigation</td><td>In-app Leaflet routing map.</td><td>Displays route line between driver, kitchen, and customer; provides direct deep-link to Google Maps / Apple Maps.</td><td>Driver</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/components/map/route-map.tsx" ><code>apps/driver-app/src/components/map/route-map.tsx</code></a></td></tr><tr><td><strong>F-023</strong></td><td>Order Pickup Verification</td><td>Kitchen pickup confirmation step.</td><td>Driver verifies customer name, order number, and item pack checklist before confirming pickup.</td><td>Driver</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/deliveries/[id]/page.tsx" ><code>apps/driver-app/src/app/deliveries/[id]/page.tsx</code></a></td></tr><tr><td><strong>F-024</strong></td><td>Doorstep Delivery Proof</td><td>Completion step with photo upload and drop notes.</td><td>Captures delivery timestamp, optional doorstep photo uploaded to Supabase Storage, and customer delivery notes.</td><td>Driver</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/deliveries/[id]/page.tsx" ><code>apps/driver-app/src/app/deliveries/[id]/page.tsx</code></a></td></tr><tr><td><strong>F-025</strong></td><td>Driver Earnings Ledger</td><td>Daily and weekly payout breakdown for drivers.</td><td>Displays completed trips, base delivery pay, customer tips, and weekly payout settlement status.</td><td>Driver</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/earnings/page.tsx" ><code>apps/driver-app/src/app/earnings/page.tsx</code></a></td></tr><tr><td><strong>F-026</strong></td><td>Driver Document Submission</td><td>Driver license, insurance, and vehicle upload.</td><td>Form to upload vehicle registration and driver's license with expiration dates for ops approval.</td><td>Driver</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/documents/page.tsx" ><code>apps/driver-app/src/app/documents/page.tsx</code></a></td></tr><tr><td><strong>F-027</strong></td><td>Ops Live Board</td><td>Master operational command center.</td><td>Real-time kanban swimlanes displaying all orders grouped by lifecycle state; color-coded SLA timers.</td><td>Ops / Super Admin</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/page.tsx" ><code>apps/ops-admin/src/app/dashboard/page.tsx</code></a></td></tr><tr><td><strong>F-028</strong></td><td>Manual Dispatch Override</td><td>Force-assign or reassign driver to delivery.</td><td>Overrides automated dispatch algorithm; allows dispatcher to pick an available driver from live fleet list.</td><td>Ops / Super Admin</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/orders/[id]/page.tsx" ><code>apps/ops-admin/src/app/dashboard/orders/[id]/page.tsx</code></a></td></tr><tr><td><strong>F-029</strong></td><td>Chef Onboarding Review</td><td>Kitchen document verification and store approval.</td><td>Ops reviews kitchen inspections, food handler certificates, Stripe status, and toggles storefront publication.</td><td>Ops / Super Admin</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/chefs/page.tsx" ><code>apps/ops-admin/src/app/dashboard/chefs/page.tsx</code></a></td></tr><tr><td><strong>F-030</strong></td><td>Driver Verification Review</td><td>Driver license &amp; vehicle validation portal.</td><td>Ops inspects driver background documents, verifies insurance dates, and marks driver status as <code>approved</code>.</td><td>Ops / Super Admin</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/drivers/page.tsx" ><code>apps/ops-admin/src/app/dashboard/drivers/page.tsx</code></a></td></tr><tr><td><strong>F-031</strong></td><td>Fleet Live Map</td><td>Real-time geographical map of all online drivers.</td><td>Displays all active drivers on Leaflet map with status pills (Idle, On Offer, En Route to Kitchen, Delivering).</td><td>Ops / Super Admin</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/dispatch/page.tsx" ><code>apps/ops-admin/src/app/dashboard/dispatch/page.tsx</code></a></td></tr><tr><td><strong>F-032</strong></td><td>Financial Ledger Audit</td><td>Double-entry accounting transaction view.</td><td>Detailed audit of all debit/credit movements across customer payments, platform fees, driver fees, and chef payouts.</td><td>Finance / Admin</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/ledger/page.tsx" ><code>apps/ops-admin/src/app/dashboard/ledger/page.tsx</code></a></td></tr><tr><td><strong>F-033</strong></td><td>Payout Run Execution</td><td>Batch processor for weekly chef and driver transfers.</td><td>Aggregates unpaid completed orders, calculates net payout amounts, and triggers Stripe Connect transfer batch.</td><td>Finance / Admin</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/payouts/page.tsx" ><code>apps/ops-admin/src/app/dashboard/payouts/page.tsx</code></a></td></tr><tr><td><strong>F-034</strong></td><td>Customer Support Tickets</td><td>Incident tracking for delayed or missing food.</td><td>Centralized ticket inbox for customer complaints, missing items, cold food, or delivery driver disputes.</td><td>Support / Ops</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/support/page.tsx" ><code>apps/ops-admin/src/app/dashboard/support/page.tsx</code></a></td></tr><tr><td><strong>F-035</strong></td><td>Refund Case Adjudication</td><td>Managed refund processing with threshold limits.</td><td>Allows support agents to issue partial/full refunds via Stripe; auto-approves requests below $25 threshold.</td><td>Support / Ops</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/support/[id]/page.tsx" ><code>apps/ops-admin/src/app/dashboard/support/[id]/page.tsx</code></a></td></tr><tr><td><strong>F-036</strong></td><td>Global Platform Settings</td><td>Operational configuration variables management.</td><td>Live editing of commission percentage, tax rate, delivery radius, base delivery fee, and timeout limits.</td><td>Super Admin</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/settings/page.tsx" ><code>apps/ops-admin/src/app/dashboard/settings/page.tsx</code></a></td></tr><tr><td><strong>F-037</strong></td><td>Operational Audit Log</td><td>Tamper-evident administrative action log.</td><td>Displays immutable log of every status override, user promotion, refund approval, and rate adjustment.</td><td>Super Admin</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/audit/page.tsx" ><code>apps/ops-admin/src/app/dashboard/audit/page.tsx</code></a></td></tr><tr><td><strong>F-038</strong></td><td>Partner API Keys</td><td>API credential generator for external partners.</td><td>Generates scoped live (<code>rdk_live_<em></code>) and test (<code>rdk_test_</em></code>) tokens for partner kitchen point-of-sale systems.</td><td>Super Admin</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/integrations/page.tsx" ><code>apps/ops-admin/src/app/dashboard/integrations/page.tsx</code></a></td></tr><tr><td><strong>F-039</strong></td><td>Automated SLA Monitor</td><td>Background cron monitoring order timeouts.</td><td>Scans active orders; escalates unaccepted orders at 5 mins; triggers auto-dispatch at 10 mins; issues system alerts.</td><td>System Cron</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/engine/src/sla-monitor.ts" ><code>packages/engine/src/sla-monitor.ts &amp; scripts/local-cron.mjs</code></a></td></tr><tr><td><strong>F-040</strong></td><td>Automated Dispatch Engine</td><td>Driver matching algorithm based on proximity.</td><td>Identifies online drivers within 15 km with active shift; scores by distance; creates cascading assignment attempts.</td><td>System Engine</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/engine/src/dispatch-engine.ts" ><code>packages/engine/src/dispatch-engine.ts</code></a></td></tr><tr><td><strong>F-041</strong></td><td>Stripe Webhook Processing</td><td>Inbound payment event lifecycle listener.</td><td>Processes <code>payment_intent.succeeded</code>, <code>charge.refunded</code>, and <code>account.updated</code>; updates order and chef records.</td><td>Inbound Webhook</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/api/webhooks/stripe/route.ts" ><code>apps/web/src/app/api/webhooks/stripe/route.ts</code></a></td></tr><tr><td><strong>F-042</strong></td><td>Customer Order Notifications</td><td>Email notifications on order state changes.</td><td>Sends transactional receipt, order accepted, food en route, and delivered confirmation emails via Resend.</td><td>System Engine</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/notifications/src/email.ts" ><code>packages/notifications/src/email.ts</code></a></td></tr><tr><td><strong>F-043</strong></td><td>Storefront Auto-Pause</td><td>Circuit breaker for overloaded kitchens.</td><td>Auto-pauses storefront when queue exceeds <code>max_queue_size</code> (10 orders) or chef repeatedly breaches acceptance SLA.</td><td>System Engine</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/engine/src/storefront-guard.ts" ><code>packages/engine/src/storefront-guard.ts</code></a></td></tr><tr><td><strong>F-044</strong></td><td>Loyalty Points System</td><td>Customer rewards accrual on orders.</td><td>Awards loyalty points per dollar spent; records balance in <code>loyalty_accounts</code> and movements in <code>loyalty_transactions</code>.</td><td>Customer</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/db" ><code>packages/db schema loyalty_accounts</code></a></td></tr><tr><td><strong>F-045</strong></td><td>Promo Code Engine</td><td>Discount validation at checkout.</td><td>Validates coupon code limits, expiration dates, min order amounts, and applies percentage or fixed discounts.</td><td>Customer</td><td>Complete</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/engine/src/pricing-calculator.ts" ><code>packages/engine/src/pricing-calculator.ts</code></a></td></tr></tbody></table></div>
+<hr class="divider" />
+<h2 id="5-content-inventory">5. Content Inventory</h2>
+<div class="table-container"><table><thead><tr><th>Page / Section</th><th>Main Content Type</th><th>Source Location</th><th>Update Mechanism</th></tr></thead><tbody><tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr><tr><td><strong>Marketplace Landing</strong> (<code>/</code>)</td><td>Static Marketing Copy &amp; Dynamic Kitchen Cards</td><td>Hardcoded in <code>apps/web/src/app/page.tsx</code> &amp; Database (<code>chef_storefronts</code>)</td><td>Code deployments for copy; Ops/Chef dashboard for storefront cards</td></tr><tr><td><strong>Storefront &amp; Menu</strong> (<code>/chefs/[slug]</code>)</td><td>Dynamic Catalog Data &amp; User Uploads</td><td>Database (<code>chef_storefronts</code>, <code>menu_categories</code>, <code>menu_items</code>)</td><td>Chef Admin portal editing</td></tr><tr><td><strong>Dish Modifiers</strong></td><td>Dynamic Pricing &amp; Option Rules</td><td>Database (<code>menu_item_options</code>, <code>menu_item_option_values</code>)</td><td>Chef Admin portal editing</td></tr><tr><td><strong>Legal Pages</strong> (<code>/privacy</code>, <code>/terms</code>)</td><td>Static Legal Text</td><td>Hardcoded TSX copy in <code>apps/web/src/app/privacy/page.tsx</code> &amp; <code>terms/page.tsx</code></td><td>Git code release</td></tr><tr><td><strong>Ops Live Board</strong> (<code>/dashboard</code>)</td><td>Live Operational Data Stream</td><td>Database (<code>orders</code>, <code>deliveries</code>, <code>system_alerts</code>)</td><td>Supabase Realtime subscriptions &amp; REST API polling</td></tr><tr><td><strong>Driver Dashboard</strong> (<code>/</code>)</td><td>Real-Time Shift &amp; Dispatch Data</td><td>Database (<code>driver_shifts</code>, <code>assignment_attempts</code>, <code>deliveries</code>)</td><td>Supabase Realtime WebSocket</td></tr><tr><td><strong>Help &amp; FAQ</strong> (<code>/faq</code>)</td><td>Static Support Articles</td><td>Hardcoded in <code>apps/web/src/app/faq/page.tsx</code></td><td>Git code release</td></tr></tbody></table></div>
+<hr class="divider" />
+<h2 id="6-business-rules-and-validation">6. Business Rules and Validation</h2>
+<h3 id="financial-calculation-formula-confirmed-packages-engine-src-pricing-calculator-ts">Financial Calculation Formula <code><span class="badge badge-confirmed">CONFIRMED: packages/engine/src/pricing-calculator.ts</span></code></h3>
+<p>For every placed customer order:</p>
+<ol>
+<li><strong>Subtotal ($S$):</strong> $\sum (\text{item\_price} \times \text{quantity} + \text{modifier\_prices})$</li>
+<li><strong>Platform Commission:</strong> $S \times 0.15$ (deducted from Chef earnings)</li>
+<li><strong>Customer Service Fee:</strong> $S \times 0.08$ (added to customer bill)</li>
+<li><strong>Base Delivery Fee:</strong> Fixed at <strong>$3.99</strong> (when distance $\le 5\text{ km}$; incremental per-km charges apply beyond 5 km)</li>
+<li><strong>Driver Payout:</strong> $80\%$ of total delivery fee + $100\%$ of customer tip</li>
+<li><strong>Harmonized Sales Tax (HST):</strong> $(S + \text{service\_fee} + \text{delivery\_fee}) \times 0.13$ (13% Ontario standard)</li>
+<li><strong>Total Charged to Customer:</strong> $S + \text{service\_fee} + \text{delivery\_fee} + \text{tip} + \text{HST} - \text{discounts}$</li>
+</ol>
+<h3 id="operational-constraints-limits-confirmed-platform-settings-table">Operational Constraints &amp; Limits <code><span class="badge badge-confirmed">CONFIRMED: platform_settings table</span></code></h3>
+<ul>
+<li><strong>Maximum Delivery Radius:</strong> 15.00 km (hard boundary: 15.10 km)</li>
+<li><strong>Minimum Order Amount:</strong> $10.00 standard (configurable up to $20.00 per storefront)</li>
+<li><strong>Chef Order Acceptance SLA:</strong> 5 minutes (triggers alert if exceeded)</li>
+<li><strong>Dispatch Auto-Escalation SLA:</strong> 10 minutes (triggers ops intervention alert if unassigned)</li>
+<li><strong>Driver Offer Expiration:</strong> 60 seconds (unaccepted offers cycle to next nearest driver)</li>
+<li><strong>Maximum Driver Assignment Attempts:</strong> 5 attempts before dispatch failure state</li>
+<li><strong>Customer Refund Window:</strong> 24 hours post-delivery</li>
+<li><strong>Automated Refund Approval Threshold:</strong> $25.00 (refunds $\le \$25$ auto-approved without ops review)</li>
+<li><strong>Kitchen Overload Guard:</strong> 10 concurrent active orders triggers auto-pause recommendation</li>
+</ul>
+<hr class="divider" />
+<h2 id="7-notifications-and-communications">7. Notifications and Communications</h2>
+<div class="table-container"><table><thead><tr><th>Trigger Event</th><th>Channel</th><th>Recipient</th><th>Content / Purpose</th><th>Implementation File</th></tr></thead><tbody><tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr><tr><td><strong>Order Placed</strong></td><td>Email</td><td>Customer</td><td>Itemized order confirmation, receipt, estimated prep time</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/notifications/src/email.ts" ><code>packages/notifications/src/email.ts</code></a></td></tr><tr><td><strong>New Order Pending</strong></td><td>Web Audio &amp; Realtime</td><td>Chef</td><td>Audible chime and banner in Chef Admin queue</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/components/orders/audio-alert.tsx" ><code>apps/chef-admin/src/components/orders/audio-alert.tsx</code></a></td></tr><tr><td><strong>Driver Offer Dispatched</strong></td><td>In-App / Push</td><td>Driver</td><td>Sound notification, offer details, 60-second acceptance timer</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/components/delivery/dispatch-offer-modal.tsx" ><code>apps/driver-app/src/components/delivery/dispatch-offer-modal.tsx</code></a></td></tr><tr><td><strong>Food Picked Up</strong></td><td>Email &amp; In-App</td><td>Customer</td><td>Notice that driver has collected food and is en route with live map</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/notifications/src/email.ts" ><code>packages/notifications/src/email.ts</code></a></td></tr><tr><td><strong>Order Delivered</strong></td><td>Email &amp; Push</td><td>Customer</td><td>Delivery completion notification with doorstep photo link</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/notifications/src/email.ts" ><code>packages/notifications/src/email.ts</code></a></td></tr><tr><td><strong>SLA Warning / Breach</strong></td><td>In-App / System Alert</td><td>Ops Dispatcher</td><td>Visual flashing alert on Ops Live Board for orders pending &gt; 5 min</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/components/alerts/system-alerts-banner.tsx" ><code>apps/ops-admin/src/components/alerts/system-alerts-banner.tsx</code></a></td></tr></tbody></table></div>
+<hr class="divider" />
+<h2 id="8-non-functional-expectations-in-code">8. Non-Functional Expectations in Code</h2>
+<ol>
+<li><strong>Security &amp; Content Security Policy:</strong></li>
+</ol>
+<ul>
+<li>Strict Level 3 Content Security Policy configured with per-request dynamic cryptographic nonces (<code>'nonce-${nonce}'</code> and <code>'strict-dynamic'</code>) preventing unauthorized XSS execution <code><span class="badge badge-confirmed">CONFIRMED: packages/auth/src/csp.ts</span></code>.</li>
+<li>Dynamic server rendering enforced across all application root and auth layouts (<code>export const dynamic = 'force-dynamic'</code>) to ensure 100% of injected scripts match the CSP header <code><span class="badge badge-confirmed">CONFIRMED: apps/*/src/app/layout.tsx</span></code>.</li>
+</ul>
+<ol>
+<li><strong>Mobile Responsiveness &amp; Viewports:</strong></li>
+</ol>
+<ul>
+<li>Explicit Next.js Viewport metadata exported on all applications (<code>width: 'device-width', initialScale: 1, maximumScale: 5, themeColor: '#EA5B26'</code>) ensuring responsive scaling on iOS Safari and Android Chrome <code><span class="badge badge-confirmed">CONFIRMED: apps/*/src/app/layout.tsx</span></code>.</li>
+<li>Verified zero horizontal pixel overflow at mobile (390×844) and desktop (1440×900) resolutions <code><span class="badge badge-confirmed">CONFIRMED: scripts/smoke/responsive-production-smoke.cjs</span></code>.</li>
+</ul>
+<ol>
+<li><strong>Data Integrity &amp; Hygiene:</strong></li>
+</ol>
+<ul>
+<li>Automated database hygiene verification scripts (<code>verify-prod-data-hygiene.mjs</code>) prevent accidental seed or reset scripts from executing in CI/CD environments <code><span class="badge badge-confirmed">CONFIRMED: scripts/verify-prod-data-hygiene.mjs</span></code>.</li>
+<li>Atomic database purge tool (<code>scripts/purge-demo-data.mjs</code>) allows clean production slate initialization without disrupting operational platform settings <code><span class="badge badge-confirmed">CONFIRMED: scripts/purge-demo-data.mjs</span></code>.</li>
+</ul>
+<hr class="divider" />
+<h2 id="9-out-of-scope-planned-stubs">9. Out of Scope / Planned / Stubs</h2>
+<ol>
+<li><strong>Native Mobile App Store Packages (iOS/Android):</strong></li>
+</ol>
+<ul>
+<li>The Driver App is currently built and deployed as a responsive web PWA (Progressive Web App) with mobile service worker support; native Swift/Kotlin binaries are not present <code><span class="badge badge-confirmed">CONFIRMED: apps/driver-app/public/manifest.json</span></code>.</li>
+</ul>
+<ol>
+<li><strong>Autonomous Drone / Robot Delivery:</strong></li>
+</ol>
+<ul>
+<li>Delivery dispatch is exclusively architected for vehicle and bicycle couriers tracked via browser Geolocation API <code><span class="badge badge-confirmed">CONFIRMED: apps/driver-app/src/components/map</span></code>.</li>
+</ul>
+<ol>
+<li><strong>Multi-Region Currency Conversion:</strong></li>
+</ol>
+<ul>
+<li>Financial ledger, pricing calculator, and Stripe integrations are strictly configured for Canadian Dollars (CAD) with 13% Ontario HST <code><span class="badge badge-confirmed">CONFIRMED: packages/engine/src/pricing-calculator.ts</span></code>.</li>
+</ul>
+  </main>
+
+  
+  <script>
+    function copySnippet(button) {
+      const code = button.closest('.code-block').querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const originalText = button.innerText;
+        button.innerText = 'Copied!';
+        setTimeout(() => { button.innerText = originalText; }, 2000);
+      });
+    }
+  </script>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    if (typeof mermaid !== 'undefined') {
+      mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    }
+  </script>
+
+</body>
+</html>

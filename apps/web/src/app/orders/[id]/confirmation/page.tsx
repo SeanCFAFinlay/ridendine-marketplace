@@ -8,6 +8,8 @@ import { LiveOrderTracker } from '@/components/tracking/live-order-tracker';
 import { ReviewForm } from '@/components/reviews/review-form';
 import { OrderActionPanel } from '@/components/orders/order-action-panel';
 import { OrderConfirmationHero } from '@/components/orders/order-confirmation-hero';
+import { OrderTaxReceiptModal } from '@/components/orders/order-tax-receipt-modal';
+import { EmergencyDispatchBanner } from '@/components/orders/emergency-dispatch-banner';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -33,6 +35,11 @@ interface OrderWithDetails {
   status: string;
   public_stage?: string;
   total: number;
+  subtotal?: number;
+  delivery_fee?: number;
+  tip?: number;
+  tax?: number;
+  created_at: string;
   estimated_ready_at: string | null;
   chef_storefronts: {
     name: string;
@@ -165,8 +172,26 @@ export default async function OrderConfirmationPage({ params }: Props) {
             </div>
           )}
 
+          {/* Emergency Hotline for in-flight orders */}
+          <EmergencyDispatchBanner
+            orderNumber={typedOrder.order_number}
+            isOrderActive={!['delivered', 'completed', 'cancelled'].includes(typedOrder.status)}
+          />
+
           {/* Actions */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center items-center">
+            <OrderTaxReceiptModal
+              orderNumber={typedOrder.order_number}
+              createdAt={typedOrder.created_at || new Date().toISOString()}
+              storefrontName={storefrontName}
+              customerName={user.email ?? undefined}
+              deliveryAddress={delivery?.dropoff_address}
+              subtotal={Number(typedOrder.subtotal ?? typedOrder.total * 0.8)}
+              deliveryFee={Number(typedOrder.delivery_fee ?? 3.99)}
+              tip={Number(typedOrder.tip ?? 0)}
+              tax={Number(typedOrder.tax ?? (typedOrder.total * 0.13) / 1.13)}
+              total={Number(typedOrder.total)}
+            />
             <Link href="/chefs">
               <Button variant="secondary">Continue Shopping</Button>
             </Link>

@@ -41,3 +41,10 @@ export function extractAreaFromAddress(address: string | null | undefined): stri
   const parts = address.split(',').map((part) => part.trim()).filter(Boolean);
   return parts[1] ?? parts[0] ?? 'Unknown';
 }
+
+/**
+ * Dispatch location freshness TTL threshold in milliseconds (90 seconds).
+ * Driver locations older than this threshold are considered stale.
+ */
+export const DRIVER_LOCATION_STALE_THRESHOLD_MS = 90_000;
+

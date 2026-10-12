@@ -92,7 +92,7 @@ export class DriverMatchingService {
   async findEligibleDrivers(
     pickupLat: number,
     pickupLng: number,
-    maxRadiusKm = 10,
+    maxRadiusKm = 15,
     filterByLocation = true
   ): Promise<EligibleDriver[]> {
     // REVIEW_2026-05-13 finding E4 — only consider drivers whose presence has

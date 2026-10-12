@@ -252,6 +252,46 @@ export function SettingsForm({ initialRules, canEdit }: SettingsFormProps) {
         </div>
       </div>
 
+      {/* Ontario Compliance, CRA & Hotlines */}
+      <div className="space-y-4">
+        <SectionHeading>Ontario Compliance & Hotlines</SectionHeading>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <label className="space-y-2">
+            <span className="text-sm text-textSubtle">CRA Business / HST Number</span>
+            <input
+              type="text"
+              value={form.craBusinessNumber ?? 'BN 789123456 RT0001'}
+              onChange={(e) => setForm((cur) => ({ ...cur, craBusinessNumber: e.target.value }))}
+              disabled={!canEdit}
+              className={inputClass}
+              placeholder="e.g. BN 789123456 RT0001"
+            />
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm text-textSubtle">Support Phone Line</span>
+            <input
+              type="text"
+              value={form.supportPhoneNumber ?? '+1 (888) 555-RIDE'}
+              onChange={(e) => setForm((cur) => ({ ...cur, supportPhoneNumber: e.target.value }))}
+              disabled={!canEdit}
+              className={inputClass}
+              placeholder="+1 (888) 555-RIDE"
+            />
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm text-textSubtle">Emergency Dispatch Hotline</span>
+            <input
+              type="text"
+              value={form.emergencyDispatchHotline ?? '+1 (905) 555-0199'}
+              onChange={(e) => setForm((cur) => ({ ...cur, emergencyDispatchHotline: e.target.value }))}
+              disabled={!canEdit}
+              className={inputClass}
+              placeholder="+1 (905) 555-0199"
+            />
+          </label>
+        </div>
+      </div>
+
       {(message || error) && (
         <div
           className={`rounded-lg px-4 py-3 text-sm ${

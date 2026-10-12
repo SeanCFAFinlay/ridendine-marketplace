@@ -46,6 +46,7 @@ interface NavItem {
   href: string;
   label: string;
   Icon: React.ComponentType<{ className?: string }>;
+  roles?: readonly string[];
 }
 
 interface NavGroup {
@@ -55,6 +56,13 @@ interface NavGroup {
   items: NavItem[];
   defaultOpen?: boolean;
 }
+
+const FINANCE_ROLES = [
+  'ops_manager',
+  'finance_admin',
+  'finance_manager',
+  'super_admin',
+] as const;
 
 const NAV_GROUPS: NavGroup[] = [
   {
@@ -98,10 +106,10 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Money',
     Icon: DollarSign,
     items: [
-      { href: '/dashboard/finance', label: 'Finance Overview', Icon: DollarSign },
-      { href: '/dashboard/finance/reconciliation', label: 'Reconciliation', Icon: CreditCard },
-      { href: '/dashboard/finance/payouts', label: 'Payouts', Icon: Wallet },
-      { href: '/dashboard/finance/instant-payouts', label: 'Instant Payouts', Icon: Banknote },
+      { href: '/dashboard/finance', label: 'Finance Overview', Icon: DollarSign, roles: FINANCE_ROLES },
+      { href: '/dashboard/finance/reconciliation', label: 'Reconciliation', Icon: CreditCard, roles: FINANCE_ROLES },
+      { href: '/dashboard/finance/payouts', label: 'Payouts', Icon: Wallet, roles: FINANCE_ROLES },
+      { href: '/dashboard/finance/instant-payouts', label: 'Instant Payouts', Icon: Banknote, roles: FINANCE_ROLES },
       { href: '/dashboard/promos', label: 'Promos', Icon: Tag },
     ],
   },
@@ -330,15 +338,32 @@ function UserMenu() {
 
 interface DashboardLayoutProps {
   children: ReactNode;
+  userRole?: string;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
+  const { user } = useAuthContext();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  const effectiveRole =
+    userRole ||
+    (user?.user_metadata?.role as string | undefined) ||
+    (user?.app_metadata?.role as string | undefined);
+
+  const filteredNavGroups = NAV_GROUPS.map((group) => {
+    const visibleItems = group.items.filter((item) => {
+      if (item.roles && effectiveRole && !item.roles.includes(effectiveRole)) {
+        return false;
+      }
+      return true;
+    });
+    return { ...group, items: visibleItems };
+  }).filter((group) => group.items.length > 0);
 
   const sidebarContent = (collapsed: boolean) => (
     <>
@@ -360,7 +385,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto p-2" aria-label="Primary">
-        {NAV_GROUPS.map((group) => (
+        {filteredNavGroups.map((group) => (
           <NavGroupItem
             key={group.id}
             group={group}
@@ -416,7 +441,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </button>
             </div>
             <nav className="flex-1 overflow-y-auto p-2">
-              {NAV_GROUPS.map((group) => (
+              {filteredNavGroups.map((group) => (
                 <NavGroupItem
                   key={group.id}
                   group={group}

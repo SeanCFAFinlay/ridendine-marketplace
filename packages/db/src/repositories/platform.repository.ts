@@ -21,6 +21,7 @@ type PlatformSettingsRow = {
   storefront_throttle_window_minutes?: number | null;
   storefront_auto_pause_enabled?: boolean | null;
   storefront_pause_on_sla_breach?: boolean | null;
+  setting_value?: Record<string, unknown> | null;
   updated_at: string;
   updated_by?: string | null;
 };
@@ -54,6 +55,9 @@ export function createDefaultPlatformRuleSet(
     storefrontThrottleWindowMinutes: 30,
     storefrontAutoPauseEnabled: false,
     storefrontPauseOnSlaBreach: true,
+    craBusinessNumber: 'BN 789123456 RT0001',
+    supportPhoneNumber: '+1 (888) 555-RIDE',
+    emergencyDispatchHotline: '+1 (905) 555-0199',
     updatedAt: new Date(0).toISOString(),
     ...overrides,
   };
@@ -122,6 +126,18 @@ function mapPlatformSettings(row: PlatformSettingsRow): PlatformRuleSet {
     storefrontPauseOnSlaBreach: Boolean(
       row.storefront_pause_on_sla_breach ?? true
     ),
+    craBusinessNumber:
+      typeof row.setting_value?.cra_business_number === 'string'
+        ? (row.setting_value.cra_business_number as string)
+        : 'BN 789123456 RT0001',
+    supportPhoneNumber:
+      typeof row.setting_value?.support_phone_number === 'string'
+        ? (row.setting_value.support_phone_number as string)
+        : '+1 (888) 555-RIDE',
+    emergencyDispatchHotline:
+      typeof row.setting_value?.emergency_dispatch_hotline === 'string'
+        ? (row.setting_value.emergency_dispatch_hotline as string)
+        : '+1 (905) 555-0199',
     updatedAt: row.updated_at,
     updatedBy: row.updated_by ?? undefined,
   };
@@ -168,6 +184,20 @@ export async function updatePlatformSettings(
     );
   }
   const targetId = input.id ?? current.id;
+  const currentSettingValue =
+    ((await getPlatformSettingValue(client)) as Record<string, unknown>) || {};
+  const updatedSettingValue = {
+    ...currentSettingValue,
+    ...(input.craBusinessNumber !== undefined
+      ? { cra_business_number: input.craBusinessNumber }
+      : {}),
+    ...(input.supportPhoneNumber !== undefined
+      ? { support_phone_number: input.supportPhoneNumber }
+      : {}),
+    ...(input.emergencyDispatchHotline !== undefined
+      ? { emergency_dispatch_hotline: input.emergencyDispatchHotline }
+      : {}),
+  };
 
   const payload = {
     platform_fee_percent: input.platformFeePercent,
@@ -187,6 +217,7 @@ export async function updatePlatformSettings(
     storefront_throttle_window_minutes: input.storefrontThrottleWindowMinutes,
     storefront_auto_pause_enabled: input.storefrontAutoPauseEnabled,
     storefront_pause_on_sla_breach: input.storefrontPauseOnSlaBreach,
+    setting_value: updatedSettingValue,
     updated_at: new Date().toISOString(),
     updated_by: actorUserId,
   };

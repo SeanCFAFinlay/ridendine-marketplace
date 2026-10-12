@@ -21,6 +21,8 @@
     "db:seed": "supabase db seed",
     "db:reset": "supabase db reset",
     "db:purge-demo": "node scripts/purge-demo-data.mjs",
+    "onboard:kitchen": "node scripts/onboard-ontario-kitchen.mjs",
+    "docs:build": "node scripts/build-docs-html.mjs",
     "local-cron": "node scripts/local-cron.mjs",
     "verify:prod-data-hygiene": "node scripts/verify-prod-data-hygiene.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",

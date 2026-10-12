@@ -44,6 +44,51 @@ export async function POST(request: NextRequest) {
   const opsActor = finalizeOpsActor(actor, guardPlatformApi(actor, capability));
   if (opsActor instanceof Response) return opsActor;
 
+  const refundAmount =
+    command.action === 'request_refund'
+      ? command.amountCents
+      : command.action === 'approve_refund'
+        ? command.approvedAmountCents
+        : 0;
+
+  if (refundAmount > 0) {
+    const isSuperOrFinanceAdmin =
+      opsActor.role === 'super_admin' || opsActor.role === 'finance_admin';
+    const isManagerOrAdmin =
+      isSuperOrFinanceAdmin ||
+      opsActor.role === 'ops_manager' ||
+      opsActor.role === 'finance_manager' ||
+      opsActor.role === 'ops_admin';
+
+    if (refundAmount > 10000 && !isSuperOrFinanceAdmin) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message:
+              'Refunds exceeding $100.00 CAD require Super-Admin or Finance Admin authorization.',
+          },
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (refundAmount > 3000 && !isManagerOrAdmin) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message:
+              'Refunds between $30.01 and $100.00 CAD require Ops Manager approval. Support agent authorization limit is $30.00 CAD.',
+          },
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
   const result = await getEngine().operations.execute(command, opsActor);
   return operationResultResponse(result, command.action === 'request_refund' ? 201 : 200);
 }

@@ -463,15 +463,16 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
     hydrateDashboard();
   }, [applyReadinessSummary, applyShiftSummary]);
 
-  // Keep the pending-offer queue fresh: the initial hydrate only runs once on
-  // mount, so poll the durable offer queue periodically. Stale responses are
-  // discarded via the shared request-id pattern inside refreshOffers.
+  // Keep the pending-offer queue fresh: poll rapidly (10s) when on shift and online
+  // to avoid missing short-lived (45-90s) dispatch offers; back off to 60s when idle/off-shift.
+  const isOnShiftActive = Boolean(shiftSummary?.isOnShift);
   useEffect(() => {
+    const pollInterval = isOnShiftActive && isOnline ? 10_000 : 60_000;
     const intervalId = window.setInterval(() => {
       void refreshOffers();
-    }, 60_000);
+    }, pollInterval);
     return () => window.clearInterval(intervalId);
-  }, [refreshOffers]);
+  }, [refreshOffers, isOnShiftActive, isOnline]);
 
   useEffect(() => {
     setNowMs(Date.now());

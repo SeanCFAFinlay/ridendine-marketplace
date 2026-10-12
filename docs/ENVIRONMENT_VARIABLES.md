@@ -26,7 +26,11 @@ Related: `docs/RUNBOOK_DEPLOY.md`, `docs/HEALTHCHECKS_AND_MONITORING.md`, `docs/
 | `NEXT_PUBLIC_DRIVER_APP_URL` | cross-links | O | O | O | Public | `http://localhost:3003` | Optional. |
 | `STRIPE_SECRET_KEY` | web/engine/chef payouts | R | R | R | Server | `sk_test_example...` / `sk_live_example...` | Secret; mode-guarded at runtime. |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | web checkout UI | R | R | R | Public | `pk_test_example...` | Public, environment-specific. |
-| `STRIPE_WEBHOOK_SECRET` | web webhook route | R | R | R | Server | `whsec_example...` | Secret; one per endpoint URL. |
+| `STRIPE_WEBHOOK_SECRET` | web webhook route | R | R | R | Server | `whsec_example...` | Secret; for /api/webhooks/stripe endpoint. |
+| `STRIPE_WEBHOOK_SECRET_OPS` | ops webhook route | O | R | R | Server | `whsec_ops_example...` | Secret; for ops-admin Stripe webhook endpoint. |
+| `HEALTH_CHECK_TOKEN` | web health check | O | O | R | Server | `hex_token_example` | Secret; authorizes detailed diagnostics on GET /api/health (sent as x-health-token). |
+| `PARTNER_API_KEY` | partner API | O | R | R | Server | `rdk_live_example...` | Secret; shared or DB-backed key for /api/partner/* (min 16 chars). |
+| `PARTNER_API_SIGNING_SECRET` | partner API HMAC | O | R | R | Server | `hex_signing_secret...` | Secret; HMAC SHA-256 request signature verification for partner integrations. |
 | `CHECKOUT_IDEMPOTENCY_MIGRATION_APPLIED` | health/readiness reporting | O | R | R | Server | `true` | Set true only after `00018` applied in that env. |
 | `UPSTASH_REDIS_REST_URL` | server APIs | O | R | R | Server | `https://region-name.upstash.io` | Required distributed rate limiting outside dev/test. |
 | `UPSTASH_REDIS_REST_TOKEN` | server APIs | O | R | R | Server | `upstash_token_example` | Secret; never public. |

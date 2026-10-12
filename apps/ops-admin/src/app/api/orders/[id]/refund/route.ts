@@ -56,6 +56,39 @@ export async function POST(
 
     const engine = getEngine();
     const amountCents = Math.round(parsed.data.amount);
+
+    // Tiered Refund Authorization Thresholds (Ontario Operations Safeguard)
+    // Tier 1: Support / Ops Agent — up to $30.00 CAD (3000 cents)
+    // Tier 2: Ops Manager / Finance Manager — up to $100.00 CAD (10000 cents)
+    // Tier 3: Super Admin / Finance Admin — over $100.00 CAD
+    const isSuperOrFinanceAdmin =
+      opsActor.role === 'super_admin' || opsActor.role === 'finance_admin';
+    const isManagerOrAdmin =
+      isSuperOrFinanceAdmin ||
+      opsActor.role === 'ops_manager' ||
+      opsActor.role === 'finance_manager' ||
+      opsActor.role === 'ops_admin';
+
+    if (amountCents > 10000 && !isSuperOrFinanceAdmin) {
+      return NextResponse.json(
+        {
+          error:
+            'Refunds exceeding $100.00 CAD require Super-Admin or Finance Admin authorization.',
+        },
+        { status: 403 }
+      );
+    }
+
+    if (amountCents > 3000 && !isManagerOrAdmin) {
+      return NextResponse.json(
+        {
+          error:
+            'Refunds between $30.01 and $100.00 CAD require Ops Manager approval. Support agent authorization limit is $30.00 CAD.',
+        },
+        { status: 403 }
+      );
+    }
+
     const refundReason =
       parsed.data.reason === 'fraudulent'
         ? 'fraudulent'

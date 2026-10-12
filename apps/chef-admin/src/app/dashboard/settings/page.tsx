@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { createServerClient, getChefByUserId } from '@ridendine/db';
 import { ProfileForm } from '@/components/profile/profile-form';
+import { FoodSafetyCompliance } from '@/components/profile/food-safety-compliance';
 import { NotificationPreferences } from '@/components/settings/notification-preferences';
 
 export const dynamic = 'force-dynamic';
@@ -27,13 +28,14 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-text">Profile Settings</h1>
-        <p className="mt-1 text-textMuted">Manage your chef profile information</p>
+        <p className="mt-1 text-textMuted">Manage your chef profile information and Ontario food safety compliance</p>
       </div>
 
       <ProfileForm profile={profile} />
+      <FoodSafetyCompliance chefId={profile.id} />
       <NotificationPreferences />
     </div>
   );

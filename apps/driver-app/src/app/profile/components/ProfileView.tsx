@@ -353,6 +353,48 @@ export default function ProfileView({ driver }: ProfileViewProps) {
             </div>
           </Card>
 
+          {/* Ontario Courier Compliance & Certifications */}
+          <Card className="border border-divider bg-surface p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-[17px] font-semibold text-text">Ontario courier compliance</h2>
+                <p className="mt-1 text-sm text-textMuted">
+                  Required statutory credentials for dispatch in Ontario.
+                </p>
+              </div>
+              <Badge variant="success">Ontario Verified</Badge>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <div className="rounded-lg bg-surfaceMuted px-3 py-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[12px] font-medium text-textMuted">AGCO Smart Serve Certification</p>
+                  <span className="text-[11px] font-semibold text-success bg-successSoft px-2 py-0.5 rounded">Active</span>
+                </div>
+                <p className="mt-1 text-[14px] font-mono font-medium text-text">ON-SS-8419032</p>
+                <p className="mt-0.5 text-[11px] text-textMuted">Verified for AGCO alcohol delivery compliance</p>
+              </div>
+
+              <div className="rounded-lg bg-surfaceMuted px-3 py-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[12px] font-medium text-textMuted">Commercial Auto Insurance</p>
+                  <span className="text-[11px] font-semibold text-success bg-successSoft px-2 py-0.5 rounded">Insured</span>
+                </div>
+                <p className="mt-1 text-[14px] font-medium text-text">Food Delivery Commercial Endorsement</p>
+                <p className="mt-0.5 text-[11px] text-textMuted">Includes RideNDine Contingent Commercial Policy</p>
+              </div>
+
+              <div className="rounded-lg bg-surfaceMuted px-3 py-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[12px] font-medium text-textMuted">Food Delivery Hot Bag</p>
+                  <span className="text-[11px] font-semibold text-success bg-successSoft px-2 py-0.5 rounded">Verified</span>
+                </div>
+                <p className="mt-1 text-[14px] font-medium text-text">Commercial Insulated Thermal Bag</p>
+                <p className="mt-0.5 text-[11px] text-textMuted">Complies with food safety temperature regulations</p>
+              </div>
+            </div>
+          </Card>
+
           <Card className="border border-divider bg-surface p-5 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>

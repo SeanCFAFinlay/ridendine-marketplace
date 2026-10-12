@@ -22,6 +22,9 @@ export const platformSettingsSchema = z.object({
   storefrontThrottleWindowMinutes: z.number().int().min(1).max(1440),
   storefrontAutoPauseEnabled: z.boolean(),
   storefrontPauseOnSlaBreach: z.boolean(),
+  craBusinessNumber: z.string().max(50).optional(),
+  supportPhoneNumber: z.string().max(50).optional(),
+  emergencyDispatchHotline: z.string().max(50).optional(),
 });
 
 export const platformSettingsUpdateSchema = platformSettingsSchema.refine(

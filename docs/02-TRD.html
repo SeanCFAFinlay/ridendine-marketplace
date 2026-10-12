@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>02 – Technical Requirements Document | RideNDine Documentation</title>
+  <style>
+    
+  :root {
+    --color-brand-primary: #0f3d2e;
+    --color-brand-primary-light: #165b45;
+    --color-brand-accent: #d97706;
+    --color-brand-accent-hover: #b45309;
+    --color-bg-base: #0f172a;
+    --color-bg-surface: #1e293b;
+    --color-bg-surface-elevated: #334155;
+    --color-text-main: #f8fafc;
+    --color-text-muted: #94a3b8;
+    --color-border: #334155;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-bg-base);
+    color: var(--color-text-main);
+    line-height: 1.6;
+  }
+  a { color: #38bdf8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  h1 {
+    font-size: 2.2rem; font-weight: 800; color: #ffffff;
+    margin-bottom: 1rem; border-bottom: 2px solid var(--color-border);
+    padding-bottom: 0.5rem; letter-spacing: -0.03em;
+  }
+  h2 { font-size: 1.5rem; font-weight: 700; color: #ffffff; margin-top: 2rem; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+  h3 { font-size: 1.2rem; font-weight: 600; color: #cbd5e1; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+  h4 { font-size: 1rem; font-weight: 600; color: #94a3b8; margin-top: 1.25rem; margin-bottom: 0.25rem; }
+  p { margin-bottom: 1.2rem; font-size: 0.95rem; color: #cbd5e1; }
+  blockquote {
+    border-left: 4px solid var(--color-brand-accent);
+    background-color: rgba(217, 119, 6, 0.1);
+    padding: 12px 18px; margin: 1.5rem 0; border-radius: 0 8px 8px 0;
+    font-size: 0.9rem; color: #e2e8f0;
+  }
+  hr.divider { border: 0; height: 1px; background-color: var(--color-border); margin: 2rem 0; }
+  ul, ol { margin: 0 0 1.5rem 1.5rem; color: #cbd5e1; font-size: 0.95rem; }
+  li { margin-bottom: 0.4rem; }
+
+  /* Badges */
+  .badge { display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin: 0 2px; vertical-align: middle; }
+  .badge-confirmed { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+  .badge-inferred { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+  .badge-unknown { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+  /* Tables */
+  .table-container { overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--color-border); border-radius: 8px; background-color: var(--color-bg-surface); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; text-align: left; }
+  th { background-color: rgba(0, 0, 0, 0.3); color: #e2e8f0; font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--color-border); color: #cbd5e1; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
+
+  /* Code & Mermaid */
+  code { font-family: var(--font-mono); font-size: 0.85em; background-color: rgba(0, 0, 0, 0.4); padding: 2px 5px; border-radius: 4px; color: #fca5a5; }
+  .code-block, .mermaid-wrapper { margin: 1.5rem 0; background-color: #0b1120; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; }
+  .code-header, .mermaid-label { display: flex; justify-content: space-between; align-items: center; background-color: rgba(0, 0, 0, 0.4); padding: 6px 12px; font-size: 0.75rem; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); font-family: var(--font-mono); }
+  .copy-btn { background-color: var(--color-bg-surface-elevated); border: 1px solid var(--color-border); color: var(--color-text-main); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
+  .copy-btn:hover { background-color: var(--color-brand-accent); }
+  pre { padding: 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.85rem; color: #e2e8f0; line-height: 1.5; }
+  pre code { background: none; padding: 0; color: inherit; }
+  .mermaid { padding: 16px; overflow-x: auto; background-color: #0f172a; text-align: center; }
+
+  @media print {
+    body { background: #ffffff !important; color: #000000 !important; }
+    .topbar, .copy-btn, .header-nav { display: none !important; }
+    h1, h2, h3 { color: #000000 !important; }
+    p, td, li { color: #222222 !important; }
+    table, th, td { border-color: #cccccc !important; }
+  }
+
+    .header-nav {
+      background-color: var(--color-bg-surface);
+      border-bottom: 1px solid var(--color-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-nav .brand {
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-nav .links {
+      display: flex;
+      gap: 16px;
+      font-size: 0.875rem;
+    }
+    .container {
+      max-width: 1024px;
+      margin: 32px auto;
+      padding: 0 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-nav">
+    <div class="brand">
+      <a href="index.html" style="color: #ffffff; text-decoration: none;">RideNDine Documentation</a>
+      <span class="badge badge-confirmed">Commit: 5599c2e5</span>
+    </div>
+    <div class="links">
+      <a href="index.html">← Back to Portal</a>
+      <a href="AUDIT-REPORT.html">Executive Summary</a>
+      <a href="01-PRD.html">01-PRD</a>
+      <a href="02-TRD.html">02-TRD</a>
+      <a href="05-Backend-Schema.html">Schema</a>
+      <button class="copy-btn" onclick="window.print()" style="padding: 4px 10px;">Print / PDF</button>
+    </div>
+  </div>
+
+  <main class="container">
+    <h1 id="ridendine-technical-requirements-document-trd">RideNDine Technical Requirements Document (TRD)</h1>
+<blockquote><strong>Document 02 – Technical Requirements Document</strong> | Project: RideNDine Marketplace | Date: October 7, 2026 | Commit: <code>5599c2e5</code> | Author: AI-generated from codebase audit | Confidence Summary: 48 CONFIRMED / 2 INFERRED / 0 UNKNOWN</blockquote>
+<hr class="divider" />
+<h2 id="1-overview-architecture-style">1. Overview &amp; Architecture Style</h2>
+<p>RideNDine is engineered as an enterprise-grade TypeScript Turborepo monorepo comprising four Next.js 14/15 App Router applications and nine internal domain packages <code><span class="badge badge-confirmed">CONFIRMED: package.json &amp; pnpm-workspace.yaml</span></code>. The architecture follows an event-driven, server-rendered (SSR) micro-frontend model backed by Supabase PostgreSQL (with PostGIS extensions), Supabase Realtime WebSockets, and serverless edge API routes <code><span class="badge badge-confirmed">CONFIRMED: packages/db &amp; packages/engine</span></code>.</p>
+<h3 id="architecture-diagram">Architecture Diagram</h3>
+<div class="mermaid-wrapper"><div class="mermaid-label">Diagram (mermaid)</div><div class="mermaid">flowchart TD
+    subgraph BrowserLayer["Client Tier (Desktop &amp; Mobile Browsers)"]
+        WEB_CLIENT["Customer Browser&lt;br/&gt;(ridendine.ca)"]
+        OPS_CLIENT["Ops Admin Console&lt;br/&gt;(ops.ridendine.ca)"]
+        CHEF_CLIENT["Chef Kitchen Portal&lt;br/&gt;(chef.ridendine.ca)"]
+        DRIVER_CLIENT["Driver Mobile PWA&lt;br/&gt;(driver.ridendine.ca)"]
+    end
+
+    subgraph CDNLayer["Edge Network &amp; Security (Vercel Edge Network)"]
+        EDGE_ROUTER["Vercel Global Edge Network&lt;br/&gt;(TLS 1.3 / HTTP/2)"]
+        CSP_MIDDLEWARE["@ridendine/auth Middleware&lt;br/&gt;(Cryptographic Nonce &amp; Level 3 CSP)"]
+    end
+
+    subgraph AppServerLayer["Application Tier (Next.js 14/15 App Router)"]
+        WEB_APP["apps/web&lt;br/&gt;(Port 3000)"]
+        OPS_APP["apps/ops-admin&lt;br/&gt;(Port 3002)"]
+        CHEF_APP["apps/chef-admin&lt;br/&gt;(Port 3001)"]
+        DRIVER_APP["apps/driver-app&lt;br/&gt;(Port 3003)"]
+    end
+
+    subgraph ServicePackageLayer["Shared Domain Engines (Turborepo)"]
+        ENGINE_PKG["@ridendine/engine&lt;br/&gt;(SLA Monitor / Dispatcher / Order State Machine)"]
+        ROUTING_PKG["@ridendine/routing&lt;br/&gt;(Haversine Distance &amp; Route Calculations)"]
+        NOTIF_PKG["@ridendine/notifications&lt;br/&gt;(Resend Email &amp; Web Push)"]
+        VAL_PKG["@ridendine/validation&lt;br/&gt;(Zod Schema Validators)"]
+        DB_PKG["@ridendine/db&lt;br/&gt;(Supabase SSR / Repository Pattern)"]
+    end
+
+    subgraph CloudDataLayer["Persistence &amp; Database Tier (Supabase)"]
+        POSTGRES["PostgreSQL 15 + PostGIS&lt;br/&gt;(112 Tables / Triggers / Foreign Keys)"]
+        RLS["Row Level Security Policies&lt;br/&gt;(Role-Based Data Isolation)"]
+        REALTIME["Supabase Realtime&lt;br/&gt;(PostgreSQL Change Data Capture / WebSockets)"]
+        STORAGE["Supabase Storage Buckets&lt;br/&gt;(Driver Documents / Proof of Delivery Photos)"]
+    end
+
+    subgraph ThirdPartyLayer["External SaaS &amp; Infrastructure Providers"]
+        STRIPE["Stripe Connect &amp; Payment Intents&lt;br/&gt;(Express Accounts &amp; Webhook Listeners)"]
+        MAPS["Google Maps Platform &amp; Leaflet OSM&lt;br/&gt;(Geocoding / Static Maps / OSM Tiles)"]
+        RESEND["Resend Email API&lt;br/&gt;(Transactional Customer Receipts)"]
+        SENTRY["Sentry Error Monitoring&lt;br/&gt;(@sentry/nextjs Crash Reporting)"]
+    end
+
+    BrowserLayer --&gt; EDGE_ROUTER
+    EDGE_ROUTER --&gt; CSP_MIDDLEWARE
+    CSP_MIDDLEWARE --&gt; AppServerLayer
+    AppServerLayer --&gt; ServicePackageLayer
+    ServicePackageLayer --&gt; CloudDataLayer
+    ServicePackageLayer --&gt; ThirdPartyLayer
+    CloudDataLayer --&gt; REALTIME
+    REALTIME -.-&gt; BrowserLayer</div></div>
+<hr class="divider" />
+<h2 id="2-technical-goals">2. Technical Goals</h2>
+<ol>
+<li><strong>Security &amp; Cryptographic Isolation:</strong></li>
+</ol>
+<ul>
+<li>Zero-trust Content Security Policy (CSP Level 3) with dynamic cryptographic nonces and <code>'strict-dynamic'</code> to prevent cross-site scripting (XSS) <code><span class="badge badge-confirmed">CONFIRMED: packages/auth/src/csp.ts</span></code>.</li>
+<li>Comprehensive Row Level Security (RLS) across all customer, chef, and driver database rows <code><span class="badge badge-confirmed">CONFIRMED: supabase/migrations/*.sql</span></code>.</li>
+</ul>
+<ol>
+<li><strong>Deterministic Financial Accounting:</strong></li>
+</ol>
+<ul>
+<li>Double-entry ledger architecture (<code>ledger_entries</code>) recording paired debits and credits on every transaction <code><span class="badge badge-confirmed">CONFIRMED: ledger_entries table</span></code>.</li>
+<li>Idempotency key tracking on checkouts to eliminate duplicate card charges <code><span class="badge badge-confirmed">CONFIRMED: checkout_idempotency_keys table</span></code>.</li>
+</ul>
+<ol>
+<li><strong>Sub-Second Real-Time Synchronization:</strong></li>
+</ol>
+<ul>
+<li>WebSockets-based order status propagation from customer checkout to kitchen printer/KDS and driver shift modal via Supabase Realtime <code><span class="badge badge-confirmed">CONFIRMED: apps/chef-admin/src/app/dashboard/page.tsx</span></code>.</li>
+</ul>
+<ol>
+<li><strong>Resilient Automated Dispatch:</strong></li>
+</ol>
+<ul>
+<li>Automated polling engines and SLA monitors (<code>packages/engine</code>) ensuring unassigned deliveries cascade to nearby drivers without dispatcher intervention <code><span class="badge badge-confirmed">CONFIRMED: packages/engine/src/dispatch-engine.ts</span></code>.</li>
+</ul>
+<hr class="divider" />
+<h2 id="3-technology-stack-catalog">3. Technology Stack Catalog</h2>
+<div class="table-container"><table><thead><tr><th>Layer</th><th>Tool / Technology</th><th>Exact Version</th><th>Purpose</th><th>Source of Evidence</th></tr></thead><tbody><tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr><tr><td><strong>Language</strong></td><td>TypeScript</td><td><code>^5.6.0</code></td><td>Strict static typechecking across all monorepo apps and packages.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/package.json#L91" ><code>package.json#L91</code></a></td></tr><tr><td><strong>Monorepo Build</strong></td><td>Turborepo</td><td><code>^2.3.0</code></td><td>High-performance monorepo build orchestration with caching.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/package.json#L90" ><code>package.json#L90</code></a></td></tr><tr><td><strong>Package Manager</strong></td><td>pnpm</td><td><code>9.15.0</code></td><td>Strict, workspace-isolated dependency management.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/package.json#L5" ><code>package.json#L5</code></a></td></tr><tr><td><strong>Frontend Framework</strong></td><td>Next.js App Router</td><td><code>^14.2.0</code></td><td>SSR, React Server Components (RSC), and edge routing.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/package.json#L74" ><code>package.json#L74</code></a></td></tr><tr><td><strong>UI Library</strong></td><td>React / React DOM</td><td><code>^18.3.0</code></td><td>Component UI rendering.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/package.json#L75-L76" ><code>package.json#L75-L76</code></a></td></tr><tr><td><strong>CSS Styling</strong></td><td>Tailwind CSS</td><td><code>^3.4.0</code></td><td>Utility-first CSS framework with tokenized color palettes.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/package.json#L53" ><code>apps/web/package.json#L53</code></a></td></tr><tr><td><strong>Component Utilities</strong></td><td>class-variance-authority</td><td><code>^0.7.0</code></td><td>Type-safe component variant generation.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/ui/package.json#L20" ><code>packages/ui/package.json#L20</code></a></td></tr><tr><td><strong>CSS Merging</strong></td><td>tailwind-merge / clsx</td><td><code>^2.5.0</code> / <code>^2.1.0</code></td><td>Dynamic class merging without specificity collisions.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/ui/package.json#L21-L22" ><code>packages/ui/package.json#L21-L22</code></a></td></tr><tr><td><strong>Iconography</strong></td><td>Lucide React</td><td><code>^0.454.0</code></td><td>Lightweight SVG icon system.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/package.json#L34" ><code>apps/ops-admin/package.json#L34</code></a></td></tr><tr><td><strong>Database</strong></td><td>PostgreSQL + PostGIS</td><td><code>15.x</code></td><td>Relational storage with spatial geographic indexing.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/db" ><code>packages/db</code> &amp; <code>supabase/migrations</code></a></td></tr><tr><td><strong>BaaS / Auth</strong></td><td>Supabase (<code>@supabase/ssr</code>)</td><td><code>^0.5.0</code></td><td>Cookie-based session auth and SSR client creation.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/db/package.json#L20" ><code>packages/db/package.json#L20</code></a></td></tr><tr><td><strong>Database Client</strong></td><td>Supabase JS Client</td><td><code>^2.47.0</code></td><td>Typed queries, real-time WebSocket subscriptions.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/db/package.json#L19" ><code>packages/db/package.json#L19</code></a></td></tr><tr><td><strong>Direct DB Client</strong></td><td><code>pg</code> (node-postgres)</td><td><code>^8.20.0</code></td><td>Direct pooling connection for migrations, audits, and purges.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/package.json#L86" ><code>package.json#L86</code></a></td></tr><tr><td><strong>Payments Backend</strong></td><td>Stripe SDK</td><td><code>^20.4.1</code></td><td>Server-side PaymentIntents, Connect accounts, and transfers.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/engine/package.json#L38" ><code>packages/engine/package.json#L38</code></a></td></tr><tr><td><strong>Payments Frontend</strong></td><td>Stripe React Elements</td><td><code>^5.6.1</code> / <code>^8.11.0</code></td><td>PCI-compliant credit card input fields.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/package.json#L26-L27" ><code>apps/web/package.json#L26-L27</code></a></td></tr><tr><td><strong>Mapping Engine</strong></td><td>Leaflet / React-Leaflet</td><td><code>^1.9.4</code> / <code>^5.0.0</code></td><td>Interactive maps, driver tracking, and route rendering.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/package.json#L29-L33" ><code>apps/ops-admin/package.json#L29-L33</code></a></td></tr><tr><td><strong>Email Delivery</strong></td><td>Resend</td><td><code>^4.0.0</code></td><td>Transactional customer receipt and alert delivery.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/engine/package.json#L37" ><code>packages/engine/package.json#L37</code></a></td></tr><tr><td><strong>Schema Validation</strong></td><td>Zod</td><td><code>^3.23.0</code></td><td>Runtime validation for forms and API request bodies.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/package.json#L36" ><code>apps/web/package.json#L36</code></a></td></tr><tr><td><strong>Error Monitoring</strong></td><td>Sentry Next.js</td><td><code>^9.0.0</code></td><td>Full-stack exception tracking and telemetry.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/package.json#L25" ><code>apps/web/package.json#L25</code></a></td></tr><tr><td><strong>Web Analytics</strong></td><td>Vercel Analytics</td><td><code>^1.6.1</code></td><td>Privacy-focused page view and visitor tracking.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/package.json#L29" ><code>apps/web/package.json#L29</code></a></td></tr><tr><td><strong>Web Performance</strong></td><td>Vercel Speed Insights</td><td><code>^1.3.1</code></td><td>Real-world Core Web Vitals telemetry.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/package.json#L30" ><code>apps/web/package.json#L30</code></a></td></tr><tr><td><strong>E2E Testing</strong></td><td>Playwright Test</td><td><code>^1.55.1</code></td><td>Headless browser testing for responsive multi-device smoke.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/package.json#L80" ><code>package.json#L80</code></a></td></tr><tr><td><strong>Unit Testing</strong></td><td>Vitest / Jest</td><td><code>^1.6.0</code> / <code>^29.7.0</code></td><td>Fast unit and contract validation.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/packages/db/package.json#L29" ><code>packages/db/package.json#L29</code></a></td></tr><tr><td><strong>Code Formatting</strong></td><td>Prettier</td><td><code>^3.4.0</code></td><td>Code style enforcement with Tailwind class sorting.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/package.json#L87-L88" ><code>package.json#L87-L88</code></a></td></tr><tr><td><strong>Linting</strong></td><td>ESLint</td><td><code>^9.39.4</code></td><td>Static analysis for TypeScript and React best practices.</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/package.json#L83" ><code>package.json#L83</code></a></td></tr></tbody></table></div>
+<hr class="divider" />
+<h2 id="4-monorepo-project-structure">4. Monorepo Project Structure</h2>
+<div class="code-block"><div class="code-header"><span>text</span><button class="copy-btn" onclick="copySnippet(this)">Copy</button></div><pre><code class="language-text">ridendine-marketplace/
+├── apps/
+│   ├── web/                    # Customer marketplace portal (ridendine.ca, port 3000)
+│   ├── chef-admin/             # Kitchen &amp; menu management portal (chef.ridendine.ca, port 3001)
+│   ├── ops-admin/              # Command center &amp; operations board (ops.ridendine.ca, port 3002)
+│   └── driver-app/             # Fleet driver dispatch PWA (driver.ridendine.ca, port 3003)
+├── packages/
+│   ├── auth/                   # Shared Supabase Auth middleware, sessions, &amp; CSP factory
+│   ├── config/                 # Shared ESLint, Prettier, and TypeScript configurations
+│   ├── db/                     # Supabase SSR client, repositories, and generated database types
+│   ├── engine/                 # Core dispatch algorithm, SLA monitor, and pricing calculator
+│   ├── notifications/          # Transactional email (Resend) and browser push dispatchers
+│   ├── routing/                # Geographic distance algorithms (Haversine) and geofences
+│   ├── types/                  # Shared TypeScript interfaces (Orders, Deliveries, Menus)
+│   ├── ui/                     # Design system component library (Buttons, Inputs, Modals)
+│   ├── utils/                  # Currency formatting, date helpers, rate limiters
+│   └── validation/             # Shared Zod validation schemas for all API payloads
+├── supabase/
+│   ├── migrations/             # 64 sequential SQL migrations establishing 112 tables
+│   └── seeds/                  # Seed fixtures for local development
+├── scripts/
+│   ├── smoke/                  # Production smoke test suites (responsive, contract, authz)
+│   ├── audit/                  # Database hardening and security ratchet audits
+│   ├── purge-demo-data.mjs     # Production database cleanup tool
+│   └── bootstrap-super-admin.mjs # Global Super Admin initialization utility
+├── docs/                       # Complete system documentation suite
+├── turbo.json                  # Turborepo task pipeline definition
+└── package.json                # Root dependency manifest and pnpm workspace config</code></pre></div>
+<hr class="divider" />
+<h2 id="5-environment-variables-catalog">5. Environment Variables Catalog</h2>
+<div class="table-container"><table><thead><tr><th>Variable Name</th><th>Purpose</th><th>Required</th><th>Used In (File / Package)</th><th>Scope</th></tr></thead><tbody><tr><td>:---</td><td>:---</td><td>:---:</td><td>:---</td><td>:---</td></tr><tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td>Base API URL of the Supabase project.</td><td><strong>Yes</strong></td><td><code>packages/db/src/client</code>, all apps</td><td>Public (Browser &amp; Server)</td></tr><tr><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>Public anonymous key for client-side queries.</td><td><strong>Yes</strong></td><td><code>packages/auth/src/middleware.ts</code>, all apps</td><td>Public (Browser &amp; Server)</td></tr><tr><td><code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>Privileged administrative key bypassing RLS.</td><td><strong>Yes</strong></td><td><code>packages/db/src/client/admin.ts</code>, engine</td><td>Server-only (Secret)</td></tr><tr><td><code>DATABASE_URL</code></td><td>Direct connection string for PostgreSQL (port 5432 / 6543).</td><td><strong>Yes</strong></td><td>Migrations, scripts, <code>packages/db</code></td><td>Server-only (Secret)</td></tr><tr><td><code>STRIPE_SECRET_KEY</code></td><td>Live Stripe secret API key (<code>sk_live_*</code>).</td><td><strong>Yes</strong></td><td><code>packages/engine</code>, <code>apps/web/src/app/api</code></td><td>Server-only (Secret)</td></tr><tr><td><code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code></td><td>Public Stripe key for Elements (<code>pk_live_*</code>).</td><td><strong>Yes</strong></td><td><code>apps/web/src/app/checkout</code></td><td>Public (Browser)</td></tr><tr><td><code>STRIPE_WEBHOOK_SECRET</code></td><td>Signing secret verifying inbound customer webhooks.</td><td><strong>Yes</strong></td><td><code>apps/web/src/app/api/webhooks/stripe</code></td><td>Server-only (Secret)</td></tr><tr><td><code>STRIPE_WEBHOOK_SECRET_OPS</code></td><td>Signing secret for ops admin Connect webhooks.</td><td>Optional</td><td><code>apps/ops-admin/src/app/api/webhooks</code></td><td>Server-only (Secret)</td></tr><tr><td><code>NEXT_PUBLIC_APP_URL</code></td><td>Canonical URL of customer marketplace.</td><td><strong>Yes</strong></td><td><code>apps/web/src/middleware.ts</code></td><td>Public (Browser &amp; Server)</td></tr><tr><td><code>NEXT_PUBLIC_CHEF_ADMIN_URL</code></td><td>Canonical URL of Chef Admin portal.</td><td><strong>Yes</strong></td><td><code>apps/chef-admin</code>, <code>apps/ops-admin</code></td><td>Public (Browser &amp; Server)</td></tr><tr><td><code>NEXT_PUBLIC_DRIVER_APP_URL</code></td><td>Canonical URL of Driver App portal.</td><td><strong>Yes</strong></td><td><code>apps/driver-app</code>, <code>apps/ops-admin</code></td><td>Public (Browser &amp; Server)</td></tr><tr><td><code>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code></td><td>Google Maps API key for geocoding / autocomplete.</td><td>Optional</td><td><code>apps/web/src/components/address</code></td><td>Public (Browser)</td></tr><tr><td><code>RESEND_API_KEY</code></td><td>Resend API key for sending transactional emails.</td><td><strong>Yes</strong></td><td><code>packages/notifications/src/email.ts</code></td><td>Server-only (Secret)</td></tr><tr><td><code>NEXT_PUBLIC_SENTRY_DSN</code></td><td>Sentry DSN key for error monitoring.</td><td>Optional</td><td><code>apps/*/sentry.client.config.ts</code></td><td>Public (Browser &amp; Server)</td></tr><tr><td><code>ENGINE_PROCESSOR_TOKEN</code></td><td>Bearer token protecting background cron trigger routes.</td><td><strong>Yes</strong></td><td><code>apps/ops-admin/src/app/api/engine</code></td><td>Server-only (Secret)</td></tr></tbody></table></div>
+<hr class="divider" />
+<h2 id="6-third-party-services-integration">6. Third-Party Services Integration</h2>
+<div class="table-container"><table><thead><tr><th>:---</th><th>:---</th><th>:---</th><th>:---</th></tr></thead><tbody><tr><td><strong>Supabase PostgreSQL</strong></td><td>Primary operational database, PostGIS spatial queries.</td><td>Node-pg connection pool &amp; REST API.</td><td><strong>Catastrophic:</strong> Entire platform fails (500 on all routes).</td></tr><tr><td><strong>Supabase Auth</strong></td><td>JWT user authentication, session tokens, password hashing.</td><td>Supabase SSR cookies (<code>sb-*-auth-token</code>).</td><td><strong>High:</strong> Users cannot log in or authenticate API requests.</td></tr><tr><td><strong>Stripe Payments</strong></td><td>Customer payment intent processing, card pre-authorizations.</td><td>Stripe REST API &amp; React Elements SDK.</td><td><strong>High:</strong> Checkouts fail; orders cannot be submitted.</td></tr><tr><td><strong>Stripe Connect</strong></td><td>Independent chef banking onboarding and automated weekly payouts.</td><td>Stripe Express Connect OAuth &amp; Payouts API.</td><td><strong>Medium:</strong> Chefs cannot link accounts; manual payout fallback needed.</td></tr><tr><td><strong>Google Maps / Leaflet</strong></td><td>Address autocomplete, geocoding coordinates, driver map.</td><td>Google Geocoding REST API &amp; OpenStreetMap Tiles.</td><td><strong>Medium:</strong> Driver tracking degrades to static coordinates.</td></tr><tr><td><strong>Resend</strong></td><td>Transactional emails (order confirmation, receipts, alerts).</td><td>Resend Node.js SDK via HTTPS.</td><td><strong>Low:</strong> Emails delayed; in-app order status remains accurate.</td></tr><tr><td><strong>Vercel</strong></td><td>Multi-project edge network hosting and serverless functions.</td><td>Git-driven CI/CD deployment hooks.</td><td><strong>Catastrophic:</strong> Web servers unavailable.</td></tr></tbody></table></div>
+<hr class="divider" />
+<h2 id="7-security-audit-protection-review">7. Security Audit &amp; Protection Review</h2>
+<div class="table-container"><table><thead><tr><th>Security Area</th><th>Rating</th><th>Code Evidence &amp; Implementation Details</th></tr></thead><tbody><tr><td>:---</td><td>:---:</td><td>:---</td></tr><tr><td><strong>Content Security Policy (CSP)</strong></td><td><strong>Strong</strong></td><td>Cryptographic nonces generated per-request in <code>@ridendine/auth/src/csp.ts</code>; <code>'strict-dynamic'</code> prevents execution of any non-nonced script tag; verified 100% compliant in production.</td></tr><tr><td><strong>Row Level Security (RLS)</strong></td><td><strong>Strong</strong></td><td>RLS enabled on all operational tables (<code>orders</code>, <code>customers</code>, <code>chef_profiles</code>, <code>drivers</code>); customer cannot view another customer's orders; chefs isolated to own storefront items.</td></tr><tr><td><strong>Input Validation &amp; Sanitization</strong></td><td><strong>Strong</strong></td><td>Strict Zod validation schemas (<code>@ridendine/validation</code>) executed on all incoming JSON payloads before database mutations.</td></tr><tr><td><strong>Authentication &amp; Tokens</strong></td><td><strong>Strong</strong></td><td>HttpOnly, Secure, SameSite=Lax cookies managed by <code>@supabase/ssr</code>; dynamic token refresh via Next.js middleware.</td></tr><tr><td><strong>Rate Limiting</strong></td><td><strong>Strong</strong></td><td>In-memory token bucket rate limiter in <code>@ridendine/utils/src/rate-limiter.ts</code> protecting auth routes against brute-force attacks (5 attempts/min).</td></tr><tr><td><strong>SQL Injection Defense</strong></td><td><strong>Strong</strong></td><td>All database queries utilize parameterized prepared statements (<code>$1, $2, ...</code>) via Supabase query builder and <code>pg.Client</code>; no raw dynamic SQL string concatenation.</td></tr><tr><td><strong>Secrets Management</strong></td><td><strong>Strong</strong></td><td>Zero hardcoded API keys or service role secrets in git repository; validated via pre-push audit gates.</td></tr><tr><td><strong>CSRF &amp; Clickjacking</strong></td><td><strong>Strong</strong></td><td><code>X-Frame-Options: DENY</code>, <code>X-Content-Type-Options: nosniff</code>, <code>Referrer-Policy: strict-origin-when-cross-origin</code> enforced in headers <code><span class="badge badge-confirmed">CONFIRMED: packages/auth/src/csp.ts</span></code>.</td></tr></tbody></table></div>
+<hr class="divider" />
+<h2 id="8-build-run-and-deployment-runbook">8. Build, Run, and Deployment Runbook</h2>
+<h3 id="local-development-setup">Local Development Setup</h3>
+<ol>
+<li><strong>Prerequisites:</strong> Node.js <code>&gt;= 20.0.0</code>, <code>pnpm</code> <code>9.15.0</code>.</li>
+<li><strong>Install Workspace Dependencies:</strong></li>
+</ol>
+<div class="code-block"><div class="code-header"><span>bash</span><button class="copy-btn" onclick="copySnippet(this)">Copy</button></div><pre><code class="language-bash">   pnpm install</code></pre></div>
+<ol>
+<li><strong>Environment Setup:</strong></li>
+</ol>
+<p>Copy <code>.env.example</code> to <code>.env.local</code> and populate <code>NEXT_PUBLIC_SUPABASE_URL</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code>, <code>STRIPE_SECRET_KEY</code>, and <code>DATABASE_URL</code>.</p>
+<ol>
+<li><strong>Run Development Servers:</strong></li>
+</ol>
+<div class="code-block"><div class="code-header"><span>bash</span><button class="copy-btn" onclick="copySnippet(this)">Copy</button></div><pre><code class="language-bash">   pnpm dev          # Launches all 4 apps concurrently via Turborepo
+   pnpm dev:web      # Customer Web only (http://localhost:3000)
+   pnpm dev:chef     # Chef Admin only (http://localhost:3001)
+   pnpm dev:ops      # Ops Admin only (http://localhost:3002)
+   pnpm dev:driver   # Driver App only (http://localhost:3003)</code></pre></div>
+<h3 id="verification-quality-gates">Verification &amp; Quality Gates</h3>
+<div class="code-block"><div class="code-header"><span>bash</span><button class="copy-btn" onclick="copySnippet(this)">Copy</button></div><pre><code class="language-bash">pnpm typecheck                    # Strict TypeScript verification across all 14 packages
+pnpm lint                         # ESLint check
+pnpm verify:prod-data-hygiene     # Asserts no forbidden reset/seed scripts in CI
+pnpm smoke:responsive             # Headless Playwright audit of all 4 apps at mobile &amp; desktop</code></pre></div>
+<h3 id="production-deployment-strategy">Production Deployment Strategy</h3>
+<ul>
+<li>Deployed across four dedicated projects on <strong>Vercel</strong>:</li>
+<li><code>ridendine-web</code> -&gt; <code>https://ridendine.ca</code></li>
+<li><code>ridendine-chef</code> -&gt; <code>https://chef.ridendine.ca</code></li>
+<li><code>ridendine-driver</code> -&gt; <code>https://driver.ridendine.ca</code></li>
+<li><code>ridendine-ops</code> -&gt; <code>https://ops.ridendine.ca</code></li>
+<li>Automatic git-driven CI/CD on pushes to <code>master</code> branch.</li>
+<li>Zero-downtime rolling deployments managed by Vercel edge infrastructure.</li>
+</ul>
+  </main>
+
+  
+  <script>
+    function copySnippet(button) {
+      const code = button.closest('.code-block').querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const originalText = button.innerText;
+        button.innerText = 'Copied!';
+        setTimeout(() => { button.innerText = originalText; }, 2000);
+      });
+    }
+  </script>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    if (typeof mermaid !== 'undefined') {
+      mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    }
+  </script>
+
+</body>
+</html>

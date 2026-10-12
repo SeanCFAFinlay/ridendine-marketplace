@@ -540,6 +540,9 @@ export interface PlatformRuleSet {
   storefrontThrottleWindowMinutes: number;
   storefrontAutoPauseEnabled: boolean;
   storefrontPauseOnSlaBreach: boolean;
+  craBusinessNumber?: string;
+  supportPhoneNumber?: string;
+  emergencyDispatchHotline?: string;
   updatedAt: string;
   updatedBy?: string;
 }

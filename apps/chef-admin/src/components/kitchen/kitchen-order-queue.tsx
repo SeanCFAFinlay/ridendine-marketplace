@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Printer } from 'lucide-react';
 import { Badge, Button, LiveIndicator } from '@ridendine/ui';
 import type { LiveIndicatorStatus } from '@ridendine/ui';
 import { KITCHEN_NEXT_TRANSITION, KITCHEN_REJECT_TRANSITION } from '@ridendine/utils';
@@ -185,6 +186,72 @@ const COLUMNS: { key: ColumnKey; label: string; statuses: string[]; accent: stri
 ];
 
 // ---------------------------------------------------------------------------
+// 80mm Thermal Receipt Printing Helper
+// ---------------------------------------------------------------------------
+
+function printThermalTicket(ticket: KitchenTicket) {
+  const printWindow = window.open('', '_blank', 'width=380,height=600');
+  if (!printWindow) {
+    window.print();
+    return;
+  }
+  const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const itemsHtml = ticket.items
+    .map(
+      (item) => `
+      <div style="display:flex; justify-content:space-between; margin:4px 0; font-size:14px; font-weight:bold;">
+        <span>${item.quantity}x ${item.name}</span>
+      </div>
+      ${item.specialInstructions ? `<div style="font-size:12px; margin-left:10px; font-style:italic;">Note: ${item.specialInstructions}</div>` : ''}
+    `
+    )
+    .join('');
+
+  printWindow.document.write(`<!DOCTYPE html>
+<html>
+  <head>
+    <title>Ticket #${ticket.orderNumber || ticket.id.slice(-6).toUpperCase()}</title>
+    <style>
+      @page { size: 80mm auto; margin: 0; }
+      body {
+        font-family: monospace, sans-serif;
+        width: 72mm;
+        margin: 2mm auto;
+        color: #000;
+        background: #fff;
+        padding: 2mm;
+      }
+      .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 6px; margin-bottom: 6px; }
+      .title { font-size: 20px; font-weight: 900; }
+      .meta { font-size: 11px; margin-top: 2px; }
+      .customer { font-size: 15px; font-weight: bold; margin: 6px 0; border-bottom: 1px solid #000; padding-bottom: 4px; }
+      .items { margin: 8px 0; border-bottom: 2px dashed #000; padding-bottom: 8px; }
+      .instructions { font-size: 12px; font-weight: bold; margin-top: 6px; padding: 4px; border: 1px solid #000; }
+      .footer { text-align: center; font-size: 10px; margin-top: 8px; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="title">ORDER #${ticket.orderNumber || ticket.id.slice(-6).toUpperCase()}</div>
+      <div class="meta">${timeStr} | KITCHEN TICKET</div>
+    </div>
+    <div class="customer">Customer: ${ticket.customerName || 'Diner'}</div>
+    <div class="items">
+      ${itemsHtml}
+    </div>
+    ${ticket.specialInstructions ? `<div class="instructions">NOTE: ${ticket.specialInstructions}</div>` : ''}
+    <div class="footer">*** RIDENDINE 80MM TICKET ***</div>
+  </body>
+</html>`);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 250);
+}
+
+// ---------------------------------------------------------------------------
 // Ticket card
 // ---------------------------------------------------------------------------
 
@@ -242,8 +309,8 @@ function TicketCard({ ticket, accent, isInFlight, onAction }: TicketCardProps) {
       )}
 
       {/* Actions */}
-      {nextTransition && (
-        <div className="flex gap-2 pt-1">
+      <div className="flex gap-2 pt-1">
+        {nextTransition && (
           <Button
             size="sm"
             className="flex-1"
@@ -252,18 +319,27 @@ function TicketCard({ ticket, accent, isInFlight, onAction }: TicketCardProps) {
           >
             {isInFlight ? '...' : nextTransition.buttonLabel}
           </Button>
-          {ticket.status === 'pending' && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onAction(ticket, KITCHEN_REJECT_TRANSITION.action, KITCHEN_REJECT_TRANSITION.nextStatus)}
-              disabled={isInFlight}
-            >
-              Reject
-            </Button>
-          )}
-        </div>
-      )}
+        )}
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => printThermalTicket(ticket)}
+          title="Print 80mm Kitchen Thermal Ticket"
+          className="px-2 text-textMuted hover:text-text hover:bg-surfaceMuted"
+        >
+          <Printer className="h-4 w-4" />
+        </Button>
+        {ticket.status === 'pending' && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onAction(ticket, KITCHEN_REJECT_TRANSITION.action, KITCHEN_REJECT_TRANSITION.nextStatus)}
+            disabled={isInFlight}
+          >
+            Reject
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -326,6 +402,15 @@ export function KitchenOrderQueue({ tickets, storefrontId }: KitchenOrderQueuePr
   const [newCount, setNewCount] = useState(0);
   const [actionError, setActionError] = useState<string | null>(null);
   const [realtimeStatus, setRealtimeStatus] = useState<LiveIndicatorStatus>('connecting');
+  const [autoPrint, setAutoPrint] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('ridendine_kds_auto_print') === 'true';
+    }
+    return false;
+  });
+  const autoPrintRef = useRef(autoPrint);
+  autoPrintRef.current = autoPrint;
+  const printedIds = useRef<Set<string>>(new Set());
   const inFlightIds = useRef<Set<string>>(new Set());
   const notifiedIds = useRef<Set<string>>(new Set());
   const hydratingIds = useRef<Set<string>>(new Set());
@@ -362,6 +447,10 @@ export function KitchenOrderQueue({ tickets, storefrontId }: KitchenOrderQueuePr
               const json = await res.json();
               const hydrated: KitchenTicket | undefined = json?.data?.ticket;
               if (hydrated) {
+                if (autoPrintRef.current && !printedIds.current.has(hydrated.id)) {
+                  printedIds.current.add(hydrated.id);
+                  printThermalTicket(hydrated);
+                }
                 setQueue((prev) => {
                   const exists = prev.some((t) => t.id === hydrated.id);
                   const next = exists
@@ -499,7 +588,25 @@ export function KitchenOrderQueue({ tickets, storefrontId }: KitchenOrderQueuePr
             <span className="text-sm text-textMuted">{totalActive} active</span>
           )}
         </div>
-        <LiveIndicator status={realtimeStatus} />
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-medium text-textSubtle hover:border-primary cursor-pointer select-none transition-colors">
+            <input
+              type="checkbox"
+              checked={autoPrint}
+              onChange={(e) => {
+                const val = e.target.checked;
+                setAutoPrint(val);
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('ridendine_kds_auto_print', String(val));
+                }
+              }}
+              className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary"
+            />
+            <Printer className="h-3.5 w-3.5 text-textMuted" />
+            <span>Auto-Print 80mm</span>
+          </label>
+          <LiveIndicator status={realtimeStatus} />
+        </div>
       </div>
 
       {/* KDS board - 3 columns */}

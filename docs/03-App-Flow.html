@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>03 – Application Flow &amp; Screen Inventory | RideNDine Documentation</title>
+  <style>
+    
+  :root {
+    --color-brand-primary: #0f3d2e;
+    --color-brand-primary-light: #165b45;
+    --color-brand-accent: #d97706;
+    --color-brand-accent-hover: #b45309;
+    --color-bg-base: #0f172a;
+    --color-bg-surface: #1e293b;
+    --color-bg-surface-elevated: #334155;
+    --color-text-main: #f8fafc;
+    --color-text-muted: #94a3b8;
+    --color-border: #334155;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-bg-base);
+    color: var(--color-text-main);
+    line-height: 1.6;
+  }
+  a { color: #38bdf8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  h1 {
+    font-size: 2.2rem; font-weight: 800; color: #ffffff;
+    margin-bottom: 1rem; border-bottom: 2px solid var(--color-border);
+    padding-bottom: 0.5rem; letter-spacing: -0.03em;
+  }
+  h2 { font-size: 1.5rem; font-weight: 700; color: #ffffff; margin-top: 2rem; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+  h3 { font-size: 1.2rem; font-weight: 600; color: #cbd5e1; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+  h4 { font-size: 1rem; font-weight: 600; color: #94a3b8; margin-top: 1.25rem; margin-bottom: 0.25rem; }
+  p { margin-bottom: 1.2rem; font-size: 0.95rem; color: #cbd5e1; }
+  blockquote {
+    border-left: 4px solid var(--color-brand-accent);
+    background-color: rgba(217, 119, 6, 0.1);
+    padding: 12px 18px; margin: 1.5rem 0; border-radius: 0 8px 8px 0;
+    font-size: 0.9rem; color: #e2e8f0;
+  }
+  hr.divider { border: 0; height: 1px; background-color: var(--color-border); margin: 2rem 0; }
+  ul, ol { margin: 0 0 1.5rem 1.5rem; color: #cbd5e1; font-size: 0.95rem; }
+  li { margin-bottom: 0.4rem; }
+
+  /* Badges */
+  .badge { display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin: 0 2px; vertical-align: middle; }
+  .badge-confirmed { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+  .badge-inferred { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+  .badge-unknown { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+  /* Tables */
+  .table-container { overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--color-border); border-radius: 8px; background-color: var(--color-bg-surface); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; text-align: left; }
+  th { background-color: rgba(0, 0, 0, 0.3); color: #e2e8f0; font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--color-border); color: #cbd5e1; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
+
+  /* Code & Mermaid */
+  code { font-family: var(--font-mono); font-size: 0.85em; background-color: rgba(0, 0, 0, 0.4); padding: 2px 5px; border-radius: 4px; color: #fca5a5; }
+  .code-block, .mermaid-wrapper { margin: 1.5rem 0; background-color: #0b1120; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; }
+  .code-header, .mermaid-label { display: flex; justify-content: space-between; align-items: center; background-color: rgba(0, 0, 0, 0.4); padding: 6px 12px; font-size: 0.75rem; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); font-family: var(--font-mono); }
+  .copy-btn { background-color: var(--color-bg-surface-elevated); border: 1px solid var(--color-border); color: var(--color-text-main); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
+  .copy-btn:hover { background-color: var(--color-brand-accent); }
+  pre { padding: 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.85rem; color: #e2e8f0; line-height: 1.5; }
+  pre code { background: none; padding: 0; color: inherit; }
+  .mermaid { padding: 16px; overflow-x: auto; background-color: #0f172a; text-align: center; }
+
+  @media print {
+    body { background: #ffffff !important; color: #000000 !important; }
+    .topbar, .copy-btn, .header-nav { display: none !important; }
+    h1, h2, h3 { color: #000000 !important; }
+    p, td, li { color: #222222 !important; }
+    table, th, td { border-color: #cccccc !important; }
+  }
+
+    .header-nav {
+      background-color: var(--color-bg-surface);
+      border-bottom: 1px solid var(--color-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-nav .brand {
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-nav .links {
+      display: flex;
+      gap: 16px;
+      font-size: 0.875rem;
+    }
+    .container {
+      max-width: 1024px;
+      margin: 32px auto;
+      padding: 0 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-nav">
+    <div class="brand">
+      <a href="index.html" style="color: #ffffff; text-decoration: none;">RideNDine Documentation</a>
+      <span class="badge badge-confirmed">Commit: 5599c2e5</span>
+    </div>
+    <div class="links">
+      <a href="index.html">← Back to Portal</a>
+      <a href="AUDIT-REPORT.html">Executive Summary</a>
+      <a href="01-PRD.html">01-PRD</a>
+      <a href="02-TRD.html">02-TRD</a>
+      <a href="05-Backend-Schema.html">Schema</a>
+      <button class="copy-btn" onclick="window.print()" style="padding: 4px 10px;">Print / PDF</button>
+    </div>
+  </div>
+
+  <main class="container">
+    <h1 id="ridendine-application-flow-document">RideNDine Application Flow Document</h1>
+<blockquote><strong>Document 03 – Application Flow Document</strong> | Project: RideNDine Marketplace | Date: October 7, 2026 | Commit: <code>5599c2e5</code> | Author: AI-generated from codebase audit | Confidence Summary: 42 CONFIRMED / 2 INFERRED / 0 UNKNOWN</blockquote>
+<hr class="divider" />
+<h2 id="1-overview-navigation-architecture">1. Overview &amp; Navigation Architecture</h2>
+<p>RideNDine is structured as four distinct web applications, each tailored with dedicated navigation paradigms suited to its operational context:</p>
+<ul>
+<li><strong>Customer Web (<code>ridendine.ca</code>):</strong> Top sticky navigation bar with search bar, cart drawer trigger with item badge, and user account dropdown; mobile bottom navigation bar on handheld screens <code><span class="badge badge-confirmed">CONFIRMED: apps/web/src/components/layout/header.tsx</span></code>.</li>
+<li><strong>Chef Admin (<code>chef.ridendine.ca</code>):</strong> Collapsible left sidebar containing kitchen workflow links (Live Queue, Orders, Menu, Availability, Recipes, Inventory, Storefront, Payouts, Reviews, Settings); top bar with live audio toggle and operational status indicator <code><span class="badge badge-confirmed">CONFIRMED: apps/chef-admin/src/components/layout/sidebar.tsx</span></code>.</li>
+<li><strong>Driver App (<code>driver.ridendine.ca</code>):</strong> Mobile-first PWA layout with persistent bottom navigation bar (Work Dashboard, Offers, Shifts, Earnings, Profile) and full-screen dispatch modals with tactile swipe actions <code><span class="badge badge-confirmed">CONFIRMED: apps/driver-app/src/components/layout/driver-nav.tsx</span></code>.</li>
+<li><strong>Ops Admin (<code>ops.ridendine.ca</code>):</strong> Dense command-center sidebar (Live Board, Orders, Dispatch, Chefs, Drivers, Support, Finance, Settings, Audit); top banner with live system alerts and SLA breach warnings <code><span class="badge badge-confirmed">CONFIRMED: apps/ops-admin/src/components/layout/ops-sidebar.tsx</span></code>.</li>
+</ul>
+<hr class="divider" />
+<h2 id="2-route-screen-inventory">2. Route &amp; Screen Inventory</h2>
+<h3 id="customer-web-apps-web-ridendine-ca">Customer Web (<code>apps/web</code> — <code>ridendine.ca</code>)</h3>
+<div class="table-container"><table><thead><tr><th>Route / URL</th><th>Screen Name</th><th>Purpose</th><th>Access Level</th><th>Reached From</th><th>Leads To</th><th>Source File</th></tr></thead><tbody><tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr><tr><td><code>/</code></td><td>Marketplace Home</td><td>Discover local kitchens, browse featured dishes, view cuisines.</td><td>Public</td><td>Direct / External</td><td><code>/chefs/[slug]</code>, <code>/auth/login</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/page.tsx" ><code>apps/web/src/app/page.tsx</code></a></td></tr><tr><td><code>/chefs/[slug]</code></td><td>Storefront View</td><td>View a specific chef's menu, biography, hours, and dishes.</td><td>Public</td><td>Home / Search</td><td>Dish Modal, <code>/checkout</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/chefs/[slug]/page.tsx" ><code>apps/web/src/app/chefs/[slug]/page.tsx</code></a></td></tr><tr><td><code>/checkout</code></td><td>Checkout Flow</td><td>Address selection, delivery instructions, tip, Stripe pay.</td><td>Customer Auth</td><td>Cart Drawer</td><td><code>/orders/[id]</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/checkout/page.tsx" ><code>apps/web/src/app/checkout/page.tsx</code></a></td></tr><tr><td><code>/orders/[id]</code></td><td>Order Tracking</td><td>Real-time map, status timeline, driver location, receipt.</td><td>Customer Auth</td><td>Checkout / Orders</td><td>Home / Support</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/orders/[id]/page.tsx" ><code>apps/web/src/app/orders/[id]/page.tsx</code></a></td></tr><tr><td><code>/account/orders</code></td><td>Order History</td><td>Historical list of customer past orders with re-order.</td><td>Customer Auth</td><td>Header Menu</td><td><code>/orders/[id]</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/account/orders/page.tsx" ><code>apps/web/src/app/account/orders/page.tsx</code></a></td></tr><tr><td><code>/account/addresses</code></td><td>Saved Addresses</td><td>Add, edit, or delete customer delivery locations.</td><td>Customer Auth</td><td>Account Menu</td><td>Checkout</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/account/addresses/page.tsx" ><code>apps/web/src/app/account/addresses/page.tsx</code></a></td></tr><tr><td><code>/auth/login</code></td><td>Customer Sign In</td><td>Email/password sign-in and Google OAuth login.</td><td>Public</td><td>Header / Checkout</td><td><code>/</code>, Previous Page</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/auth/login/page.tsx" ><code>apps/web/src/app/auth/login/page.tsx</code></a></td></tr><tr><td><code>/auth/signup</code></td><td>Customer Register</td><td>Create new customer profile.</td><td>Public</td><td>Login Page</td><td><code>/</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/auth/signup/page.tsx" ><code>apps/web/src/app/auth/signup/page.tsx</code></a></td></tr><tr><td><code>/privacy</code></td><td>Privacy Policy</td><td>Legal statement on data collection, storage, and retention.</td><td>Public</td><td>Footer</td><td><code>/terms</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/privacy/page.tsx" ><code>apps/web/src/app/privacy/page.tsx</code></a></td></tr><tr><td><code>/terms</code></td><td>Terms of Service</td><td>Customer marketplace terms and conditions.</td><td>Public</td><td>Footer</td><td><code>/privacy</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/terms/page.tsx" ><code>apps/web/src/app/terms/page.tsx</code></a></td></tr></tbody></table></div>
+<h3 id="chef-admin-apps-chef-admin-chef-ridendine-ca">Chef Admin (<code>apps/chef-admin</code> — <code>chef.ridendine.ca</code>)</h3>
+<div class="table-container"><table><thead><tr><th>Route / URL</th><th>Screen Name</th><th>Purpose</th><th>Access Level</th><th>Reached From</th><th>Leads To</th><th>Source File</th></tr></thead><tbody><tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr><tr><td><code>/dashboard</code></td><td>Chef Dashboard</td><td>Live action queue, prep timeline, earnings snapshot.</td><td>Approved Chef</td><td>Login</td><td>Orders, Menu, Payouts</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/page.tsx" ><code>apps/chef-admin/src/app/dashboard/page.tsx</code></a></td></tr><tr><td><code>/dashboard/orders</code></td><td>Orders Queue</td><td>List of active, preparing, and completed orders.</td><td>Approved Chef</td><td>Sidebar</td><td><code>/dashboard/orders/[id]</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/orders/page.tsx" ><code>apps/chef-admin/src/app/dashboard/orders/page.tsx</code></a></td></tr><tr><td><code>/dashboard/orders/[id]</code></td><td>Order Detail</td><td>Accept/Reject order, mark Preparing, Ready for Pickup.</td><td>Approved Chef</td><td>Orders Queue</td><td>Orders Queue</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/orders/[id]/page.tsx" ><code>apps/chef-admin/src/app/dashboard/orders/[id]/page.tsx</code></a></td></tr><tr><td><code>/dashboard/menu</code></td><td>Menu Catalog</td><td>CRUD categories, menu items, prices, 86/sold-out toggles.</td><td>Approved Chef</td><td>Sidebar</td><td>Item Editor</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/menu/page.tsx" ><code>apps/chef-admin/src/app/dashboard/menu/page.tsx</code></a></td></tr><tr><td><code>/dashboard/storefront</code></td><td>Storefront Editor</td><td>Kitchen bio, cuisine tags, logo, banner, prep time buffers.</td><td>Approved Chef</td><td>Sidebar</td><td>Setup Wizard</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/storefront/page.tsx" ><code>apps/chef-admin/src/app/dashboard/storefront/page.tsx</code></a></td></tr><tr><td><code>/dashboard/availability</code></td><td>Operating Hours</td><td>Day-of-week operating hours and vacation pause mode.</td><td>Approved Chef</td><td>Sidebar</td><td>Storefront</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/availability/page.tsx" ><code>apps/chef-admin/src/app/dashboard/availability/page.tsx</code></a></td></tr><tr><td><code>/dashboard/recipes</code></td><td>Recipe Costing</td><td>Ingredient quantities, batch cost, profit margin analytics.</td><td>Approved Chef</td><td>Sidebar</td><td>Inventory</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/recipes/page.tsx" ><code>apps/chef-admin/src/app/dashboard/recipes/page.tsx</code></a></td></tr><tr><td><code>/dashboard/inventory</code></td><td>Inventory Tracker</td><td>Raw material tracking, waste events, supplier items.</td><td>Approved Chef</td><td>Sidebar</td><td>Recipes</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/inventory/page.tsx" ><code>apps/chef-admin/src/app/dashboard/inventory/page.tsx</code></a></td></tr><tr><td><code>/dashboard/payouts</code></td><td>Payouts &amp; Stripe</td><td>Stripe Express Connect onboarding and payout history.</td><td>Approved Chef</td><td>Sidebar</td><td>Stripe Express</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/payouts/page.tsx" ><code>apps/chef-admin/src/app/dashboard/payouts/page.tsx</code></a></td></tr><tr><td><code>/dashboard/reviews</code></td><td>Customer Reviews</td><td>Rating history and customer feedback comments.</td><td>Approved Chef</td><td>Sidebar</td><td>Dashboard</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/dashboard/reviews/page.tsx" ><code>apps/chef-admin/src/app/dashboard/reviews/page.tsx</code></a></td></tr><tr><td><code>/auth/login</code></td><td>Chef Portal Login</td><td>Credentials sign in for registered kitchen operators.</td><td>Public</td><td>Direct</td><td><code>/dashboard</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/auth/login/page.tsx" ><code>apps/chef-admin/src/app/auth/login/page.tsx</code></a></td></tr><tr><td><code>/auth/signup</code></td><td>Chef Onboarding</td><td>New kitchen partner registration form.</td><td>Public</td><td>Login</td><td><code>/dashboard/storefront/setup</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/auth/signup/page.tsx" ><code>apps/chef-admin/src/app/auth/signup/page.tsx</code></a></td></tr></tbody></table></div>
+<h3 id="driver-app-apps-driver-app-driver-ridendine-ca">Driver App (<code>apps/driver-app</code> — <code>driver.ridendine.ca</code>)</h3>
+<div class="table-container"><table><thead><tr><th>Route / URL</th><th>Screen Name</th><th>Purpose</th><th>Access Level</th><th>Reached From</th><th>Leads To</th><th>Source File</th></tr></thead><tbody><tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr><tr><td><code>/</code></td><td>Work Dashboard</td><td>Online shift toggle, active dispatch offer modal, live task.</td><td>Approved Driver</td><td>Login</td><td>Delivery Route</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/page.tsx" ><code>apps/driver-app/src/app/page.tsx</code></a></td></tr><tr><td><code>/deliveries/[id]</code></td><td>Delivery Execution</td><td>Pickup checklist, customer routing, photo proof upload.</td><td>Approved Driver</td><td>Dashboard</td><td>Dashboard</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/deliveries/[id]/page.tsx" ><code>apps/driver-app/src/app/deliveries/[id]/page.tsx</code></a></td></tr><tr><td><code>/earnings</code></td><td>Earnings Summary</td><td>Completed deliveries, delivery pay, tips, settlement status.</td><td>Approved Driver</td><td>Navigation</td><td>Dashboard</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/earnings/page.tsx" ><code>apps/driver-app/src/app/earnings/page.tsx</code></a></td></tr><tr><td><code>/documents</code></td><td>Vehicle &amp; License</td><td>License photo, insurance expiry, vehicle registration.</td><td>Driver Auth</td><td>Navigation</td><td>Dashboard</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/documents/page.tsx" ><code>apps/driver-app/src/app/documents/page.tsx</code></a></td></tr><tr><td><code>/profile</code></td><td>Driver Profile</td><td>Contact details, phone number, vehicle settings, logout.</td><td>Driver Auth</td><td>Navigation</td><td><code>/auth/login</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/profile/page.tsx" ><code>apps/driver-app/src/app/profile/page.tsx</code></a></td></tr><tr><td><code>/auth/login</code></td><td>Driver Sign In</td><td>Driver authentication portal.</td><td>Public</td><td>Direct</td><td><code>/</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/auth/login/page.tsx" ><code>apps/driver-app/src/app/auth/login/page.tsx</code></a></td></tr><tr><td><code>/auth/signup</code></td><td>Driver Onboarding</td><td>Sign up to deliver with RideNDine.</td><td>Public</td><td>Login</td><td><code>/documents</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/auth/signup/page.tsx" ><code>apps/driver-app/src/app/auth/signup/page.tsx</code></a></td></tr></tbody></table></div>
+<h3 id="ops-admin-apps-ops-admin-ops-ridendine-ca">Ops Admin (<code>apps/ops-admin</code> — <code>ops.ridendine.ca</code>)</h3>
+<div class="table-container"><table><thead><tr><th>Route / URL</th><th>Screen Name</th><th>Purpose</th><th>Access Level</th><th>Reached From</th><th>Leads To</th><th>Source File</th></tr></thead><tbody><tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr><tr><td><code>/dashboard</code></td><td>Live Operations Board</td><td>Real-time kanban swimlanes of orders, active fleet count.</td><td>Ops Staff</td><td>Login</td><td>Order Detail</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/page.tsx" ><code>apps/ops-admin/src/app/dashboard/page.tsx</code></a></td></tr><tr><td><code>/dashboard/orders</code></td><td>Orders Management</td><td>Search, filter, inspect all orders with lifecycle status.</td><td>Ops Staff</td><td>Sidebar</td><td>Order Detail</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/orders/page.tsx" ><code>apps/ops-admin/src/app/dashboard/orders/page.tsx</code></a></td></tr><tr><td><code>/dashboard/orders/[id]</code></td><td>Order Command Center</td><td>Manual driver reassignment, cancel order, force status.</td><td>Ops Staff</td><td>Live Board</td><td>Orders</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/orders/[id]/page.tsx" ><code>apps/ops-admin/src/app/dashboard/orders/[id]/page.tsx</code></a></td></tr><tr><td><code>/dashboard/dispatch</code></td><td>Fleet Live Map</td><td>Real-time map of all online drivers with status indicators.</td><td>Ops Staff</td><td>Sidebar</td><td>Driver Detail</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/dispatch/page.tsx" ><code>apps/ops-admin/src/app/dashboard/dispatch/page.tsx</code></a></td></tr><tr><td><code>/dashboard/chefs</code></td><td>Chef Management</td><td>Kitchen verification, document review, storefront pause.</td><td>Ops Staff</td><td>Sidebar</td><td>Chef Detail</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/chefs/page.tsx" ><code>apps/ops-admin/src/app/dashboard/chefs/page.tsx</code></a></td></tr><tr><td><code>/dashboard/drivers</code></td><td>Driver Management</td><td>Background check verification, license validation.</td><td>Ops Staff</td><td>Sidebar</td><td>Driver Detail</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/drivers/page.tsx" ><code>apps/ops-admin/src/app/dashboard/drivers/page.tsx</code></a></td></tr><tr><td><code>/dashboard/support</code></td><td>Support Desk</td><td>Customer complaint tickets, missing items, refund triage.</td><td>Support Agent</td><td>Sidebar</td><td>Ticket Resolution</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/support/page.tsx" ><code>apps/ops-admin/src/app/dashboard/support/page.tsx</code></a></td></tr><tr><td><code>/dashboard/finance</code></td><td>Finance Dashboard</td><td>GMV, net platform commission, driver payouts, sales tax.</td><td>Finance Mgr</td><td>Sidebar</td><td>Ledger</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/finance/page.tsx" ><code>apps/ops-admin/src/app/dashboard/finance/page.tsx</code></a></td></tr><tr><td><code>/dashboard/ledger</code></td><td>Double-Entry Ledger</td><td>Immutable credit/debit transaction log.</td><td>Finance Mgr</td><td>Sidebar</td><td>Finance</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/ledger/page.tsx" ><code>apps/ops-admin/src/app/dashboard/ledger/page.tsx</code></a></td></tr><tr><td><code>/dashboard/payouts</code></td><td>Payout Processor</td><td>Execute weekly Stripe Connect batch transfers.</td><td>Finance Mgr</td><td>Sidebar</td><td>Stripe Dashboard</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/payouts/page.tsx" ><code>apps/ops-admin/src/app/dashboard/payouts/page.tsx</code></a></td></tr><tr><td><code>/dashboard/settings</code></td><td>Platform Settings</td><td>Adjust commission %, base delivery fees, SLAs, radiuses.</td><td>Super Admin</td><td>Sidebar</td><td>Dashboard</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/settings/page.tsx" ><code>apps/ops-admin/src/app/dashboard/settings/page.tsx</code></a></td></tr><tr><td><code>/dashboard/audit</code></td><td>Audit Log</td><td>Read-only ledger of administrative actions and overrides.</td><td>Super Admin</td><td>Sidebar</td><td>Dashboard</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/dashboard/audit/page.tsx" ><code>apps/ops-admin/src/app/dashboard/audit/page.tsx</code></a></td></tr><tr><td><code>/auth/login</code></td><td>Ops Console Login</td><td>Secure administrator sign in.</td><td>Public</td><td>Direct</td><td><code>/dashboard</code></td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/auth/login/page.tsx" ><code>apps/ops-admin/src/app/auth/login/page.tsx</code></a></td></tr></tbody></table></div>
+<hr class="divider" />
+<h2 id="3-key-user-journeys">3. Key User Journeys</h2>
+<h3 id="journey-1-customer-order-checkout">Journey 1: Customer Order &amp; Checkout</h3>
+<ol>
+<li><strong>Discovery:</strong> Customer visits <code>https://ridendine.ca/</code>, enters delivery address or allows geolocation; platform filters open kitchens within 15 km.</li>
+<li><strong>Selection:</strong> Customer opens chef storefront (<code>/chefs/[slug]</code>), clicks a dish card, configures options (e.g. spice level), and clicks "Add to Order".</li>
+<li><strong>Cart Review:</strong> Customer opens cart drawer, reviews itemized subtotal, service fee, and estimated delivery fee.</li>
+<li><strong>Checkout:</strong> Customer proceeds to <code>/checkout</code>, selects saved address or inputs new address, adds driver tip ($2, $3, $5, or custom), and inputs credit card into Stripe Elements.</li>
+<li><strong>Confirmation:</strong> System creates order record in Supabase with <code>status: 'placed'</code> and redirects customer to <code>/orders/[id]</code> live tracking view.</li>
+</ol>
+<h3 id="journey-2-chef-kitchen-fulfillment">Journey 2: Chef Kitchen Fulfillment</h3>
+<ol>
+<li><strong>Alert:</strong> Incoming order triggers audio alert and appears in Chef Admin (<code>/dashboard</code>) under "Today's Action Queue".</li>
+<li><strong>Acceptance:</strong> Chef reviews items and click "Accept Order" (within 5-min SLA window); status transitions to <code>accepted</code>.</li>
+<li><strong>Preparation:</strong> When cooking begins, chef clicks "Start Preparing"; status becomes <code>preparing</code>; dispatch engine initiates driver matching.</li>
+<li><strong>Handoff:</strong> When food is packed, chef clicks "Ready for Pickup"; status transitions to <code>ready_for_pickup</code>. Chef verifies driver ID on arrival and hands over package.</li>
+</ol>
+<h3 id="journey-3-driver-dispatch-delivery">Journey 3: Driver Dispatch &amp; Delivery</h3>
+<ol>
+<li><strong>Shift Online:</strong> Driver logs in to <code>https://driver.ridendine.ca/</code> and toggles shift toggle to "Go Online".</li>
+<li><strong>Offer Dispatch:</strong> When an order is preparing, dispatch engine identifies nearest driver; a 60-second offer modal appears with pickup/delivery distance and earnings.</li>
+<li><strong>Acceptance:</strong> Driver taps "Accept Offer"; delivery transitions to <code>assigned</code>.</li>
+<li><strong>Pickup:</strong> Driver navigates to kitchen, confirms pickup checklist in app, and taps "Confirm Pickup"; status becomes <code>in_transit</code>.</li>
+<li><strong>Doorstep Delivery:</strong> Driver navigates to customer address, drops food at door, takes photo verification in app, and taps "Complete Delivery"; status transitions to <code>delivered</code>.</li>
+</ol>
+<hr class="divider" />
+<h2 id="4-master-order-lifecycle-state-diagram">4. Master Order Lifecycle State Diagram</h2>
+<div class="mermaid-wrapper"><div class="mermaid-label">Diagram (mermaid)</div><div class="mermaid">stateDiagram-v2
+    [*] --&gt; Placed: Customer Checkout (Stripe Authorized)
+    Placed --&gt; Accepted: Chef Accepts (within 5 min SLA)
+    Placed --&gt; Cancelled: Chef Rejects or 5-min SLA Breached
+    
+    Accepted --&gt; Preparing: Chef Starts Cooking
+    Preparing --&gt; ReadyForPickup: Food Packed &amp; Ready
+    
+    state DispatchProcess {
+        [*] --&gt; DriverSearch: Auto-Dispatch Triggered
+        DriverSearch --&gt; OfferSent: Nearest Driver Found (60s timer)
+        OfferSent --&gt; DriverAssigned: Driver Accepts Offer
+        OfferSent --&gt; DriverSearch: Driver Rejects / 60s Timeout
+    }
+    
+    Preparing --&gt; DispatchProcess: Concurrent Dispatch Matching
+    
+    ReadyForPickup --&gt; PickedUp: Driver Arrives &amp; Confirms Pickup
+    PickedUp --&gt; Delivered: Driver Drops at Door + Photo Proof
+    
+    Cancelled --&gt; Refunded: Automated Stripe Refund Processed
+    Delivered --&gt; [*]
+    Refunded --&gt; [*]</div></div>
+  </main>
+
+  
+  <script>
+    function copySnippet(button) {
+      const code = button.closest('.code-block').querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const originalText = button.innerText;
+        button.innerText = 'Copied!';
+        setTimeout(() => { button.innerText = originalText; }, 2000);
+      });
+    }
+  </script>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    if (typeof mermaid !== 'undefined') {
+      mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    }
+  </script>
+
+</body>
+</html>

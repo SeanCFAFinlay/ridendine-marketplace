@@ -11,6 +11,7 @@ const links = [
   { href: '/dashboard/finance/instant-payouts', label: 'Instant queue' },
   { href: '/dashboard/finance/reconciliation', label: 'Reconciliation' },
   { href: '/dashboard/finance/refunds', label: 'Refunds' },
+  { href: '/dashboard/finance/tax-reports', label: 'Ontario Tax (T4A)' },
 ] as const;
 
 export function FinanceSubnav() {

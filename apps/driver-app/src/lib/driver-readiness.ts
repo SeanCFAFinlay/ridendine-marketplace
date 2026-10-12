@@ -1,6 +1,7 @@
 import type { DriverReadinessSignal, DriverReadinessStatus } from '@ridendine/types';
+import { DRIVER_LOCATION_STALE_THRESHOLD_MS } from '@ridendine/utils';
 
-export const DRIVER_DISPATCH_LOCATION_TTL_MS = 90_000;
+export const DRIVER_DISPATCH_LOCATION_TTL_MS = DRIVER_LOCATION_STALE_THRESHOLD_MS;
 
 /**
  * Phase 1 exposes this for downstream summary/UI copy. Dispatch blocking still

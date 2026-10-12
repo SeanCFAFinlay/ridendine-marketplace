@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>05 – Backend Schema &amp; API Catalog | RideNDine Documentation</title>
+  <style>
+    
+  :root {
+    --color-brand-primary: #0f3d2e;
+    --color-brand-primary-light: #165b45;
+    --color-brand-accent: #d97706;
+    --color-brand-accent-hover: #b45309;
+    --color-bg-base: #0f172a;
+    --color-bg-surface: #1e293b;
+    --color-bg-surface-elevated: #334155;
+    --color-text-main: #f8fafc;
+    --color-text-muted: #94a3b8;
+    --color-border: #334155;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-bg-base);
+    color: var(--color-text-main);
+    line-height: 1.6;
+  }
+  a { color: #38bdf8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  h1 {
+    font-size: 2.2rem; font-weight: 800; color: #ffffff;
+    margin-bottom: 1rem; border-bottom: 2px solid var(--color-border);
+    padding-bottom: 0.5rem; letter-spacing: -0.03em;
+  }
+  h2 { font-size: 1.5rem; font-weight: 700; color: #ffffff; margin-top: 2rem; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+  h3 { font-size: 1.2rem; font-weight: 600; color: #cbd5e1; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+  h4 { font-size: 1rem; font-weight: 600; color: #94a3b8; margin-top: 1.25rem; margin-bottom: 0.25rem; }
+  p { margin-bottom: 1.2rem; font-size: 0.95rem; color: #cbd5e1; }
+  blockquote {
+    border-left: 4px solid var(--color-brand-accent);
+    background-color: rgba(217, 119, 6, 0.1);
+    padding: 12px 18px; margin: 1.5rem 0; border-radius: 0 8px 8px 0;
+    font-size: 0.9rem; color: #e2e8f0;
+  }
+  hr.divider { border: 0; height: 1px; background-color: var(--color-border); margin: 2rem 0; }
+  ul, ol { margin: 0 0 1.5rem 1.5rem; color: #cbd5e1; font-size: 0.95rem; }
+  li { margin-bottom: 0.4rem; }
+
+  /* Badges */
+  .badge { display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin: 0 2px; vertical-align: middle; }
+  .badge-confirmed { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+  .badge-inferred { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+  .badge-unknown { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+  /* Tables */
+  .table-container { overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--color-border); border-radius: 8px; background-color: var(--color-bg-surface); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; text-align: left; }
+  th { background-color: rgba(0, 0, 0, 0.3); color: #e2e8f0; font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--color-border); color: #cbd5e1; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
+
+  /* Code & Mermaid */
+  code { font-family: var(--font-mono); font-size: 0.85em; background-color: rgba(0, 0, 0, 0.4); padding: 2px 5px; border-radius: 4px; color: #fca5a5; }
+  .code-block, .mermaid-wrapper { margin: 1.5rem 0; background-color: #0b1120; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; }
+  .code-header, .mermaid-label { display: flex; justify-content: space-between; align-items: center; background-color: rgba(0, 0, 0, 0.4); padding: 6px 12px; font-size: 0.75rem; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); font-family: var(--font-mono); }
+  .copy-btn { background-color: var(--color-bg-surface-elevated); border: 1px solid var(--color-border); color: var(--color-text-main); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
+  .copy-btn:hover { background-color: var(--color-brand-accent); }
+  pre { padding: 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.85rem; color: #e2e8f0; line-height: 1.5; }
+  pre code { background: none; padding: 0; color: inherit; }
+  .mermaid { padding: 16px; overflow-x: auto; background-color: #0f172a; text-align: center; }
+
+  @media print {
+    body { background: #ffffff !important; color: #000000 !important; }
+    .topbar, .copy-btn, .header-nav { display: none !important; }
+    h1, h2, h3 { color: #000000 !important; }
+    p, td, li { color: #222222 !important; }
+    table, th, td { border-color: #cccccc !important; }
+  }
+
+    .header-nav {
+      background-color: var(--color-bg-surface);
+      border-bottom: 1px solid var(--color-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-nav .brand {
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-nav .links {
+      display: flex;
+      gap: 16px;
+      font-size: 0.875rem;
+    }
+    .container {
+      max-width: 1024px;
+      margin: 32px auto;
+      padding: 0 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-nav">
+    <div class="brand">
+      <a href="index.html" style="color: #ffffff; text-decoration: none;">RideNDine Documentation</a>
+      <span class="badge badge-confirmed">Commit: 5599c2e5</span>
+    </div>
+    <div class="links">
+      <a href="index.html">← Back to Portal</a>
+      <a href="AUDIT-REPORT.html">Executive Summary</a>
+      <a href="01-PRD.html">01-PRD</a>
+      <a href="02-TRD.html">02-TRD</a>
+      <a href="05-Backend-Schema.html">Schema</a>
+      <button class="copy-btn" onclick="window.print()" style="padding: 4px 10px;">Print / PDF</button>
+    </div>
+  </div>
+
+  <main class="container">
+    <h1 id="ridendine-backend-schema-api-catalog">RideNDine Backend Schema &amp; API Catalog</h1>
+<blockquote><strong>Document 05 – Backend Schema &amp; API Catalog</strong> | Project: RideNDine Marketplace | Date: October 7, 2026 | Commit: <code>5599c2e5</code> | Author: AI-generated from codebase audit | Confidence Summary: 56 CONFIRMED / 0 INFERRED / 0 UNKNOWN</blockquote>
+<hr class="divider" />
+<h2 id="1-overview-database-architecture">1. Overview &amp; Database Architecture</h2>
+<p>RideNDine utilizes a high-availability <strong>PostgreSQL 15</strong> relational database hosted on Supabase, enhanced with the <strong>PostGIS</strong> geographic extension for spatial radius and distance calculations <code><span class="badge badge-confirmed">CONFIRMED: supabase/migrations/*.sql &amp; information_schema.tables</span></code>.</p>
+<h3 id="key-database-statistics">Key Database Statistics</h3>
+<ul>
+<li><strong>Total Operational Tables:</strong> 112 public tables (113 including PostGIS <code>spatial_ref_sys</code>) <code><span class="badge badge-confirmed">CONFIRMED: information_schema.tables</span></code>.</li>
+<li><strong>Database Views:</strong> 4 public views (<code>geography_columns</code>, <code>geometry_columns</code>, <code>order_status_events</code>, <code>partner_api_stats</code>) <code><span class="badge badge-confirmed">CONFIRMED: information_schema.tables</span></code>.</li>
+<li><strong>Migrations:</strong> 64 sequential migrations recorded in <code>supabase/migrations/</code> establishing referential integrity, indexes, and RLS policies <code><span class="badge badge-confirmed">CONFIRMED: supabase/migrations</span></code>.</li>
+<li><strong>Connection Mechanisms:</strong> Direct connection pooling via Node-postgres (<code>pg</code>) on port 5432/6543, and HTTP REST / WebSocket connection via <code>@supabase/supabase-js</code> <code><span class="badge badge-confirmed">CONFIRMED: packages/db</span></code>.</li>
+</ul>
+<hr class="divider" />
+<h2 id="2-core-entity-relationship-diagram">2. Core Entity-Relationship Diagram</h2>
+<div class="mermaid-wrapper"><div class="mermaid-label">Diagram (mermaid)</div><div class="mermaid">erDiagram
+    PLATFORM_USERS ||--o{ AUDIT_LOGS : "performs"
+    AUTH_USERS ||--o| PLATFORM_USERS : "has"
+    AUTH_USERS ||--o| CHEF_PROFILES : "owns"
+    AUTH_USERS ||--o| DRIVERS : "operates as"
+    AUTH_USERS ||--o| CUSTOMERS : "purchases as"
+
+    CHEF_PROFILES ||--o{ CHEF_STOREFRONTS : "operates"
+    CHEF_STOREFRONTS ||--o{ MENU_CATEGORIES : "contains"
+    MENU_CATEGORIES ||--o{ MENU_ITEMS : "categorizes"
+    MENU_ITEMS ||--o{ MENU_ITEM_OPTIONS : "configures"
+    MENU_ITEM_OPTIONS ||--o{ MENU_ITEM_OPTION_VALUES : "defines"
+
+    CUSTOMERS ||--o{ CUSTOMER_ADDRESSES : "saves"
+    CUSTOMERS ||--o{ ORDERS : "places"
+    CHEF_STOREFRONTS ||--o{ ORDERS : "fulfills"
+    ORDERS ||--o{ ORDER_ITEMS : "contains"
+    ORDER_ITEMS ||--o{ ORDER_ITEM_MODIFIERS : "customized by"
+    ORDERS ||--o{ ORDER_STATUS_HISTORY : "tracks"
+
+    ORDERS ||--o| DELIVERIES : "dispatches to"
+    DRIVERS ||--o{ DELIVERIES : "transports"
+    DELIVERIES ||--o{ DELIVERY_TRACKING_EVENTS : "records"
+    DRIVERS ||--o{ DRIVER_SHIFTS : "logs"
+    DRIVERS ||--o{ DRIVER_LOCATIONS : "broadcasts"
+
+    ORDERS ||--o{ LEDGER_ENTRIES : "generates"
+    ORDERS ||--o{ REVIEWS : "rated by"
+    ORDERS ||--o{ REFUND_CASES : "disputed via"</div></div>
+<hr class="divider" />
+<h2 id="3-database-table-catalog-by-functional-domain">3. Database Table Catalog by Functional Domain</h2>
+<h3 id="domain-1-orders-fulfillment-15-tables-confirmed-information-schema-tables">Domain 1: Orders &amp; Fulfillment (15 Tables) <code><span class="badge badge-confirmed">CONFIRMED: information_schema.tables</span></code></h3>
+<ol>
+<li><strong><code>orders</code>:</strong> Master order transaction table storing order number, customer ID, storefront ID, status, financial totals (subtotal, tax, tip, delivery fee, service fee, total), payment status, and prep timing.</li>
+<li><strong><code>order_items</code>:</strong> Itemized dishes included in an order with quantity, unit price, item ID, and special kitchen instructions.</li>
+<li><strong><code>order_item_modifiers</code>:</strong> Selected customizations and options chosen for each order item with incremental add-on pricing.</li>
+<li><strong><code>order_status_history</code>:</strong> Audit trail recording exact timestamps and user IDs for every order state transition.</li>
+<li><strong><code>order_pack_checks</code>:</strong> Checklists used by kitchen staff and drivers to verify dish packaging accuracy before handoff.</li>
+<li><strong><code>order_exceptions</code>:</strong> Escalated incidents (e.g. food late, customer unavailable, damaged item) linked to specific orders.</li>
+<li><strong><code>deliveries</code>:</strong> Delivery fulfillment record storing pickup address, delivery address, driver ID, delivery status, and timestamps.</li>
+<li><strong><code>delivery_assignments</code>:</strong> Assignment records linking drivers to specific delivery runs.</li>
+<li><strong><code>delivery_tracking_events</code>:</strong> Time-series GPS location breadcrumbs and status changes logged during transit.</li>
+<li><strong><code>assignment_attempts</code>:</strong> Automated dispatch attempt log tracking 60-second driver offer lifecycles and acceptance status.</li>
+<li><strong><code>kitchen_tickets</code>:</strong> Digital kitchen tickets routed to preparation lines.</li>
+<li><strong><code>kitchen_ticket_items</code>:</strong> Individual line items assigned to specific prep tickets.</li>
+<li><strong><code>kitchen_queue_entries</code>:</strong> Real-time queue positioning for kitchens operating under high order volume.</li>
+<li><strong><code>refund_cases</code>:</strong> Formal customer dispute records tracking requested refund amounts, reasons, and Stripe refund IDs.</li>
+<li><strong><code>payout_adjustments</code>:</strong> Credit/debit manual adjustments applied to orders, drivers, or chefs following support resolutions.</li>
+</ol>
+<h3 id="domain-2-kitchens-chefs-menus-18-tables-confirmed-information-schema-tables">Domain 2: Kitchens, Chefs &amp; Menus (18 Tables) <code><span class="badge badge-confirmed">CONFIRMED: information_schema.tables</span></code></h3>
+<ol>
+<li><strong><code>chef_profiles</code>:</strong> Primary identity for kitchen creators storing legal name, display name, bio, phone, and verification status.</li>
+<li><strong><code>chef_storefronts</code>:</strong> Public kitchen brand profiles with slug, cuisine tags, logo, banner image, queue limits, and status.</li>
+<li><strong><code>chef_kitchens</code>:</strong> Commercial preparation facility addresses with geographic lat/lng coordinates and inspection records.</li>
+<li><strong><code>chef_availability</code>:</strong> Recurring operating schedules defining open/close times per day of week.</li>
+<li><strong><code>chef_delivery_zones</code>:</strong> Configured delivery polygons and distance boundaries defining where a kitchen delivers.</li>
+<li><strong><code>chef_documents</code>:</strong> Uploaded food safety certificates, business licenses, and government IDs.</li>
+<li><strong><code>chef_payout_accounts</code>:</strong> Linked Stripe Express Connect account IDs (<code>acct_*</code>) and verification states.</li>
+<li><strong><code>chef_payouts</code>:</strong> Historical records of funds disbursed to chefs with Stripe transfer IDs.</li>
+<li><strong><code>menu_categories</code>:</strong> Storefront menu groupings (e.g. Appetizers, Entrees, Desserts, Beverages).</li>
+<li><strong><code>menu_items</code>:</strong> Individual dishes with pricing, descriptions, allergen tags, daily volume caps, and 86/sold-out status.</li>
+<li><strong><code>menu_item_options</code>:</strong> Modifier groupings (e.g. "Choose your protein", "Spice level") attached to menu items.</li>
+<li><strong><code>menu_item_option_values</code>:</strong> Individual choices within an option group with price adjustments.</li>
+<li><strong><code>menu_item_availability</code>:</strong> Time-specific availability overrides for seasonal or lunch-only items.</li>
+<li><strong><code>menu_item_packaging</code>:</strong> Packaging container specifications mapped to menu items for transport safety.</li>
+<li><strong><code>menu_item_recipe_versions</code>:</strong> Versioned recipe links associating menu items with ingredient bill of materials.</li>
+<li><strong><code>kitchen_daily_summaries</code>:</strong> End-of-day kitchen operational rollups (total orders, GMV, prep speed, waste count).</li>
+<li><strong><code>kitchen_stations</code>:</strong> Prep station definitions (e.g. Cold Prep, Wok Station, Packing).</li>
+<li><strong><code>kitchen_station_assignments</code>:</strong> Kitchen staff assignments to specific prep stations.</li>
+</ol>
+<h3 id="domain-3-drivers-fleet-dispatch-14-tables-confirmed-information-schema-tables">Domain 3: Drivers, Fleet &amp; Dispatch (14 Tables) <code><span class="badge badge-confirmed">CONFIRMED: information_schema.tables</span></code></h3>
+<ol>
+<li><strong><code>drivers</code>:</strong> Fleet courier records storing vehicle type, license number, status (<code>pending</code>, <code>approved</code>, <code>suspended</code>), and ratings.</li>
+<li><strong><code>driver_shifts</code>:</strong> Shift work logs tracking clock-in and clock-out timestamps and total hours worked.</li>
+<li><strong><code>driver_presence</code>:</strong> Real-time online/offline presence tracking with battery level, network status, and current coordinates.</li>
+<li><strong><code>driver_locations</code>:</strong> High-frequency geographic GPS coordinates broadcasted by active drivers.</li>
+<li><strong><code>driver_earnings</code>:</strong> Aggregated earnings ledgers recording trip base pay, customer tips, and bonuses.</li>
+<li><strong><code>driver_payouts</code>:</strong> Historical bank transfers and weekly Stripe payouts disbursed to drivers.</li>
+<li><strong><code>driver_payout_accounts</code>:</strong> Bank routing and Stripe Connect account details for driver disbursements.</li>
+<li><strong><code>driver_documents</code>:</strong> Scanned driver's licenses, motor vehicle inspection records, and insurance cards.</li>
+<li><strong><code>driver_vehicles</code>:</strong> Vehicle details including make, model, year, license plate, and color.</li>
+<li><strong><code>driver_notification_preferences</code>:</strong> Push and SMS notification toggles for dispatch alerts.</li>
+<li><strong><code>instant_payout_requests</code>:</strong> On-demand instant cash-out requests initiated by drivers.</li>
+<li><strong><code>delivery_events</code>:</strong> Detailed log of delivery state changes and transit exceptions.</li>
+<li><strong><code>sla_timers</code>:</strong> Active countdown timers tracking delivery and dispatch SLA thresholds.</li>
+<li><strong><code>service_areas</code>:</strong> Geofenced municipal service polygons governing driver coverage areas.</li>
+</ol>
+<h3 id="domain-4-customers-loyalty-8-tables-confirmed-information-schema-tables">Domain 4: Customers &amp; Loyalty (8 Tables) <code><span class="badge badge-confirmed">CONFIRMED: information_schema.tables</span></code></h3>
+<ol>
+<li><strong><code>customers</code>:</strong> Customer accounts storing contact details, preferences, and default payment references.</li>
+<li><strong><code>customer_addresses</code>:</strong> Saved delivery locations with street addresses, apartment/buzzer codes, and lat/lng coordinates.</li>
+<li><strong><code>carts</code>:</strong> Persistent customer shopping carts tied to user IDs and storefronts.</li>
+<li><strong><code>cart_items</code>:</strong> Individual items, quantities, and selected options stored in an active cart.</li>
+<li><strong><code>favorites</code>:</strong> Customer-bookmarked chef storefronts and favorite dishes.</li>
+<li><strong><code>loyalty_accounts</code>:</strong> Customer reward balances tracking earned loyalty points.</li>
+<li><strong><code>loyalty_transactions</code>:</strong> Point movements detailing points earned on orders and points redeemed for discounts.</li>
+<li><strong><code>reviews</code>:</strong> Verified customer star ratings (1–5) and written feedback linked to completed orders.</li>
+</ol>
+<h3 id="domain-5-platform-settings-ledger-12-tables-confirmed-information-schema-tables">Domain 5: Platform, Settings &amp; Ledger (12 Tables) <code><span class="badge badge-confirmed">CONFIRMED: information_schema.tables</span></code></h3>
+<ol>
+<li><strong><code>platform_users</code>:</strong> Internal operational personnel with assigned roles (<code>super_admin</code>, <code>ops_agent</code>, <code>finance_manager</code>, <code>support_agent</code>).</li>
+<li><strong><code>platform_settings</code>:</strong> Master operational configuration (commission %, customer fee %, tax %, radius, SLAs, updated_by).</li>
+<li><strong><code>platform_accounts</code>:</strong> High-level platform asset accounts for accounting reconciliation.</li>
+<li><strong><code>ledger_entries</code>:</strong> Double-entry accounting log recording debit/credit balances across every transaction.</li>
+<li><strong><code>promo_codes</code>:</strong> Promotional discount rules with usage limits, minimum spend, discount value, and expiration dates.</li>
+<li><strong><code>promo_code_usages</code>:</strong> Audit trail recording which customers redeemed promo codes on specific orders.</li>
+<li><strong><code>referral_codes</code>:</strong> Customer referral link identifiers and reward rules.</li>
+<li><strong><code>referral_signups</code>:</strong> New customer accounts attributed to peer referral codes.</li>
+<li><strong><code>payout_runs</code>:</strong> Batch accounting records tracking weekly scheduled disbursement cycles.</li>
+<li><strong><code>checkout_idempotency_keys</code>:</strong> Cryptographic tokens preventing duplicate checkout submissions.</li>
+<li><strong><code>stripe_events_processed</code>:</strong> Inbound Stripe webhook event deduplication log.</li>
+<li><strong><code>stripe_reconciliation</code>:</strong> Settlement audit reconciling Stripe balance reports against internal ledger entries.</li>
+</ol>
+<h3 id="domain-6-recipes-inventory-kitchen-ops-25-tables-confirmed-information-schema-tables">Domain 6: Recipes, Inventory &amp; Kitchen Ops (25 Tables) <code><span class="badge badge-confirmed">CONFIRMED: information_schema.tables</span></code></h3>
+<ol>
+<li><strong><code>recipes</code>:</strong> Master recipe cards defining culinary dishes and preparation guides.</li>
+<li><strong><code>recipe_versions</code>:</strong> Versioned recipe iterations preserving historical ingredient composition.</li>
+<li><strong><code>recipe_ingredients</code>:</strong> Bill of materials listing raw ingredients, units of measure, and portion ratios.</li>
+<li><strong><code>recipe_steps</code>:</strong> Step-by-step culinary preparation instructions and temperature standards.</li>
+<li><strong><code>recipe_cost_snapshots</code>:</strong> Computed batch costs and food margin percentages.</li>
+<li><strong><code>inventory_items</code>:</strong> Raw culinary ingredients tracked in storage with reorder thresholds.</li>
+<li><strong><code>inventory_counts</code>:</strong> Physical stock count audits conducted in kitchens.</li>
+<li><strong><code>inventory_count_lines</code>:</strong> Individual stock item count variances during physical inventory.</li>
+<li><strong><code>inventory_stock_movements</code>:</strong> Stock ledger recording receipts, prep depletion, and adjustments.</li>
+<li><strong><code>inventory_waste_events</code>:</strong> Spoiled or discarded inventory logging with root-cause reasons.</li>
+<li><strong><code>inventory_alerts</code>:</strong> Automated notifications triggered when ingredient stock dips below reorder points.</li>
+<li><strong><code>storage_locations</code>:</strong> Physical kitchen storage zones (e.g. Walk-in Cooler, Dry Storage, Freezer).</li>
+<li><strong><code>suppliers</code>:</strong> Vendor directory providing raw culinary ingredients and packaging supplies.</li>
+<li><strong><code>supplier_items</code>:</strong> Vendor-specific SKU numbers, minimum order quantities, and unit prices.</li>
+<li><strong><code>supplier_price_history</code>:</strong> Historical price fluctuations for raw culinary supplies.</li>
+<li><strong><code>purchase_orders</code>:</strong> Commercial ingredient purchase orders submitted to food suppliers.</li>
+<li><strong><code>purchase_order_lines</code>:</strong> Line items and negotiated costs on supplier purchase orders.</li>
+<li><strong><code>receiving_batches</code>:</strong> Delivered food supplies inspected and checked into kitchen inventory.</li>
+<li><strong><code>packaging_items</code>:</strong> Food delivery containers, tamper-evident seals, and branded paper bags.</li>
+<li><strong><code>prep_tasks</code>:</strong> Daily kitchen batch preparation tasks assigned to cooks.</li>
+<li><strong><code>prep_task_events</code>:</strong> Timestamped task progression logs (started, paused, completed).</li>
+<li><strong><code>production_batches</code>:</strong> Scaled batch cooking lots (e.g. 50 liters of broth) with yield counts.</li>
+<li><strong><code>production_batch_inputs</code>:</strong> Raw ingredients depleted into a specific production batch.</li>
+<li><strong><code>production_batch_outputs</code>:</strong> Finished dishes or portioned components generated by a batch.</li>
+<li><strong><code>kitchen_staff</code>:</strong> Kitchen employee directory and contact records.</li>
+</ol>
+<h3 id="domain-7-system-events-telemetry-20-tables-confirmed-information-schema-tables">Domain 7: System, Events &amp; Telemetry (20 Tables) <code><span class="badge badge-confirmed">CONFIRMED: information_schema.tables</span></code></h3>
+<ol>
+<li><strong><code>kitchen_shifts</code>:</strong> Kitchen employee shift logs and attendance records.</li>
+<li><strong><code>time_entries</code>:</strong> Granular clock-in/out timestamps for kitchen workers.</li>
+<li><strong><code>labor_allocations</code>:</strong> Labor cost hours mapped to specific menu preparations.</li>
+<li><strong><code>labor_cost_snapshots</code>:</strong> Calculated labor expense rollups per operating day.</li>
+<li><strong><code>pay_periods</code>:</strong> Weekly and bi-weekly payroll cycle boundaries.</li>
+<li><strong><code>support_tickets</code>:</strong> Customer and kitchen support cases with priority and assigned agent.</li>
+<li><strong><code>system_alerts</code>:</strong> Automated operational alerts (SLA breaches, dispatch failures, stock depletions).</li>
+<li><strong><code>notifications</code>:</strong> In-app notification queue delivered to users.</li>
+<li><strong><code>audit_logs</code>:</strong> Immutable record of administrative mutations with before/after JSON snapshots.</li>
+<li><strong><code>domain_events</code>:</strong> Event bus recording application-level domain events for asynchronous handling.</li>
+<li><strong><code>ops_override_logs</code>:</strong> Specific audit trail of manual dispatcher status overrides.</li>
+<li><strong><code>ops_processor_runs</code>:</strong> Background cron processor execution logs.</li>
+<li><strong><code>admin_notes</code>:</strong> Internal administrative notes attached to chefs, drivers, or orders.</li>
+<li><strong><code>storefront_state_changes</code>:</strong> Audit history of storefront publication, pause, and suspension events.</li>
+<li><strong><code>push_subscriptions</code>:</strong> Web Push API endpoint subscriptions for browser notifications.</li>
+<li><strong><code>api_partners</code>:</strong> Registered third-party API integration accounts.</li>
+<li><strong><code>api_partner_keys</code>:</strong> Scoped API credentials for external integrations.</li>
+<li><strong><code>partner_webhook_deliveries</code>:</strong> Outbound webhook dispatch logs to external partner endpoints.</li>
+<li><strong><code>analytics_events</code>:</strong> Client-side telemetry and user interaction event stream.</li>
+<li><strong><code>spatial_ref_sys</code>:</strong> PostGIS geographic spatial reference coordinate system table.</li>
+</ol>
+<hr class="divider" />
+<h2 id="4-api-route-catalog-sample-of-177-handlers-confirmed-scripts-smoke-runtime-surface-classification-cjs">4. API Route Catalog (Sample of 177 Handlers) <code><span class="badge badge-confirmed">CONFIRMED: scripts/smoke/runtime-surface-classification.cjs</span></code></h2>
+<div class="table-container"><table><thead><tr><th>:---</th><th>:---</th><th>:---</th><th>:---:</th><th>:---</th><th>:---</th></tr></thead><tbody><tr><td><code>POST</code></td><td><code>/api/auth/login</code></td><td>Authenticate customer via email/password.</td><td>No</td><td>Public</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/api/auth/login/route.ts" ><code>apps/web/src/app/api/auth/login/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/auth/signup</code></td><td>Register new customer account.</td><td>No</td><td>Public</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/api/auth/signup/route.ts" ><code>apps/web/src/app/api/auth/signup/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/checkout</code></td><td>Create Stripe PaymentIntent and reserve order.</td><td>Yes</td><td>Customer</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/api/checkout/route.ts" ><code>apps/web/src/app/api/checkout/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/webhooks/stripe</code></td><td>Inbound Stripe webhook listener.</td><td>Webhook Sig</td><td>Stripe</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/api/webhooks/stripe/route.ts" ><code>apps/web/src/app/api/webhooks/stripe/route.ts</code></a></td></tr><tr><td><code>GET</code></td><td><code>/api/health</code></td><td>Service readiness probe for uptime monitors.</td><td>No</td><td>Public</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/web/src/app/api/health/route.ts" ><code>apps/web/src/app/api/health/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/auth/login</code></td><td>Chef authentication with approved profile check.</td><td>No</td><td>Public</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/api/auth/login/route.ts" ><code>apps/chef-admin/src/app/api/auth/login/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/orders/[id]/accept</code></td><td>Accept order and transition to <code>accepted</code>.</td><td>Yes</td><td>Chef</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/api/orders/[id]/accept/route.ts" ><code>apps/chef-admin/src/app/api/orders/[id]/accept/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/orders/[id]/ready</code></td><td>Mark food packed and trigger driver dispatch.</td><td>Yes</td><td>Chef</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/api/orders/[id]/ready/route.ts" ><code>apps/chef-admin/src/app/api/orders/[id]/ready/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/payouts/setup</code></td><td>Generate Stripe Express Connect onboarding link.</td><td>Yes</td><td>Chef</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/chef-admin/src/app/api/payouts/setup/route.ts" ><code>apps/chef-admin/src/app/api/payouts/setup/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/driver/shift</code></td><td>Clock in/out and toggle driver availability.</td><td>Yes</td><td>Driver</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/api/driver/shift/route.ts" ><code>apps/driver-app/src/app/api/driver/shift/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/driver/location</code></td><td>Broadcast current GPS lat/lng coordinates.</td><td>Yes</td><td>Driver</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/api/driver/location/route.ts" ><code>apps/driver-app/src/app/api/driver/location/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/offers/[id]/accept</code></td><td>Accept 60-second dispatch delivery offer.</td><td>Yes</td><td>Driver</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/api/offers/[id]/accept/route.ts" ><code>apps/driver-app/src/app/api/offers/[id]/accept/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/deliveries/[id]/complete</code></td><td>Finalize delivery with proof photo upload.</td><td>Yes</td><td>Driver</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/driver-app/src/app/api/deliveries/[id]/complete/route.ts" ><code>apps/driver-app/src/app/api/deliveries/[id]/complete/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/engine/sla-scan</code></td><td>Trigger background SLA check across active orders.</td><td>Bearer Token</td><td>Engine Cron</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/api/engine/sla-scan/route.ts" ><code>apps/ops-admin/src/app/api/engine/sla-scan/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/engine/dispatch</code></td><td>Trigger automated driver proximity matching.</td><td>Bearer Token</td><td>Engine Cron</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/api/engine/dispatch/route.ts" ><code>apps/ops-admin/src/app/api/engine/dispatch/route.ts</code></a></td></tr><tr><td><code>POST</code></td><td><code>/api/admin/payouts/run</code></td><td>Execute weekly batch payout to all eligible chefs.</td><td>Yes</td><td>Finance Mgr / Admin</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/api/admin/payouts/run/route.ts" ><code>apps/ops-admin/src/app/api/admin/payouts/run/route.ts</code></a></td></tr><tr><td><code>PATCH</code></td><td><code>/api/admin/settings</code></td><td>Modify platform fees, tax rate, or delivery radius.</td><td>Yes</td><td>Super Admin</td><td><a href="file:///D:/Projects/RIDENDINE/ridendine-marketplace/apps/ops-admin/src/app/api/admin/settings/route.ts" ><code>apps/ops-admin/src/app/api/admin/settings/route.ts</code></a></td></tr></tbody></table></div>
+<hr class="divider" />
+<h2 id="5-row-level-security-rls-permissions-matrix">5. Row Level Security (RLS) Permissions Matrix</h2>
+<div class="table-container"><table><thead><tr><th>Entity Group</th><th>Public / Anon</th><th>Customer Role</th><th>Chef Role</th><th>Driver Role</th><th>Ops / Admin Role</th><th>Enforcement Mechanism</th></tr></thead><tbody><tr><td>:---</td><td>:---:</td><td>:---:</td><td>:---:</td><td>:---:</td><td>:---:</td><td>:---</td></tr><tr><td><strong><code>chef_storefronts</code></strong></td><td>View (Active)</td><td>View (Active)</td><td>View / Edit (Own)</td><td>View (Active)</td><td>Full CRUD</td><td>RLS Policy + Service Role</td></tr><tr><td><strong><code>menu_items</code></strong></td><td>View (Active)</td><td>View (Active)</td><td>Full CRUD (Own)</td><td>View (Active)</td><td>Full CRUD</td><td>RLS Policy</td></tr><tr><td><strong><code>orders</code></strong></td><td>None</td><td>View / Insert (Own)</td><td>View / Update (Own Store)</td><td>View (Assigned)</td><td>Full CRUD</td><td>RLS Policy + API Route Guards</td></tr><tr><td><strong><code>deliveries</code></strong></td><td>None</td><td>View (Own Order)</td><td>View (Own Order)</td><td>View / Update (Assigned)</td><td>Full CRUD</td><td>RLS Policy</td></tr><tr><td><strong><code>driver_presence</code></strong></td><td>None</td><td>None</td><td>None</td><td>Full CRUD (Own ID)</td><td>Full CRUD</td><td>RLS Policy</td></tr><tr><td><strong><code>ledger_entries</code></strong></td><td>None</td><td>None</td><td>None</td><td>None</td><td>View Only (Finance/Admin)</td><td>RLS Policy (Restricted)</td></tr><tr><td><strong><code>platform_settings</code></strong></td><td>View (Global)</td><td>View (Global)</td><td>View (Global)</td><td>View (Global)</td><td>Update (Super Admin)</td><td>RLS Policy + Role Check</td></tr><tr><td><strong><code>audit_logs</code></strong></td><td>None</td><td>None</td><td>None</td><td>None</td><td>View Only (Super Admin)</td><td>RLS Policy (Append-only Trigger)</td></tr></tbody></table></div>
+  </main>
+
+  
+  <script>
+    function copySnippet(button) {
+      const code = button.closest('.code-block').querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const originalText = button.innerText;
+        button.innerText = 'Copied!';
+        setTimeout(() => { button.innerText = originalText; }, 2000);
+      });
+    }
+  </script>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    if (typeof mermaid !== 'undefined') {
+      mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    }
+  </script>
+
+</body>
+</html>

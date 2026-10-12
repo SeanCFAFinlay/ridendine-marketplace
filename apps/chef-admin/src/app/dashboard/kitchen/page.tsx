@@ -223,8 +223,14 @@ export default function KitchenPage() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30_000);
-    return () => clearInterval(interval);
+    // Poll every 10s for responsive kitchen updates + immediate fetch on window focus/tap
+    const interval = setInterval(fetchData, 10_000);
+    const onFocus = () => { void fetchData(); };
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [fetchData]);
 
   const togglePause = async () => {
