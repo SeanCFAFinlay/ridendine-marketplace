@@ -84,7 +84,8 @@ export default function TeamPage() {
           {loading ? (
             <div className="p-8 text-center text-textMuted">Loading...</div>
           ) : (
-            <table className="w-full">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[620px]">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-textMuted">
                   <th className="px-4 py-3">Member</th>
@@ -127,6 +128,7 @@ export default function TeamPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </Card>
 

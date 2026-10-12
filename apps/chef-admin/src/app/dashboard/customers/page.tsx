@@ -226,7 +226,7 @@ export default function CustomersPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[620px]">
               <thead>
                 <tr className="border-b border-divider text-left text-xs font-medium uppercase tracking-wide text-textSubtle">
                   <th className="px-5 py-3">Customer</th>

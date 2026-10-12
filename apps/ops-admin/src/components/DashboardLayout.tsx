@@ -159,10 +159,11 @@ function useGroupOpen(groupId: string, defaultOpen = false) {
   return [isOpen, toggle] as const;
 }
 
-function NavGroupItem({ group, pathname, collapsed }: {
+function NavGroupItem({ group, pathname, collapsed, onNavigate }: {
   group: NavGroup;
   pathname: string;
   collapsed: boolean;
+  onNavigate?: () => void;
 }) {
   const { Icon } = group;
 
@@ -226,7 +227,8 @@ function NavGroupItem({ group, pathname, collapsed }: {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-2.5 rounded-md py-2 pl-3 pr-3 text-sm transition-colors ${
+                  onClick={onNavigate}
+                  className={`flex items-center gap-2.5 rounded-md py-2.5 pl-3 pr-3 text-sm transition-colors ${
                     isActive
                       ? 'border-l-2 border-primary bg-primarySoft pl-[10px] font-medium text-primary'
                       : 'border-l-2 border-transparent text-textMuted hover:bg-surfaceMuted hover:text-text'
@@ -428,16 +430,16 @@ export function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
-          <aside className="absolute left-0 top-0 flex h-full w-64 flex-col border-r border-border bg-surface shadow-xl">
+          <aside className="absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col border-r border-border bg-surface shadow-2xl">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <span className="text-sm font-semibold text-text">Navigation</span>
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-md p-1 text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text focus-visible:outline-none focus-visible:shadow-focus"
+                className="rounded-md p-1.5 text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text focus-visible:outline-none focus-visible:shadow-focus"
                 aria-label="Close navigation"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
             <nav className="flex-1 overflow-y-auto p-2">
@@ -447,6 +449,7 @@ export function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
                   group={group}
                   pathname={pathname}
                   collapsed={false}
+                  onNavigate={() => setMobileOpen(false)}
                 />
               ))}
             </nav>

@@ -42,24 +42,26 @@ function LiabilityTable({
   }
 
   return (
-    <table className="w-full text-left text-sm">
-      <thead>
-        <tr className="border-b border-border text-xs uppercase tracking-wide text-textMuted">
-          <th className="py-3 pr-4">Name</th>
-          <th className="py-3 text-right">Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.id} className="border-b border-border">
-            <td className="py-3 pr-4 font-medium text-white">{row.name}</td>
-            <td className="py-3 text-right font-medium text-success">
-              {formatCurrency(row.amount)}
-            </td>
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[320px] text-left text-sm">
+        <thead>
+          <tr className="border-b border-border text-xs uppercase tracking-wide text-textMuted">
+            <th className="py-3 pr-4">Name</th>
+            <th className="py-3 text-right">Amount</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id} className="border-b border-border">
+              <td className="py-3 pr-4 font-medium text-white">{row.name}</td>
+              <td className="py-3 text-right font-medium text-success">
+                {formatCurrency(row.amount)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -70,7 +72,7 @@ function LedgerTable({ rows }: { rows: LedgerEntry[] }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
+      <table className="w-full min-w-[640px] text-left text-sm">
         <thead>
           <tr className="border-b border-border text-xs uppercase tracking-wide text-textMuted">
             <th className="py-3 pr-4">Date</th>

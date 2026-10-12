@@ -297,7 +297,7 @@ export default function GrowthPage() {
           Full {window === 'weeks' ? 'Weekly' : 'Monthly'} Breakdown
         </h2>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[560px]">
             <thead>
               <tr className="border-b border-divider text-left text-xs font-medium uppercase tracking-wide text-textSubtle">
                 <th className="pb-3">Period</th>

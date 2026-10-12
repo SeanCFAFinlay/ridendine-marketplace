@@ -1034,7 +1034,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
 
   const renderProofPanel = () => (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 z-sticky border-t border-border bg-white p-4 shadow-lg safe-bottom">
         {status === 'arrived_at_dropoff' ? (
           <Button
             className="w-full rounded-lg bg-[#22c55e] py-4 text-[15px] font-semibold hover:bg-[#16a34a] disabled:opacity-60"
@@ -1213,7 +1213,7 @@ export default function DeliveryDetail({ delivery, order }: DeliveryDetailProps)
   );
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-32 sm:pb-36">
       {errorMessage && (
         <div className="p-4 pb-0">
           <Card className="border border-danger/30 bg-dangerSoft p-3 text-sm text-danger">

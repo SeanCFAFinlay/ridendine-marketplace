@@ -83,7 +83,7 @@ export default async function FinancePayoutRunsPage() {
                 />
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+                <table className="w-full min-w-[640px] text-left text-sm">
                   <thead>
                     <tr className="border-b border-border text-xs uppercase tracking-wide text-textMuted">
                       <th className="py-3 pr-4">Created</th>

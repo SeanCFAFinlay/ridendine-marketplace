@@ -266,7 +266,8 @@ export default async function OrderDetailPage({
           <h2 className="mb-4 text-lg font-semibold text-white">
             Order Items & Financial Breakdown
           </h2>
-          <table className="w-full">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[500px]">
             <thead>
               <tr className="border-b border-border text-left text-sm text-textMuted">
                 <th className="pb-3">Item</th>
@@ -305,6 +306,7 @@ export default async function OrderDetailPage({
               )}
             </tbody>
           </table>
+          </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <div className="space-y-2 pt-4 text-sm">
@@ -415,7 +417,7 @@ export default async function OrderDetailPage({
 
                   {financials.ledgerEntries.length > 0 && (
                     <div className="overflow-x-auto border-t border-border pt-3">
-                      <table className="w-full text-left text-xs">
+                      <table className="w-full min-w-[560px] text-left text-xs">
                         <thead>
                           <tr className="border-b border-border text-textMuted">
                             <th className="pb-2 pr-3">Ledger type</th>

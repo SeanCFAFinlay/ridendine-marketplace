@@ -842,7 +842,7 @@ export default async function DashboardPage() {
                 <p className="mt-1 text-xs text-textMuted">Orders will appear here once customers start ordering.</p>
               </div>
             ) : (
-              <table className="w-full">
+              <table className="w-full min-w-[500px]">
                 <thead>
                   <tr className="border-b border-divider text-left text-xs font-medium uppercase tracking-wide text-textSubtle">
                     <th className="px-5 py-3">Order</th>

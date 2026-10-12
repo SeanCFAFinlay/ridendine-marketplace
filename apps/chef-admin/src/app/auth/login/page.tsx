@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button, Input } from '@ridendine/ui';
 import { AuthLayout } from '../../../components/auth/auth-layout';
 import { resolveChefRedirectTarget } from './redirect-target';
 
-export default function LoginPage() {
+function ChefLoginForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -116,5 +116,22 @@ export default function LoginPage() {
         </Link>
       </p>
     </AuthLayout>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center p-6 text-textMuted">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <p className="text-sm font-medium">Loading Chef Portal...</p>
+          </div>
+        </div>
+      }
+    >
+      <ChefLoginForm />
+    </Suspense>
   );
 }

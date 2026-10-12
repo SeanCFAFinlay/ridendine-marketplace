@@ -558,6 +558,7 @@ export function KitchenOrderQueue({ tickets, storefrontId }: KitchenOrderQueuePr
     []
   );
 
+  const [mobileColumn, setMobileColumn] = useState<'all' | ColumnKey>('all');
   const totalActive = queue.length;
 
   return (
@@ -571,7 +572,7 @@ export function KitchenOrderQueue({ tickets, storefrontId }: KitchenOrderQueuePr
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold text-text">Live Orders</h2>
           {newCount > 0 && (
@@ -588,7 +589,7 @@ export function KitchenOrderQueue({ tickets, storefrontId }: KitchenOrderQueuePr
             <span className="text-sm text-textMuted">{totalActive} active</span>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <label className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-medium text-textSubtle hover:border-primary cursor-pointer select-none transition-colors">
             <input
               type="checkbox"
@@ -603,13 +604,46 @@ export function KitchenOrderQueue({ tickets, storefrontId }: KitchenOrderQueuePr
               className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary"
             />
             <Printer className="h-3.5 w-3.5 text-textMuted" />
-            <span>Auto-Print 80mm</span>
+            <span className="hidden xs:inline sm:inline">Auto-Print 80mm</span>
+            <span className="xs:hidden sm:hidden">Print</span>
           </label>
           <LiveIndicator status={realtimeStatus} />
         </div>
       </div>
 
-      {/* KDS board - 3 columns */}
+      {/* Mobile stage selector (shown on small screens) */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileColumn('all')}
+          className={`rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
+            mobileColumn === 'all'
+              ? 'bg-primary text-white'
+              : 'bg-surface border border-border text-textMuted hover:text-text'
+          }`}
+        >
+          All ({queue.length})
+        </button>
+        {COLUMNS.map((col) => {
+          const count = queue.filter((t) => col.statuses.includes(t.status)).length;
+          return (
+            <button
+              key={col.key}
+              type="button"
+              onClick={() => setMobileColumn(col.key)}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
+                mobileColumn === col.key
+                  ? 'bg-primary text-white'
+                  : 'bg-surface border border-border text-textMuted hover:text-text'
+              }`}
+            >
+              {col.label} ({count})
+            </button>
+          );
+        })}
+      </div>
+
+      {/* KDS board */}
       {queue.length === 0 ? (
         <div className="rounded-xl border border-divider bg-surfaceMuted py-16 text-center">
           <p className="text-textMuted">No active orders right now</p>
@@ -617,15 +651,19 @@ export function KitchenOrderQueue({ tickets, storefrontId }: KitchenOrderQueuePr
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {COLUMNS.map((col) => (
-            <KDSColumn
-              key={col.key}
-              col={col}
-              tickets={queue}
-              inFlightIds={inFlightIds}
-              onAction={handleAction}
-            />
-          ))}
+          {COLUMNS.map((col) => {
+            const isVisibleOnMobile = mobileColumn === 'all' || mobileColumn === col.key;
+            return (
+              <div key={col.key} className={isVisibleOnMobile ? 'block' : 'hidden sm:block'}>
+                <KDSColumn
+                  col={col}
+                  tickets={queue}
+                  inFlightIds={inFlightIds}
+                  onAction={handleAction}
+                />
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

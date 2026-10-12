@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button, Card, Input } from '@ridendine/ui';
 import { ShieldCheck } from 'lucide-react';
 import { resolveOpsRedirectTarget } from './redirect-target';
 
-export default function LoginPage() {
+function OpsLoginForm() {
   const searchParams = useSearchParams();
 
   const [email, setEmail] = useState('');
@@ -134,5 +134,22 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background p-6 text-white">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <p className="text-sm font-medium text-textMuted">Loading Ops Portal...</p>
+          </div>
+        </div>
+      }
+    >
+      <OpsLoginForm />
+    </Suspense>
   );
 }

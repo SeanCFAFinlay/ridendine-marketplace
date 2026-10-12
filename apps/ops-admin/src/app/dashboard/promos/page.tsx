@@ -84,7 +84,8 @@ export default function PromosPage() {
           ) : promos.length === 0 ? (
             <div className="p-8 text-center text-textMuted">No promo codes yet. Create one to get started.</div>
           ) : (
-            <table className="w-full">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px]">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-textMuted">
                   <th className="px-4 py-3">Code</th>
@@ -146,6 +147,7 @@ export default function PromosPage() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </Card>
 

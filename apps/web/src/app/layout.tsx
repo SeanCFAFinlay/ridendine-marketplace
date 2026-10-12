@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { AuthProvider } from '@ridendine/auth';
 import { CartProvider } from '@/contexts/cart-context';
@@ -28,6 +28,13 @@ export const metadata: Metadata = {
     icon: '/logo-icon.png',
     apple: '/logo-icon.png',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#EA5B26',
 };
 
 export default function RootLayout({

@@ -52,7 +52,7 @@ export default async function FinanceInstantPayoutsPage() {
               <Badge className="bg-warning/20 text-warning">{(rows ?? []).length}</Badge>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full min-w-[600px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-border text-textMuted">
                     <th className="py-2">Requested</th>

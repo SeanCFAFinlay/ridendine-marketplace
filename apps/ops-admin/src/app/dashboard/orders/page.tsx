@@ -186,7 +186,7 @@ export default function OrdersPage() {
 
         <Card className="border-border bg-surface">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[700px]">
               <thead>
                 <tr className="border-b border-border text-left text-sm text-textMuted">
                   <th className="pb-4 pl-6 font-medium">Order Number</th>

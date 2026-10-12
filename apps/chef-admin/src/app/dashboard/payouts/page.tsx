@@ -280,7 +280,7 @@ export default function PayoutsPage() {
           <p className="mt-4 text-sm text-textMuted">No payouts yet</p>
         ) : (
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[500px]">
               <thead>
                 <tr className="border-b text-left text-sm text-textMuted">
                   <th className="pb-3 font-medium">Date</th>

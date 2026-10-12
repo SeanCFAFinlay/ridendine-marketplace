@@ -611,7 +611,7 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
             data-testid="driver-online-toggle"
             onClick={toggleShiftStatus}
             disabled={isTogglingStatus || showShiftEndBlock}
-            className={`rounded-xl px-5 py-3 text-sm font-semibold transition-all disabled:opacity-60 ${
+            className={`w-full md:w-auto rounded-xl px-5 py-3.5 text-base sm:text-sm font-semibold transition-all disabled:opacity-60 ${
               isOnShift
                 ? 'bg-text text-white hover:bg-text/90'
                 : 'bg-primary text-white hover:bg-primaryHover'
@@ -775,7 +775,7 @@ export default function DriverDashboard({ driver, activeDeliveries }: DriverDash
                   data-testid="driver-online-toggle"
                   onClick={toggleShiftStatus}
                   disabled={isTogglingStatus}
-                  className="mt-4 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:bg-primaryHover disabled:opacity-60"
+                  className="mt-4 w-full sm:w-auto rounded-xl bg-primary px-6 py-3.5 text-base sm:text-sm font-semibold text-white hover:bg-primaryHover disabled:opacity-60"
                 >
                   {shiftActionLabel}
                 </button>

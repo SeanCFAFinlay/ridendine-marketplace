@@ -200,7 +200,7 @@ export default async function ChefDetailPage({ params }: { params: { id: string 
           <h3 className="text-lg font-semibold text-white mb-4">Delivery Zones</h3>
           {zones.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[600px] text-sm">
                 <thead>
                   <tr className="border-b border-border text-left">
                     <th className="pb-3 text-textMuted font-medium">Zone Name</th>

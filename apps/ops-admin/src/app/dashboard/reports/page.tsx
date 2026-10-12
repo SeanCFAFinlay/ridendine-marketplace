@@ -154,8 +154,8 @@ export default function ReportsPage() {
               <div className="px-4 py-3 border-b border-border">
                 <h3 className="font-semibold text-white">Daily Breakdown</h3>
               </div>
-              <div className="max-h-96 overflow-y-auto">
-                <table className="w-full">
+              <div className="max-h-96 overflow-y-auto overflow-x-auto">
+                <table className="w-full min-w-[500px]">
                   <thead className="sticky top-0 bg-surface">
                     <tr className="text-left text-xs uppercase tracking-wider text-textMuted border-b border-border">
                       <th className="px-4 py-2">Date</th>

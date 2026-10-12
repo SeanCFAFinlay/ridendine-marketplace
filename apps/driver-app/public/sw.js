@@ -1,12 +1,11 @@
 // RideNDine Driver App Service Worker
-const CACHE_NAME = 'ridendine-driver-v1';
+const CACHE_NAME = 'ridendine-driver-v2';
 const STATIC_ASSETS = [
-  '/',
-  '/auth/login',
+  '/offline.html',
   '/logo-icon.png',
 ];
 
-// Install: cache static assets
+// Install: cache static assets only (never cache dynamic authenticated routes)
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
@@ -14,7 +13,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate: clean old caches
+// Activate: clean old caches (including v1)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -24,14 +23,11 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for API, cache-first for static
+// Fetch: network-first for API and HTML navigation; cache-first for static assets
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Non-GET API requests (status updates, proofs, issue reports): pass
-  // through to the network, but return a consistent offline JSON error
-  // instead of a raw TypeError so page error handling can show a clear
-  // message. Mutations are never cached or replayed.
+  // Non-GET API requests: pass through to the network with clean offline error
   if (event.request.method !== 'GET') {
     if (url.pathname.startsWith('/api/')) {
       event.respondWith(
@@ -55,24 +51,32 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for static assets, offline fallback for navigation
+  // HTML navigation requests: strictly network-first so authentication redirects and
+  // live SSR views are never trapped in a stale cache.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(async () => {
+        const offlineMatch = await caches.match('/offline.html');
+        return offlineMatch || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+      })
+    );
+    return;
+  }
+
+  // Cache-first strategy for static assets (images, static files, offline.html)
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
 
       return fetch(event.request)
         .then((response) => {
-          if (response.ok) {
+          if (response.ok && (url.pathname.startsWith('/_next/static/') || url.pathname.match(/\.(png|jpg|jpeg|svg|webp|ico|woff2?)$/))) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return response;
         })
         .catch(() => {
-          // Offline fallback: serve offline.html for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match('/offline.html');
-          }
           return new Response('', { status: 408 });
         });
     })

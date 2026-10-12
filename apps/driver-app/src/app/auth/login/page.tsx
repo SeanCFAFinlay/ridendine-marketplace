@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@ridendine/ui';
 import { resolveDriverRedirectTarget } from './redirect-target';
 
-export default function DriverLoginPage() {
+function DriverLoginForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -129,5 +129,22 @@ export default function DriverLoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function DriverLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-opsCanvas to-[#1a2d3d] p-6 text-white">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <p className="text-sm font-medium text-textMuted">Loading Driver Portal...</p>
+          </div>
+        </div>
+      }
+    >
+      <DriverLoginForm />
+    </Suspense>
   );
 }
