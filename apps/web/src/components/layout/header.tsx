@@ -30,64 +30,65 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-sticky border-b border-border bg-surface/95 backdrop-blur-md shadow-sm">
-        <div className="container flex h-16 items-center justify-between gap-3">
+        <div className="container flex h-16 items-center justify-between gap-2 sm:gap-4">
           {/* Brand Logo & Location Tag */}
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
               href="/"
-              className="inline-flex items-center rounded-sm focus-visible:outline-none focus-visible:shadow-focus"
+              className="inline-flex shrink-0 items-center rounded-sm focus-visible:outline-none focus-visible:shadow-focus"
               aria-label="RideNDine — home"
             >
               <Logo height={30} />
             </Link>
 
-            <span className="hidden items-center gap-1 rounded-full border border-border bg-surfaceMuted px-2.5 py-0.5 text-xs font-semibold text-textMuted sm:inline-flex">
+            <span className="hidden items-center gap-1 rounded-full border border-border bg-surfaceMuted px-2.5 py-0.5 text-xs font-semibold text-textMuted xl:inline-flex">
               <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
               Ontario
             </span>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-5 md:flex" aria-label="Desktop primary navigation">
+          {/* Desktop Navigation — Activates on lg (1024px+) to prevent intermediate tablet collisions */}
+          <nav className="hidden items-center gap-2 lg:flex xl:gap-4" aria-label="Desktop primary navigation">
             <Link
               href="/chefs/bep-ba-muoi"
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/10 to-[#EE3985]/10 px-3 py-1 text-xs font-bold text-[#0369a1] dark:text-[#7dd3fc] hover:border-[#EE3985]/50 transition-colors shadow-sm"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/10 to-[#EE3985]/10 px-2.5 py-1 text-xs font-bold text-[#0369a1] dark:text-[#7dd3fc] hover:border-[#EE3985]/50 transition-colors shadow-xs whitespace-nowrap"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-[#EE3985] animate-pulse" />
-              Bếp Bà Muối (Cooco Chef)
+              <span className="hidden xl:inline">Bếp Bà Muối (Cooco Chef)</span>
+              <span className="xl:hidden">Bếp Bà Muối</span>
             </Link>
             <Link
               href="/chefs"
-              className="text-sm font-medium text-textMuted transition-colors hover:text-primary"
+              className="shrink-0 text-sm font-medium text-textMuted transition-colors hover:text-primary whitespace-nowrap"
             >
               Browse Chefs
             </Link>
             <Link
               href="/how-it-works"
-              className="text-sm font-medium text-textMuted transition-colors hover:text-primary"
+              className="shrink-0 text-sm font-medium text-textMuted transition-colors hover:text-primary whitespace-nowrap"
             >
               How It Works
             </Link>
             <Link
               href="/about"
-              className="text-sm font-medium text-textMuted transition-colors hover:text-primary"
+              className="shrink-0 text-sm font-medium text-textMuted transition-colors hover:text-primary whitespace-nowrap"
             >
               About
             </Link>
             <Link
               href="/download"
-              className="text-sm font-medium text-textMuted transition-colors hover:text-primary"
+              className="shrink-0 text-sm font-medium text-textMuted transition-colors hover:text-primary whitespace-nowrap"
             >
               Get the App
             </Link>
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {/* Cart Icon — Always accessible for both guests and authenticated users */}
             <Link
               href="/cart"
-              className="relative flex h-10 w-10 items-center justify-center rounded-lg text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text focus-visible:outline-none focus-visible:shadow-focus"
+              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text focus-visible:outline-none focus-visible:shadow-focus"
               aria-label="Cart"
             >
               <svg
@@ -115,11 +116,11 @@ export function Header() {
             </Link>
 
             {loading ? (
-              <div className="h-9 w-9 animate-pulse rounded-full bg-surfaceMuted" />
+              <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-surfaceMuted" />
             ) : user ? (
               <Link
                 href="/account"
-                className="flex h-10 w-10 items-center justify-center rounded-full focus-visible:outline-none focus-visible:shadow-focus"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:shadow-focus"
                 aria-label="Account"
               >
                 <Avatar
@@ -144,10 +145,10 @@ export function Header() {
               </div>
             )}
 
-            {/* Mobile Hamburger Drawer Toggle */}
+            {/* Mobile / Tablet Hamburger Drawer Toggle */}
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-lg text-textMuted transition-colors hover:bg-surfaceMuted focus-visible:outline-none focus-visible:shadow-focus md:hidden"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-textMuted transition-colors hover:bg-surfaceMuted focus-visible:outline-none focus-visible:shadow-focus lg:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileMenuOpen}
@@ -164,9 +165,9 @@ export function Header() {
         </div>
       </header>
 
-      {/* Enhanced Mobile Drawer */}
+      {/* Enhanced Mobile & Tablet Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-modal md:hidden">
+        <div className="fixed inset-0 z-modal lg:hidden">
           <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileMenuOpen(false)}

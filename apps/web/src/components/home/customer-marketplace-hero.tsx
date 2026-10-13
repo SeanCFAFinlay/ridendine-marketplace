@@ -5,10 +5,10 @@ import { Badge, Button, Card } from '@ridendine/ui';
 const cuisineChips = [
   { label: '🔥 Bếp Bà Muối (Cooco)', href: '/chefs/bep-ba-muoi' },
   { label: 'Vietnamese', href: '/chefs?cuisine=Vietnamese' },
+  { label: 'Beef Stew (Bò Kho)', href: '/chefs?search=bo+kho' },
+  { label: 'Broken Rice (Cơm Tấm)', href: '/chefs?search=com+tam' },
+  { label: 'Noodles & Soups', href: '/chefs?search=noodles' },
   { label: 'Burgers', href: '/chefs?cuisine=American' },
-  { label: 'Japanese', href: '/chefs?cuisine=Japanese' },
-  { label: 'Italian', href: '/chefs?cuisine=Italian' },
-  { label: 'Vegan', href: '/chefs?cuisine=Vegan' },
 ];
 
 export function CustomerMarketplaceHero({
@@ -75,7 +75,7 @@ export function CustomerMarketplaceHero({
                 <Link
                   key={chip.label}
                   href={chip.href}
-                  className="rounded-full border border-border bg-surface px-3 py-1.5 text-sm font-medium text-textMuted transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:shadow-focus"
+                  className="rounded-full border border-border bg-surface px-3 py-1.5 text-sm font-medium text-textMuted transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:shadow-focus whitespace-nowrap"
                 >
                   {chip.label}
                 </Link>
@@ -96,29 +96,38 @@ export function CustomerMarketplaceHero({
             </div>
           </div>
 
-          <Card elevated padding="lg" className="border border-[#57BBFF]/40 bg-surface shadow-lg">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/15 to-[#EE3985]/15 px-2.5 py-1 text-xs font-bold text-[#0369a1] dark:text-[#7dd3fc]">
+          <Card elevated padding="none" className="overflow-hidden border border-[#57BBFF]/40 bg-surface shadow-lg">
+            {/* Visual Cover Banner */}
+            <div className="relative h-36 w-full overflow-hidden bg-primarySoft">
+              <img
+                src="/chefs/bep-ba-muoi/cover.png"
+                alt="Bếp Bà Muối signature cooking"
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+              <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/60 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm shadow-xs">
                   <span className="h-2 w-2 rounded-full bg-[#EE3985] animate-pulse" />
                   Featured Cooco Partner
                 </span>
-                <span className="rounded-full bg-successSoft px-2.5 py-0.5 text-xs font-semibold text-success">
+                <span className="rounded-full bg-success px-2.5 py-0.5 text-xs font-semibold text-white shadow-xs">
                   Open now
                 </span>
               </div>
+            </div>
 
+            <div className="p-5 space-y-4">
               <Link href="/chefs/bep-ba-muoi" className="group block">
-                <div className="flex items-center gap-3">
-                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-border bg-primary shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="-mt-8 h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 border-surface bg-primary shadow-md">
                     <img
                       src="/chefs/bep-ba-muoi/avatar.png"
                       alt="Bếp Bà Muối logo"
                       className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     />
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="truncate text-base font-bold text-text group-hover:text-primary transition-colors">
+                  <div className="min-w-0 flex-1 pt-0.5">
+                    <h3 className="text-base font-bold leading-snug text-text group-hover:text-primary transition-colors">
                       Bếp Bà Muối (Ba Muoi Kitchen)
                     </h3>
                     <p className="text-xs text-textMuted">Authentic Vietnamese Home Cooking</p>
@@ -144,7 +153,7 @@ export function CustomerMarketplaceHero({
 
               <Link href="/chefs/bep-ba-muoi" className="block w-full">
                 <Button variant="primary" size="md" className="w-full font-bold">
-                  View Full Menu & Order
+                  View Full Menu & Order (55 Dishes)
                 </Button>
               </Link>
             </div>

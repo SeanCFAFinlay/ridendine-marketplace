@@ -158,6 +158,17 @@ export async function ChefsList({
                 </div>
               </div>
 
+              {(chef.slug === 'bep-ba-muoi' ||
+                chef.slug === 'cooco' ||
+                chef.name.toLowerCase().includes('muối') ||
+                chef.name.toLowerCase().includes('cooco')) && (
+                <div className="mb-1.5">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/15 to-[#EE3985]/15 px-2 py-0.5 text-[10px] font-bold text-[#0369a1] dark:text-[#7dd3fc]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#EE3985]" />
+                    Official Cooco Partner
+                  </span>
+                </div>
+              )}
               <h3 className="text-lg font-bold text-text transition-colors group-hover:text-primary">
                 {chef.name}
               </h3>
