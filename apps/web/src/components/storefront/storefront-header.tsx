@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Badge } from '@ridendine/ui';
 import { StorefrontActions } from './storefront-actions';
 
@@ -51,6 +52,18 @@ export function StorefrontHeader({ storefront }: StorefrontHeaderProps) {
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-text/30 to-transparent" />
+          <div className="absolute left-3 top-3 z-10 sm:left-4 sm:top-4">
+            <Link
+              href="/chefs"
+              className="inline-flex items-center gap-1.5 rounded-full bg-surface/90 px-3 py-1.5 text-xs font-semibold text-text shadow-sm backdrop-blur-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:shadow-focus"
+              aria-label="Back to all chefs"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              All Chefs
+            </Link>
+          </div>
         </div>
       </div>
 

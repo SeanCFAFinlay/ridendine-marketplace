@@ -457,7 +457,7 @@ export function StorefrontMenu({
       {itemCount > 0 && (
         <div
           data-testid="sticky-mobile-view-cart-bar"
-          className="fixed bottom-0 left-0 right-0 z-sticky border-t border-border bg-surface p-4 shadow-lg lg:hidden"
+          className="fixed bottom-0 left-0 right-0 z-sticky border-t border-border bg-surface p-4 pb-[max(1rem,calc(env(safe-area-inset-bottom)+0.5rem))] shadow-lg lg:hidden"
         >
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">

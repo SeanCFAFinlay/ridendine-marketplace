@@ -4,6 +4,7 @@ import { AuthProvider } from '@ridendine/auth';
 import { CartProvider } from '@/contexts/cart-context';
 import { ToastProvider, ErrorBoundary } from '@ridendine/ui';
 import { SwRegistration } from '@/components/layout/sw-registration';
+import { MobileAppBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
@@ -28,6 +29,14 @@ export const metadata: Metadata = {
     icon: '/logo-icon.png',
     apple: '/logo-icon.png',
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'RideNDine',
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export const viewport: Viewport = {
@@ -35,6 +44,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   themeColor: '#EA5B26',
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -49,7 +59,12 @@ export default function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             <CartProvider>
-              <ToastProvider>{children}</ToastProvider>
+              <ToastProvider>
+                <div className="flex min-h-screen flex-col pb-20 md:pb-0">
+                  {children}
+                </div>
+                <MobileAppBottomNav />
+              </ToastProvider>
             </CartProvider>
           </AuthProvider>
         </ErrorBoundary>

@@ -1,13 +1,41 @@
 {
   "name": "RideNDine - Home-Cooked Food Delivery",
   "short_name": "RideNDine",
-  "description": "Order home-cooked meals from local chefs in Hamilton",
+  "description": "Order home-cooked meals from local chefs in Ontario",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#EA5B26",
+  "categories": ["food", "shopping", "lifestyle"],
   "icons": [
-    { "src": "/logo-icon.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/logo-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "/logo-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Chefs",
+      "url": "/chefs",
+      "description": "Find local Ontario chefs and kitchens"
+    },
+    {
+      "name": "My Orders",
+      "url": "/account/orders",
+      "description": "View and track active orders"
+    },
+    {
+      "name": "My Cart",
+      "url": "/cart",
+      "description": "View items in your cart"
+    }
   ]
 }
