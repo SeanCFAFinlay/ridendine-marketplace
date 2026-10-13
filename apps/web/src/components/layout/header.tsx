@@ -48,7 +48,14 @@ export function Header() {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-6 md:flex" aria-label="Desktop primary navigation">
+          <nav className="hidden items-center gap-5 md:flex" aria-label="Desktop primary navigation">
+            <Link
+              href="/chefs/bep-ba-muoi"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/10 to-[#EE3985]/10 px-3 py-1 text-xs font-bold text-[#0369a1] dark:text-[#7dd3fc] hover:border-[#EE3985]/50 transition-colors shadow-sm"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-[#EE3985] animate-pulse" />
+              Bếp Bà Muối (Cooco Chef)
+            </Link>
             <Link
               href="/chefs"
               className="text-sm font-medium text-textMuted transition-colors hover:text-primary"
@@ -237,6 +244,16 @@ export function Header() {
                     Marketplace
                   </p>
                   <ul className="flex flex-col gap-0.5">
+                    <li>
+                      <Link
+                        href="/chefs/bep-ba-muoi"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold text-[#0369a1] dark:text-[#7dd3fc] bg-gradient-to-r from-[#57BBFF]/10 to-[#EE3985]/10 border border-[#57BBFF]/30 transition-colors"
+                      >
+                        <span className="h-2 w-2 rounded-full bg-[#EE3985] animate-pulse" />
+                        Bếp Bà Muối (Cooco Chef)
+                      </Link>
+                    </li>
                     <li>
                       <Link
                         href="/chefs"

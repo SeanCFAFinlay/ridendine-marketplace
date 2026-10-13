@@ -198,6 +198,33 @@ export async function searchStorefronts(
   limit = 20,
   sortBy: StorefrontSortBy = 'default'
 ): Promise<StorefrontWithChef[]> {
+  const cleanQuery = query.trim();
+  if (!cleanQuery) {
+    return getActiveStorefronts(client, { limit, sortBy });
+  }
+
+  let matchedStorefrontIds: string[] = [];
+  try {
+    const { data: matchingItems } = await client
+      .from('menu_items')
+      .select('storefront_id')
+      .or(`name.ilike.%${cleanQuery}%,description.ilike.%${cleanQuery}%`)
+      .limit(50);
+
+    if (matchingItems && matchingItems.length > 0) {
+      matchedStorefrontIds = Array.from(
+        new Set(matchingItems.map((m: any) => m.storefront_id).filter(Boolean))
+      );
+    }
+  } catch {
+    // Non-fatal if menu item join probe is unavailable
+  }
+
+  let filterClause = `name.ilike.%${cleanQuery}%,description.ilike.%${cleanQuery}%,cuisine_types.cs.{"${cleanQuery}"}`;
+  if (matchedStorefrontIds.length > 0) {
+    filterClause += `,id.in.(${matchedStorefrontIds.join(',')})`;
+  }
+
   let q = client
     .from('chef_storefronts')
     .select(`
@@ -217,7 +244,7 @@ export async function searchStorefronts(
     `)
     .eq('is_active', true)
     .eq('chef_profiles.status', 'approved')
-    .or(`name.ilike.%${query}%,description.ilike.%${query}%,cuisine_types.cs.{"${query}"}`)
+    .or(filterClause)
     .limit(limit);
 
   switch (sortBy) {

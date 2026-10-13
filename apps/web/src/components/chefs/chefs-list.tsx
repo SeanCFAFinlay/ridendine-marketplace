@@ -24,13 +24,12 @@ export async function ChefsList({
   sortBy = 'default',
   openNow = false,
 }: ChefsListProps = {}) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
   const sort = normalizeStorefrontSort(sortBy);
-
   let chefs: Awaited<ReturnType<typeof getActiveStorefronts>> = [];
 
   try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(cookieStore);
     if (search) {
       chefs = await searchStorefronts(supabase as any, search, 20, sort);
     } else {
@@ -139,9 +138,6 @@ export async function ChefsList({
                       src={chef.logo_url}
                       alt={chef.name}
                       className="h-full w-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
                     />
                   ) : (
                     chef.name.charAt(0)

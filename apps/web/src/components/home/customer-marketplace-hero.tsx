@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Badge, Button, Card } from '@ridendine/ui';
 
 const cuisineChips = [
+  { label: '🔥 Bếp Bà Muối (Cooco)', href: '/chefs/bep-ba-muoi' },
   { label: 'Vietnamese', href: '/chefs?cuisine=Vietnamese' },
   { label: 'Burgers', href: '/chefs?cuisine=American' },
   { label: 'Japanese', href: '/chefs?cuisine=Japanese' },
@@ -82,50 +83,70 @@ export function CustomerMarketplaceHero({
             </div>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Link href="/chefs">
-                <Button size="lg" className="w-full sm:w-auto">
-                  Browse Chefs
+              <Link href="/chefs/bep-ba-muoi">
+                <Button size="lg" className="w-full sm:w-auto font-bold">
+                  Order from Bếp Bà Muối
                 </Button>
               </Link>
-              <Link href="/account/orders">
+              <Link href="/chefs">
                 <Button variant="secondary" size="lg" className="w-full sm:w-auto">
-                  Order Again
+                  Browse All Chefs
                 </Button>
               </Link>
             </div>
           </div>
 
-          <Card elevated padding="lg" className="border border-primary/10 bg-surface">
-            <div className="space-y-5">
-              <div>
-                <p className="text-sm font-medium text-textMuted">Delivering in</p>
-                <p className="mt-1 font-display text-2xl font-bold text-text">Hamilton</p>
+          <Card elevated padding="lg" className="border border-[#57BBFF]/40 bg-surface shadow-lg">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/15 to-[#EE3985]/15 px-2.5 py-1 text-xs font-bold text-[#0369a1] dark:text-[#7dd3fc]">
+                  <span className="h-2 w-2 rounded-full bg-[#EE3985] animate-pulse" />
+                  Featured Cooco Partner
+                </span>
+                <span className="rounded-full bg-successSoft px-2.5 py-0.5 text-xs font-semibold text-success">
+                  Open now
+                </span>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-primarySoft p-4">
-                  <p className="text-2xl font-bold text-primary">
-                    {activeChefs > 0 ? activeChefs : '—'}
-                  </p>
-                  <p className="mt-1 text-sm text-textMuted">Local Chefs</p>
-                </div>
-                <div className="rounded-lg bg-accentSoft p-4">
-                  <p className="text-2xl font-bold text-accent">
-                    {liveMenuItems > 0 ? `${liveMenuItems}+` : '—'}
-                  </p>
-                  <p className="mt-1 text-sm text-textMuted">Live Dishes</p>
-                </div>
-              </div>
-              <div className="rounded-lg border border-divider bg-background p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-text">Fast local delivery</p>
-                    <p className="text-sm text-textMuted">Chef prep plus driver pickup, shown before checkout.</p>
+
+              <Link href="/chefs/bep-ba-muoi" className="group block">
+                <div className="flex items-center gap-3">
+                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-border bg-primary shadow-sm">
+                    <img
+                      src="/chefs/bep-ba-muoi/avatar.png"
+                      alt="Bếp Bà Muối logo"
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    />
                   </div>
-                  <span className="rounded-full bg-successSoft px-3 py-1 text-xs font-semibold text-success">
-                    Open now
-                  </span>
+                  <div className="min-w-0">
+                    <h3 className="truncate text-base font-bold text-text group-hover:text-primary transition-colors">
+                      Bếp Bà Muối (Ba Muoi Kitchen)
+                    </h3>
+                    <p className="text-xs text-textMuted">Authentic Vietnamese Home Cooking</p>
+                    <p className="mt-0.5 text-xs font-medium text-[#EE3985]">Pick up near Eastgate Square, Hamilton</p>
+                  </div>
+                </div>
+              </Link>
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="rounded-lg bg-primarySoft p-3">
+                  <p className="text-xl font-bold text-primary">
+                    {activeChefs > 0 ? activeChefs : 1}
+                  </p>
+                  <p className="text-xs text-textMuted">Local Chefs</p>
+                </div>
+                <div className="rounded-lg bg-accentSoft p-3">
+                  <p className="text-xl font-bold text-accent">
+                    {liveMenuItems > 0 ? `${liveMenuItems}+` : '55+'}
+                  </p>
+                  <p className="text-xs text-textMuted">Live Dishes</p>
                 </div>
               </div>
+
+              <Link href="/chefs/bep-ba-muoi" className="block w-full">
+                <Button variant="primary" size="md" className="w-full font-bold">
+                  View Full Menu & Order
+                </Button>
+              </Link>
             </div>
           </Card>
         </div>

@@ -8,13 +8,15 @@ interface FeaturedChefsProps {
 }
 
 export async function FeaturedChefs({ limit = 6 }: FeaturedChefsProps) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
-
   let chefs: Awaited<ReturnType<typeof getActiveStorefronts>> = [];
 
   try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(cookieStore);
     chefs = await getActiveStorefronts(supabase as any, { limit, featured: true });
+    if (chefs.length === 0) {
+      chefs = await getActiveStorefronts(supabase as any, { limit });
+    }
   } catch (error) {
     console.error('Failed to fetch featured chefs:', error);
   }
@@ -70,9 +72,6 @@ export async function FeaturedChefs({ limit = 6 }: FeaturedChefsProps) {
                         src={chef.logo_url}
                         alt={`${chef.name} logo`}
                         className="h-full w-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
                       />
                     ) : (
                       chef.name.charAt(0)

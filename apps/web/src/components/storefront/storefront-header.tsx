@@ -76,9 +76,6 @@ export function StorefrontHeader({ storefront }: StorefrontHeaderProps) {
                 src={storefront.logoUrl}
                 alt={storefront.name}
                 className="h-full w-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
               />
             ) : (
               storefront.name.charAt(0)
