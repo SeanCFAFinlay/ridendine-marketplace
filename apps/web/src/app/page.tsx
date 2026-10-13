@@ -213,6 +213,51 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Download the App Section */}
+      <section className="border-t border-border bg-gradient-to-b from-surface to-surfaceSubtle py-16 sm:py-20">
+        <div className="container">
+          <ScrollRevealSection className="mx-auto max-w-4xl text-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primarySoft px-3 py-1 text-xs font-semibold text-primary">
+              📲 Installable for iOS & Android
+            </span>
+            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-text sm:text-4xl">
+              Authentic home food, right in your pocket
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-base text-textMuted sm:text-lg">
+              Install the RideNDine app directly on your phone for instant reordering, push notifications when dishes are fresh, and live GPS delivery tracking.
+            </p>
+
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Link href="/download">
+                <Button size="lg" className="w-full sm:w-auto">
+                  Download & Install App
+                </Button>
+              </Link>
+              <Link href="/chefs">
+                <Button variant="secondary" size="lg" className="w-full sm:w-auto">
+                  Explore Chefs
+                </Button>
+              </Link>
+            </div>
+
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-textMuted">
+              <span className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                No 100MB+ app store download needed
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                Works on iPhone, iPad & Android
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                Live order status & driver tracking
+              </span>
+            </div>
+          </ScrollRevealSection>
+        </div>
+      </section>
+
       <Footer />
     </div>
   );
@@ -228,7 +273,7 @@ function Footer() {
               <Logo height={28} />
             </div>
             <p className="text-sm text-textMuted">
-              Connecting food lovers with talented home chefs in Hamilton, ON.
+              Connecting food lovers with talented home chefs in Ontario.
             </p>
           </div>
           <FooterColumn
@@ -237,6 +282,7 @@ function Footer() {
               { href: '/chefs', label: 'Browse Chefs' },
               { href: '/how-it-works', label: 'How It Works' },
               { href: '/account/orders', label: 'My Orders' },
+              { href: '/download', label: 'Download App' },
             ]}
           />
           <FooterColumn

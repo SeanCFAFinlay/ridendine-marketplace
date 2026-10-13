@@ -2,9 +2,12 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { AuthProvider } from '@ridendine/auth';
 import { CartProvider } from '@/contexts/cart-context';
+import { PwaInstallProvider } from '@/contexts/pwa-install-context';
 import { ToastProvider, ErrorBoundary } from '@ridendine/ui';
 import { SwRegistration } from '@/components/layout/sw-registration';
 import { MobileAppBottomNav } from '@/components/layout/mobile-bottom-nav';
+import { InstallAppBanner } from '@/components/layout/install-app-banner';
+import { PwaInstallModal } from '@/components/layout/pwa-install-modal';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
@@ -59,12 +62,16 @@ export default function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             <CartProvider>
-              <ToastProvider>
-                <div className="flex min-h-screen flex-col pb-20 md:pb-0">
-                  {children}
-                </div>
-                <MobileAppBottomNav />
-              </ToastProvider>
+              <PwaInstallProvider>
+                <ToastProvider>
+                  <InstallAppBanner />
+                  <div className="flex min-h-screen flex-col pb-20 md:pb-0">
+                    {children}
+                  </div>
+                  <MobileAppBottomNav />
+                  <PwaInstallModal />
+                </ToastProvider>
+              </PwaInstallProvider>
             </CartProvider>
           </AuthProvider>
         </ErrorBoundary>
