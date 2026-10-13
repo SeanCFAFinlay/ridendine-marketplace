@@ -21,11 +21,11 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       logo={
         <Link href="/">
           <Image
-            src="/logo-icon.png"
+            src="/logo.png"
             alt="RideNDine"
-            width={72}
-            height={72}
-            className="mx-auto h-auto w-16 rounded-2xl shadow-md"
+            width={120}
+            height={150}
+            className="mx-auto h-24 w-auto object-contain drop-shadow"
             priority
           />
         </Link>

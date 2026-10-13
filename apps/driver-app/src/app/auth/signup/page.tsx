@@ -99,17 +99,15 @@ export default function DriverSignupPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
           <Image
-            src="/logo-icon.png"
+            src="/logo.png"
             alt="RideNDine"
-            width={64}
-            height={64}
-            className="mx-auto rounded-2xl shadow-lg"
+            width={112}
+            height={140}
+            className="mx-auto h-24 w-auto object-contain drop-shadow"
+            priority
           />
-          <h1 className="mt-3 text-2xl font-bold">
-            <span className="text-accent">RideN</span>
-            <span className="text-primary">Dine</span>
-          </h1>
-          <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-success/20 px-3 py-1 text-xs font-semibold text-success">
+          <h1 className="sr-only">RideNDine Driver Application</h1>
+          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-success/20 px-3 py-1 text-xs font-semibold text-success">
             Driver Application
           </div>
         </div>

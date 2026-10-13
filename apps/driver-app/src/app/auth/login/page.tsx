@@ -50,20 +50,18 @@ function DriverLoginForm() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="mb-8 text-center">
-          <div className="mb-4 flex justify-center">
+          <div className="mb-3 flex justify-center">
             <Image
-              src="/logo-icon.png"
+              src="/logo.png"
               alt="RideNDine"
-              width={64}
-              height={64}
-              className="rounded-2xl"
+              width={112}
+              height={140}
+              className="h-24 w-auto object-contain drop-shadow"
+              priority
             />
           </div>
-          <h1 className="text-2xl font-bold">
-            <span className="text-accent">RideN</span>
-            <span className="text-primary">Dine</span>
-          </h1>
-          <p className="mt-1 text-textSubtle">Driver Portal</p>
+          <h1 className="sr-only">RideNDine Driver Portal</h1>
+          <p className="mt-1 text-sm font-semibold tracking-wide text-textSubtle">Driver Portal</p>
         </div>
 
         {/* Login Card */}

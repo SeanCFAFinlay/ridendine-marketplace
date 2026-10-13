@@ -47,18 +47,15 @@ function OpsLoginForm() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-3">
             <Image
-              src="/logo-icon.png"
+              src="/logo.png"
               alt="RideNDine"
-              width={72}
-              height={72}
-              className="h-auto w-16 rounded-2xl shadow-lg"
+              width={112}
+              height={140}
+              className="h-24 w-auto object-contain drop-shadow-lg"
               priority
             />
           </div>
-          <h1 className="text-3xl font-bold">
-            <span className="text-accent">RideN</span>
-            <span className="text-primary">Dine</span>
-          </h1>
+          <h1 className="sr-only">RideNDine Operations Admin Portal</h1>
           <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary/20 px-3 py-1 text-xs font-semibold text-primary">
             <ShieldCheck className="h-3.5 w-3.5" />
             Operations Admin Portal
