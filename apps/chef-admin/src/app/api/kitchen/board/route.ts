@@ -37,10 +37,17 @@ export async function GET() {
       return successResponse({ brands: [], stations: [], ticketCount: 0 });
     }
     const brandById = new Map(
-      brands.map((b, idx) => [
-        b.id,
-        { storefrontId: b.id, name: b.name, color: BRAND_COLORS[idx % BRAND_COLORS.length] },
-      ]),
+      brands.map((b, idx) => {
+        const isCooco = b.name.toLowerCase().includes('muối') || b.name.toLowerCase().includes('cooco');
+        return [
+          b.id,
+          {
+            storefrontId: b.id,
+            name: b.name,
+            color: isCooco ? '#57BBFF' : BRAND_COLORS[idx % BRAND_COLORS.length],
+          },
+        ];
+      }),
     );
     const stations = (stationRows ?? []) as { id: string; name: string; sort_order: number }[];
     const stationNameById = new Map(stations.map((s) => [s.id, s.name]));

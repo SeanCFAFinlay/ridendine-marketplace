@@ -380,10 +380,10 @@ test.describe('ops negative paths @lifecycle @negative', () => {
     await page.goto('/dashboard/chefs');
     await expect(page.getByText(/chefs/i).first()).toBeVisible({ timeout: 15_000 });
 
-    const ryoRow = page.locator('tr', { hasText: 'Ryo' }).first();
+    const ryoRow = page.locator('tr', { hasText: /Bếp Bà Muối|Ba Muoi|Ryo/i }).first();
     const suspendBtn = ryoRow.locator('button[title="Suspend"]');
     if (!(await becomesVisible(suspendBtn, 8_000))) {
-      test.skip(true, 'Seed chef Ryo is not in approved state (left suspended by a previous partial run?) — run supabase db reset');
+      test.skip(true, 'Seed chef Bếp Bà Muối is not in approved state (left suspended by a previous partial run?) — run supabase db reset');
     }
 
     let suspended = false;
@@ -425,7 +425,7 @@ test.describe('ops negative paths @lifecycle @negative', () => {
       await expect(page.getByRole('heading', { name: /browse chefs/i })).toBeVisible({
         timeout: 15_000,
       });
-      await expect(page.getByRole('link', { name: /cooco/i })).toBeHidden();
+      await expect(page.getByRole('link', { name: /bếp bà muối|cooco/i })).toBeHidden();
     } finally {
       if (suspended) {
         // Best-effort restore so later local runs (without a db reset) and the

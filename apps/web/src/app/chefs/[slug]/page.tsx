@@ -12,11 +12,23 @@ interface ChefPageProps {
   params: Promise<{ slug: string }>;
 }
 
+async function resolveStorefront(supabase: any, slug: string) {
+  let storefront = await getStorefrontBySlug(supabase, slug);
+  if (!storefront) {
+    if (slug === 'cooco') {
+      storefront = await getStorefrontBySlug(supabase, 'bep-ba-muoi');
+    } else if (slug === 'bep-ba-muoi') {
+      storefront = await getStorefrontBySlug(supabase, 'cooco');
+    }
+  }
+  return storefront;
+}
+
 export async function generateMetadata({ params }: ChefPageProps): Promise<Metadata> {
   const { slug } = await params;
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
-  const storefront = await getStorefrontBySlug(supabase as any, slug);
+  const storefront = await resolveStorefront(supabase as any, slug);
 
   if (!storefront) {
     return { title: 'Chef Not Found - RideNDine' };
@@ -50,7 +62,7 @@ export default async function ChefPage({ params }: ChefPageProps) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
-  const storefront = await getStorefrontBySlug(supabase as any, slug);
+  const storefront = await resolveStorefront(supabase as any, slug);
 
   if (!storefront) {
     notFound();

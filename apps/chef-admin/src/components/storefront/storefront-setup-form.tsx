@@ -5,6 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Card, Button } from '@ridendine/ui';
 
 const availableCuisines = [
+  'Vietnamese',
+  'Home Cooking',
+  'Catering',
+  'Noodles',
+  'Party Trays',
   'Mexican',
   'Italian',
   'Chinese',
@@ -15,7 +20,6 @@ const availableCuisines = [
   'American',
   'Latin',
   'Tex-Mex',
-  'Vietnamese',
   'Korean',
   'Filipino',
   'Soul Food',

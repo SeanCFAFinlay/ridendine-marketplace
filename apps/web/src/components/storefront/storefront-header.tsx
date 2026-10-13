@@ -87,6 +87,17 @@ export function StorefrontHeader({ storefront }: StorefrontHeaderProps) {
 
           {/* Info */}
           <div className="min-w-0 flex-1">
+            {(storefront.slug === 'bep-ba-muoi' ||
+              storefront.slug === 'cooco' ||
+              storefront.name.toLowerCase().includes('muối') ||
+              storefront.name.toLowerCase().includes('cooco')) && (
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/15 via-white/80 to-[#EE3985]/15 px-3 py-1 shadow-xs dark:from-[#57BBFF]/25 dark:to-[#EE3985]/25">
+                <span className="flex h-2 w-2 rounded-full bg-[#EE3985] animate-pulse" />
+                <span className="text-xs font-bold tracking-wide text-[#212121] dark:text-neutral-100">
+                  Official <span className="text-[#0284c7] dark:text-[#57BBFF]">cooco.app</span> Partner Chef
+                </span>
+              </div>
+            )}
             <h1 className="font-display text-2xl font-bold tracking-tight text-text md:text-3xl">
               {storefront.name}
             </h1>

@@ -149,9 +149,19 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-border p-3">
+      <div className="space-y-2 border-t border-border p-3">
+        <div className="rounded-lg border border-[#57BBFF]/40 bg-gradient-to-br from-[#57BBFF]/10 via-surface to-[#EE3985]/10 p-3 shadow-xs">
+          <div className="flex items-center gap-2">
+            <span className="flex h-2 w-2 rounded-full bg-[#EE3985] animate-pulse" />
+            <span className="text-xs font-bold text-text">Cooco Partner Chef</span>
+          </div>
+          <p className="mt-1 text-[11px] leading-tight text-textMuted">
+            Bếp Bà Muối kitchen operations powered by RideNDine & Cooco.app
+          </p>
+        </div>
+
         <Link
-          href="/"
+          href="http://localhost:3000/chefs/bep-ba-muoi"
           target="_blank"
           className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text focus-visible:outline-none focus-visible:shadow-focus"
         >

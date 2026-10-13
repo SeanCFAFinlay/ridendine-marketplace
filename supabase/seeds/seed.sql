@@ -185,9 +185,9 @@ VALUES
    NOW() - INTERVAL '60 days', NOW()),
   ('cccccccc-cccc-cccc-cccc-cccccccccccc',
    '33333333-3333-3333-3333-333333333333',
-   'Ryo',
-   '+1 (905) 555-0303',
-   'Osaka-trained home chef bringing Japanese precision to Hamilton kitchens. Tonkotsu ramen, katsu, and gyudon crafted with care.',
+   'Bếp Bà Muối (Ba Muoi Kitchen)',
+   '+1 (289) 556-4905',
+   'Homemade Vietnamese catering in Hamilton — fresh, slow-cooked, and made to order. Specializing in traditional noodle soups, broken rice plates, vegetarian delicacies, party trays, and sweet chè.',
    'approved',
    NOW() - INTERVAL '45 days', NOW()),
   -- Pending-approval chef — required by ops "approve chef" lifecycle Playwright test (Phase 11).
@@ -221,8 +221,8 @@ VALUES
    true, NOW() - INTERVAL '60 days', NOW()),
   ('aa000000-0003-4000-8000-000000000003',
    'cccccccc-cccc-cccc-cccc-cccccccccccc',
-   'COOCO Kitchen',
-   '789 Concession St', 'Hamilton', 'ON', 'L8V 1C9', 'CA',
+   'Bếp Bà Muối Kitchen',
+   'Pick up near Eastgate Square, Queenston Rd', 'Hamilton', 'ON', 'L8G 2B4', 'CA',
    true, NOW() - INTERVAL '45 days', NOW())
 ON CONFLICT (id) DO NOTHING;
 
@@ -272,20 +272,20 @@ VALUES
    4.9, 38,
    NOW() - INTERVAL '60 days', NOW()),
 
-  -- COOCO (Ryo)
+  -- Bếp Bà Muối (Cooco Partner)
   ('ffffffff-ffff-ffff-ffff-ffffffffffff',
    'cccccccc-cccc-cccc-cccc-cccccccccccc',
    'aa000000-0003-4000-8000-000000000003',
-   'cooco',
-   'COOCO',
-   'Japanese home cooking elevated. Osaka-trained precision meets Hamilton hospitality — tonkotsu ramen, gyudon, and chicken katsu curry crafted with care and authentic ingredients.',
-   ARRAY['Japanese', 'Ramen', 'Katsu', 'Asian'],
-   'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&q=80',
-   NULL,
+   'bep-ba-muoi',
+   'Bếp Bà Muối',
+   'Homemade Vietnamese catering in Hamilton — fresh, slow-cooked, and made to order. Authentic family recipes from traditional noodle soups and broken rice plates to vegetarian specialties, party trays, and sweet chè desserts.',
+   ARRAY['Vietnamese', 'Home Cooking', 'Catering', 'Noodles', 'Party Trays'],
+   '/chefs/bep-ba-muoi/cover.png',
+   '/chefs/bep-ba-muoi/avatar.png',
    true, true,
-   20, 40,
+   25, 45,
    20.00,
-   4.7, 19,
+   4.9, 42,
    NOW() - INTERVAL '45 days', NOW())
 ON CONFLICT (id) DO NOTHING;
 
@@ -299,8 +299,10 @@ VALUES
   ('ca700000-0001-4000-8000-000000000002', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'Chicken', 'Nashville hot, crispy, and saucy chicken dishes', 2, true, NOW(), NOW()),
   ('ca700000-0002-4000-8000-000000000001', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Phở & Noodle Soups', 'Slow-cooked broths and hand-crafted noodle soups', 1, true, NOW(), NOW()),
   ('ca700000-0002-4000-8000-000000000002', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Rice & Vermicelli', 'Traditional rice and vermicelli dishes', 2, true, NOW(), NOW()),
-  ('ca700000-0003-4000-8000-000000000001', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'Ramen & Soups', 'Rich tonkotsu and shoyu ramen bowls', 1, true, NOW(), NOW()),
-  ('ca700000-0003-4000-8000-000000000002', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'Rice Bowls', 'Hearty Japanese rice bowl dishes', 2, true, NOW(), NOW())
+  ('ca700000-0003-4000-8000-000000000001', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'Main Dishes — Rice & Noodles', 'Authentic Vietnamese slow-cooked noodle soups and hearty broken-rice plates (4 servings)', 1, true, NOW(), NOW()),
+  ('ca700000-0003-4000-8000-000000000002', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'Vegetarian', 'Plant-based authentic Vietnamese dishes, fresh tofu and braised vegetable specialties', 2, true, NOW(), NOW()),
+  ('ca700000-0003-4000-8000-000000000003', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'Bánh Mì, Sticky Rice & Party Trays', 'Party trays, savoury sticky rice, and specialty platters for family gatherings', 3, true, NOW(), NOW()),
+  ('ca700000-0003-4000-8000-000000000004', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'Desserts & Sweet Soups', 'Traditional Vietnamese chè sweet soups and homemade desserts', 4, true, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
@@ -376,36 +378,336 @@ VALUES
    30.00, 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
    true, false, ARRAY[]::text[], 45, 5, NOW(), NOW()),
 
-  -- COOCO (Ryo) — 5 dishes
+  -- Bếp Bà Muối (Ba Muoi Kitchen) — 55 authentic Vietnamese dishes
   ('17e30000-0003-4000-8000-000000000001', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
-   'Tonkotsu Ramen',
-   'Rich, creamy pork bone broth simmered for 18 hours, thin ramen noodles, chashu pork belly, soft-boiled marinated egg, nori, bamboo shoots.',
-   22.00, 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&q=80',
-   true, true, ARRAY[]::text[], 25, 1, NOW(), NOW()),
+   'Rice with Grilled Pork Chop, Shredded Pork Skin & Steamed Egg Meatloaf (Cơm sườn bì chả)',
+   'Broken-rice classic with grilled pork chop, shredded pork skin and steamed egg meatloaf. Chicken can be substituted. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-6.jpg',
+   true, true, ARRAY[]::text[], 30, 1, NOW(), NOW()),
 
   ('17e30000-0003-4000-8000-000000000002', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
-   'Shoyu Ramen',
-   'Clear soy-based chicken broth, wavy noodles, chicken chashu, marinated egg, menma, nori, and scallions.',
-   20.00, 'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=600&q=80',
-   true, false, ARRAY[]::text[], 20, 2, NOW(), NOW()),
+   'Vietnamese Beef Stew (Bò kho)',
+   'Slow-braised beef with carrots and lemongrass; served with baguette, egg noodles or rice noodles. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-7.jpg',
+   true, true, ARRAY[]::text[], 30, 2, NOW(), NOW()),
 
-  ('17e30000-0003-4000-8000-000000000003', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000002',
-   'Chicken Katsu Curry',
-   'Crispy panko-breaded chicken cutlet over Japanese short-grain rice, topped with rich golden curry sauce. Served with pickled daikon.',
-   21.00, 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80',
-   true, true, ARRAY[]::text[], 25, 3, NOW(), NOW()),
+  ('17e30000-0003-4000-8000-000000000003', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Duck & Bamboo Shoot Noodle Soup (Bún / Miến măng vịt)',
+   'Duck and bamboo shoot broth with rice vermicelli or glass noodles, served with ginger fish sauce. [4 servings]',
+   55.00, '/chefs/bep-ba-muoi/dishes/dish-8.jpg',
+   true, true, ARRAY[]::text[], 30, 3, NOW(), NOW()),
 
-  ('17e30000-0003-4000-8000-000000000004', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000002',
-   'Gyudon (Beef Rice Bowl)',
-   'Thinly sliced beef and onions simmered in sweet dashi-soy broth, served over steamed Japanese rice with a soft-poached egg.',
-   19.00, 'https://images.unsplash.com/photo-1562967914-608f82629710?w=600&q=80',
-   true, false, ARRAY[]::text[], 20, 4, NOW(), NOW()),
+  ('17e30000-0003-4000-8000-000000000004', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Crab Noodle Soup with Pork Trotter (Bánh canh cua giò heo)',
+   'Thick tapioca noodles in crab broth with pork trotter. [4 servings]',
+   50.00, '/chefs/bep-ba-muoi/dishes/dish-9.jpg',
+   true, true, ARRAY[]::text[], 30, 4, NOW(), NOW()),
 
-  ('17e30000-0003-4000-8000-000000000005', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000002',
-   'Karaage Chicken Don',
-   'Japanese fried chicken marinated in soy, ginger, and sake, served over steamed rice with Japanese mayo and teriyaki drizzle.',
-   20.00, 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=600&q=80',
-   true, false, ARRAY[]::text[], 22, 5, NOW(), NOW())
+  ('17e30000-0003-4000-8000-000000000005', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Rice Vermicelli with Grilled Pork or Stir-fried Pork & Spring Rolls (Bún thịt nướng / Bún thịt xào chả giò)',
+   'Vermicelli bowl with grilled (or stir-fried) pork, crispy spring rolls, herbs, pickles and peanuts. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-10.jpg',
+   true, true, ARRAY[]::text[], 30, 5, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000006', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Braised Herbal Chicken Noodle Soup with Pickled Papaya (Mì gà tiềm ăn kèm đu đủ ngâm)',
+   'Herbal-braised chicken leg with egg noodles and greens, served with pickled papaya. [4 servings]',
+   55.00, '/chefs/bep-ba-muoi/dishes/dish-11.jpg',
+   true, true, ARRAY[]::text[], 30, 6, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000007', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Shaking Beef with Rice (Cơm bò lúc lắc)',
+   'Wok-seared beef cubes with bell peppers and onion over rice; served with soup. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-12.jpg',
+   true, false, ARRAY[]::text[], 30, 7, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000008', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Fried Chicken with Garlic Fish Sauce over Rice (Cơm gà mắm tỏi)',
+   'Crispy chicken leg glazed in garlic fish sauce over fried rice. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-13.jpg',
+   true, false, ARRAY[]::text[], 30, 8, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000009', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Fried Rice with Beef & Pickled Mustard Greens (Cơm rang dưa bò)',
+   'Fried rice with beef and pickled mustard greens; served with sour beef soup. [4 servings]',
+   50.00, '/chefs/bep-ba-muoi/dishes/dish-14.jpg',
+   true, false, ARRAY[]::text[], 30, 9, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000010', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Yang Chow Fried Rice with Seaweed Soup (Cơm chiên Dương Châu)',
+   'Fried rice with Chinese sausage, egg, peas and carrots; served with seaweed soup. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-15.jpg',
+   true, false, ARRAY[]::text[], 30, 10, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000011', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Rice Noodles with Braised Pork Ribs (Hủ tíu sườn)',
+   'Rice noodles with tender braised pork ribs and Thai basil. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-16.jpg',
+   true, false, ARRAY[]::text[], 30, 11, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000012', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Beef & Pork Knuckle Noodle Soup (Bún bò giò heo)',
+   'Spicy lemongrass beef broth with vermicelli, beef and pork knuckle. [4 servings]',
+   50.00, '/chefs/bep-ba-muoi/dishes/dish-17.jpg',
+   true, false, ARRAY[]::text[], 30, 12, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000013', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Hainanese Chicken Rice (Cơm gà Hải Nam)',
+   'Poached chicken with fragrant chicken-fat rice, cucumber and pickles. [4 servings]',
+   55.00, '/chefs/bep-ba-muoi/dishes/dish-18.jpg',
+   true, false, ARRAY[]::text[], 30, 13, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000014', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Phnom Penh-style Noodle Soup (Hủ tíu Nam Vang)',
+   'Clear pork broth with rice noodles, shrimp, minced pork, liver and quail eggs. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-19.jpg',
+   true, false, ARRAY[]::text[], 30, 14, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000015', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Crab Paste Vermicelli Soup (Bún riêu)',
+   'Tomato-crab broth with vermicelli, crab paste, tofu and pork blood. [4 servings]',
+   50.00, '/chefs/bep-ba-muoi/dishes/dish-20.jpg',
+   true, false, ARRAY[]::text[], 30, 15, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000016', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Fermented Fish Vermicelli Soup (Bún mắm)',
+   'Rich fermented-fish broth with vermicelli, shrimp, squid and roast pork. [4 servings]',
+   60.00, '/chefs/bep-ba-muoi/dishes/dish-21.jpg',
+   true, false, ARRAY[]::text[], 30, 16, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000017', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Rice with Sweet & Sour Fish Soup & Braised Fish (Cơm canh chua cá kho)',
+   'Home-style set: rice, sweet & sour fish soup and caramel-braised fish. [4 servings]',
+   50.00, '/chefs/bep-ba-muoi/dishes/dish-22.jpg',
+   true, false, ARRAY[]::text[], 30, 17, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000018', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Rice with Sweet & Sour Soup & Black Pepper Braised Pork (Cơm canh chua thịt kho tiêu)',
+   'Home-style set: rice, sweet & sour soup and black pepper braised pork. [4 servings]',
+   50.00, '/chefs/bep-ba-muoi/dishes/dish-23.jpg',
+   true, false, ARRAY[]::text[], 30, 18, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000019', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Quang-style Noodles (Mì Quảng)',
+   'Turmeric wide rice noodles with pork, shrimp, egg, peanuts and a little broth. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-24.jpg',
+   true, false, ARRAY[]::text[], 30, 19, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000020', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Korean Sweet & Spicy Chicken Rice with Salad (Cơm gà cay ngọt Hàn Quốc kèm salad)',
+   'Crispy chicken in sweet & spicy Korean glaze, with rice and salad. [4 servings]',
+   50.00, '/chefs/bep-ba-muoi/dishes/dish-25.jpg',
+   true, false, ARRAY[]::text[], 30, 20, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000021', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Rice with Stir-fried Beef (Cơm bò xào lăn)',
+   'Tender beef stir-fried with lemongrass and onion, served with rice. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-26.jpg',
+   true, false, ARRAY[]::text[], 30, 21, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000022', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Crispy Fried Chicken Rice (Cơm gà xối mỡ)',
+   'Crispy-skin fried chicken leg with tomato fried rice and cucumber. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-27.jpg',
+   true, false, ARRAY[]::text[], 30, 22, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000023', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Chicken Glass Noodle Soup (Miến gà)',
+   'Glass noodles in clear chicken broth with shredded chicken and herbs. [4 servings]',
+   50.00, '/chefs/bep-ba-muoi/dishes/dish-28.jpg',
+   true, false, ARRAY[]::text[], 30, 23, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000024', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Chicken / Duck Congee with Salad (Cháo gà / vịt kèm gỏi)',
+   'Rice congee with poached chicken or duck, served with cabbage salad. [4 servings]',
+   55.00, '/chefs/bep-ba-muoi/dishes/dish-29.jpg',
+   true, false, ARRAY[]::text[], 30, 24, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000025', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Pork Organ Congee (Cháo lòng)',
+   'Rice congee with assorted pork offal, bean sprouts and herbs. [4 servings]',
+   50.00, '/chefs/bep-ba-muoi/dishes/dish-30.jpg',
+   true, false, ARRAY[]::text[], 30, 25, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000026', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000001',
+   'Beef Pho / Chicken Pho (Phở bò / Phở gà)',
+   'Classic pho with rice noodles and beef or chicken in slow-simmered broth. [4 servings]',
+   40.00, '/chefs/bep-ba-muoi/dishes/dish-31.jpg',
+   true, false, ARRAY[]::text[], 30, 26, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000027', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000002',
+   'Vegetarian Pho (Phở chay)',
+   'Vegetable broth pho with tofu, mushrooms and mock meats. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-33.jpg',
+   true, false, ARRAY['Vegetarian']::text[], 30, 27, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000028', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000002',
+   'Vegetarian Crab Paste Vermicelli Soup (Bún riêu chay)',
+   'Tomato broth with vermicelli, tofu and vegetarian ''''crab'''' paste. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-34.jpg',
+   true, false, ARRAY['Vegetarian']::text[], 30, 28, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000029', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000002',
+   'Vegetarian Hue-style Vermicelli Soup (Bún Huế chay)',
+   'Spicy lemongrass broth with vermicelli, tofu and vegetarian ham. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-35.jpg',
+   true, false, ARRAY['Vegetarian']::text[], 30, 29, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000030', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000002',
+   'Vegetarian Clear Noodle Soup (Hủ tíu chay)',
+   'Clear vegetable broth with rice noodles, tofu, mushrooms and wonton crisps. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-36.jpg',
+   true, false, ARRAY['Vegetarian']::text[], 30, 30, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000031', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000002',
+   'Mushroom Hotpot (Lẩu nấm)',
+   'Assorted mushrooms, corn, tofu and greens in a vegetable hotpot broth. [4 servings]',
+   60.00, '/chefs/bep-ba-muoi/dishes/dish-37.jpg',
+   true, false, ARRAY['Vegetarian']::text[], 30, 31, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000032', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000002',
+   'Vegetarian Yang Chow Fried Rice (Cơm chiên Dương Châu chay)',
+   'Fried rice with vegetarian ham, carrots and green beans. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-38.jpg',
+   true, false, ARRAY['Vegetarian']::text[], 30, 32, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000033', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000002',
+   'Garlic Fried Rice, Lemongrass Braised Tofu & Seaweed Tofu Soup (Cơm chiên tỏi - Đậu hủ kho sả + Canh rong biển đậu hủ)',
+   'Set: garlic fried rice, lemongrass-braised tofu and seaweed tofu soup. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-39.jpg',
+   true, false, ARRAY['Vegetarian']::text[], 30, 33, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000034', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000002',
+   'Black Pepper Braised Mushrooms & Vegetarian Sweet & Sour Soup (Nấm thập cẩm kho tiêu + Canh chua chay)',
+   'Set: assorted mushrooms braised with black pepper and vegetarian sweet & sour soup. [4 servings]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-40.jpg',
+   true, false, ARRAY['Vegetarian']::text[], 30, 34, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000035', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Bánh Mì (Grilled Pork Sausage / Roasted Pork / Assorted) (Bánh mì nem nướng / heo quay / thập cẩm)',
+   'Vietnamese baguette sandwiches with pickled vegetables, herbs and chili. [Per sandwich (min. 5 per type)]',
+   5.00, '/chefs/bep-ba-muoi/dishes/dish-42.jpg',
+   true, false, ARRAY[]::text[], 20, 35, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000036', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Chicken / Duck Salad & Shrimp Crackers (Gỏi gà / vịt & bánh phồng)',
+   'Shredded chicken or duck salad with herbs and onions, served with shrimp crackers. [Large tray]',
+   55.00, '/chefs/bep-ba-muoi/dishes/dish-43.jpg',
+   true, false, ARRAY[]::text[], 20, 36, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000037', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Steamed Rice Rolls (Bánh cuốn)',
+   'Thin steamed rice sheets filled with pork and wood-ear mushroom, with fried shallots and dipping sauce. [Tray]',
+   25.00, '/chefs/bep-ba-muoi/dishes/dish-44.jpg',
+   true, false, ARRAY[]::text[], 20, 37, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000038', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Sticky Rice Cake (Traditional / Banana) (Bánh tét mặn / Tét chuối)',
+   'Banana-leaf wrapped glutinous rice cake, savory (pork & mung bean) or banana. [2 pcs]',
+   30.00, '/chefs/bep-ba-muoi/dishes/dish-45.jpg',
+   true, false, ARRAY[]::text[], 20, 38, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000039', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Sticky Rice Cake with Salted Egg (Bánh tét mặn trứng muối)',
+   'Savory rice cake with pork, mung bean and salted egg yolk. [2 pcs]',
+   40.00, '/chefs/bep-ba-muoi/dishes/dish-46.jpg',
+   true, false, ARRAY[]::text[], 20, 39, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000040', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Mung Bean Coated Sticky Rice (Xôi vò)',
+   'Fluffy sticky rice coated in mashed mung bean, with coconut. [Tray]',
+   50.00, '/chefs/bep-ba-muoi/dishes/dish-47.jpg',
+   true, false, ARRAY[]::text[], 20, 40, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000041', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Steamed Sticky Rice Ball with Pork & Mung Bean (Xôi khúc)',
+   'Sticky rice balls stuffed with mung bean and pork. [Tray]',
+   50.00, '/chefs/bep-ba-muoi/dishes/dish-48.jpg',
+   true, false, ARRAY[]::text[], 20, 41, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000042', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Sticky Rice with Braised Chicken (Xôi gà khìa)',
+   'Sticky rice with coconut-braised chicken, pickles and peanuts. [Tray]',
+   50.00, '/chefs/bep-ba-muoi/dishes/dish-49.jpg',
+   true, false, ARRAY[]::text[], 20, 42, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000043', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Savory Sticky Rice (Xôi mặn)',
+   'Sticky rice with Chinese sausage, Vietnamese ham, eggs and fried shallots. [Tray]',
+   50.00, '/chefs/bep-ba-muoi/dishes/dish-50.jpg',
+   true, false, ARRAY[]::text[], 20, 43, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000044', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Clear Tapioca Dumplings (Bánh bột lọc)',
+   'Chewy clear tapioca dumplings with shrimp and pork, wrapped in banana leaf. [25 pcs]',
+   25.00, '/chefs/bep-ba-muoi/dishes/dish-51.jpg',
+   true, false, ARRAY[]::text[], 20, 44, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000045', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Clear Tapioca Dumplings (Bánh bột lọc)',
+   'Chewy clear tapioca dumplings with shrimp and pork, wrapped in banana leaf. [50 pcs]',
+   45.00, '/chefs/bep-ba-muoi/dishes/dish-52.jpg',
+   true, false, ARRAY[]::text[], 20, 45, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000046', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Shredded Pork Skin Rolls / Fresh Spring Rolls (Bì cuốn / Gỏi cuốn)',
+   'Rice paper rolls with shredded pork skin, or shrimp and pork, with herbs and dipping sauce. [Per roll (min. 10 pcs)]',
+   2.00, '/chefs/bep-ba-muoi/dishes/dish-53.jpg',
+   true, false, ARRAY[]::text[], 20, 46, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000047', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Crispy Spring Rolls (Chả giò)',
+   'Deep-fried pork spring rolls with dipping sauce. [Per roll (order 30 / 50 / 100 pcs)]',
+   1.00, '/chefs/bep-ba-muoi/dishes/dish-54.jpg',
+   true, false, ARRAY[]::text[], 20, 47, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000048', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000003',
+   'Fermented Pork Roll / Vietnamese Head Cheese (Nem chua / Giò thủ)',
+   'Tangy fermented pork roll, or pressed pork head cheese with wood-ear mushroom. [Per order]',
+   15.00, '/chefs/bep-ba-muoi/dishes/dish-55.jpg',
+   true, false, ARRAY[]::text[], 20, 48, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000049', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000004',
+   'Steamed Banana Cake (Bánh chuối hấp)',
+   'Steamed banana and tapioca cake topped with coconut cream and peanuts. [Tray]',
+   30.00, '/chefs/bep-ba-muoi/dishes/dish-57.jpg',
+   true, false, ARRAY[]::text[], 15, 49, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000050', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000004',
+   'Grilled Banana Wrapped in Sticky Rice (Bánh chuối nếp nướng)',
+   'Banana wrapped in sticky rice and banana leaf, grilled. [Tray]',
+   30.00, '/chefs/bep-ba-muoi/dishes/dish-58.jpg',
+   true, false, ARRAY[]::text[], 15, 50, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000051', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000004',
+   'Mung Bean Sweet Soup with Coconut Milk (Chè đậu xanh cốt dừa)',
+   'Sweet mung bean soup topped with coconut milk. [10 pcs]',
+   25.00, '/chefs/bep-ba-muoi/dishes/dish-59.jpg',
+   true, false, ARRAY[]::text[], 15, 51, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000052', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000004',
+   'Peach Gum Beauty Sweet Soup (Chè dưỡng nhan)',
+   'Peach gum, red dates, goji, longan, lotus seeds and chia in light syrup. [10 pcs]',
+   30.00, '/chefs/bep-ba-muoi/dishes/dish-60.jpg',
+   true, false, ARRAY[]::text[], 15, 52, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000053', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000004',
+   'Glutinous Rice Balls in Ginger Syrup (Chè trôi nước)',
+   'Mung bean-filled rice balls in ginger syrup with coconut milk and sesame. [Per order]',
+   20.00, '/chefs/bep-ba-muoi/dishes/dish-61.jpg',
+   true, false, ARRAY[]::text[], 15, 53, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000054', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000004',
+   'Silken Tofu in Ginger Syrup (Đậu hủ nước gừng)',
+   'Soft silken tofu in warm ginger syrup. [Per order]',
+   20.00, '/chefs/bep-ba-muoi/dishes/dish-62.jpg',
+   true, false, ARRAY[]::text[], 15, 54, NOW(), NOW()),
+
+  ('17e30000-0003-4000-8000-000000000055', 'ffffffff-ffff-ffff-ffff-ffffffffffff', 'ca700000-0003-4000-8000-000000000004',
+   'Grass Jelly with Chia Seeds & Coconut Milk (Sương sáo hạt chia nước dừa)',
+   'Grass jelly with chia seeds and coconut milk. [10 pcs]',
+   30.00, '/chefs/bep-ba-muoi/dishes/dish-63.jpg',
+   true, false, ARRAY[]::text[], 15, 55, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
@@ -522,14 +824,14 @@ VALUES
    'Extra herbs please',
    NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days' + INTERVAL '55 minutes'),
 
-  -- Order 3: COOCO - delivered
+  -- Order 3: Bếp Bà Muối - delivered
   ('0d000000-0000-4000-8000-000000000003', 'RND-003',
    'c0570000-0000-4000-8000-000000000001',
    'ffffffff-ffff-ffff-ffff-ffffffffffff',
    'add20000-0000-4000-8000-000000000001',
    'delivered', 'completed',
-   43.00, 5.00, 2.00, 6.24, 2.00, 58.24,
-   NULL,
+   100.00, 5.00, 2.00, 13.91, 5.00, 125.91,
+   'Pick up at Eastgate Square entrance',
    NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days' + INTERVAL '40 minutes'),
 
   -- Order 4: Every Bite Yum - preparing
@@ -552,13 +854,13 @@ VALUES
    'No spice please',
    NOW() - INTERVAL '10 minutes', NOW() - INTERVAL '10 minutes'),
 
-  -- Order 6: COOCO - ready_for_pickup
+  -- Order 6: Bếp Bà Muối - ready_for_pickup
   ('0d000000-0000-4000-8000-000000000006', 'RND-006',
    'c0570000-0000-4000-8000-000000000002',
    'ffffffff-ffff-ffff-ffff-ffffffffffff',
    'add20000-0000-4000-8000-000000000002',
    'ready_for_pickup', 'pending',
-   41.00, 5.00, 2.00, 5.97, 0.00, 53.97,
+   95.00, 5.00, 2.00, 13.26, 0.00, 115.26,
    NULL,
    NOW() - INTERVAL '45 minutes', NOW() - INTERVAL '15 minutes'),
 
@@ -620,14 +922,14 @@ VALUES
   ('01000000-0001-4000-8000-000000000002', '0d000000-0000-4000-8000-000000000001', '17e30000-0001-4000-8000-000000000003', 'Nashville Hot Chicken Sandwich', 1, 19.99, 19.99, NOW() - INTERVAL '5 days'),
   ('01000000-0002-4000-8000-000000000001', '0d000000-0000-4000-8000-000000000002', '17e30000-0002-4000-8000-000000000001', 'Beef Phở (Phở Bò)', 1, 28.00, 28.00, NOW() - INTERVAL '3 days'),
   ('01000000-0002-4000-8000-000000000002', '0d000000-0000-4000-8000-000000000002', '17e30000-0002-4000-8000-000000000003', 'Authentic Huế Beef Noodle Soup (Bún Bò Huế)', 1, 32.00, 32.00, NOW() - INTERVAL '3 days'),
-  ('01000000-0003-4000-8000-000000000001', '0d000000-0000-4000-8000-000000000003', '17e30000-0003-4000-8000-000000000001', 'Tonkotsu Ramen', 1, 22.00, 22.00, NOW() - INTERVAL '2 days'),
-  ('01000000-0003-4000-8000-000000000002', '0d000000-0000-4000-8000-000000000003', '17e30000-0003-4000-8000-000000000003', 'Chicken Katsu Curry', 1, 21.00, 21.00, NOW() - INTERVAL '2 days'),
+  ('01000000-0003-4000-8000-000000000001', '0d000000-0000-4000-8000-000000000003', '17e30000-0003-4000-8000-000000000001', 'Rice with Grilled Pork Chop, Shredded Pork Skin & Steamed Egg Meatloaf (Cơm sườn bì chả)', 1, 45.00, 45.00, NOW() - INTERVAL '2 days'),
+  ('01000000-0003-4000-8000-000000000002', '0d000000-0000-4000-8000-000000000003', '17e30000-0003-4000-8000-000000000003', 'Duck & Bamboo Shoot Noodle Soup (Bún / Miến măng vịt)', 1, 55.00, 55.00, NOW() - INTERVAL '2 days'),
   ('01000000-0004-4000-8000-000000000001', '0d000000-0000-4000-8000-000000000004', '17e30000-0001-4000-8000-000000000002', 'BBQ Bacon Smash Burger', 1, 21.99, 21.99, NOW() - INTERVAL '30 minutes'),
   ('01000000-0004-4000-8000-000000000002', '0d000000-0000-4000-8000-000000000004', '17e30000-0001-4000-8000-000000000004', 'Crispy Chicken Tenders (4pc)', 1, 16.99, 16.99, NOW() - INTERVAL '30 minutes'),
   ('01000000-0005-4000-8000-000000000001', '0d000000-0000-4000-8000-000000000005', '17e30000-0002-4000-8000-000000000002', 'Chicken Phở (Phở Gà)', 1, 26.00, 26.00, NOW() - INTERVAL '10 minutes'),
   ('01000000-0005-4000-8000-000000000002', '0d000000-0000-4000-8000-000000000005', '17e30000-0002-4000-8000-000000000004', 'Stir-Fried Pork Vermicelli (Bún Thịt Xào)', 1, 24.00, 24.00, NOW() - INTERVAL '10 minutes'),
-  ('01000000-0006-4000-8000-000000000001', '0d000000-0000-4000-8000-000000000006', '17e30000-0003-4000-8000-000000000004', 'Gyudon (Beef Rice Bowl)', 1, 19.00, 19.00, NOW() - INTERVAL '45 minutes'),
-  ('01000000-0006-4000-8000-000000000002', '0d000000-0000-4000-8000-000000000006', '17e30000-0003-4000-8000-000000000005', 'Karaage Chicken Don', 1, 20.00, 20.00, NOW() - INTERVAL '45 minutes'),
+  ('01000000-0006-4000-8000-000000000001', '0d000000-0000-4000-8000-000000000006', '17e30000-0003-4000-8000-000000000004', 'Crab Noodle Soup with Pork Trotter (Bánh canh cua giò heo)', 1, 50.00, 50.00, NOW() - INTERVAL '45 minutes'),
+  ('01000000-0006-4000-8000-000000000002', '0d000000-0000-4000-8000-000000000006', '17e30000-0003-4000-8000-000000000005', 'Chicken Glass Noodle Soup (Miến gà)', 1, 45.00, 45.00, NOW() - INTERVAL '45 minutes'),
   ('01000000-0007-4000-8000-000000000001', '0d000000-0000-4000-8000-000000000007', '17e30000-0001-4000-8000-000000000001', 'Classic Smash Burger', 1, 18.99, 18.99, NOW()),
   ('01000000-0007-4000-8000-000000000002', '0d000000-0000-4000-8000-000000000007', '17e30000-0001-4000-8000-000000000003', 'Nashville Hot Chicken Sandwich', 1, 19.99, 19.99, NOW()),
   ('01000000-0008-4000-8000-000000000001', '0d000000-0000-4000-8000-000000000008', '17e30000-0002-4000-8000-000000000001', 'Beef Phở (Phở Bò)', 1, 28.00, 28.00, NOW()),
@@ -703,18 +1005,18 @@ VALUES
    '0d000000-0000-4000-8000-000000000003',
    'd2000000-0000-4000-8000-000000000001',
    'delivered',
-   '789 Concession St, Hamilton, ON L8V 1C9',
+   'Pick up near Eastgate Square, Queenston Rd, Hamilton, ON L8G 2B4',
    '10 Main St W, Hamilton, ON L8P 1H1',
-   2.9, 5.00, 7.50,
+   5.8, 5.00, 10.50,
    NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days' + INTERVAL '40 minutes'),
 
   ('de100000-0000-4000-8000-000000000006',
    '0d000000-0000-4000-8000-000000000006',
    'd2000000-0000-4000-8000-000000000001',
    'assigned',
-   '789 Concession St, Hamilton, ON L8V 1C9',
+   'Pick up near Eastgate Square, Queenston Rd, Hamilton, ON L8G 2B4',
    '25 Dundurn St N, Hamilton, ON L8R 3E2',
-   2.8, 5.00, 7.50,
+   6.1, 5.00, 11.00,
    NOW() - INTERVAL '15 minutes', NOW() - INTERVAL '15 minutes'),
 
   -- Unassigned pending delivery — required by driver "accept offer" lifecycle Playwright test (Phase 11).
@@ -777,7 +1079,7 @@ VALUES
    '0d000000-0000-4000-8000-000000000003',
    'c0570000-0000-4000-8000-000000000001',
    'ffffffff-ffff-ffff-ffff-ffffffffffff',
-   5, 'The tonkotsu ramen broth was so rich and creamy. You can tell it was simmered for hours. Ryo is a true craftsman.',
+   5, 'The authentic Vietnamese flavours from Bếp Bà Muối are unmatched! The Cơm sườn bì chả and duck noodle soup were fresh, tender, and deeply comforting. Truly authentic home cooking.',
    NOW() - INTERVAL '2 days' + INTERVAL '2 hours', NOW())
 ON CONFLICT (id) DO NOTHING;
 

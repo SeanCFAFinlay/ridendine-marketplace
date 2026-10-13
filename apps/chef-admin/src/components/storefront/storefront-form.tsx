@@ -22,6 +22,11 @@ interface StorefrontFormProps {
 }
 
 const availableCuisines = [
+  'Vietnamese',
+  'Home Cooking',
+  'Catering',
+  'Noodles',
+  'Party Trays',
   'Mexican',
   'Italian',
   'Chinese',

@@ -105,6 +105,10 @@ export function Header() {
         <div className="hidden min-w-0 items-center gap-3 lg:flex">
           <h2 className="font-display text-lg font-semibold text-text">Chef Dashboard</h2>
           <Badge tone="success">Online</Badge>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/15 to-[#EE3985]/15 px-2.5 py-0.5 text-xs font-semibold text-[#0284c7] dark:text-[#57BBFF]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#EE3985]" />
+            cooco.app Partner
+          </span>
           <BrandSwitcher />
         </div>
 

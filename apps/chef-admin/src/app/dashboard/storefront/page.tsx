@@ -142,6 +142,38 @@ export default async function StorefrontPage() {
     return (
       <div>
         <ApprovalBanner chefStatus={chefStatus} />
+        <div className="mb-6 rounded-xl border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/10 via-surface to-[#EE3985]/10 p-4 shadow-xs">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#57BBFF] to-[#EE3985] text-lg font-bold text-white shadow-sm">
+                C
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-text">Cooco Partner Kitchen</h3>
+                  <span className="rounded-full bg-[#57BBFF]/20 px-2 py-0.5 text-[10px] font-bold text-[#0284c7] dark:text-[#7dd3fc]">
+                    Active Onboarding
+                  </span>
+                </div>
+                <p className="text-xs text-textMuted">
+                  Integrated with partner profile <code className="font-mono text-[11px] text-text">06b4462d-a5af-4c47-aa30-7ced490262c5</code> (Bếp Bà Muối · Hamilton, ON)
+                </p>
+              </div>
+            </div>
+            <a
+              href="https://cooco.app/cooks/06b4462d-a5af-4c47-aa30-7ced490262c5"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 self-start rounded-lg border border-[#57BBFF]/40 bg-surface px-3 py-1.5 text-xs font-semibold text-text shadow-xs transition-colors hover:bg-[#57BBFF]/10 sm:self-auto"
+            >
+              <span>View on cooco.app</span>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          </div>
+        </div>
+
         <div>
           <h1 className="text-2xl font-bold text-text">Storefront</h1>
           <p className="mt-1 text-textMuted">Customize how customers see your kitchen</p>
