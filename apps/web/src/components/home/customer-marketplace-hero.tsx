@@ -118,15 +118,15 @@ export function CustomerMarketplaceHero({
 
             <div className="p-5 space-y-4">
               <Link href="/chefs/bep-ba-muoi" className="group block">
-                <div className="flex items-start gap-3">
-                  <div className="-mt-8 h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 border-surface bg-primary shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border bg-primary shadow-sm">
                     <img
                       src="/chefs/bep-ba-muoi/avatar.png"
                       alt="Bếp Bà Muối logo"
                       className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     />
                   </div>
-                  <div className="min-w-0 flex-1 pt-0.5">
+                  <div className="min-w-0 flex-1">
                     <h3 className="text-base font-bold leading-snug text-text group-hover:text-primary transition-colors">
                       Bếp Bà Muối (Ba Muoi Kitchen)
                     </h3>

@@ -43,6 +43,8 @@ jest.mock('@ridendine/engine', () => ({
   createTaxConfigService: () => ({
     getTaxRates: async () => ({ hstRate: 13, serviceFeePercent: 8 }),
   }),
+  getStripePublishableKey: jest.fn(() => 'pk_test_mock'),
+  isStripeTestModeConfigured: jest.fn(() => true),
   BASE_DELIVERY_FEE: 500,
 }));
 

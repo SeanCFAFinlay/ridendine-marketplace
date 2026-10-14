@@ -503,6 +503,8 @@ export async function runCheckout({
       const piParams: Parameters<typeof stripe.paymentIntents.create>[0] = {
         amount: totalCents,
         currency: 'cad',
+        statement_descriptor_suffix: 'RIDENDINE',
+        description: `RideNDine Order ${order.order_number}`,
         metadata: {
           order_id: order.id,
           order_number: order.order_number,
@@ -535,10 +537,11 @@ export async function runCheckout({
         orderId: order.id,
         orderNumber: order.order_number,
         total: serverQuote.total,
-        ...(isTest && {
-          testMode: true,
-          publishableKey: getStripePublishableKey({ testMode: true }),
-        }),
+        testMode: Boolean(isTest),
+        publishableKey:
+          typeof getStripePublishableKey === 'function'
+            ? getStripePublishableKey({ testMode: isTest })
+            : null,
         breakdown: {
           subtotal: serverQuote.subtotal,
           deliveryFee: serverQuote.deliveryFee,

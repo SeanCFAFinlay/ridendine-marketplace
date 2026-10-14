@@ -67,10 +67,10 @@ export function StorefrontHeader({ storefront }: StorefrontHeaderProps) {
         </div>
       </div>
 
-      <div className="container">
-        <div className="-mt-16 flex flex-col gap-4 pb-6 md:-mt-20 md:flex-row md:items-start md:gap-6">
+      <div className="container pb-6 pt-3 sm:pt-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
           {/* Avatar */}
-          <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-surface bg-primary text-3xl font-bold text-primaryFg shadow-lg md:h-32 md:w-32">
+          <div className="flex h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-border bg-primary text-2xl sm:text-3xl font-bold text-primaryFg shadow-md">
             {storefront.logoUrl ? (
               <img
                 src={storefront.logoUrl}

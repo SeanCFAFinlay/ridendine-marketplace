@@ -71,7 +71,9 @@ export async function POST() {
         .insert({
           chef_id: chefProfile.id,
           stripe_account_id: accountId,
-          status: 'pending',
+          stripe_account_status: 'pending',
+          payout_enabled: false,
+          is_verified: false,
         });
     }
 

@@ -17,7 +17,10 @@ interface Payout {
 interface PayoutAccount {
   id: string;
   stripe_account_id: string;
-  status: 'pending' | 'active' | 'restricted';
+  stripe_account_status?: string | null;
+  status?: 'pending' | 'active' | 'restricted';
+  payout_enabled?: boolean | null;
+  is_verified?: boolean;
   created_at: string;
 }
 
@@ -212,7 +215,23 @@ export default function PayoutsPage() {
         </Card>
       )}
 
-      {account && account.status === 'restricted' && (
+      {account && (account.stripe_account_status === 'pending' || account.status === 'pending') && !account.payout_enabled && (
+        <Card className="bg-primarySoft border-primary/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-primary">Verification in Progress</h3>
+              <p className="text-sm text-primary">
+                Your payout account is linked with Stripe. Payouts will activate once verification completes.
+              </p>
+            </div>
+            <Button variant="outline" onClick={handleSetupAccount}>
+              Review Stripe Details
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {account && (account.stripe_account_status === 'restricted' || account.status === 'restricted') && (
         <Card className="bg-warningSoft border-warning/30">
           <div className="flex items-center justify-between">
             <div>
@@ -257,7 +276,7 @@ export default function PayoutsPage() {
       </div>
 
       {/* Request Payout */}
-      {account && account.status === 'active' && availableBalance >= 10 && (
+      {account && (account.payout_enabled || account.stripe_account_status === 'active' || account.status === 'active') && availableBalance >= 10 && (
         <Card>
           <div className="flex items-center justify-between">
             <div>

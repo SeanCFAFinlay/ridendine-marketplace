@@ -16,7 +16,9 @@ import { orderConfirmationPath } from '@/lib/customer-ordering';
 import { calculateCartSubtotal, formatCartCurrency, totalsDifferBeyondTolerance } from '@/lib/cart-summary';
 import { useEta } from '@/hooks/use-eta';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const defaultStripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
 interface CartItem {
   id: string;
@@ -156,6 +158,7 @@ function CheckoutContent() {
   const promoRequestIdRef = useRef(0);
 
   // Stripe state
+  const [stripePromise, setStripePromise] = useState<ReturnType<typeof loadStripe> | null>(() => defaultStripePromise);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [breakdown, setBreakdown] = useState<OrderBreakdown | null>(null);
@@ -365,6 +368,9 @@ function CheckoutContent() {
             : null
         );
 
+        if (result.data.publishableKey) {
+          setStripePromise(loadStripe(result.data.publishableKey));
+        }
         setClientSecret(result.data.clientSecret);
         setCheckoutStep('payment');
       } else {
@@ -657,24 +663,30 @@ function CheckoutContent() {
                 </div>
               )}
               {clientSecret && !totalChangeNotice && (
-                <Elements
-                  stripe={stripePromise}
-                  options={{
-                    clientSecret,
-                    appearance: {
-                      theme: 'stripe',
-                      variables: {
-                        colorPrimary: '#EA5B26',
+                stripePromise ? (
+                  <Elements
+                    stripe={stripePromise}
+                    options={{
+                      clientSecret,
+                      appearance: {
+                        theme: 'stripe',
+                        variables: {
+                          colorPrimary: '#EA5B26',
+                        },
                       },
-                    },
-                  }}
-                >
-                  <StripePaymentForm
-                    orderId={orderId!}
-                    onSuccess={handlePaymentSuccess}
-                    onError={handlePaymentError}
-                  />
-                </Elements>
+                    }}
+                  >
+                    <StripePaymentForm
+                      orderId={orderId!}
+                      onSuccess={handlePaymentSuccess}
+                      onError={handlePaymentError}
+                    />
+                  </Elements>
+                ) : (
+                  <div className="rounded-lg border border-border bg-surfaceMuted p-4 text-center">
+                    <p className="text-sm text-textMuted">Initializing secure payment gateway...</p>
+                  </div>
+                )
               )}
               <button
                 type="button"

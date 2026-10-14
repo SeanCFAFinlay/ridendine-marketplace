@@ -15,12 +15,12 @@ export type CheckoutReadinessResult =
   | { ok: true }
   | { ok: false; code: CheckoutReadinessFailureCode; message: string };
 
-/** `HH:MM` or `HH:MM:SS` → minutes from midnight (0–1439 clamp). */
+/** `HH:MM` or `HH:MM:SS` → minutes from midnight (0–1440 clamp). */
 export function timeStringToMinutes(t: string): number {
   const parts = String(t).trim().split(':').map((p) => parseInt(p, 10));
   const h = Number.isFinite(parts[0]) ? parts[0]! : 0;
   const m = Number.isFinite(parts[1]) ? parts[1]! : 0;
-  return Math.min(1439, Math.max(0, h * 60 + m));
+  return Math.min(1440, Math.max(0, h * 60 + m));
 }
 
 /**
@@ -51,6 +51,11 @@ export function evaluateWeeklyAvailability(
   const cur = now.getHours() * 60 + now.getMinutes();
   const start = timeStringToMinutes(todayRow.start_time);
   const end = timeStringToMinutes(todayRow.end_time);
+
+  // 24-hour / all-day availability window (e.g. 00:00 to 23:59:59 or 24:00)
+  if (start === 0 && end >= 1439) {
+    return { allowed: true };
+  }
 
   if (end > start) {
     if (cur < start || cur >= end) {

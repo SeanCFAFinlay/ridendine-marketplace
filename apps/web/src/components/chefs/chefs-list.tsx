@@ -130,22 +130,47 @@ export async function ChefsList({
             </div>
 
             <div className="p-5">
-              <div className="-mt-14 mb-4 flex items-end justify-between">
-                {/* Avatar */}
-                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-4 border-surface bg-primary text-2xl font-bold text-primaryFg shadow-md">
-                  {chef.logo_url ? (
-                    <img
-                      src={chef.logo_url}
-                      alt={chef.name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    chef.name.charAt(0)
-                  )}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  {/* Avatar */}
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-primary text-xl font-bold text-primaryFg shadow-sm">
+                    {chef.logo_url ? (
+                      <img
+                        src={chef.logo_url}
+                        alt={chef.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      chef.name.charAt(0)
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    {(chef.slug === 'bep-ba-muoi' ||
+                      chef.slug === 'cooco' ||
+                      chef.name.toLowerCase().includes('muối') ||
+                      chef.name.toLowerCase().includes('cooco')) && (
+                      <div className="mb-1">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/15 to-[#EE3985]/15 px-2 py-0.5 text-[10px] font-bold text-[#0369a1] dark:text-[#7dd3fc]">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#EE3985]" />
+                          Official Cooco Partner
+                        </span>
+                      </div>
+                    )}
+                    <h3 className="text-lg font-bold leading-tight text-text transition-colors group-hover:text-primary">
+                      {chef.name}
+                    </h3>
+                    <p className="mt-0.5 truncate text-sm text-textMuted">
+                      by{' '}
+                      <span className="font-medium text-text">
+                        {chef.chef_profiles?.display_name || 'Chef'}
+                      </span>
+                    </p>
+                  </div>
                 </div>
 
                 {/* Rating */}
-                <div className="flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-1 shadow-sm">
+                <div className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-surface px-2 py-1 shadow-sm">
                   <svg className="h-3.5 w-3.5 text-warning" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
@@ -157,27 +182,6 @@ export async function ChefsList({
                   )}
                 </div>
               </div>
-
-              {(chef.slug === 'bep-ba-muoi' ||
-                chef.slug === 'cooco' ||
-                chef.name.toLowerCase().includes('muối') ||
-                chef.name.toLowerCase().includes('cooco')) && (
-                <div className="mb-1.5">
-                  <span className="inline-flex items-center gap-1 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/15 to-[#EE3985]/15 px-2 py-0.5 text-[10px] font-bold text-[#0369a1] dark:text-[#7dd3fc]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#EE3985]" />
-                    Official Cooco Partner
-                  </span>
-                </div>
-              )}
-              <h3 className="text-lg font-bold text-text transition-colors group-hover:text-primary">
-                {chef.name}
-              </h3>
-              <p className="text-sm text-textMuted">
-                by{' '}
-                <span className="font-medium text-text">
-                  {chef.chef_profiles?.display_name || 'Chef'}
-                </span>
-              </p>
 
               {chef.description && (
                 <p className="mt-2 text-sm text-textMuted line-clamp-2">{chef.description}</p>

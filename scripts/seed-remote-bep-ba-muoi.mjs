@@ -124,18 +124,18 @@ async function run() {
         updated_at = NOW();
     `);
 
-    // 4. Chef Availability (every day 10:00 - 21:00)
+    // 4. Chef Availability (every day 00:00 - 23:59:59 all-day ordering)
     console.log('Seeding chef_availability...');
     await client.query(`
       INSERT INTO chef_availability (storefront_id, day_of_week, start_time, end_time, is_available)
       VALUES
-        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 0, '10:00:00', '21:00:00', true),
-        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 1, '10:00:00', '21:00:00', true),
-        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 2, '10:00:00', '21:00:00', true),
-        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 3, '10:00:00', '21:00:00', true),
-        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 4, '10:00:00', '21:00:00', true),
-        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 5, '10:00:00', '21:00:00', true),
-        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 6, '10:00:00', '21:00:00', true)
+        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 0, '00:00:00', '23:59:59', true),
+        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 1, '00:00:00', '23:59:59', true),
+        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 2, '00:00:00', '23:59:59', true),
+        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 3, '00:00:00', '23:59:59', true),
+        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 4, '00:00:00', '23:59:59', true),
+        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 5, '00:00:00', '23:59:59', true),
+        ('ffffffff-ffff-ffff-ffff-ffffffffffff', 6, '00:00:00', '23:59:59', true)
       ON CONFLICT (storefront_id, day_of_week) DO UPDATE SET
         start_time = EXCLUDED.start_time,
         end_time = EXCLUDED.end_time,

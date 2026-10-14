@@ -23,15 +23,19 @@ function ChefsLoadingSkeleton() {
     <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {[1, 2, 3].map((i) => (
         <div key={i} className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
-          <div className="h-44 animate-pulse bg-surfaceMuted" />
+          <div className="aspect-[16/9] animate-pulse bg-surfaceMuted" />
           <div className="p-5">
-            <div className="-mt-10 mb-4 flex items-end justify-between">
-              <div className="h-14 w-14 animate-pulse rounded-xl bg-surfaceMuted" />
-              <div className="h-6 w-16 animate-pulse rounded-full bg-surfaceMuted" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-start gap-3">
+                <div className="h-12 w-12 shrink-0 animate-pulse rounded-xl bg-surfaceMuted" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="h-5 w-36 animate-pulse rounded bg-surfaceMuted" />
+                  <div className="h-4 w-24 animate-pulse rounded bg-surfaceMuted" />
+                </div>
+              </div>
+              <div className="h-6 w-14 shrink-0 animate-pulse rounded-full bg-surfaceMuted" />
             </div>
-            <div className="mb-2 h-5 w-3/4 animate-pulse rounded bg-surfaceMuted" />
-            <div className="mb-3 h-4 w-1/2 animate-pulse rounded bg-surfaceMuted" />
-            <div className="flex gap-2">
+            <div className="mt-4 flex gap-2">
               <div className="h-5 w-20 animate-pulse rounded-full bg-surfaceMuted" />
               <div className="h-5 w-16 animate-pulse rounded-full bg-surfaceMuted" />
             </div>
