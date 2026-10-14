@@ -1,4 +1,4 @@
-import { createAdminClient, getStorefrontMenu } from '@ridendine/db';
+import { createAdminClient, getStorefrontMenu, getStorefrontBySlug } from '@ridendine/db';
 import { successResponse, errorResponse } from '@/lib/engine';
 
 export const dynamic = 'force-dynamic';
@@ -11,16 +11,27 @@ export async function GET(_request: Request, { params }: RouteParams) {
   try {
     const { id } = await params;
     const client = createAdminClient() as any;
-    const { data: storefront } = await client
-      .from('chef_storefronts')
-      .select('id')
-      .eq('id', id)
-      .eq('is_active', true)
-      .maybeSingle();
-    if (!storefront) return errorResponse('NOT_FOUND', 'Storefront not found', 404);
+
+    let storefrontId: string | null = null;
+    const bySlug = await getStorefrontBySlug(client, id);
+    if (bySlug) {
+      storefrontId = bySlug.id;
+    } else {
+      const { data: sf } = await client
+        .from('chef_storefronts')
+        .select('id')
+        .eq('id', id)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (sf) {
+        storefrontId = sf.id;
+      }
+    }
+
+    if (!storefrontId) return errorResponse('NOT_FOUND', 'Storefront not found', 404);
 
     const [menu, { data: options }] = await Promise.all([
-      getStorefrontMenu(client, id, { includeUnavailable: false }),
+      getStorefrontMenu(client, storefrontId, { includeUnavailable: false }),
       client
         .from('menu_item_options')
         .select('*, menu_item_option_values(*)')
@@ -30,7 +41,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
             await client
               .from('menu_items')
               .select('id')
-              .eq('storefront_id', id)
+              .eq('storefront_id', storefrontId)
               .eq('is_available', true)
           ).data?.map((item: { id: string }) => item.id) ?? []
         ),

@@ -4,10 +4,12 @@
 
 const mockCreateAdminClient = jest.fn();
 const mockGetStorefrontMenu = jest.fn();
+const mockGetStorefrontBySlug = jest.fn();
 
 jest.mock('@ridendine/db', () => ({
   createAdminClient: () => mockCreateAdminClient(),
   getStorefrontMenu: (...args: unknown[]) => mockGetStorefrontMenu(...args),
+  getStorefrontBySlug: (...args: unknown[]) => mockGetStorefrontBySlug(...args),
 }));
 
 jest.mock('@/lib/engine', () => ({
@@ -112,6 +114,35 @@ describe('GET /api/storefronts/[id]/menu', () => {
     expect(mockGetStorefrontMenu).toHaveBeenCalledWith(
       expect.any(Object),
       'sf-1',
+      expect.objectContaining({ includeUnavailable: false }),
+    );
+  });
+
+  it('resolves menu when accessed by slug', async () => {
+    mockGetStorefrontBySlug.mockResolvedValue({ id: 'sf-slug-1', slug: 'bep-ba-muoi' });
+    mockCreateAdminClient.mockReturnValue(
+      buildClient({
+        storefrontExists: false, // fallback table not needed because slug matched
+        menuItemRows: [{ id: 'menu-1' }],
+      }),
+    );
+    mockGetStorefrontMenu.mockResolvedValue([
+      {
+        id: 'cat-1',
+        name: 'Mains',
+        items: [{ id: 'menu-1', name: 'Com Suon', is_sold_out: false }],
+      },
+    ]);
+
+    const params = { params: Promise.resolve({ id: 'bep-ba-muoi' }) };
+    const res = await GET(new Request('http://localhost/api/storefronts/bep-ba-muoi/menu'), params);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.data.categories[0].items[0].name).toBe('Com Suon');
+    expect(mockGetStorefrontMenu).toHaveBeenCalledWith(
+      expect.any(Object),
+      'sf-slug-1',
       expect.objectContaining({ includeUnavailable: false }),
     );
   });

@@ -36,7 +36,7 @@ function publicStorefront(row: any) {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q')?.trim();
+    const query = (searchParams.get('q') || searchParams.get('search'))?.trim();
     const limit = Math.min(Number(searchParams.get('limit') || 20), 50);
     const offset = Math.max(Number(searchParams.get('offset') || 0), 0);
     const sortBy = (searchParams.get('sortBy') as any) || 'default';

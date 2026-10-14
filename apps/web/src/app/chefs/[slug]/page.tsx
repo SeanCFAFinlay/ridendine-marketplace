@@ -15,10 +15,31 @@ interface ChefPageProps {
 async function resolveStorefront(supabase: any, slug: string) {
   let storefront = await getStorefrontBySlug(supabase, slug);
   if (!storefront) {
-    if (slug === 'cooco') {
+    if (slug === 'cooco' || slug === '06b4462d-a5af-4c47-aa30-7ced490262c5') {
       storefront = await getStorefrontBySlug(supabase, 'bep-ba-muoi');
     } else if (slug === 'bep-ba-muoi') {
       storefront = await getStorefrontBySlug(supabase, 'cooco');
+    } else {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+      if (isUuid) {
+        const { data: sf } = await supabase
+          .from('chef_storefronts')
+          .select(`
+            *,
+            chef_profiles!inner (
+              id,
+              display_name,
+              profile_image_url,
+              status
+            )
+          `)
+          .or(`id.eq.${slug},chef_id.eq.${slug}`)
+          .eq('is_active', true)
+          .maybeSingle();
+        if (sf) {
+          storefront = sf;
+        }
+      }
     }
   }
   return storefront;
