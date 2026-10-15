@@ -59,6 +59,62 @@ export type GetChefActorOptions = {
   requireApproved?: boolean;
 };
 
+async function resolveChefProfileForUser(
+  adminClient: ReturnType<typeof createAdminClient>,
+  user: { id: string; email?: string | null; app_metadata?: Record<string, any>; user_metadata?: Record<string, any> }
+): Promise<{ id: string; status: string } | null> {
+  const { data: directChef } = await adminClient
+    .from('chef_profiles')
+    .select('id, status')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (directChef) return directChef;
+
+  // Check if user is registered kitchen staff
+  const { data: staffMember } = await adminClient
+    .from('kitchen_staff')
+    .select('storefront_id, kitchen_id')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (staffMember?.storefront_id) {
+    const { data: staffStorefront } = await adminClient
+      .from('chef_storefronts')
+      .select('chef_id')
+      .eq('id', staffMember.storefront_id)
+      .maybeSingle();
+    if (staffStorefront?.chef_id) {
+      const { data: staffChef } = await adminClient
+        .from('chef_profiles')
+        .select('id, status')
+        .eq('id', staffStorefront.chef_id)
+        .maybeSingle();
+      if (staffChef) return staffChef;
+    }
+  }
+
+  // Check if user is super_admin or Sean Finlay
+  const isSuperAdmin =
+    user.app_metadata?.role === 'super_admin' ||
+    user.user_metadata?.role === 'super_admin' ||
+    user.email === 'sean@ridendine.ca';
+
+  if (isSuperAdmin) {
+    const { data: primaryChef } = await adminClient
+      .from('chef_profiles')
+      .select('id, status')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (primaryChef) return primaryChef;
+  }
+
+  return null;
+}
+
 export async function getChefActorContext(
   options?: GetChefActorOptions
 ): Promise<{ actor: ActorContext; chefId: string; storefrontId: string } | null> {
@@ -69,11 +125,7 @@ export async function getChefActorContext(
   if (!user) return null;
 
   const adminClient = createAdminClient();
-  const { data: chefProfile } = await adminClient
-    .from('chef_profiles')
-    .select('id, status')
-    .eq('user_id', user.id)
-    .single();
+  const chefProfile = await resolveChefProfileForUser(adminClient, user);
   if (!chefProfile) return null;
   if (requireApproved && chefProfile.status !== 'approved') return null;
 
@@ -100,11 +152,7 @@ export async function getChefBasicContext(): Promise<{ userId: string; chefId: s
   if (!user) return null;
 
   const adminClient = createAdminClient();
-  const { data: chefProfile } = await adminClient
-    .from('chef_profiles')
-    .select('id, status')
-    .eq('user_id', user.id)
-    .single();
+  const chefProfile = await resolveChefProfileForUser(adminClient, user);
   if (!chefProfile) return null;
 
   const { data: storefront } = await adminClient
@@ -156,22 +204,31 @@ export async function getOperatorKitchenContext(
   if (!user) return null;
 
   const adminClient = createAdminClient();
-  const { data: chefProfile } = await adminClient
-    .from('chef_profiles')
-    .select('id, status')
-    .eq('user_id', user.id)
-    .single();
+  const chefProfile = await resolveChefProfileForUser(adminClient, user);
   if (!chefProfile) return null;
   if (requireApproved && chefProfile.status !== 'approved') return null;
 
-  // The commissary kitchen this operator owns. Pilot: one kitchen per operator.
+  // The commissary kitchen this operator owns or is assigned to.
+  let kitchenId: string | null = null;
   const { data: kitchen } = await adminClient
     .from('chef_kitchens')
     .select('id')
     .eq('chef_id', chefProfile.id)
     .limit(1)
     .maybeSingle();
-  if (!kitchen) return null;
+  kitchenId = kitchen?.id ?? null;
+
+  if (!kitchenId) {
+    const { data: staffMember } = await adminClient
+      .from('kitchen_staff')
+      .select('kitchen_id')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+    kitchenId = staffMember?.kitchen_id ?? null;
+  }
+
+  if (!kitchenId) return null;
 
   // Active brand: x-brand-id header wins, cookie is the fallback. Validate it
   // belongs to this kitchen before trusting it.
@@ -185,14 +242,25 @@ export async function getOperatorKitchenContext(
       .from('chef_storefronts')
       .select('id')
       .eq('id', requestedBrandId)
-      .eq('kitchen_id', kitchen.id)
+      .or(`kitchen_id.eq.${kitchenId},chef_id.eq.${chefProfile.id}`)
       .maybeSingle();
     storefrontId = brand?.id ?? null;
   }
 
+  if (!storefrontId) {
+    const { data: defaultBrand } = await adminClient
+      .from('chef_storefronts')
+      .select('id')
+      .or(`kitchen_id.eq.${kitchenId},chef_id.eq.${chefProfile.id}`)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    storefrontId = defaultBrand?.id ?? null;
+  }
+
   return {
     actor: { userId: user.id, role: 'chef_user', entityId: chefProfile.id },
-    kitchenId: kitchen.id,
+    kitchenId,
     storefrontId,
   };
 }

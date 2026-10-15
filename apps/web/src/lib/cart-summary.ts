@@ -21,7 +21,7 @@ export function formatCartCurrency(value: number): string {
 }
 
 export function calculateCartLineTotal(item: Pick<CartSummaryItem, 'price' | 'quantity'>): number {
-  return roundMoney(item.price * item.quantity);
+  return roundMoney((Number(item.price) || 0) * (Number(item.quantity) || 0));
 }
 
 export function calculateCartSubtotal(items: CartSummaryItem[]): number {
@@ -29,7 +29,7 @@ export function calculateCartSubtotal(items: CartSummaryItem[]): number {
 }
 
 export function calculateCartItemCount(items: CartSummaryItem[]): number {
-  return items.reduce((sum, item) => sum + item.quantity, 0);
+  return items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
 }
 
 export function checkoutHrefForStorefront(storefrontId?: string | null): string {

@@ -77,25 +77,29 @@ function BarChart({
   color: string;
   highlightIndex?: number;
 }) {
-  const max = Math.max(...bars.map((b) => b.height), 1);
+  const heights = bars.map((b) => Number(b.height) || 0);
+  const max = Math.max(...heights, 1);
   return (
     <div className="h-48 flex items-end gap-0.5">
-      {bars.map((bar, i) => (
-        <div
-          key={i}
-          className={`flex-1 rounded-t transition-opacity ${
-            highlightIndex !== undefined && i === highlightIndex
-              ? 'opacity-100 ring-2 ring-offset-1 ring-current'
-              : 'opacity-70 hover:opacity-100'
-          }`}
-          style={{
-            height: `${(bar.height / max) * 100}%`,
-            minHeight: '2px',
-            backgroundColor: color,
-          }}
-          title={bar.label}
-        />
-      ))}
+      {bars.map((bar, i) => {
+        const heightVal = Number(bar.height) || 0;
+        return (
+          <div
+            key={i}
+            className={`flex-1 rounded-t transition-opacity ${
+              highlightIndex !== undefined && i === highlightIndex
+                ? 'opacity-100 ring-2 ring-offset-1 ring-current'
+                : 'opacity-70 hover:opacity-100'
+            }`}
+            style={{
+              height: `${(heightVal / max) * 100}%`,
+              minHeight: '2px',
+              backgroundColor: color,
+            }}
+            title={bar.label}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -135,16 +139,22 @@ export default function AnalyticsPage() {
     );
   }
 
-  const dailyBars = data.dailyRevenue.map((d) => ({
-    height: d.revenue,
-    label: `${d.date}: $${d.revenue.toFixed(2)}`,
-  }));
+  const dailyBars = (data.dailyRevenue || []).map((d) => {
+    const rev = Number(d.revenue) || 0;
+    return {
+      height: rev,
+      label: `${d.date}: $${rev.toFixed(2)}`,
+    };
+  });
 
-  const hourlyBars = data.hourlyOrders.map((h) => ({
-    height: h.count,
-    label: `${h.hour}:00 — ${h.count} orders`,
-    isHighlight: h.hour === data.peakHour,
-  }));
+  const hourlyBars = (data.hourlyOrders || []).map((h) => {
+    const count = Number(h.count) || 0;
+    return {
+      height: count,
+      label: `${h.hour}:00 — ${count} orders`,
+      isHighlight: h.hour === data.peakHour,
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -154,26 +164,26 @@ export default function AnalyticsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Revenue"
-          value={`$${data.revenue.toFixed(2)}`}
-          sub={`${data.orderCount} orders`}
-          change={data.comparison.revenueChange}
+          value={`$${(Number(data.revenue) || 0).toFixed(2)}`}
+          sub={`${Number(data.orderCount) || 0} orders`}
+          change={data.comparison?.revenueChange}
         />
         <MetricCard
           label="Avg Order Value"
-          value={`$${data.avgOrderValue.toFixed(2)}`}
+          value={`$${(Number(data.avgOrderValue) || 0).toFixed(2)}`}
           sub="per order"
-          change={data.comparison.avgOrderValueChange}
+          change={data.comparison?.avgOrderValueChange}
         />
         <MetricCard
           label="Customers Served"
-          value={String(data.uniqueCustomers)}
-          sub={`${data.repeatCustomerRate.toFixed(0)}% repeat`}
-          change={data.comparison.customersChange}
+          value={String(Number(data.uniqueCustomers) || 0)}
+          sub={`${(Number(data.repeatCustomerRate) || 0).toFixed(0)}% repeat`}
+          change={data.comparison?.customersChange}
         />
         <MetricCard
           label="Avg Rating"
-          value={data.avgRating !== null ? `${data.avgRating.toFixed(1)} ★` : 'No reviews'}
-          sub={`${data.cancellationRate.toFixed(1)}% cancel rate`}
+          value={data.avgRating !== null && data.avgRating !== undefined ? `${(Number(data.avgRating) || 0).toFixed(1)} ★` : 'No reviews'}
+          sub={`${(Number(data.cancellationRate) || 0).toFixed(1)}% cancel rate`}
         />
       </div>
 
@@ -231,7 +241,7 @@ export default function AnalyticsPage() {
                 <div className="flex-1">
                   <p className="font-medium text-text">{item.name}</p>
                   <p className="text-sm text-textMuted">
-                    {item.count} sold &bull; ${item.revenue.toFixed(2)} revenue
+                    {item.count} sold &bull; ${(Number(item.revenue) || 0).toFixed(2)} revenue
                   </p>
                 </div>
                 <div className="w-32 h-2 bg-surfaceMuted rounded-full overflow-hidden">
@@ -294,12 +304,14 @@ function PageHeader({
 }
 
 function EarningsBreakdown({
-  revenue,
-  orderCount,
+  revenue: rawRevenue,
+  orderCount: rawOrderCount,
 }: {
   revenue: number;
   orderCount: number;
 }) {
+  const revenue = Number(rawRevenue) || 0;
+  const orderCount = Number(rawOrderCount) || 0;
   const platformFee = revenue * 0.15;
   const stripeFee = revenue * 0.029 + orderCount * 0.3;
   const netEarnings = revenue - platformFee - stripeFee;
@@ -352,11 +364,11 @@ function EarningsBreakdown({
 }
 
 function OperationalHealth({
-  cancellationRate,
-  repeatCustomerRate,
-  avgOrderValue,
-  uniqueCustomers,
-  orderCount,
+  cancellationRate: rawCancellationRate,
+  repeatCustomerRate: rawRepeatCustomerRate,
+  avgOrderValue: rawAvgOrderValue,
+  uniqueCustomers: rawUniqueCustomers,
+  orderCount: rawOrderCount,
 }: {
   cancellationRate: number;
   repeatCustomerRate: number;
@@ -364,7 +376,12 @@ function OperationalHealth({
   uniqueCustomers: number;
   orderCount: number;
 }) {
-  const fulfillmentRate = 100 - cancellationRate;
+  const cancellationRate = Number(rawCancellationRate) || 0;
+  const repeatCustomerRate = Number(rawRepeatCustomerRate) || 0;
+  const avgOrderValue = Number(rawAvgOrderValue) || 0;
+  const uniqueCustomers = Number(rawUniqueCustomers) || 0;
+  const orderCount = Number(rawOrderCount) || 0;
+  const fulfillmentRate = Math.max(0, 100 - cancellationRate);
 
   const kpis = [
     {
@@ -372,7 +389,7 @@ function OperationalHealth({
       value: `${fulfillmentRate.toFixed(1)}%`,
       sub: 'Orders completed vs received',
       tone: fulfillmentRate >= 90 ? 'text-success' : fulfillmentRate >= 75 ? 'text-warning' : 'text-danger',
-      bar: fulfillmentRate,
+      bar: Math.min(100, fulfillmentRate),
       barColor: fulfillmentRate >= 90 ? 'bg-success' : fulfillmentRate >= 75 ? 'bg-warning' : 'bg-danger',
     },
     {

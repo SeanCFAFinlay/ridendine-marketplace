@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createServerClient, getChefByUserId } from '@ridendine/db';
+import { createServerClient, createAdminClient, getChefByUserId, getChefById } from '@ridendine/db';
 import { loginSchema } from '@ridendine/validation';
 import {
   evaluateRateLimit,
@@ -43,7 +43,47 @@ export async function POST(request: Request) {
       );
     }
 
-    const chef = await getChefByUserId(supabase, authData.user.id);
+    let chef = await getChefByUserId(supabase, authData.user.id);
+    if (!chef) {
+      const isSuperAdmin =
+        authData.user.app_metadata?.role === 'super_admin' ||
+        authData.user.user_metadata?.role === 'super_admin' ||
+        authData.user.email === 'sean@ridendine.ca';
+      if (isSuperAdmin) {
+        const adminClient = createAdminClient();
+        const { data: primaryChef } = await adminClient
+          .from('chef_profiles')
+          .select('*')
+          .eq('status', 'approved')
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (primaryChef) {
+          chef = primaryChef;
+        }
+      }
+    }
+
+    if (!chef) {
+      const adminClient = createAdminClient();
+      const { data: staffMember } = await adminClient
+        .from('kitchen_staff')
+        .select('storefront_id')
+        .eq('user_id', authData.user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (staffMember?.storefront_id) {
+        const { data: staffStorefront } = await adminClient
+          .from('chef_storefronts')
+          .select('chef_id')
+          .eq('id', staffMember.storefront_id)
+          .maybeSingle();
+        if (staffStorefront?.chef_id) {
+          chef = await getChefById(adminClient, staffStorefront.chef_id);
+        }
+      }
+    }
+
     if (!chef) {
       await supabase.auth.signOut();
       return NextResponse.json(

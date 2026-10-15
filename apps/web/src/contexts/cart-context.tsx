@@ -89,7 +89,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     persistStorefrontId(id);
   }, []);
 
-  const itemCount = cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  const itemCount = cart?.items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0) ?? 0;
 
   const fetchCart = useCallback(async (sfId: string) => {
     setLoading(true);
@@ -103,8 +103,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           id: item.id,
           menu_item_id: item.menu_item_id,
           name: item.menu_items?.name || 'Unknown Item',
-          price: item.unit_price,
-          quantity: item.quantity,
+          price: Number(item.unit_price) || 0,
+          quantity: Number(item.quantity) || 0,
           special_instructions: item.special_instructions,
           image_url: item.menu_items?.image_url,
         }));

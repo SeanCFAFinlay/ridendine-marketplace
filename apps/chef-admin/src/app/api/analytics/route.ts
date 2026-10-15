@@ -92,9 +92,9 @@ function buildDailyRevenue(
   }
   for (const o of orders) {
     const date = o.created_at.split('T')[0]!;
-    if (date in daily) daily[date]! += o.total;
+    if (date in daily) daily[date]! += Number(o.total || 0);
   }
-  return Object.entries(daily).map(([date, revenue]) => ({ date, revenue }));
+  return Object.entries(daily).map(([date, revenue]) => ({ date, revenue: Number(revenue) }));
 }
 
 function buildTopItems(items: OrderItemRow[]): Array<{ name: string; count: number; revenue: number }> {
@@ -102,8 +102,8 @@ function buildTopItems(items: OrderItemRow[]): Array<{ name: string; count: numb
   for (const item of items) {
     const name = item.menu_items?.name ?? 'Unknown';
     if (!acc[name]) acc[name] = { count: 0, revenue: 0 };
-    acc[name]!.count += item.quantity;
-    acc[name]!.revenue += item.unit_price * item.quantity;
+    acc[name]!.count += Number(item.quantity || 0);
+    acc[name]!.revenue += Number(item.unit_price || 0) * Number(item.quantity || 0);
   }
   return Object.entries(acc)
     .map(([name, stats]) => ({ name, ...stats }))
@@ -113,7 +113,7 @@ function buildTopItems(items: OrderItemRow[]): Array<{ name: string; count: numb
 
 function calcAvgRating(reviews: ReviewRow[]): number | null {
   if (reviews.length === 0) return null;
-  return reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+  return reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / reviews.length;
 }
 
 export async function GET(request: NextRequest) {
@@ -145,8 +145,8 @@ export async function GET(request: NextRequest) {
     const prevActiveOrders = prevOrders.filter((o) => ACTIVE_STATUSES.includes(o.status));
 
     // Revenue and order counts
-    const revenue = activeOrders.reduce((s, o) => s + o.total, 0);
-    const prevRevenue = prevActiveOrders.reduce((s, o) => s + o.total, 0);
+    const revenue = activeOrders.reduce((s, o) => s + Number(o.total || 0), 0);
+    const prevRevenue = prevActiveOrders.reduce((s, o) => s + Number(o.total || 0), 0);
     const orderCount = activeOrders.length;
     const prevOrderCount = prevActiveOrders.length;
     const avgOrderValue = orderCount > 0 ? revenue / orderCount : 0;

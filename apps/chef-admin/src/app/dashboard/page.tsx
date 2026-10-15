@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import {
   createServerClient,
+  createAdminClient,
   getStorefrontByChefId,
   getOrdersByStorefront,
   getMenuItemsByStorefront,
@@ -100,14 +101,56 @@ async function getChefContext(): Promise<{
     } = await supabase.auth.getUser();
     if (!user) return { chef: null, storefront: null };
 
-    const { data: chef, error } = await supabase
+    const adminClient = createAdminClient();
+    let { data: chef } = await adminClient
       .from('chef_profiles')
       .select('id, display_name, status, phone, bio')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (error || !chef) return { chef: null, storefront: null };
-    const storefront = await getStorefrontByChefId(supabase as any, chef.id);
+    if (!chef) {
+      const { data: staffMember } = await adminClient
+        .from('kitchen_staff')
+        .select('storefront_id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (staffMember?.storefront_id) {
+        const { data: staffStorefront } = await adminClient
+          .from('chef_storefronts')
+          .select('chef_id')
+          .eq('id', staffMember.storefront_id)
+          .maybeSingle();
+        if (staffStorefront?.chef_id) {
+          const { data: staffChef } = await adminClient
+            .from('chef_profiles')
+            .select('id, display_name, status, phone, bio')
+            .eq('id', staffStorefront.chef_id)
+            .maybeSingle();
+          if (staffChef) chef = staffChef;
+        }
+      }
+    }
+
+    if (!chef) {
+      const isSuperAdmin =
+        user.app_metadata?.role === 'super_admin' ||
+        user.user_metadata?.role === 'super_admin' ||
+        user.email === 'sean@ridendine.ca';
+      if (isSuperAdmin) {
+        const { data: primaryChef } = await adminClient
+          .from('chef_profiles')
+          .select('id, display_name, status, phone, bio')
+          .eq('status', 'approved')
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (primaryChef) chef = primaryChef;
+      }
+    }
+
+    if (!chef) return { chef: null, storefront: null };
+    const storefront = await getStorefrontByChefId(adminClient as any, chef.id);
     return { chef: chef as ChefProfile, storefront };
   } catch {
     return { chef: null, storefront: null };
