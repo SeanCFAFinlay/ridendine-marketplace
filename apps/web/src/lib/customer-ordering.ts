@@ -34,3 +34,9 @@ export function getChefPortalLoginUrl(): string {
   if (!base) return '';
   return `${trimTrailingSlashes(base)}/auth/login`;
 }
+
+export function getChefPortalAppUrl(): string {
+  const base = process.env.NEXT_PUBLIC_CHEF_ADMIN_URL?.trim() || 'https://chef.ridendine.ca';
+  return `${trimTrailingSlashes(base)}/app`;
+}
+

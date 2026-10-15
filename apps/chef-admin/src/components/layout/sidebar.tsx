@@ -173,16 +173,24 @@ export function Sidebar() {
           <span className="text-[10px] uppercase tracking-wider bg-primary/20 px-1.5 py-0.5 rounded">QR</span>
         </Link>
 
-        <Link
-          href="http://localhost:3000/chefs/bep-ba-muoi"
-          target="_blank"
-          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text focus-visible:outline-none focus-visible:shadow-focus"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-          View Storefront
-        </Link>
+        {(() => {
+          const webBaseUrl = (process.env.NEXT_PUBLIC_WEB_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://ridendine.ca').replace(/\/+$/, '');
+          const storefrontSlug = activeBrand?.slug || 'bep-ba-muoi';
+          const storefrontUrl = `${webBaseUrl}/chefs/${storefrontSlug}`;
+          return (
+            <Link
+              href={storefrontUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text focus-visible:outline-none focus-visible:shadow-focus"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              View Storefront
+            </Link>
+          );
+        })()}
       </div>
     </aside>
   );

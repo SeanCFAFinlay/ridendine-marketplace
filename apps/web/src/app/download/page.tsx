@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Header } from '@/components/layout/header';
 import { usePwaInstall } from '@/contexts/pwa-install-context';
 import { Badge, Button, Card } from '@ridendine/ui';
+import { getChefPortalAppUrl } from '@/lib/customer-ordering';
 
 export default function DownloadPage() {
   const { triggerInstall, isInstalled, isInstallable } = usePwaInstall();
@@ -165,14 +166,22 @@ export default function DownloadPage() {
 
             <div className="mt-8 space-y-3">
               <a
-                href="https://chef.ridendine.ca"
+                href={process.env.NEXT_PUBLIC_CHEF_ADMIN_URL?.trim() || 'https://chef.ridendine.ca'}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="block"
               >
                 <Button variant="secondary" fullWidth size="lg">
                   Open Kitchen App ↗
                 </Button>
+              </a>
+              <a
+                href={getChefPortalAppUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-center text-xs font-semibold text-primary hover:underline"
+              >
+                📱 Install on Tablet / Scan QR Code →
               </a>
               <Link href="/chef-signup" className="block text-center text-xs text-textMuted hover:text-primary">
                 Apply as a Home Chef →

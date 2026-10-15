@@ -1,8 +1,27 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import pg from 'pg';
 import QRCode from 'qrcode';
 
+if (!process.env.DATABASE_URL) {
+  try {
+    const envPath = path.resolve(process.cwd(), '.env.local');
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, 'utf8');
+      for (const line of content.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('DATABASE_URL=')) {
+          process.env.DATABASE_URL = trimmed.split('DATABASE_URL=')[1].replace(/^["']|["']$/g, '');
+        }
+      }
+    }
+  } catch (e) {
+    // Ignore
+  }
+}
+
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL.replace(/##/g, '%23%23'),
+  connectionString: (process.env.DATABASE_URL || '').replace(/##/g, '%23%23'),
   ssl: { rejectUnauthorized: false },
 });
 

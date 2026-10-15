@@ -69,6 +69,11 @@ export function Header() {
   const scope = useKitchenScope();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const webBaseUrl = (process.env.NEXT_PUBLIC_WEB_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://ridendine.ca').replace(/\/+$/, '');
+  const activeBrand = scope?.brands.find((b) => b.id === scope.activeBrandId) ?? null;
+  const storefrontSlug = activeBrand?.slug || 'bep-ba-muoi';
+  const storefrontUrl = `${webBaseUrl}/chefs/${storefrontSlug}`;
+
   const handleSignOut = async () => {
     await signOut();
     router.push('/auth/login');
@@ -228,13 +233,39 @@ export function Header() {
             {/* Drawer Footer */}
             <div className="shrink-0 border-t border-border bg-surface p-3 space-y-1">
               <Link
-                href="/"
+                href="/app"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                  </svg>
+                  <span>Kitchen Tablet App (QR)</span>
+                </span>
+                <span className="text-[10px] uppercase tracking-wider bg-primary/20 px-1.5 py-0.5 rounded">QR</span>
+              </Link>
+              <Link
+                href={storefrontUrl}
                 target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                View Storefront
+              </Link>
+              <Link
+                href={webBaseUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-textMuted transition-colors hover:bg-surfaceMuted hover:text-text"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
                 View Marketplace
               </Link>
