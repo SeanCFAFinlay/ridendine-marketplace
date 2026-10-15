@@ -7,6 +7,7 @@ import { useAuthContext } from '@ridendine/auth';
 import { Avatar, Badge, cn, Logo } from '@ridendine/ui';
 import { BrandSwitcher } from '@/components/layout/brand-switcher';
 import { useKitchenScope } from '@/components/layout/kitchen-scope-provider';
+import { ChefAppQrModal } from '@/components/chef-app-qr-modal';
 
 type NavItem = { href: string; label: string; icon: string };
 type NavSection = { key: string; title: string | null; scope?: 'kitchen' | 'brand'; items: NavItem[] };
@@ -110,9 +111,11 @@ export function Header() {
             cooco.app Partner
           </span>
           <BrandSwitcher />
+          <ChefAppQrModal buttonText="📱 Tablet App (QR)" />
         </div>
 
         <div className="flex max-w-[calc(100vw-7rem)] shrink-0 items-center gap-2 sm:gap-4 overflow-hidden lg:max-w-none">
+          <ChefAppQrModal variant="icon" />
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <Avatar
               src={user?.user_metadata?.avatar_url}

@@ -155,6 +155,49 @@ export default async function KitchenSetupPage() {
         )}
       </div>
 
+      {/* Tablet & Mobile KDS Setup Card */}
+      <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 via-surface to-amber-500/10 p-5 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-5">
+        <div className="flex items-start gap-4">
+          <div className="p-2 bg-white rounded-xl shadow-md border border-neutral-200 shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/api/qr?format=svg&size=100"
+              alt="Scan QR code for Kitchen Tablet App"
+              className="w-20 h-20 object-contain"
+            />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="font-bold text-text text-base">Kitchen Display Tablet & Mobile App</h2>
+              <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary">PWA Ready</span>
+            </div>
+            <p className="mt-1 text-xs text-textMuted max-w-md">
+              Scan with your iPad, Android tablet, or smartphone to mount your dedicated full-screen Kitchen Order Display.
+            </p>
+            <div className="mt-2 flex items-center gap-3 text-xs text-textMuted">
+              <span>✓ Touchscreen ticket queue</span>
+              <span>✓ Live audio chime</span>
+              <span>✓ Prep countdown</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex sm:flex-col gap-2 shrink-0 w-full sm:w-auto">
+          <Link
+            href="/app"
+            className="flex-1 sm:flex-none text-center px-4 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primaryHover transition-colors shadow-xs"
+          >
+            Open Setup & Print Poster
+          </Link>
+          <a
+            href="/api/qr?format=png&size=600"
+            download="kitchen-app-qr.png"
+            className="flex-1 sm:flex-none text-center px-4 py-2 rounded-lg border border-border bg-surface text-text text-xs font-semibold hover:bg-surfaceMuted transition-colors"
+          >
+            Download QR Code
+          </a>
+        </div>
+      </div>
+
       {/* Steps */}
       <ol className="space-y-3">
         {steps.map((step, i) => (

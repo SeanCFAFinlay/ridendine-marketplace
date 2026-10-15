@@ -28,9 +28,15 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'Chef Dashboard - RideNDine',
   description: 'Manage your storefront, menu, and orders on RideNDine.',
+  manifest: '/manifest.json',
   icons: {
     icon: '/logo-icon.png',
     apple: '/logo-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'RideNDine Chef',
   },
 };
 

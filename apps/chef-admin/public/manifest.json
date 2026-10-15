@@ -1,0 +1,25 @@
+{
+  "name": "RideNDine Chef & Kitchen Display",
+  "short_name": "Chef App",
+  "description": "Kitchen Order Display & Storefront Operations for RideNDine Partner Chefs",
+  "start_url": "/dashboard/kitchen",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#EA5B26",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/logo-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

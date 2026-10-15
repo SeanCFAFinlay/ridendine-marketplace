@@ -12,6 +12,7 @@ import {
 import { KitchenOrderQueue } from '@/components/kitchen/kitchen-order-queue';
 import { KitchenCommandHeader } from '@/components/kitchen/kitchen-command-header';
 import { ServiceControls } from '@/components/kitchen/service-controls';
+import { ChefAppQrModal } from '@/components/chef-app-qr-modal';
 import type { KitchenTicket, ServiceMetrics } from '@/lib/kitchen';
 
 // ============================================================
@@ -309,14 +310,17 @@ export default function KitchenPage() {
             Prep plan, live board, and service control for today's service.
           </p>
         </div>
-        <button
-          onClick={fetchData}
-          aria-label="Refresh kitchen data"
-          className="flex items-center gap-2 self-start rounded-lg bg-surfaceMuted px-3 py-2 text-sm font-medium text-textMuted transition-colors hover:text-text sm:self-auto"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <ChefAppQrModal buttonText="📱 Mount Tablet (QR)" />
+          <button
+            onClick={fetchData}
+            aria-label="Refresh kitchen data"
+            className="flex items-center gap-2 rounded-lg bg-surfaceMuted px-3 py-2 text-sm font-medium text-textMuted transition-colors hover:text-text"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Service control */}

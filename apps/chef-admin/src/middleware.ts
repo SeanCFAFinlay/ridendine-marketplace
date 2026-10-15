@@ -16,7 +16,11 @@ export const middleware = createAuthMiddleware({
     '/auth/forgot-password',
     '/privacy',
     '/terms',
+    '/app',
+    '/install',
+    '/download',
     '/api/health',
+    '/api/qr',
     // E2E walkthrough fix: without these, the chef-admin login API
     // returned HTTP 307 from the middleware (auth/login page form posts
     // to /api/auth/login which the default-protect mode flagged as
@@ -32,6 +36,6 @@ export const middleware = createAuthMiddleware({
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|json)$).*)',
   ],
 };
