@@ -136,7 +136,7 @@ jobs:
 
       - name: Upload DB step diagnostics
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: e2e-db-diagnostics
           path: /tmp/*.log
@@ -185,7 +185,7 @@ jobs:
 
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: e2e-lifecycle-playwright-report
           path: |
