@@ -4,10 +4,10 @@ import React, { useState } from 'react';
 import { Card, Button, Badge } from '@ridendine/ui';
 
 interface FoodSafetyComplianceProps {
-  chefId: string;
+  chefId?: string;
 }
 
-export function FoodSafetyCompliance({ chefId }: FoodSafetyComplianceProps) {
+export function FoodSafetyCompliance({ chefId: _chefId }: FoodSafetyComplianceProps) {
   const [healthUnit, setHealthUnit] = useState('Niagara Region Public Health');
   const [dinesafeNumber, setDinesafeNumber] = useState('ON-PHU-2026-9812');
   const [foodHandlerCert, setFoodHandlerCert] = useState('CFH-ON-558210');
@@ -64,7 +64,7 @@ export function FoodSafetyCompliance({ chefId }: FoodSafetyComplianceProps) {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="success">DineSafe Verified</Badge>
-          <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+          <span className="text-[11px] font-mono text-success bg-successSoft px-2 py-0.5 rounded border border-success/30">
             Ontario Reg 493/17
           </span>
         </div>
@@ -151,7 +151,7 @@ export function FoodSafetyCompliance({ chefId }: FoodSafetyComplianceProps) {
         </div>
 
         {savedSuccess && (
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400 font-medium">
+          <div className="rounded-lg border border-success/30 bg-successSoft p-3 text-xs text-success font-medium">
             Food safety and DineSafe credentials verified and updated successfully.
           </div>
         )}

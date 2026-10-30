@@ -156,10 +156,9 @@ export default async function KitchenSetupPage() {
       </div>
 
       {/* Tablet & Mobile KDS Setup Card */}
-      <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 via-surface to-amber-500/10 p-5 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-5">
+      <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 via-surface to-warning/10 p-5 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-5">
         <div className="flex items-start gap-4">
-          <div className="p-2 bg-white rounded-xl shadow-md border border-neutral-200 shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+          <div className="p-2 bg-white rounded-xl shadow-md border border-border shrink-0">
             <img
               src="/api/qr?format=svg&size=100"
               alt="Scan QR code for Kitchen Tablet App"

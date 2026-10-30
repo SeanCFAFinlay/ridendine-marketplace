@@ -18,10 +18,10 @@ export function EmergencyDispatchBanner({
   const rawPhone = phone.replace(/[^0-9+]/g, '');
 
   return (
-    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-left">
+    <div className="rounded-xl border border-warning/30 bg-warningSoft p-4 text-left">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-500">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-warning/20 text-warning">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
@@ -42,7 +42,7 @@ export function EmergencyDispatchBanner({
         <div className="flex items-center gap-2 sm:self-center">
           <a
             href={`tel:${rawPhone}`}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-amber-500 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-warning px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-warning/90 transition-colors"
           >
             <span>Call Hotline</span>
           </a>

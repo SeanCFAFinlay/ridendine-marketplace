@@ -1,6 +1,4 @@
 import Link from 'next/link';
-import { cookies } from 'next/headers';
-import { createServerClient, getStorefrontByChefId, type SupabaseClient } from '@ridendine/db';
 import { EmptyState } from '@ridendine/ui';
 import { StorefrontForm } from '@/components/storefront/storefront-form';
 import { StorefrontSetupForm } from '@/components/storefront/storefront-setup-form';

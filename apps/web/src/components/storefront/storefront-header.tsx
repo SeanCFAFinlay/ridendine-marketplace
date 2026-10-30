@@ -94,7 +94,7 @@ export function StorefrontHeader({ storefront }: StorefrontHeaderProps) {
                 title="View verified partner profile on cooco.app"
               >
                 <span className="flex h-2 w-2 rounded-full bg-[#EE3985] animate-pulse" />
-                <span className="text-xs font-bold tracking-wide text-[#212121] dark:text-neutral-100">
+                <span className="text-xs font-bold tracking-wide text-text">
                   Official <span className="text-[#0284c7] underline decoration-[#57BBFF]/50 underline-offset-2 dark:text-[#57BBFF]">cooco.app</span> Partner Chef ↗
                 </span>
               </a>

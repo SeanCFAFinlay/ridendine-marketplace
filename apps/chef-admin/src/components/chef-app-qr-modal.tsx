@@ -8,7 +8,6 @@ import {
   Printer,
   Copy,
   Check,
-  ExternalLink,
   Smartphone,
   Tablet,
   ChefHat,
@@ -58,7 +57,7 @@ export function ChefAppQrModal({ buttonText = 'Get Tablet App', variant = 'heade
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-500 shadow-md transition-colors"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primaryFg hover:bg-primaryHover shadow-md transition-colors"
         >
           <QrCode className="h-4 w-4" />
           <span>{buttonText}</span>
@@ -83,11 +82,11 @@ export function ChefAppQrModal({ buttonText = 'Get Tablet App', variant = 'heade
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
           />
-          <div className="relative w-full max-w-sm rounded-2xl bg-neutral-900 border border-neutral-800 p-6 text-neutral-100 shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-150">
+          <div className="relative w-full max-w-sm rounded-2xl bg-surface border border-border p-6 text-text shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-150">
             {/* Close button */}
             <button
               onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-textMuted hover:text-text hover:bg-surfaceMuted transition-colors"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
@@ -95,21 +94,20 @@ export function ChefAppQrModal({ buttonText = 'Get Tablet App', variant = 'heade
 
             {/* Header */}
             <div className="text-center">
-              <div className="inline-flex w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/20 items-center justify-center text-orange-400 mb-3 shadow-inner">
+              <div className="inline-flex w-12 h-12 rounded-2xl bg-primarySoft border border-primary/20 items-center justify-center text-primary mb-3 shadow-inner">
                 <ChefHat className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">
+              <h3 className="text-lg font-bold text-text">
                 Chef & Kitchen Display App
               </h3>
-              <p className="text-xs text-neutral-400 mt-1">
+              <p className="text-xs text-textMuted mt-1">
                 Scan with any iPad, tablet, or smartphone camera
               </p>
             </div>
 
             {/* QR Code */}
             <div className="mt-5 flex justify-center">
-              <div className="relative p-3 bg-white rounded-2xl shadow-xl border-4 border-orange-500/30">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+              <div className="relative p-3 bg-surface rounded-2xl shadow-xl border-4 border-primary/30">
                 <img
                   src={`/api/qr?url=${encodeURIComponent(appUrl)}&format=svg&size=200`}
                   alt="Scan to open Chef App"
@@ -119,29 +117,29 @@ export function ChefAppQrModal({ buttonText = 'Get Tablet App', variant = 'heade
             </div>
 
             {/* Quick action badges */}
-            <div className="mt-4 flex items-center justify-center gap-3 text-xs text-neutral-400">
+            <div className="mt-4 flex items-center justify-center gap-3 text-xs text-textMuted">
               <span className="flex items-center gap-1">
-                <Tablet className="w-3.5 h-3.5 text-orange-400" />
+                <Tablet className="w-3.5 h-3.5 text-primary" />
                 iPad / Tablets
               </span>
               <span>&bull;</span>
               <span className="flex items-center gap-1">
-                <Smartphone className="w-3.5 h-3.5 text-orange-400" />
+                <Smartphone className="w-3.5 h-3.5 text-primary" />
                 Phones
               </span>
             </div>
 
             {/* URL & Copy */}
-            <div className="mt-4 flex items-center gap-1.5 p-2 rounded-xl bg-neutral-950 border border-neutral-800 text-xs">
-              <span className="truncate text-neutral-400 flex-1 font-mono text-[11px] px-1">
+            <div className="mt-4 flex items-center gap-1.5 p-2 rounded-xl bg-surfaceMuted border border-border text-xs">
+              <span className="truncate text-textMuted flex-1 font-mono text-[11px] px-1">
                 {appUrl}
               </span>
               <button
                 onClick={handleCopy}
-                className="shrink-0 p-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 transition-colors flex items-center gap-1 text-[11px]"
+                className="shrink-0 p-1.5 rounded-lg bg-surface border border-border hover:bg-surfaceMuted text-text transition-colors flex items-center gap-1 text-[11px]"
                 title="Copy URL"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copied ? 'Copied' : 'Copy'}</span>
               </button>
             </div>
@@ -151,7 +149,7 @@ export function ChefAppQrModal({ buttonText = 'Get Tablet App', variant = 'heade
               <Link
                 href="/app"
                 onClick={() => setIsOpen(false)}
-                className="w-full py-2.5 px-4 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 rounded-xl bg-primary hover:bg-primaryHover text-primaryFg font-semibold text-xs transition-colors flex items-center justify-center gap-2"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print Kitchen Poster / Install Guide</span>

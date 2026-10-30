@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import QRCode from 'qrcode';
 
 export const dynamic = 'force-dynamic';

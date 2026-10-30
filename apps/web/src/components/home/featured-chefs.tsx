@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { createServerClient, getActiveStorefronts } from '@ridendine/db';
 import { Badge, Button, Card, EmptyState } from '@ridendine/ui';
-import { isCoocoPartner, getCoocoPartnerConfig, COOCO_PARTNERS, getPartnerExternalLink } from '@/lib/partners';
+import { isCoocoPartner } from '@/lib/partners';
 
 interface FeaturedChefsProps {
   limit?: number;

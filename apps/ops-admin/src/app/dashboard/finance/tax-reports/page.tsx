@@ -185,7 +185,7 @@ export default async function OntarioTaxReportsPage() {
                   </p>
                 </div>
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-surfaceMuted px-3 py-1 text-xs font-medium text-textSubtle">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  <span className="h-2 w-2 rounded-full bg-success" />
                   Ontario Exclusive Operations
                 </div>
               </div>
@@ -268,7 +268,7 @@ export default async function OntarioTaxReportsPage() {
                           <td className="py-3 pr-4 font-medium text-white">
                             {formatCurrency(courier.totalEarnings)}
                           </td>
-                          <td className="py-3 pr-4 font-mono font-medium text-emerald-400">
+                          <td className="py-3 pr-4 font-mono font-medium text-success">
                             {formatCurrency(courier.totalEarnings)}
                           </td>
                           <td className="py-3 text-right">
