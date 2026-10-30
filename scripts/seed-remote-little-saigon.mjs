@@ -28,6 +28,32 @@ async function run() {
   try {
     await client.query('BEGIN');
 
+    // 0. Auth User (Little Saigon)
+    console.log('Seeding auth.users for Little Saigon...');
+    await client.query(`
+      INSERT INTO auth.users (
+        id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
+        invited_at, confirmation_token, confirmation_sent_at, recovery_token,
+        recovery_sent_at, email_change_token_new, email_change, email_change_sent_at,
+        last_sign_in_at, raw_app_meta_data, raw_user_meta_data, is_super_admin,
+        created_at, updated_at, phone, phone_confirmed_at, phone_change,
+        phone_change_token, phone_change_sent_at, email_change_token_current,
+        email_change_confirm_status, banned_until, reauthentication_token,
+        reauthentication_sent_at, is_sso_user, deleted_at, is_anonymous
+      ) VALUES (
+        '99999999-9999-9999-9999-999999999999',
+        '00000000-0000-0000-0000-000000000000',
+        'authenticated',
+        'authenticated',
+        'littlesaigon@ridendine.ca',
+        '$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345',
+        NOW(), NULL, '', NULL, '', NULL, '', '', NULL, NOW(),
+        '{"provider":"email","providers":["email"]}',
+        '{"name":"Little Saigon"}',
+        false, NOW(), NOW(), NULL, NULL, '', '', NULL, '', 0, NULL, '', NULL, false, NULL, false
+      ) ON CONFLICT (id) DO NOTHING;
+    `);
+
     // 1. Chef Profile (Little Saigon Restaurant)
     console.log('Seeding chef_profiles for Little Saigon...');
     await client.query(`
