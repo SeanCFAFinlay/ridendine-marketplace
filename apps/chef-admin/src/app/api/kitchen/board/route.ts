@@ -38,7 +38,10 @@ export async function GET() {
     }
     const brandById = new Map(
       brands.map((b, idx) => {
-        const isCooco = b.name.toLowerCase().includes('muối') || b.name.toLowerCase().includes('cooco');
+        const isCooco =
+          b.name.toLowerCase().includes('muối') ||
+          b.name.toLowerCase().includes('cooco') ||
+          b.name.toLowerCase().includes('saigon');
         return [
           b.id,
           {

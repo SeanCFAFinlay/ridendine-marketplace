@@ -1,6 +1,6 @@
 # Runtime Coverage Audit
 
-Generated: 2026-06-09T18:46:59.042Z
+Generated: 2026-10-26T11:41:45.995Z
 
 This Phase 17 coverage inventory maps every discovered app page and API route file to the runtime, live-role, non-admin role, high-risk authorization, and Phase 18/19 classification contracts that currently exercise, document, or classify it. Structural uncovered rows mean a surface has no classification or contract. Proof gaps mean a surface is classified but still lacks runtime/live/static proof coverage.
 
@@ -8,26 +8,26 @@ This Phase 17 coverage inventory maps every discovered app page and API route fi
 
 | Surface | Total discovered | Structurally covered | Structural gaps | Proof covered | Proof gaps |
 |---|---:|---:|---:|---:|---:|
-| Pages | 91 | 91 | 0 | 90 | 1 |
-| API route files | 124 | 124 | 0 | 124 | 0 |
+| Pages | 107 | 107 | 0 | 106 | 1 |
+| API route files | 178 | 178 | 0 | 178 | 0 |
 
 ## Contract Source Counts
 
 | Source | Contract rows |
 |---|---:|
-| high-risk-negative-authz | 33 |
-| high-risk-ops-authz | 19 |
+| high-risk-negative-authz | 27 |
+| high-risk-ops-authz | 16 |
 | live-role-fixture | 27 |
 | non-admin-role-fixture | 15 |
 | ops-export-audit-smoke | 1 |
-| runtime-api-classification | 124 |
+| runtime-api-classification | 178 |
 | runtime-authenticated-json | 18 |
 | runtime-page-auth-intent | 17 |
-| runtime-page-classification | 91 |
-| runtime-proof-action-api | 118 |
-| runtime-proof-action-page | 77 |
+| runtime-page-classification | 107 |
+| runtime-proof-action-api | 168 |
+| runtime-proof-action-page | 92 |
 | runtime-public-json | 7 |
-| runtime-sample-fixture | 18 |
+| runtime-sample-fixture | 23 |
 
 ## Proof Disposition Summary
 
@@ -41,20 +41,34 @@ This Phase 17 coverage inventory maps every discovered app page and API route fi
 | App | Route | File | Contract sources |
 |---|---|---|---|
 | Chef Admin | `/` | `apps/chef-admin/src/app/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/app` | `apps/chef-admin/src/app/app/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/auth/forgot-password` | `apps/chef-admin/src/app/auth/forgot-password/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/auth/login` | `apps/chef-admin/src/app/auth/login/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/auth/signup` | `apps/chef-admin/src/app/auth/signup/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/dashboard` | `apps/chef-admin/src/app/dashboard/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/dashboard/analytics` | `apps/chef-admin/src/app/dashboard/analytics/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/dashboard/availability` | `apps/chef-admin/src/app/dashboard/availability/page.tsx` | runtime-page-auth-intent, runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/dashboard/costs` | `apps/chef-admin/src/app/dashboard/costs/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/dashboard/customers` | `apps/chef-admin/src/app/dashboard/customers/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/dashboard/growth` | `apps/chef-admin/src/app/dashboard/growth/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/dashboard/inventory` | `apps/chef-admin/src/app/dashboard/inventory/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/dashboard/kitchen` | `apps/chef-admin/src/app/dashboard/kitchen/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/dashboard/kitchen/board` | `apps/chef-admin/src/app/dashboard/kitchen/board/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/dashboard/kitchen/pnl` | `apps/chef-admin/src/app/dashboard/kitchen/pnl/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/dashboard/kitchen/setup` | `apps/chef-admin/src/app/dashboard/kitchen/setup/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/dashboard/labor` | `apps/chef-admin/src/app/dashboard/labor/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/dashboard/menu` | `apps/chef-admin/src/app/dashboard/menu/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/dashboard/orders` | `apps/chef-admin/src/app/dashboard/orders/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/dashboard/orders/[id]` | `apps/chef-admin/src/app/dashboard/orders/[id]/page.tsx` | runtime-page-classification, runtime-sample-fixture |
 | Chef Admin | `/dashboard/payouts` | `apps/chef-admin/src/app/dashboard/payouts/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/dashboard/production` | `apps/chef-admin/src/app/dashboard/production/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/dashboard/recipes` | `apps/chef-admin/src/app/dashboard/recipes/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/dashboard/recipes/[id]` | `apps/chef-admin/src/app/dashboard/recipes/[id]/page.tsx` | runtime-page-classification, runtime-sample-fixture |
 | Chef Admin | `/dashboard/reviews` | `apps/chef-admin/src/app/dashboard/reviews/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/dashboard/settings` | `apps/chef-admin/src/app/dashboard/settings/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/dashboard/storefront` | `apps/chef-admin/src/app/dashboard/storefront/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/dashboard/storefront/setup` | `apps/chef-admin/src/app/dashboard/storefront/setup/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Chef Admin | `/dashboard/suppliers` | `apps/chef-admin/src/app/dashboard/suppliers/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/privacy` | `apps/chef-admin/src/app/privacy/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Chef Admin | `/terms` | `apps/chef-admin/src/app/terms/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Customer Web | `/` | `apps/web/src/app/page.tsx` | runtime-page-classification, runtime-proof-action-page |
@@ -74,6 +88,7 @@ This Phase 17 coverage inventory maps every discovered app page and API route fi
 | Customer Web | `/chefs` | `apps/web/src/app/chefs/page.tsx` | runtime-page-auth-intent, runtime-page-classification, runtime-proof-action-page |
 | Customer Web | `/chefs/[slug]` | `apps/web/src/app/chefs/[slug]/page.tsx` | runtime-page-classification, runtime-sample-fixture |
 | Customer Web | `/contact` | `apps/web/src/app/contact/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Customer Web | `/download` | `apps/web/src/app/download/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Customer Web | `/how-it-works` | `apps/web/src/app/how-it-works/page.tsx` | runtime-page-auth-intent, runtime-page-classification, runtime-proof-action-page |
 | Customer Web | `/maintenance` | `apps/web/src/app/maintenance/page.tsx` | runtime-page-auth-intent, runtime-page-classification, runtime-proof-action-page |
 | Customer Web | `/order-confirmation/[orderId]` | `apps/web/src/app/order-confirmation/[orderId]/page.tsx` | runtime-page-auth-intent, runtime-page-classification, runtime-sample-fixture |
@@ -120,6 +135,7 @@ This Phase 17 coverage inventory maps every discovered app page and API route fi
 | Ops Admin | `/dashboard/finance/payouts/[runId]` | `apps/ops-admin/src/app/dashboard/finance/payouts/[runId]/page.tsx` | runtime-page-classification, runtime-sample-fixture |
 | Ops Admin | `/dashboard/finance/reconciliation` | `apps/ops-admin/src/app/dashboard/finance/reconciliation/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Ops Admin | `/dashboard/finance/refunds` | `apps/ops-admin/src/app/dashboard/finance/refunds/page.tsx` | runtime-page-classification, runtime-proof-action-page |
+| Ops Admin | `/dashboard/finance/tax-reports` | `apps/ops-admin/src/app/dashboard/finance/tax-reports/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Ops Admin | `/dashboard/health` | `apps/ops-admin/src/app/dashboard/health/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Ops Admin | `/dashboard/integrations` | `apps/ops-admin/src/app/dashboard/integrations/page.tsx` | runtime-page-classification, runtime-proof-action-page |
 | Ops Admin | `/dashboard/map` | `apps/ops-admin/src/app/dashboard/map/page.tsx` | runtime-page-auth-intent, runtime-page-classification, runtime-proof-action-page |
@@ -151,9 +167,38 @@ None found.
 | Chef Admin | `/api/analytics` | `apps/chef-admin/src/app/api/analytics/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Chef Admin | `/api/auth/login` | `apps/chef-admin/src/app/api/auth/login/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Chef Admin | `/api/auth/signup` | `apps/chef-admin/src/app/api/auth/signup/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/costs/overview` | `apps/chef-admin/src/app/api/costs/overview/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/costs/pnl` | `apps/chef-admin/src/app/api/costs/pnl/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/customers` | `apps/chef-admin/src/app/api/customers/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/growth` | `apps/chef-admin/src/app/api/growth/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Chef Admin | `/api/health` | `apps/chef-admin/src/app/api/health/route.ts` | runtime-api-classification, runtime-proof-action-api, runtime-public-json |
+| Chef Admin | `/api/inventory` | `apps/chef-admin/src/app/api/inventory/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/inventory/[id]` | `apps/chef-admin/src/app/api/inventory/[id]/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/inventory/[id]/movement` | `apps/chef-admin/src/app/api/inventory/[id]/movement/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/inventory/alerts` | `apps/chef-admin/src/app/api/inventory/alerts/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/inventory/counts` | `apps/chef-admin/src/app/api/inventory/counts/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/inventory/reorder` | `apps/chef-admin/src/app/api/inventory/reorder/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/inventory/waste` | `apps/chef-admin/src/app/api/inventory/waste/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/kitchen/board` | `apps/chef-admin/src/app/api/kitchen/board/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/kitchen/brands/clone` | `apps/chef-admin/src/app/api/kitchen/brands/clone/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/kitchen/close-day` | `apps/chef-admin/src/app/api/kitchen/close-day/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/kitchen/daily-summary` | `apps/chef-admin/src/app/api/kitchen/daily-summary/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/kitchen/overview` | `apps/chef-admin/src/app/api/kitchen/overview/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/kitchen/pause` | `apps/chef-admin/src/app/api/kitchen/pause/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/kitchen/service-mode` | `apps/chef-admin/src/app/api/kitchen/service-mode/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/kitchen/tickets/[id]` | `apps/chef-admin/src/app/api/kitchen/tickets/[id]/route.ts` | runtime-api-classification, runtime-sample-fixture |
+| Chef Admin | `/api/labor/clock-in` | `apps/chef-admin/src/app/api/labor/clock-in/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/labor/clock-out` | `apps/chef-admin/src/app/api/labor/clock-out/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/labor/costs` | `apps/chef-admin/src/app/api/labor/costs/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/labor/pay-periods` | `apps/chef-admin/src/app/api/labor/pay-periods/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/labor/pay-periods/[id]/export` | `apps/chef-admin/src/app/api/labor/pay-periods/[id]/export/route.ts` | runtime-api-classification, runtime-sample-fixture |
+| Chef Admin | `/api/labor/pay-periods/[id]/lock` | `apps/chef-admin/src/app/api/labor/pay-periods/[id]/lock/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/labor/shifts` | `apps/chef-admin/src/app/api/labor/shifts/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/labor/staff` | `apps/chef-admin/src/app/api/labor/staff/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/labor/today` | `apps/chef-admin/src/app/api/labor/today/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Chef Admin | `/api/menu` | `apps/chef-admin/src/app/api/menu/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Chef Admin | `/api/menu/[id]` | `apps/chef-admin/src/app/api/menu/[id]/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/menu/[id]/cost` | `apps/chef-admin/src/app/api/menu/[id]/cost/route.ts` | runtime-api-classification, runtime-sample-fixture |
 | Chef Admin | `/api/menu/[id]/options` | `apps/chef-admin/src/app/api/menu/[id]/options/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Chef Admin | `/api/menu/[id]/options/[optionId]` | `apps/chef-admin/src/app/api/menu/[id]/options/[optionId]/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Chef Admin | `/api/menu/[id]/options/[optionId]/values` | `apps/chef-admin/src/app/api/menu/[id]/options/[optionId]/values/route.ts` | runtime-api-classification, runtime-proof-action-api |
@@ -161,11 +206,32 @@ None found.
 | Chef Admin | `/api/menu/categories` | `apps/chef-admin/src/app/api/menu/categories/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Chef Admin | `/api/orders` | `apps/chef-admin/src/app/api/orders/route.ts` | live-role-fixture, runtime-api-classification, runtime-authenticated-json, runtime-proof-action-api |
 | Chef Admin | `/api/orders/[id]` | `apps/chef-admin/src/app/api/orders/[id]/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/packaging` | `apps/chef-admin/src/app/api/packaging/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/packaging/[id]` | `apps/chef-admin/src/app/api/packaging/[id]/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Chef Admin | `/api/payouts/request` | `apps/chef-admin/src/app/api/payouts/request/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Chef Admin | `/api/payouts/setup` | `apps/chef-admin/src/app/api/payouts/setup/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/production/batches` | `apps/chef-admin/src/app/api/production/batches/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/production/batches/[id]` | `apps/chef-admin/src/app/api/production/batches/[id]/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/production/batches/[id]/complete` | `apps/chef-admin/src/app/api/production/batches/[id]/complete/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/production/batches/[id]/waste` | `apps/chef-admin/src/app/api/production/batches/[id]/waste/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/production/forecast` | `apps/chef-admin/src/app/api/production/forecast/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/production/plan` | `apps/chef-admin/src/app/api/production/plan/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/production/plan/consolidated` | `apps/chef-admin/src/app/api/production/plan/consolidated/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/production/prep-tasks` | `apps/chef-admin/src/app/api/production/prep-tasks/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/production/prep-tasks/[id]` | `apps/chef-admin/src/app/api/production/prep-tasks/[id]/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Chef Admin | `/api/profile` | `apps/chef-admin/src/app/api/profile/route.ts` | live-role-fixture, runtime-api-classification, runtime-authenticated-json, runtime-proof-action-api |
+| Chef Admin | `/api/purchase-orders` | `apps/chef-admin/src/app/api/purchase-orders/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/purchase-orders/[id]` | `apps/chef-admin/src/app/api/purchase-orders/[id]/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/purchase-orders/[id]/receive` | `apps/chef-admin/src/app/api/purchase-orders/[id]/receive/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/qr` | `apps/chef-admin/src/app/api/qr/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/recipes` | `apps/chef-admin/src/app/api/recipes/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/recipes/[id]` | `apps/chef-admin/src/app/api/recipes/[id]/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/recipes/[id]/version` | `apps/chef-admin/src/app/api/recipes/[id]/version/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Chef Admin | `/api/storefront` | `apps/chef-admin/src/app/api/storefront/route.ts` | live-role-fixture, runtime-api-classification, runtime-authenticated-json, runtime-proof-action-api |
 | Chef Admin | `/api/storefront/availability` | `apps/chef-admin/src/app/api/storefront/availability/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/suppliers` | `apps/chef-admin/src/app/api/suppliers/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/suppliers/[id]` | `apps/chef-admin/src/app/api/suppliers/[id]/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Chef Admin | `/api/suppliers/[id]/items` | `apps/chef-admin/src/app/api/suppliers/[id]/items/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Chef Admin | `/api/upload` | `apps/chef-admin/src/app/api/upload/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Customer Web | `/api/addresses` | `apps/web/src/app/api/addresses/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Customer Web | `/api/auth/login` | `apps/web/src/app/api/auth/login/route.ts` | runtime-api-classification, runtime-proof-action-api |
@@ -184,6 +250,11 @@ None found.
 | Customer Web | `/api/orders/[id]/cancel` | `apps/web/src/app/api/orders/[id]/cancel/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Customer Web | `/api/orders/[id]/payment-status` | `apps/web/src/app/api/orders/[id]/payment-status/route.ts` | runtime-api-classification, runtime-sample-fixture |
 | Customer Web | `/api/orders/[id]/reorder` | `apps/web/src/app/api/orders/[id]/reorder/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Customer Web | `/api/partner/checkout` | `apps/web/src/app/api/partner/checkout/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Customer Web | `/api/partner/checkout/quote` | `apps/web/src/app/api/partner/checkout/quote/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Customer Web | `/api/partner/orders/[orderId]/cancel` | `apps/web/src/app/api/partner/orders/[orderId]/cancel/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Customer Web | `/api/partner/storefronts` | `apps/web/src/app/api/partner/storefronts/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Customer Web | `/api/partner/storefronts/[id]/menu` | `apps/web/src/app/api/partner/storefronts/[id]/menu/route.ts` | runtime-api-classification, runtime-sample-fixture |
 | Customer Web | `/api/payment-methods` | `apps/web/src/app/api/payment-methods/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Customer Web | `/api/profile` | `apps/web/src/app/api/profile/route.ts` | live-role-fixture, runtime-api-classification, runtime-authenticated-json, runtime-proof-action-api |
 | Customer Web | `/api/promos/validate` | `apps/web/src/app/api/promos/validate/route.ts` | runtime-api-classification, runtime-proof-action-api |
@@ -224,11 +295,6 @@ None found.
 | Ops Admin | `/api/auth/login` | `apps/ops-admin/src/app/api/auth/login/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/chefs` | `apps/ops-admin/src/app/api/chefs/route.ts` | live-role-fixture, runtime-api-classification, runtime-authenticated-json, runtime-proof-action-api |
 | Ops Admin | `/api/chefs/[id]` | `apps/ops-admin/src/app/api/chefs/[id]/route.ts` | runtime-api-classification, runtime-proof-action-api |
-| Ops Admin | `/api/cron/expired-offers` | `apps/ops-admin/src/app/api/cron/expired-offers/route.ts` | high-risk-negative-authz, high-risk-ops-authz, runtime-api-classification, runtime-proof-action-api |
-| Ops Admin | `/api/cron/payouts-chef-preview` | `apps/ops-admin/src/app/api/cron/payouts-chef-preview/route.ts` | high-risk-negative-authz, high-risk-ops-authz, runtime-api-classification, runtime-proof-action-api |
-| Ops Admin | `/api/cron/payouts-driver-preview` | `apps/ops-admin/src/app/api/cron/payouts-driver-preview/route.ts` | high-risk-negative-authz, high-risk-ops-authz, runtime-api-classification, runtime-proof-action-api |
-| Ops Admin | `/api/cron/reconciliation-daily` | `apps/ops-admin/src/app/api/cron/reconciliation-daily/route.ts` | high-risk-negative-authz, high-risk-ops-authz, runtime-api-classification, runtime-proof-action-api |
-| Ops Admin | `/api/cron/sla-tick` | `apps/ops-admin/src/app/api/cron/sla-tick/route.ts` | high-risk-negative-authz, high-risk-ops-authz, runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/customers` | `apps/ops-admin/src/app/api/customers/route.ts` | live-role-fixture, runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/customers/[id]/notify` | `apps/ops-admin/src/app/api/customers/[id]/notify/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/deliveries` | `apps/ops-admin/src/app/api/deliveries/route.ts` | live-role-fixture, runtime-api-classification, runtime-proof-action-api |
@@ -245,12 +311,16 @@ None found.
 | Ops Admin | `/api/engine/health` | `apps/ops-admin/src/app/api/engine/health/route.ts` | live-role-fixture, runtime-api-classification, runtime-authenticated-json, runtime-proof-action-api |
 | Ops Admin | `/api/engine/maintenance` | `apps/ops-admin/src/app/api/engine/maintenance/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/engine/orders/[id]` | `apps/ops-admin/src/app/api/engine/orders/[id]/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Ops Admin | `/api/engine/partner-stats` | `apps/ops-admin/src/app/api/engine/partner-stats/route.ts` | runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/engine/payouts` | `apps/ops-admin/src/app/api/engine/payouts/route.ts` | high-risk-negative-authz, high-risk-ops-authz, live-role-fixture, non-admin-role-fixture, runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/engine/payouts/execute` | `apps/ops-admin/src/app/api/engine/payouts/execute/route.ts` | high-risk-negative-authz, high-risk-ops-authz, runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/engine/payouts/instant` | `apps/ops-admin/src/app/api/engine/payouts/instant/route.ts` | high-risk-negative-authz, high-risk-ops-authz, live-role-fixture, runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/engine/payouts/instant/[id]` | `apps/ops-admin/src/app/api/engine/payouts/instant/[id]/route.ts` | high-risk-negative-authz, high-risk-ops-authz, runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/engine/payouts/preview` | `apps/ops-admin/src/app/api/engine/payouts/preview/route.ts` | high-risk-negative-authz, high-risk-ops-authz, runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/engine/processors/expired-offers` | `apps/ops-admin/src/app/api/engine/processors/expired-offers/route.ts` | high-risk-negative-authz, high-risk-ops-authz, runtime-api-classification, runtime-proof-action-api |
+| Ops Admin | `/api/engine/processors/partner-webhooks` | `apps/ops-admin/src/app/api/engine/processors/partner-webhooks/route.ts` | runtime-api-classification, runtime-proof-action-api |
+| Ops Admin | `/api/engine/processors/reconciliation` | `apps/ops-admin/src/app/api/engine/processors/reconciliation/route.ts` | high-risk-negative-authz, high-risk-ops-authz, runtime-api-classification, runtime-proof-action-api |
+| Ops Admin | `/api/engine/processors/retention` | `apps/ops-admin/src/app/api/engine/processors/retention/route.ts` | high-risk-negative-authz, high-risk-ops-authz, runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/engine/processors/sla` | `apps/ops-admin/src/app/api/engine/processors/sla/route.ts` | high-risk-negative-authz, high-risk-ops-authz, runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/engine/reconciliation` | `apps/ops-admin/src/app/api/engine/reconciliation/route.ts` | live-role-fixture, non-admin-role-fixture, runtime-api-classification, runtime-proof-action-api |
 | Ops Admin | `/api/engine/refunds` | `apps/ops-admin/src/app/api/engine/refunds/route.ts` | high-risk-negative-authz, high-risk-ops-authz, live-role-fixture, runtime-api-classification, runtime-proof-action-api |

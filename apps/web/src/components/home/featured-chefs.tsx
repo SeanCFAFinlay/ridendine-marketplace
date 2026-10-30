@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { createServerClient, getActiveStorefronts } from '@ridendine/db';
 import { Badge, Button, Card, EmptyState } from '@ridendine/ui';
+import { isCoocoPartner, getCoocoPartnerConfig, COOCO_PARTNERS, getPartnerExternalLink } from '@/lib/partners';
 
 interface FeaturedChefsProps {
   limit?: number;
@@ -79,10 +80,7 @@ export async function FeaturedChefs({ limit = 6 }: FeaturedChefsProps) {
                   </div>
 
                   <div className="min-w-0">
-                    {(chef.slug === 'bep-ba-muoi' ||
-                      chef.slug === 'cooco' ||
-                      chef.name.toLowerCase().includes('muối') ||
-                      chef.name.toLowerCase().includes('cooco')) && (
+                    {isCoocoPartner(chef) && (
                       <span className="mb-1 inline-flex items-center gap-1 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/15 to-[#EE3985]/15 px-2 py-0.5 text-[10px] font-bold text-[#0369a1] dark:text-[#7dd3fc]">
                         <span className="h-1.5 w-1.5 rounded-full bg-[#EE3985]" />
                         Cooco Partner
@@ -236,14 +234,14 @@ export async function FeaturedChefs({ limit = 6 }: FeaturedChefsProps) {
                   Hand-crafted home food from verified Ontario kitchens.
                 </p>
                 <p>
-                  Bếp Bà Muối is our premier Hamilton kitchen partner from <span className="font-bold text-[#0369a1] dark:text-[#7dd3fc]">cooco.app</span>, bringing authentic Vietnamese recipes directly to your door.
+                  Little Saigon Restaurant and Bếp Bà Muối are premier Hamilton kitchen partners from <span className="font-bold text-[#0369a1] dark:text-[#7dd3fc]">cooco.app</span>, bringing authentic Vietnamese dishes, 12-hour simmered Phở, and home catering directly to your door.
                 </p>
                 <div className="flex flex-col gap-1.5 pt-1">
                   <span className="flex items-center gap-1.5 text-text">
                     <span className="h-1.5 w-1.5 rounded-full bg-success" /> Verified local food safety standards
                   </span>
                   <span className="flex items-center gap-1.5 text-text">
-                    <span className="h-1.5 w-1.5 rounded-full bg-success" /> Family-sized 4-portion feast dishes
+                    <span className="h-1.5 w-1.5 rounded-full bg-success" /> 250+ authentic partner specialties live
                   </span>
                   <span className="flex items-center gap-1.5 text-text">
                     <span className="h-1.5 w-1.5 rounded-full bg-success" /> Freshly made to order daily
@@ -252,15 +250,22 @@ export async function FeaturedChefs({ limit = 6 }: FeaturedChefsProps) {
               </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between gap-2 border-t border-divider pt-3">
-              <a
-                href="https://cooco.app/cooks/06b4462d-a5af-4c47-aa30-7ced490262c5"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold text-[#0369a1] hover:underline"
-              >
-                cooco.app Profile ↗
-              </a>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-divider pt-3">
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/chefs/little-saigon"
+                  className="text-xs font-semibold text-[#0369a1] hover:underline"
+                >
+                  Little Saigon (196 items)
+                </Link>
+                <span className="text-textSubtle text-xs">·</span>
+                <Link
+                  href="/chefs/bep-ba-muoi"
+                  className="text-xs font-semibold text-[#0369a1] hover:underline"
+                >
+                  Bếp Bà Muối (55 items)
+                </Link>
+              </div>
               <Link href="/chef-signup">
                 <Button size="sm" variant="secondary">
                   Join as a Chef

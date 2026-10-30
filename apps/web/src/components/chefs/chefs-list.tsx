@@ -8,6 +8,7 @@ import {
   isChefOpenNow,
   normalizeStorefrontSort,
 } from '@/lib/discovery';
+import { isCoocoPartner } from '@/lib/partners';
 
 interface ChefsListProps {
   search?: string;
@@ -146,10 +147,7 @@ export async function ChefsList({
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    {(chef.slug === 'bep-ba-muoi' ||
-                      chef.slug === 'cooco' ||
-                      chef.name.toLowerCase().includes('muối') ||
-                      chef.name.toLowerCase().includes('cooco')) && (
+                    {isCoocoPartner(chef) && (
                       <div className="mb-1">
                         <span className="inline-flex items-center gap-1 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/15 to-[#EE3985]/15 px-2 py-0.5 text-[10px] font-bold text-[#0369a1] dark:text-[#7dd3fc]">
                           <span className="h-1.5 w-1.5 rounded-full bg-[#EE3985]" />

@@ -150,15 +150,27 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="space-y-2 border-t border-border p-3">
-        <div className="rounded-lg border border-[#57BBFF]/40 bg-gradient-to-br from-[#57BBFF]/10 via-surface to-[#EE3985]/10 p-3 shadow-xs">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 rounded-full bg-[#EE3985] animate-pulse" />
-            <span className="text-xs font-bold text-text">Cooco Partner Chef</span>
-          </div>
-          <p className="mt-1 text-[11px] leading-tight text-textMuted">
-            Bếp Bà Muối kitchen operations powered by RideNDine & Cooco.app
-          </p>
-        </div>
+        {(() => {
+          const isCooco =
+            activeBrand?.slug === 'bep-ba-muoi' ||
+            activeBrand?.slug === 'little-saigon' ||
+            activeBrand?.slug === 'cooco' ||
+            activeBrand?.name?.toLowerCase().includes('cooco') ||
+            activeBrand?.name?.toLowerCase().includes('saigon') ||
+            activeBrand?.name?.toLowerCase().includes('muối');
+          if (!isCooco) return null;
+          return (
+            <div className="rounded-lg border border-[#57BBFF]/40 bg-gradient-to-br from-[#57BBFF]/10 via-surface to-[#EE3985]/10 p-3 shadow-xs">
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-[#EE3985] animate-pulse" />
+                <span className="text-xs font-bold text-text">Cooco Partner Chef</span>
+              </div>
+              <p className="mt-1 text-[11px] leading-tight text-textMuted">
+                {activeBrand?.name || 'Partner'} operations powered by RideNDine & Cooco
+              </p>
+            </div>
+          );
+        })()}
 
         <Link
           href="/app"
@@ -175,7 +187,7 @@ export function Sidebar() {
 
         {(() => {
           const webBaseUrl = (process.env.NEXT_PUBLIC_WEB_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://ridendine.ca').replace(/\/+$/, '');
-          const storefrontSlug = activeBrand?.slug || 'bep-ba-muoi';
+          const storefrontSlug = activeBrand?.slug || (activeBrand?.name?.toLowerCase().includes('saigon') ? 'little-saigon' : 'bep-ba-muoi');
           const storefrontUrl = `${webBaseUrl}/chefs/${storefrontSlug}`;
           return (
             <Link

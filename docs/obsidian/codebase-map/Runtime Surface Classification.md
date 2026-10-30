@@ -1,6 +1,6 @@
 # Runtime Surface Classification
 
-Generated: 2026-06-09T18:46:44.520Z
+Generated: 2026-10-26T11:41:45.833Z
 
 This Phase 18/19 classification inventory records the intended auth, guard, method, mutation-risk, and smoke-bucket treatment for every discovered app page and route handler. It is structural coverage, not a claim that every dynamic or mutating route is safe to exercise against production.
 
@@ -8,28 +8,42 @@ This Phase 18/19 classification inventory records the intended auth, guard, meth
 
 | Surface | Total discovered | Classified | Unclassified |
 |---|---:|---:|---:|
-| Pages | 91 | 91 | 0 |
-| API route handlers | 124 | 124 | 0 |
+| Pages | 107 | 107 | 0 |
+| API route handlers | 178 | 178 | 0 |
 
 ## Page Surface Classification
 
 | App | Route | File | Auth intent | Smoke bucket | Reason |
 |---|---|---|---|---|---|
 | Chef Admin | `/` | `apps/chef-admin/src/app/page.tsx` | protected-redirect | redirect-or-login-guard | Root shim that redirects into a protected workspace. |
+| Chef Admin | `/app` | `apps/chef-admin/src/app/app/page.tsx` | public | public-html | Public marketing, legal, discovery, or informational page. |
 | Chef Admin | `/auth/forgot-password` | `apps/chef-admin/src/app/auth/forgot-password/page.tsx` | public-auth-entry | public-html | Public authentication entry page that creates or recovers a session. |
 | Chef Admin | `/auth/login` | `apps/chef-admin/src/app/auth/login/page.tsx` | public-auth-entry | public-html | Public authentication entry page that creates or recovers a session. |
 | Chef Admin | `/auth/signup` | `apps/chef-admin/src/app/auth/signup/page.tsx` | public-auth-entry | public-html | Public authentication entry page that creates or recovers a session. |
 | Chef Admin | `/dashboard` | `apps/chef-admin/src/app/dashboard/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Chef Admin | `/dashboard/analytics` | `apps/chef-admin/src/app/dashboard/analytics/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Chef Admin | `/dashboard/availability` | `apps/chef-admin/src/app/dashboard/availability/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Chef Admin | `/dashboard/costs` | `apps/chef-admin/src/app/dashboard/costs/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Chef Admin | `/dashboard/customers` | `apps/chef-admin/src/app/dashboard/customers/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Chef Admin | `/dashboard/growth` | `apps/chef-admin/src/app/dashboard/growth/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Chef Admin | `/dashboard/inventory` | `apps/chef-admin/src/app/dashboard/inventory/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Chef Admin | `/dashboard/kitchen` | `apps/chef-admin/src/app/dashboard/kitchen/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Chef Admin | `/dashboard/kitchen/board` | `apps/chef-admin/src/app/dashboard/kitchen/board/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Chef Admin | `/dashboard/kitchen/pnl` | `apps/chef-admin/src/app/dashboard/kitchen/pnl/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Chef Admin | `/dashboard/kitchen/setup` | `apps/chef-admin/src/app/dashboard/kitchen/setup/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Chef Admin | `/dashboard/labor` | `apps/chef-admin/src/app/dashboard/labor/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Chef Admin | `/dashboard/menu` | `apps/chef-admin/src/app/dashboard/menu/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Chef Admin | `/dashboard/orders` | `apps/chef-admin/src/app/dashboard/orders/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Chef Admin | `/dashboard/orders/[id]` | `apps/chef-admin/src/app/dashboard/orders/[id]/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Chef Admin | `/dashboard/payouts` | `apps/chef-admin/src/app/dashboard/payouts/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Chef Admin | `/dashboard/production` | `apps/chef-admin/src/app/dashboard/production/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Chef Admin | `/dashboard/recipes` | `apps/chef-admin/src/app/dashboard/recipes/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Chef Admin | `/dashboard/recipes/[id]` | `apps/chef-admin/src/app/dashboard/recipes/[id]/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Chef Admin | `/dashboard/reviews` | `apps/chef-admin/src/app/dashboard/reviews/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Chef Admin | `/dashboard/settings` | `apps/chef-admin/src/app/dashboard/settings/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Chef Admin | `/dashboard/storefront` | `apps/chef-admin/src/app/dashboard/storefront/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Chef Admin | `/dashboard/storefront/setup` | `apps/chef-admin/src/app/dashboard/storefront/setup/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Chef Admin | `/dashboard/suppliers` | `apps/chef-admin/src/app/dashboard/suppliers/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Chef Admin | `/privacy` | `apps/chef-admin/src/app/privacy/page.tsx` | public | public-html | Public marketing, legal, discovery, or informational page. |
 | Chef Admin | `/terms` | `apps/chef-admin/src/app/terms/page.tsx` | public | public-html | Public marketing, legal, discovery, or informational page. |
 | Customer Web | `/` | `apps/web/src/app/page.tsx` | public | public-html | Public marketing, legal, discovery, or informational page. |
@@ -49,6 +63,7 @@ This Phase 18/19 classification inventory records the intended auth, guard, meth
 | Customer Web | `/chefs` | `apps/web/src/app/chefs/page.tsx` | public | public-html | Public marketing, legal, discovery, or informational page. |
 | Customer Web | `/chefs/[slug]` | `apps/web/src/app/chefs/[slug]/page.tsx` | public | public-html | Public marketing, legal, discovery, or informational page. |
 | Customer Web | `/contact` | `apps/web/src/app/contact/page.tsx` | public | public-html | Public marketing, legal, discovery, or informational page. |
+| Customer Web | `/download` | `apps/web/src/app/download/page.tsx` | public | public-html | Public marketing, legal, discovery, or informational page. |
 | Customer Web | `/how-it-works` | `apps/web/src/app/how-it-works/page.tsx` | public | public-html | Public marketing, legal, discovery, or informational page. |
 | Customer Web | `/maintenance` | `apps/web/src/app/maintenance/page.tsx` | public | public-html | Public marketing, legal, discovery, or informational page. |
 | Customer Web | `/order-confirmation/[orderId]` | `apps/web/src/app/order-confirmation/[orderId]/page.tsx` | public | public-html | Public marketing, legal, discovery, or informational page. |
@@ -95,6 +110,7 @@ This Phase 18/19 classification inventory records the intended auth, guard, meth
 | Ops Admin | `/dashboard/finance/payouts/[runId]` | `apps/ops-admin/src/app/dashboard/finance/payouts/[runId]/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Ops Admin | `/dashboard/finance/reconciliation` | `apps/ops-admin/src/app/dashboard/finance/reconciliation/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Ops Admin | `/dashboard/finance/refunds` | `apps/ops-admin/src/app/dashboard/finance/refunds/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
+| Ops Admin | `/dashboard/finance/tax-reports` | `apps/ops-admin/src/app/dashboard/finance/tax-reports/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Ops Admin | `/dashboard/health` | `apps/ops-admin/src/app/dashboard/health/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Ops Admin | `/dashboard/integrations` | `apps/ops-admin/src/app/dashboard/integrations/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
 | Ops Admin | `/dashboard/map` | `apps/ops-admin/src/app/dashboard/map/page.tsx` | protected | login-guard | Application workspace page that requires an authenticated app user or redirects to login. |
@@ -114,9 +130,38 @@ This Phase 18/19 classification inventory records the intended auth, guard, meth
 | Chef Admin | `/api/analytics` | `apps/chef-admin/src/app/api/analytics/route.ts` | GET | protected-session | read-only | low | authenticated-read |
 | Chef Admin | `/api/auth/login` | `apps/chef-admin/src/app/api/auth/login/route.ts` | POST | public-auth-entry | mutating | medium | auth-entry-contract |
 | Chef Admin | `/api/auth/signup` | `apps/chef-admin/src/app/api/auth/signup/route.ts` | POST | public-auth-entry | mutating | medium | auth-entry-contract |
+| Chef Admin | `/api/costs/overview` | `apps/chef-admin/src/app/api/costs/overview/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Chef Admin | `/api/costs/pnl` | `apps/chef-admin/src/app/api/costs/pnl/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Chef Admin | `/api/customers` | `apps/chef-admin/src/app/api/customers/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Chef Admin | `/api/growth` | `apps/chef-admin/src/app/api/growth/route.ts` | GET | protected-session | read-only | low | authenticated-read |
 | Chef Admin | `/api/health` | `apps/chef-admin/src/app/api/health/route.ts` | GET | public-read | read-only | low | public-json |
+| Chef Admin | `/api/inventory` | `apps/chef-admin/src/app/api/inventory/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/inventory/[id]` | `apps/chef-admin/src/app/api/inventory/[id]/route.ts` | GET, PATCH | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/inventory/[id]/movement` | `apps/chef-admin/src/app/api/inventory/[id]/movement/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/inventory/alerts` | `apps/chef-admin/src/app/api/inventory/alerts/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Chef Admin | `/api/inventory/counts` | `apps/chef-admin/src/app/api/inventory/counts/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/inventory/reorder` | `apps/chef-admin/src/app/api/inventory/reorder/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/inventory/waste` | `apps/chef-admin/src/app/api/inventory/waste/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/kitchen/board` | `apps/chef-admin/src/app/api/kitchen/board/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Chef Admin | `/api/kitchen/brands/clone` | `apps/chef-admin/src/app/api/kitchen/brands/clone/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/kitchen/close-day` | `apps/chef-admin/src/app/api/kitchen/close-day/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/kitchen/daily-summary` | `apps/chef-admin/src/app/api/kitchen/daily-summary/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Chef Admin | `/api/kitchen/overview` | `apps/chef-admin/src/app/api/kitchen/overview/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Chef Admin | `/api/kitchen/pause` | `apps/chef-admin/src/app/api/kitchen/pause/route.ts` | POST, DELETE | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/kitchen/service-mode` | `apps/chef-admin/src/app/api/kitchen/service-mode/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/kitchen/tickets/[id]` | `apps/chef-admin/src/app/api/kitchen/tickets/[id]/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Chef Admin | `/api/labor/clock-in` | `apps/chef-admin/src/app/api/labor/clock-in/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/labor/clock-out` | `apps/chef-admin/src/app/api/labor/clock-out/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/labor/costs` | `apps/chef-admin/src/app/api/labor/costs/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Chef Admin | `/api/labor/pay-periods` | `apps/chef-admin/src/app/api/labor/pay-periods/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/labor/pay-periods/[id]/export` | `apps/chef-admin/src/app/api/labor/pay-periods/[id]/export/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Chef Admin | `/api/labor/pay-periods/[id]/lock` | `apps/chef-admin/src/app/api/labor/pay-periods/[id]/lock/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/labor/shifts` | `apps/chef-admin/src/app/api/labor/shifts/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/labor/staff` | `apps/chef-admin/src/app/api/labor/staff/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/labor/today` | `apps/chef-admin/src/app/api/labor/today/route.ts` | GET | protected-session | read-only | low | authenticated-read |
 | Chef Admin | `/api/menu` | `apps/chef-admin/src/app/api/menu/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
 | Chef Admin | `/api/menu/[id]` | `apps/chef-admin/src/app/api/menu/[id]/route.ts` | GET, PATCH, DELETE | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/menu/[id]/cost` | `apps/chef-admin/src/app/api/menu/[id]/cost/route.ts` | GET | protected-session | read-only | low | authenticated-read |
 | Chef Admin | `/api/menu/[id]/options` | `apps/chef-admin/src/app/api/menu/[id]/options/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
 | Chef Admin | `/api/menu/[id]/options/[optionId]` | `apps/chef-admin/src/app/api/menu/[id]/options/[optionId]/route.ts` | PATCH, DELETE | protected-session | mutating | medium | negative-authz-contract-only |
 | Chef Admin | `/api/menu/[id]/options/[optionId]/values` | `apps/chef-admin/src/app/api/menu/[id]/options/[optionId]/values/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
@@ -124,11 +169,32 @@ This Phase 18/19 classification inventory records the intended auth, guard, meth
 | Chef Admin | `/api/menu/categories` | `apps/chef-admin/src/app/api/menu/categories/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
 | Chef Admin | `/api/orders` | `apps/chef-admin/src/app/api/orders/route.ts` | GET | protected-session | read-only | low | authenticated-read |
 | Chef Admin | `/api/orders/[id]` | `apps/chef-admin/src/app/api/orders/[id]/route.ts` | GET, PATCH | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/packaging` | `apps/chef-admin/src/app/api/packaging/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/packaging/[id]` | `apps/chef-admin/src/app/api/packaging/[id]/route.ts` | PATCH | protected-session | mutating | medium | negative-authz-contract-only |
 | Chef Admin | `/api/payouts/request` | `apps/chef-admin/src/app/api/payouts/request/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
 | Chef Admin | `/api/payouts/setup` | `apps/chef-admin/src/app/api/payouts/setup/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/production/batches` | `apps/chef-admin/src/app/api/production/batches/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/production/batches/[id]` | `apps/chef-admin/src/app/api/production/batches/[id]/route.ts` | PATCH | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/production/batches/[id]/complete` | `apps/chef-admin/src/app/api/production/batches/[id]/complete/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/production/batches/[id]/waste` | `apps/chef-admin/src/app/api/production/batches/[id]/waste/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/production/forecast` | `apps/chef-admin/src/app/api/production/forecast/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/production/plan` | `apps/chef-admin/src/app/api/production/plan/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Chef Admin | `/api/production/plan/consolidated` | `apps/chef-admin/src/app/api/production/plan/consolidated/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Chef Admin | `/api/production/prep-tasks` | `apps/chef-admin/src/app/api/production/prep-tasks/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/production/prep-tasks/[id]` | `apps/chef-admin/src/app/api/production/prep-tasks/[id]/route.ts` | PATCH | protected-session | mutating | medium | negative-authz-contract-only |
 | Chef Admin | `/api/profile` | `apps/chef-admin/src/app/api/profile/route.ts` | GET, PATCH | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/purchase-orders` | `apps/chef-admin/src/app/api/purchase-orders/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/purchase-orders/[id]` | `apps/chef-admin/src/app/api/purchase-orders/[id]/route.ts` | GET, PATCH | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/purchase-orders/[id]/receive` | `apps/chef-admin/src/app/api/purchase-orders/[id]/receive/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Chef Admin | `/api/qr` | `apps/chef-admin/src/app/api/qr/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Chef Admin | `/api/recipes` | `apps/chef-admin/src/app/api/recipes/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/recipes/[id]` | `apps/chef-admin/src/app/api/recipes/[id]/route.ts` | GET, PATCH | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/recipes/[id]/version` | `apps/chef-admin/src/app/api/recipes/[id]/version/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
 | Chef Admin | `/api/storefront` | `apps/chef-admin/src/app/api/storefront/route.ts` | GET, POST, PATCH | protected-session | mixed | medium | authenticated-read |
 | Chef Admin | `/api/storefront/availability` | `apps/chef-admin/src/app/api/storefront/availability/route.ts` | GET, PUT | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/suppliers` | `apps/chef-admin/src/app/api/suppliers/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/suppliers/[id]` | `apps/chef-admin/src/app/api/suppliers/[id]/route.ts` | GET, PATCH | protected-session | mixed | medium | authenticated-read |
+| Chef Admin | `/api/suppliers/[id]/items` | `apps/chef-admin/src/app/api/suppliers/[id]/items/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
 | Chef Admin | `/api/upload` | `apps/chef-admin/src/app/api/upload/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
 | Customer Web | `/api/addresses` | `apps/web/src/app/api/addresses/route.ts` | GET, POST, PATCH, DELETE | protected-session | mixed | medium | authenticated-read |
 | Customer Web | `/api/auth/login` | `apps/web/src/app/api/auth/login/route.ts` | POST | public-auth-entry | mutating | medium | auth-entry-contract |
@@ -147,6 +213,11 @@ This Phase 18/19 classification inventory records the intended auth, guard, meth
 | Customer Web | `/api/orders/[id]/cancel` | `apps/web/src/app/api/orders/[id]/cancel/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
 | Customer Web | `/api/orders/[id]/payment-status` | `apps/web/src/app/api/orders/[id]/payment-status/route.ts` | GET | protected-session | read-only | low | authenticated-read |
 | Customer Web | `/api/orders/[id]/reorder` | `apps/web/src/app/api/orders/[id]/reorder/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Customer Web | `/api/partner/checkout` | `apps/web/src/app/api/partner/checkout/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Customer Web | `/api/partner/checkout/quote` | `apps/web/src/app/api/partner/checkout/quote/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Customer Web | `/api/partner/orders/[orderId]/cancel` | `apps/web/src/app/api/partner/orders/[orderId]/cancel/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
+| Customer Web | `/api/partner/storefronts` | `apps/web/src/app/api/partner/storefronts/route.ts` | GET | protected-session | read-only | low | authenticated-read |
+| Customer Web | `/api/partner/storefronts/[id]/menu` | `apps/web/src/app/api/partner/storefronts/[id]/menu/route.ts` | GET | protected-session | read-only | low | authenticated-read |
 | Customer Web | `/api/payment-methods` | `apps/web/src/app/api/payment-methods/route.ts` | GET, DELETE | protected-session | mixed | medium | authenticated-read |
 | Customer Web | `/api/profile` | `apps/web/src/app/api/profile/route.ts` | GET, PATCH | protected-session | mixed | medium | authenticated-read |
 | Customer Web | `/api/promos/validate` | `apps/web/src/app/api/promos/validate/route.ts` | GET | protected-session | read-only | low | authenticated-read |
@@ -187,11 +258,6 @@ This Phase 18/19 classification inventory records the intended auth, guard, meth
 | Ops Admin | `/api/auth/login` | `apps/ops-admin/src/app/api/auth/login/route.ts` | POST | public-auth-entry | mutating | medium | auth-entry-contract |
 | Ops Admin | `/api/chefs` | `apps/ops-admin/src/app/api/chefs/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
 | Ops Admin | `/api/chefs/[id]` | `apps/ops-admin/src/app/api/chefs/[id]/route.ts` | PATCH | protected-session | mutating | medium | negative-authz-contract-only |
-| Ops Admin | `/api/cron/expired-offers` | `apps/ops-admin/src/app/api/cron/expired-offers/route.ts` | GET, POST | token-guarded | mixed | high | token-contract-only |
-| Ops Admin | `/api/cron/payouts-chef-preview` | `apps/ops-admin/src/app/api/cron/payouts-chef-preview/route.ts` | GET, POST | token-guarded | mixed | high | token-contract-only |
-| Ops Admin | `/api/cron/payouts-driver-preview` | `apps/ops-admin/src/app/api/cron/payouts-driver-preview/route.ts` | GET, POST | token-guarded | mixed | high | token-contract-only |
-| Ops Admin | `/api/cron/reconciliation-daily` | `apps/ops-admin/src/app/api/cron/reconciliation-daily/route.ts` | GET, POST | token-guarded | mixed | high | token-contract-only |
-| Ops Admin | `/api/cron/sla-tick` | `apps/ops-admin/src/app/api/cron/sla-tick/route.ts` | GET, POST | token-guarded | mixed | high | token-contract-only |
 | Ops Admin | `/api/customers` | `apps/ops-admin/src/app/api/customers/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
 | Ops Admin | `/api/customers/[id]/notify` | `apps/ops-admin/src/app/api/customers/[id]/notify/route.ts` | POST | protected-session | mutating | medium | negative-authz-contract-only |
 | Ops Admin | `/api/deliveries` | `apps/ops-admin/src/app/api/deliveries/route.ts` | GET | protected-session | read-only | low | authenticated-read |
@@ -208,12 +274,16 @@ This Phase 18/19 classification inventory records the intended auth, guard, meth
 | Ops Admin | `/api/engine/health` | `apps/ops-admin/src/app/api/engine/health/route.ts` | GET | protected-session | read-only | low | authenticated-read |
 | Ops Admin | `/api/engine/maintenance` | `apps/ops-admin/src/app/api/engine/maintenance/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
 | Ops Admin | `/api/engine/orders/[id]` | `apps/ops-admin/src/app/api/engine/orders/[id]/route.ts` | GET, PATCH | protected-session | mixed | medium | authenticated-read |
+| Ops Admin | `/api/engine/partner-stats` | `apps/ops-admin/src/app/api/engine/partner-stats/route.ts` | GET | protected-session | read-only | low | authenticated-read |
 | Ops Admin | `/api/engine/payouts` | `apps/ops-admin/src/app/api/engine/payouts/route.ts` | GET, POST | protected-session | mixed | high | authenticated-read |
 | Ops Admin | `/api/engine/payouts/execute` | `apps/ops-admin/src/app/api/engine/payouts/execute/route.ts` | POST | protected-session | mutating | high | negative-authz-contract-only |
 | Ops Admin | `/api/engine/payouts/instant` | `apps/ops-admin/src/app/api/engine/payouts/instant/route.ts` | GET | protected-session | read-only | high | authenticated-read |
 | Ops Admin | `/api/engine/payouts/instant/[id]` | `apps/ops-admin/src/app/api/engine/payouts/instant/[id]/route.ts` | POST, DELETE | protected-session | mutating | high | negative-authz-contract-only |
 | Ops Admin | `/api/engine/payouts/preview` | `apps/ops-admin/src/app/api/engine/payouts/preview/route.ts` | POST | protected-session | mutating | high | negative-authz-contract-only |
 | Ops Admin | `/api/engine/processors/expired-offers` | `apps/ops-admin/src/app/api/engine/processors/expired-offers/route.ts` | GET, POST | token-guarded | mixed | high | token-contract-only |
+| Ops Admin | `/api/engine/processors/partner-webhooks` | `apps/ops-admin/src/app/api/engine/processors/partner-webhooks/route.ts` | GET, POST | token-guarded | mixed | high | token-contract-only |
+| Ops Admin | `/api/engine/processors/reconciliation` | `apps/ops-admin/src/app/api/engine/processors/reconciliation/route.ts` | GET, POST | token-guarded | mixed | high | token-contract-only |
+| Ops Admin | `/api/engine/processors/retention` | `apps/ops-admin/src/app/api/engine/processors/retention/route.ts` | GET, POST | token-guarded | mixed | high | token-contract-only |
 | Ops Admin | `/api/engine/processors/sla` | `apps/ops-admin/src/app/api/engine/processors/sla/route.ts` | GET, POST | token-guarded | mixed | high | token-contract-only |
 | Ops Admin | `/api/engine/reconciliation` | `apps/ops-admin/src/app/api/engine/reconciliation/route.ts` | GET, POST | protected-session | mixed | medium | authenticated-read |
 | Ops Admin | `/api/engine/refunds` | `apps/ops-admin/src/app/api/engine/refunds/route.ts` | GET, POST | protected-session | mixed | high | authenticated-read |

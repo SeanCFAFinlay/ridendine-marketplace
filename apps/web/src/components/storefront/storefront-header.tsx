@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Badge } from '@ridendine/ui';
 import { StorefrontActions } from './storefront-actions';
+import { isCoocoPartner, getPartnerExternalLink } from '@/lib/partners';
 
 const TYPICAL_DRIVE_MINUTES = 15;
 const DELIVERY_BUFFER_MINUTES = 5;
@@ -84,16 +85,13 @@ export function StorefrontHeader({ storefront }: StorefrontHeaderProps) {
 
           {/* Info */}
           <div className="min-w-0 flex-1">
-            {(storefront.slug === 'bep-ba-muoi' ||
-              storefront.slug === 'cooco' ||
-              storefront.name.toLowerCase().includes('muối') ||
-              storefront.name.toLowerCase().includes('cooco')) && (
+            {isCoocoPartner(storefront) && (
               <a
-                href="https://cooco.app/cooks/06b4462d-a5af-4c47-aa30-7ced490262c5"
+                href={getPartnerExternalLink(storefront.slug)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group mb-2 inline-flex items-center gap-2 rounded-full border border-[#57BBFF]/50 bg-gradient-to-r from-[#57BBFF]/15 via-white/80 to-[#EE3985]/15 px-3 py-1 shadow-xs transition-transform hover:scale-[1.02] dark:from-[#57BBFF]/25 dark:to-[#EE3985]/25"
-                title="View verified chef profile on cooco.app"
+                title="View verified partner profile on cooco.app"
               >
                 <span className="flex h-2 w-2 rounded-full bg-[#EE3985] animate-pulse" />
                 <span className="text-xs font-bold tracking-wide text-[#212121] dark:text-neutral-100">

@@ -239,7 +239,7 @@ export async function searchStorefronts(
 
   let filterClause = `name.ilike.%${cleanQuery}%,description.ilike.%${cleanQuery}%,slug.ilike.%${cleanQuery}%,cuisine_types.cs.{"${cleanQuery}"}`;
   if (cleanQuery.toLowerCase().includes('cooco')) {
-    filterClause += ',id.eq.ffffffff-ffff-ffff-ffff-ffffffffffff';
+    filterClause += ',id.eq.ffffffff-ffff-ffff-ffff-ffffffffffff,id.eq.4a4a4a4a-4a4a-4a4a-8a4a-4a4a4a4a4a4a,cuisine_types.cs.{"Cooco Partner"}';
   }
   if (matchedStorefrontIds.length > 0) {
     filterClause += `,id.in.(${matchedStorefrontIds.join(',')})`;

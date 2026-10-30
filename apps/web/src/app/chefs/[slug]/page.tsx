@@ -19,6 +19,10 @@ async function resolveStorefront(supabase: any, slug: string) {
       storefront = await getStorefrontBySlug(supabase, 'bep-ba-muoi');
     } else if (slug === 'bep-ba-muoi') {
       storefront = await getStorefrontBySlug(supabase, 'cooco');
+    } else if (slug === 'littlesaigonrestaurant-1' || slug === 'little-saigon-restaurant') {
+      storefront = await getStorefrontBySlug(supabase, 'little-saigon');
+    } else if (slug === 'little-saigon') {
+      storefront = await getStorefrontBySlug(supabase, 'littlesaigonrestaurant-1');
     } else {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
       if (isUuid) {

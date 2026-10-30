@@ -3,12 +3,13 @@ import Link from 'next/link';
 import { Badge, Button, Card } from '@ridendine/ui';
 
 const cuisineChips = [
+  { label: '⭐ Little Saigon (Cooco)', href: '/chefs/little-saigon' },
   { label: '🔥 Bếp Bà Muối (Cooco)', href: '/chefs/bep-ba-muoi' },
+  { label: 'Traditional Phở', href: '/chefs?search=pho' },
   { label: 'Vietnamese', href: '/chefs?cuisine=Vietnamese' },
-  { label: 'Beef Stew (Bò Kho)', href: '/chefs?search=bo+kho' },
-  { label: 'Broken Rice (Cơm Tấm)', href: '/chefs?search=com+tam' },
-  { label: 'Noodles & Soups', href: '/chefs?search=noodles' },
   { label: 'Burgers', href: '/chefs?cuisine=American' },
+  { label: 'Broken Rice (Cơm)', href: '/chefs?search=com' },
+  { label: 'Party Trays & Catering', href: '/chefs?search=tray' },
 ];
 
 export function CustomerMarketplaceHero({
@@ -82,15 +83,20 @@ export function CustomerMarketplaceHero({
               ))}
             </div>
 
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link href="/chefs/little-saigon">
+                <Button size="lg" className="font-bold">
+                  Order from Little Saigon
+                </Button>
+              </Link>
               <Link href="/chefs/bep-ba-muoi">
-                <Button size="lg" className="w-full sm:w-auto font-bold">
+                <Button variant="secondary" size="lg" className="font-bold">
                   Order from Bếp Bà Muối
                 </Button>
               </Link>
               <Link href="/chefs">
-                <Button variant="secondary" size="lg" className="w-full sm:w-auto">
-                  Browse All Chefs
+                <Button variant="ghost" size="lg">
+                  Browse All Chefs →
                 </Button>
               </Link>
             </div>
@@ -100,8 +106,8 @@ export function CustomerMarketplaceHero({
             {/* Visual Cover Banner */}
             <div className="relative h-36 w-full overflow-hidden bg-primarySoft">
               <img
-                src="/chefs/bep-ba-muoi/cover.png"
-                alt="Bếp Bà Muối signature cooking"
+                src="/chefs/little-saigon/cover.jpg"
+                alt="Little Saigon signature Vietnamese kitchen"
                 className="h-full w-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
@@ -117,21 +123,21 @@ export function CustomerMarketplaceHero({
             </div>
 
             <div className="p-5 space-y-4">
-              <Link href="/chefs/bep-ba-muoi" className="group block">
+              <Link href="/chefs/little-saigon" className="group block">
                 <div className="flex items-center gap-3">
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border bg-primary shadow-sm">
                     <img
-                      src="/chefs/bep-ba-muoi/avatar.png"
-                      alt="Bếp Bà Muối logo"
+                      src="/chefs/little-saigon/logo.jpg"
+                      alt="Little Saigon Restaurant logo"
                       className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     />
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-base font-bold leading-snug text-text group-hover:text-primary transition-colors">
-                      Bếp Bà Muối (Ba Muoi Kitchen)
+                      Little Saigon Restaurant
                     </h3>
-                    <p className="text-xs text-textMuted">Authentic Vietnamese Home Cooking</p>
-                    <p className="mt-0.5 text-xs font-medium text-[#EE3985]">Pick up near Eastgate Square, Hamilton</p>
+                    <p className="text-xs text-textMuted">Authentic Vietnamese Phở & Regional Food</p>
+                    <p className="mt-0.5 text-xs font-medium text-[#EE3985]">891 Upper James St, Hamilton</p>
                   </div>
                 </div>
               </Link>
@@ -139,23 +145,30 @@ export function CustomerMarketplaceHero({
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className="rounded-lg bg-primarySoft p-3">
                   <p className="text-xl font-bold text-primary">
-                    {activeChefs > 0 ? activeChefs : 1}
+                    {activeChefs > 0 ? activeChefs : 2}
                   </p>
                   <p className="text-xs text-textMuted">Local Chefs</p>
                 </div>
                 <div className="rounded-lg bg-accentSoft p-3">
                   <p className="text-xl font-bold text-accent">
-                    {liveMenuItems > 0 ? `${liveMenuItems}+` : '55+'}
+                    {liveMenuItems > 0 ? `${liveMenuItems}+` : '250+'}
                   </p>
                   <p className="text-xs text-textMuted">Live Dishes</p>
                 </div>
               </div>
 
-              <Link href="/chefs/bep-ba-muoi" className="block w-full">
-                <Button variant="primary" size="md" className="w-full font-bold">
-                  View Full Menu & Order (55 Dishes)
-                </Button>
-              </Link>
+              <div className="flex flex-col gap-2">
+                <Link href="/chefs/little-saigon" className="block w-full">
+                  <Button variant="primary" size="md" className="w-full font-bold">
+                    Little Saigon Menu (196 Dishes)
+                  </Button>
+                </Link>
+                <Link href="/chefs/bep-ba-muoi" className="block w-full">
+                  <Button variant="secondary" size="md" className="w-full font-bold text-xs">
+                    Bếp Bà Muối Menu (55 Dishes) →
+                  </Button>
+                </Link>
+              </div>
             </div>
           </Card>
         </div>

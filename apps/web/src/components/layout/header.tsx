@@ -50,12 +50,18 @@ export function Header() {
           {/* Desktop Navigation — Activates on lg (1024px+) to prevent intermediate tablet collisions */}
           <nav className="hidden items-center gap-2 lg:flex xl:gap-4" aria-label="Desktop primary navigation">
             <Link
-              href="/chefs/bep-ba-muoi"
+              href="/chefs/little-saigon"
               className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/10 to-[#EE3985]/10 px-2.5 py-1 text-xs font-bold text-[#0369a1] dark:text-[#7dd3fc] hover:border-[#EE3985]/50 transition-colors shadow-xs whitespace-nowrap"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-[#EE3985] animate-pulse" />
-              <span className="hidden xl:inline">Bếp Bà Muối (Cooco Chef)</span>
-              <span className="xl:hidden">Bếp Bà Muối</span>
+              <span>Little Saigon</span>
+            </Link>
+            <Link
+              href="/chefs/bep-ba-muoi"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#57BBFF]/40 bg-gradient-to-r from-[#57BBFF]/10 to-[#EE3985]/10 px-2.5 py-1 text-xs font-bold text-[#0369a1] dark:text-[#7dd3fc] hover:border-[#EE3985]/50 transition-colors shadow-xs whitespace-nowrap"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-[#EE3985]" />
+              <span>Bếp Bà Muối</span>
             </Link>
             <Link
               href="/chefs"
@@ -247,11 +253,21 @@ export function Header() {
                   <ul className="flex flex-col gap-0.5">
                     <li>
                       <Link
-                        href="/chefs/bep-ba-muoi"
+                        href="/chefs/little-saigon"
                         onClick={() => setMobileMenuOpen(false)}
                         className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold text-[#0369a1] dark:text-[#7dd3fc] bg-gradient-to-r from-[#57BBFF]/10 to-[#EE3985]/10 border border-[#57BBFF]/30 transition-colors"
                       >
                         <span className="h-2 w-2 rounded-full bg-[#EE3985] animate-pulse" />
+                        Little Saigon Restaurant (Cooco)
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/chefs/bep-ba-muoi"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold text-[#0369a1] dark:text-[#7dd3fc] bg-gradient-to-r from-[#57BBFF]/10 to-[#EE3985]/10 border border-[#57BBFF]/30 transition-colors"
+                      >
+                        <span className="h-2 w-2 rounded-full bg-[#EE3985]" />
                         Bếp Bà Muối (Cooco Chef)
                       </Link>
                     </li>
