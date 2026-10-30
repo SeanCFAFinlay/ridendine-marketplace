@@ -4,35 +4,19 @@ import { createServerClient, getStorefrontByChefId, type SupabaseClient } from '
 import { EmptyState } from '@ridendine/ui';
 import { StorefrontForm } from '@/components/storefront/storefront-form';
 import { StorefrontSetupForm } from '@/components/storefront/storefront-setup-form';
+import { getChefStorefrontContext } from '@/lib/chef-context';
 
 export const dynamic = 'force-dynamic';
 
 async function getChefData() {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
-
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user, chef, storefront } = await getChefStorefrontContext();
     if (!user) return { isAuthenticated: false, hasChefProfile: false, chefStatus: null, storefront: null };
 
-    const { data: chefProfile, error } = await supabase
-      .from('chef_profiles')
-      .select('id, status')
-      .eq('user_id', user.id)
-      .single();
-
-    if (error || !chefProfile) {
-      return { isAuthenticated: true, hasChefProfile: false, chefStatus: null, storefront: null };
-    }
-
-    const storefront = await getStorefrontByChefId(
-      supabase as unknown as SupabaseClient,
-      chefProfile.id
-    );
     return {
       isAuthenticated: true,
-      hasChefProfile: true,
-      chefStatus: chefProfile.status,
+      hasChefProfile: Boolean(chef || storefront),
+      chefStatus: chef?.status || (storefront ? 'approved' : null),
       storefront,
     };
   } catch (error) {

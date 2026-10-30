@@ -1,30 +1,12 @@
 import { cookies } from 'next/headers';
 import {
   createServerClient,
-  getStorefrontByChefId,
   getStorefrontMenu,
 } from '@ridendine/db';
 import { MenuList } from '@/components/menu/menu-list';
+import { getChefStorefrontContext } from '@/lib/chef-context';
 
 export const dynamic = 'force-dynamic';
-
-async function getChefStorefront() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: chefProfile }: any = await supabase
-    .from('chef_profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single();
-
-  if (!chefProfile) return null;
-
-  return await getStorefrontByChefId(supabase as any, chefProfile.id);
-}
 
 async function getMenuData(storefrontId: string) {
   const cookieStore = await cookies();
@@ -33,7 +15,7 @@ async function getMenuData(storefrontId: string) {
 }
 
 export default async function MenuPage() {
-  const storefront = await getChefStorefront();
+  const { storefront } = await getChefStorefrontContext();
 
   if (!storefront) {
     return (

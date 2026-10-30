@@ -82,11 +82,18 @@ VALUES
   -- Pending-approval chef — used by ops "approve chef" lifecycle test
   ('88888888-8888-8888-8888-888888888888', 'pending.chef@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
    '{"provider":"email","providers":["email"],"role":"chef"}',
-   '{"display_name":"Pending Chef","role":"chef"}', false, 'authenticated')
+   '{"display_name":"Pending Chef","role":"chef"}', false, 'authenticated'),
   -- Little Saigon Restaurant (Cooco Partner chef)
   ('99999999-9999-9999-9999-999999999999', 'littlesaigon@ridendine.ca', crypt('password123', gen_salt('bf')), NOW(), NOW(), NOW(),
    '{"provider":"email","providers":["email"],"role":"chef"}',
    '{"display_name":"Little Saigon Restaurant","role":"chef"}', false, 'authenticated'),
+  -- Ryo - Ba Muoi Kitchen (Cooco Partner chef)
+  ('33333333-3333-4333-8333-333333333331', 'roy@cooco.app', crypt('ride1234', gen_salt('bf')), NOW(), NOW(), NOW(),
+   '{"provider":"email","providers":["email"],"role":"chef"}',
+   '{"display_name":"Ryo","role":"chef"}', false, 'authenticated'),
+  ('33333333-3333-4333-8333-333333333332', 'ryo@cooco.app', crypt('ride1234', gen_salt('bf')), NOW(), NOW(), NOW(),
+   '{"provider":"email","providers":["email"],"role":"chef"}',
+   '{"display_name":"Ryo","role":"chef"}', false, 'authenticated')
 ON CONFLICT (id) DO NOTHING;
 
 -- GoTrue requirements for password sign-in on directly-seeded users:
@@ -114,7 +121,10 @@ WHERE id IN (
   '55555555-5555-5555-5555-555555555555',
   '66666666-6666-6666-6666-666666666666',
   '77777777-7777-7777-7777-777777777777',
-  '88888888-8888-8888-8888-888888888888'
+  '88888888-8888-8888-8888-888888888888',
+  '99999999-9999-9999-9999-999999999999',
+  '33333333-3333-4333-8333-333333333331',
+  '33333333-3333-4333-8333-333333333332'
 );
 
 -- Email/password sign-in also requires a matching auth.identities row per
@@ -136,7 +146,10 @@ WHERE u.id IN (
   '55555555-5555-5555-5555-555555555555',
   '66666666-6666-6666-6666-666666666666',
   '77777777-7777-7777-7777-777777777777',
-  '88888888-8888-8888-8888-888888888888'
+  '88888888-8888-8888-8888-888888888888',
+  '99999999-9999-9999-9999-999999999999',
+  '33333333-3333-4333-8333-333333333331',
+  '33333333-3333-4333-8333-333333333332'
 )
 ON CONFLICT (provider_id, provider) DO NOTHING;
 
@@ -188,7 +201,7 @@ VALUES
    'approved',
    NOW() - INTERVAL '60 days', NOW()),
   ('cccccccc-cccc-cccc-cccc-cccccccccccc',
-   '33333333-3333-3333-3333-333333333333',
+   '33333333-3333-4333-8333-333333333332',
    'Bếp Bà Muối (Ba Muoi Kitchen)',
    '+1 (289) 556-4905',
    'Homemade Vietnamese catering in Hamilton — fresh, slow-cooked, and made to order. Specializing in traditional noodle soups, broken rice plates, vegetarian delicacies, party trays, and sweet chè.',
@@ -2401,8 +2414,10 @@ VALUES
 ON CONFLICT (kitchen_id, name) DO NOTHING;
 
 -- Shared staff (kitchen-scoped), with hourly rates for labour/payroll.
-INSERT INTO kitchen_staff (id, kitchen_id, name, role, station_id, hourly_rate, is_active)
+INSERT INTO kitchen_staff (id, kitchen_id, name, role, station_id, hourly_rate, is_active, storefront_id, user_id)
 VALUES
-  ('57aff000-0001-4000-8000-000000000001', 'aa000000-0001-4000-8000-000000000001', 'Alex Prep',  'line_staff', '57a70000-0001-4000-8000-000000000001', 17.50, true),
-  ('57aff000-0002-4000-8000-000000000002', 'aa000000-0001-4000-8000-000000000001', 'Sam Cook',   'head_chef',  '57a70000-0001-4000-8000-000000000001', 24.00, true)
+  ('57aff000-0001-4000-8000-000000000001', 'aa000000-0001-4000-8000-000000000001', 'Alex Prep',  'line_staff', '57a70000-0001-4000-8000-000000000001', 17.50, true, '11111111-1111-1111-1111-111111111111', NULL),
+  ('57aff000-0002-4000-8000-000000000002', 'aa000000-0001-4000-8000-000000000001', 'Sam Cook',   'head_chef',  '57a70000-0001-4000-8000-000000000001', 24.00, true, '11111111-1111-1111-1111-111111111111', NULL),
+  ('c3b5b0f3-c06b-45b3-9f8c-fc78f8fc7be5', 'aa000000-0003-4000-8000-000000000003', 'Ryo', 'Chef & Kitchen Operator', NULL, 0.00, true, 'ffffffff-ffff-ffff-ffff-ffffffffffff', '33333333-3333-4333-8333-333333333331'),
+  ('c3b5b0f3-c06b-45b3-9f8c-fc78f8fc7be6', 'aa000000-0003-4000-8000-000000000003', 'Ryo', 'Chef & Kitchen Operator', NULL, 0.00, true, 'ffffffff-ffff-ffff-ffff-ffffffffffff', '33333333-3333-4333-8333-333333333332')
 ON CONFLICT (id) DO NOTHING;

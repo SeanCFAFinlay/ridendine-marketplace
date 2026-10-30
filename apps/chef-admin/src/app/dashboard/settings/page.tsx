@@ -3,6 +3,7 @@ import { createServerClient, createAdminClient, getChefById } from '@ridendine/d
 import { ProfileForm } from '@/components/profile/profile-form';
 import { FoodSafetyCompliance } from '@/components/profile/food-safety-compliance';
 import { NotificationPreferences } from '@/components/settings/notification-preferences';
+import { ChangePasswordForm } from '@/components/settings/change-password-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,24 +63,26 @@ async function getChefProfile() {
 export default async function SettingsPage() {
   const profile = await getChefProfile();
 
-  if (!profile) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <p className="text-textMuted">No profile found. Please complete your setup.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-text">Profile Settings</h1>
-        <p className="mt-1 text-textMuted">Manage your chef profile information and Ontario food safety compliance</p>
+        <h1 className="text-2xl font-bold text-text">Account & Profile Settings</h1>
+        <p className="mt-1 text-textMuted">Manage your chef credentials, kitchen profile information, and food safety compliance</p>
       </div>
 
-      <ProfileForm profile={profile} />
-      <FoodSafetyCompliance chefId={profile.id} />
-      <NotificationPreferences />
+      <ChangePasswordForm />
+
+      {profile ? (
+        <>
+          <ProfileForm profile={profile} />
+          <FoodSafetyCompliance chefId={profile.id} />
+          <NotificationPreferences />
+        </>
+      ) : (
+        <div className="rounded-xl border border-border bg-surface p-6 text-center">
+          <p className="text-textMuted">No chef bio configured yet. Contact your kitchen administrator to update public details.</p>
+        </div>
+      )}
     </div>
   );
 }
