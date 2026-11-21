@@ -9,6 +9,7 @@ interface Review {
   rating: number;
   comment: string | null;
   created_at: string;
+  chef_response?: string | null;
   customer: { first_name: string; last_name: string } | null;
 }
 
@@ -57,6 +58,12 @@ export function ReviewsList({ storefrontId }: ReviewsListProps) {
             <span className="text-xs text-textSubtle">{new Date(review.created_at).toLocaleDateString()}</span>
           </div>
           {review.comment && <p className="mt-2 text-sm text-textMuted">{review.comment}</p>}
+          {review.chef_response && (
+            <div className="mt-3 rounded-lg border-l-2 border-primary bg-primarySoft/60 px-3 py-2">
+              <p className="text-xs font-semibold text-primary">Response from the chef</p>
+              <p className="mt-0.5 whitespace-pre-line text-sm text-text">{review.chef_response}</p>
+            </div>
+          )}
         </Card>
       ))}
     </div>

@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
   const { data: reviews, error } = await adminClient
     .from('reviews')
     .select(`
-      id, rating, comment, created_at,
+      id, rating, comment, created_at, chef_response, chef_responded_at,
       customer:customers(first_name, last_name)
     `)
     .eq('storefront_id', storefrontId)

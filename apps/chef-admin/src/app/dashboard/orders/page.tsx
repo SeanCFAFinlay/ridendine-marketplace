@@ -1,13 +1,16 @@
-import { cookies } from 'next/headers';
-import { createServerClient } from '@ridendine/db';
+import { createAdminClient } from '@ridendine/db';
 import { OrdersLedger } from '@/components/orders/orders-ledger';
 import { getChefStorefrontContext } from '@/lib/chef-context';
 
 export const dynamic = 'force-dynamic';
 
+// Service-role read, scoped to the storefront that getChefStorefrontContext
+// resolved for the signed-in user. The user's RLS client cannot be used here:
+// the orders policy keys on chef_profiles.user_id, so kitchen staff (e.g. a
+// kitchen operator) see nothing, and there is no chef policy on customers or
+// deliveries, so even owners got null customer/driver joins.
 async function getOrdersWithCustomers(storefrontId: string) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('orders')
@@ -53,14 +56,14 @@ export default async function OrdersPage() {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Order Ledger
+            Orders
           </p>
-          <h1 className="mt-1 text-2xl font-bold text-text">Orders</h1>
+          <h1 className="mt-1 text-2xl font-bold text-text">Order History</h1>
           <p className="mt-1 text-textMuted">
-            Order history, customer &amp; payment context, delivery trace and exceptions. Run live
-            service from{' '}
+            Past and current orders with customer, payment and delivery details. Accept and
+            prepare new orders in{' '}
             <a href="/dashboard/kitchen" className="font-medium text-primary hover:underline">
-              Kitchen Command
+              Live Orders
             </a>
             .
           </p>

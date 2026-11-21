@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { createAdminClient } from '@ridendine/db';
+import { loadPayoutData } from '@/lib/payout-data';
 import { getChefActorContext, errorResponse, successResponse } from '@/lib/engine';
 import {
   getPeriodDateRange,
@@ -134,10 +135,17 @@ export async function GET(request: NextRequest) {
     const { storefrontId } = chefContext;
 
     // Fetch current + previous period orders in parallel with reviews
-    const [allOrders, prevOrders, reviews] = await Promise.all([
+    const [allOrders, prevOrders, reviews, payoutSummary] = await Promise.all([
       fetchOrders(adminClient, storefrontId, start, end),
       fetchOrders(adminClient, storefrontId, prevStart, prevEnd),
       fetchReviews(adminClient, storefrontId),
+      loadPayoutData(adminClient, chefContext.chefId, storefrontId)
+        .then((d) => d.summary)
+        .catch((err) => {
+          // Degrade the card, never the whole analytics response.
+          console.error('payout summary', err);
+          return null;
+        }),
     ]);
 
     const activeOrders = allOrders.filter((o) => ACTIVE_STATUSES.includes(o.status));
@@ -206,6 +214,7 @@ export async function GET(request: NextRequest) {
       hourlyOrders,
       dailyRevenue,
       topItems,
+      payoutSummary,
     });
   } catch (err) {
     console.error('Error fetching analytics:', err);

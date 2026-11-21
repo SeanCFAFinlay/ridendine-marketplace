@@ -197,6 +197,13 @@ export {
 
 // Constants
 export * from './constants';
+export {
+  toCents,
+  platformFeeCents,
+  chefPayableCents,
+  computeOrderSplit,
+  type OrderSplit,
+} from './services/order-split';
 
 // Shared client helpers (explicit to avoid naming conflicts with core getEngine)
 export {

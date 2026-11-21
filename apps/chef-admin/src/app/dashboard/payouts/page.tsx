@@ -1,177 +1,100 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, Badge, Button } from '@ridendine/ui';
-import { createBrowserClient } from '@ridendine/db';
+import { PayoutSummaryCard } from '@/components/analytics/payout-summary-card';
+import type { PayoutSummary } from '@/lib/payout-summary';
 
 interface Payout {
   id: string;
+  /** Integer cents. */
   amount: number;
-  status: 'scheduled' | 'approved' | 'exported' | 'bank_submitted' | 'paid' | 'failed' | 'reconciled';
+  status: string;
   created_at: string;
   paid_at: string | null;
   period_start: string;
   period_end: string;
 }
 
-interface PayoutAccount {
-  id: string;
-  stripe_account_id: string;
-  stripe_account_status?: string | null;
-  status?: 'pending' | 'active' | 'restricted';
-  payout_enabled?: boolean | null;
-  is_verified?: boolean;
-  created_at: string;
+interface PayoutsPayload {
+  summary: PayoutSummary;
+  payouts: Payout[];
+  account: { connected: boolean; payoutEnabled: boolean } | null;
+}
+
+const MIN_PAYOUT_CENTS = 1000;
+
+function money(cents: number, currency = 'CAD') {
+  return new Intl.NumberFormat('en-CA', { style: 'currency', currency }).format(cents / 100);
+}
+
+function statusVariant(status: string): 'success' | 'info' | 'error' | 'warning' {
+  if (['paid', 'reconciled', 'completed'].includes(status)) return 'success';
+  if (['exported', 'bank_submitted', 'processing'].includes(status)) return 'info';
+  if (status === 'failed') return 'error';
+  return 'warning';
 }
 
 export default function PayoutsPage() {
   const [loading, setLoading] = useState(true);
-  const [payouts, setPayouts] = useState<Payout[]>([]);
-  const [account, setAccount] = useState<PayoutAccount | null>(null);
-  const [pendingBalance, setPendingBalance] = useState(0);
-  const [availableBalance, setAvailableBalance] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<PayoutsPayload | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
 
-  const supabase = useMemo(() => createBrowserClient(), []);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/payouts');
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error?.message ?? 'Could not load payouts');
+      setData(json.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load payouts');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-
-    const db = supabase;
-
-    async function fetchPayoutData() {
-      setLoading(true);
-
-      const { data: { user } } = await db.auth.getUser();
-      if (!user) return;
-
-      // Get chef profile
-      const { data: chefProfile } = await db
-        .from('chef_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single() as { data: { id: string } | null };
-
-      if (!chefProfile) return;
-
-      // Get payout account
-      const { data: payoutAccount } = await db
-        .from('chef_payout_accounts')
-        .select('*')
-        .eq('chef_id', chefProfile.id)
-        .single() as { data: PayoutAccount | null };
-
-      setAccount(payoutAccount);
-
-      // Get payouts
-      const { data: payoutsData } = await db
-        .from('chef_payouts')
-        .select('*')
-        .eq('chef_id', chefProfile.id)
-        .order('created_at', { ascending: false }) as { data: Payout[] | null };
-
-      if (payoutsData) {
-        setPayouts(payoutsData);
-      }
-
-      // Get storefront for balance calculation
-      const { data: storefront } = await db
-        .from('chef_storefronts')
-        .select('id')
-        .eq('chef_id', chefProfile.id)
-        .single() as { data: { id: string } | null };
-
-      if (storefront) {
-        // Calculate pending and available balance from completed orders
-        const { data: orders } = await db
-          .from('orders')
-          .select('total, status, created_at')
-          .eq('storefront_id', storefront.id)
-          .in('status', ['delivered', 'completed']);
-
-        if (orders) {
-          const now = new Date();
-          const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-          let pending = 0;
-          let available = 0;
-
-          // 15% platform fee → chef earns 85% of the order total.
-          // This used to read an orders.chef_payout column that never existed
-          // on the live schema; falling back to (total * 0.85) for every order.
-          orders.forEach((order: { total: number | null; created_at: string }) => {
-            const orderDate = new Date(order.created_at);
-            const payout = Number(order.total ?? 0) * 0.85;
-
-            if (orderDate > sevenDaysAgo) {
-              pending += payout;
-            } else {
-              available += payout;
-            }
-          });
-
-          // Subtract already paid out amounts
-          payoutsData?.forEach((p: Payout) => {
-            if (['scheduled', 'approved', 'exported', 'bank_submitted', 'paid', 'reconciled'].includes(p.status)) {
-              available -= p.amount / 100;
-            }
-          });
-
-          setPendingBalance(Math.max(0, pending));
-          setAvailableBalance(Math.max(0, available));
-        }
-      }
-
-      setLoading(false);
-    }
-
-    fetchPayoutData();
-  }, [supabase]);
+    load();
+  }, [load]);
 
   const handleSetupAccount = async () => {
+    setBusy(true);
+    setNotice(null);
     try {
-      const response = await fetch('/api/payouts/setup', {
-        method: 'POST',
-      });
-
-      const data = await response.json();
-
-      if (data.url) {
-        window.location.href = data.url;
+      const res = await fetch('/api/payouts/setup', { method: 'POST' });
+      const json = await res.json().catch(() => null);
+      if (json?.url) {
+        window.location.href = json.url;
+        return;
       }
-    } catch (error) {
-      console.error('Error setting up payout account:', error);
-      alert('Failed to setup payout account. Please try again.');
+      throw new Error(json?.error ?? 'Could not start payout setup');
+    } catch (err) {
+      setNotice({ tone: 'error', text: err instanceof Error ? err.message : 'Could not start payout setup' });
+      setBusy(false);
     }
   };
 
-  const handleRequestPayout = async () => {
-    if (availableBalance < 10) {
-      alert('Minimum payout amount is $10');
-      return;
-    }
-
+  const handleRequestPayout = async (amountCents: number) => {
+    setBusy(true);
+    setNotice(null);
     try {
-      const response = await fetch('/api/payouts/request', {
+      const res = await fetch('/api/payouts/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: availableBalance }),
+        body: JSON.stringify({ amount: amountCents / 100 }),
       });
-
-      if (response.ok) {
-        const { payout } = await response.json();
-        setPayouts((prev) => [payout, ...prev]);
-        setAvailableBalance(0);
-        alert('Payout requested! Funds will be transferred within 2-3 business days.');
-      } else {
-        const data = await response.json();
-        alert(data.error || 'Failed to request payout');
-      }
-    } catch (error) {
-      console.error('Error requesting payout:', error);
-      alert('Failed to request payout. Please try again.');
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error ?? 'Failed to request payout');
+      setNotice({ tone: 'success', text: 'Payout requested. Funds usually arrive within 2–3 business days.' });
+      await load();
+    } catch (err) {
+      setNotice({ tone: 'error', text: err instanceof Error ? err.message : 'Failed to request payout' });
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -182,8 +105,8 @@ export default function PayoutsPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="animate-pulse">
-              <div className="h-4 w-24 bg-surfaceMuted rounded" />
-              <div className="mt-2 h-8 w-20 bg-surfaceMuted rounded" />
+              <div className="h-4 w-24 rounded bg-surfaceMuted" />
+              <div className="mt-2 h-8 w-20 rounded bg-surfaceMuted" />
             </Card>
           ))}
         </div>
@@ -191,102 +114,95 @@ export default function PayoutsPage() {
     );
   }
 
+  if (error || !data) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-text">Payouts</h1>
+        <Card>
+          <p className="py-6 text-center text-sm text-danger">{error ?? 'Could not load payouts'}</p>
+          <div className="flex justify-center">
+            <Button variant="outline" size="sm" onClick={load}>
+              Try again
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  const { summary, payouts, account } = data;
+  const currency = summary.currency;
+  const canRequest =
+    account?.payoutEnabled === true &&
+    !summary.processing &&
+    summary.expectedPayoutCents >= MIN_PAYOUT_CENTS;
+  const totalPaidCents = payouts
+    .filter((p) => ['paid', 'reconciled', 'completed'].includes(p.status))
+    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-text">Payouts</h1>
-        <p className="mt-1 text-textMuted">Manage your earnings and payouts</p>
+        <p className="mt-1 text-textMuted">Your earnings, payout schedule and bank connection</p>
       </div>
 
-      {/* Account Setup Banner */}
-      {!account && (
-        <Card className="bg-primarySoft border-primary/20">
-          <div className="flex items-center justify-between">
+      {notice && (
+        <div
+          role="status"
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            notice.tone === 'success'
+              ? 'border-success/30 bg-successSoft text-success'
+              : 'border-danger/30 bg-dangerSoft text-danger'
+          }`}
+        >
+          {notice.text}
+        </div>
+      )}
+
+      {/* Bank connection */}
+      {!account?.connected ? (
+        <Card className="border-primary/20 bg-primarySoft">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="font-semibold text-primary">Setup Required</h3>
-              <p className="text-sm text-primary">
-                Connect your bank account to receive payouts
-              </p>
+              <h3 className="font-semibold text-primary">Connect your bank account</h3>
+              <p className="text-sm text-primary">You need a connected account to receive payouts.</p>
             </div>
-            <Button onClick={handleSetupAccount}>
-              Setup Payout Account
+            <Button onClick={handleSetupAccount} disabled={busy}>
+              Set up payouts
             </Button>
           </div>
         </Card>
-      )}
-
-      {account && (account.stripe_account_status === 'pending' || account.status === 'pending') && !account.payout_enabled && (
-        <Card className="bg-primarySoft border-primary/20">
-          <div className="flex items-center justify-between">
+      ) : !account.payoutEnabled ? (
+        <Card className="border-warning/30 bg-warningSoft">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="font-semibold text-primary">Verification in Progress</h3>
-              <p className="text-sm text-primary">
-                Your payout account is linked with Stripe. Payouts will activate once verification completes.
-              </p>
-            </div>
-            <Button variant="outline" onClick={handleSetupAccount}>
-              Review Stripe Details
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      {account && (account.stripe_account_status === 'restricted' || account.status === 'restricted') && (
-        <Card className="bg-warningSoft border-warning/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-warning">Account Restricted</h3>
+              <h3 className="font-semibold text-warning">Verification in progress</h3>
               <p className="text-sm text-warning">
-                Additional verification required to continue receiving payouts
+                Your account is linked with Stripe. Payouts start once Stripe finishes verifying it.
               </p>
             </div>
-            <Button variant="outline" onClick={handleSetupAccount}>
-              Complete Verification
+            <Button variant="outline" onClick={handleSetupAccount} disabled={busy}>
+              Review Stripe details
             </Button>
           </div>
         </Card>
-      )}
+      ) : null}
 
-      {/* Balance Cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <p className="text-sm text-textMuted">Available Balance</p>
-          <p className="mt-1 text-3xl font-bold text-success">
-            ${availableBalance.toFixed(2)}
-          </p>
-          <p className="mt-1 text-xs text-textSubtle">Ready to withdraw</p>
-        </Card>
-        <Card>
-          <p className="text-sm text-textMuted">Pending Balance</p>
-          <p className="mt-1 text-3xl font-bold text-primary">
-            ${pendingBalance.toFixed(2)}
-          </p>
-          <p className="mt-1 text-xs text-textSubtle">Available in 7 days</p>
-        </Card>
-        <Card>
-          <p className="text-sm text-textMuted">Total Paid Out</p>
-          <p className="mt-1 text-3xl font-bold text-text">
-            ${payouts
-              .filter((p) => ['paid', 'reconciled'].includes(p.status))
-              .reduce((sum, p) => sum + p.amount / 100, 0)
-              .toFixed(2)}
-          </p>
-          <p className="mt-1 text-xs text-textSubtle">Lifetime earnings</p>
-        </Card>
-      </div>
+      <PayoutSummaryCard summary={summary} onPayoutsPage />
 
-      {/* Request Payout */}
-      {account && (account.payout_enabled || account.stripe_account_status === 'active' || account.status === 'active') && availableBalance >= 10 && (
+      {/* Request payout early */}
+      {canRequest && (
         <Card>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="font-semibold text-text">Request Payout</h3>
+              <h3 className="font-semibold text-text">Want it sooner?</h3>
               <p className="text-sm text-textMuted">
-                Transfer ${availableBalance.toFixed(2)} to your bank account
+                Request your {money(summary.expectedPayoutCents, currency)} balance now instead of waiting for Monday.
               </p>
             </div>
-            <Button onClick={handleRequestPayout}>
-              Request Payout
+            <Button onClick={() => handleRequestPayout(summary.expectedPayoutCents)} disabled={busy}>
+              {busy ? 'Requesting…' : 'Request payout'}
             </Button>
           </div>
         </Card>
@@ -294,7 +210,10 @@ export default function PayoutsPage() {
 
       {/* Payout History */}
       <Card>
-        <h3 className="font-semibold text-text">Payout History</h3>
+        <div className="flex items-baseline justify-between gap-2">
+          <h3 className="font-semibold text-text">Payout history</h3>
+          <span className="text-sm text-textMuted">Total paid: {money(totalPaidCents, currency)}</span>
+        </div>
         {payouts.length === 0 ? (
           <p className="mt-4 text-sm text-textMuted">No payouts yet</p>
         ) : (
@@ -311,26 +230,13 @@ export default function PayoutsPage() {
               <tbody className="text-sm">
                 {payouts.map((payout) => (
                   <tr key={payout.id} className="border-b">
-                    <td className="py-3 text-text">
-                      {new Date(payout.created_at).toLocaleDateString()}
-                    </td>
+                    <td className="py-3 text-text">{new Date(payout.paid_at ?? payout.created_at).toLocaleDateString()}</td>
                     <td className="py-3 text-textMuted">
-                      {new Date(payout.period_start).toLocaleDateString()} -{' '}
-                      {new Date(payout.period_end).toLocaleDateString()}
+                      {new Date(payout.period_start).toLocaleDateString()} – {new Date(payout.period_end).toLocaleDateString()}
                     </td>
-                    <td className="py-3 font-medium text-text">
-                      ${(payout.amount / 100).toFixed(2)}
-                    </td>
+                    <td className="py-3 font-medium text-text">{money(Number(payout.amount) || 0, currency)}</td>
                     <td className="py-3">
-                      <Badge
-                        variant={
-                          ['paid', 'reconciled'].includes(payout.status) ? 'success' :
-                          ['exported', 'bank_submitted'].includes(payout.status) ? 'info' :
-                          payout.status === 'failed' ? 'error' : 'warning'
-                        }
-                      >
-                        {payout.status}
-                      </Badge>
+                      <Badge variant={statusVariant(payout.status)}>{payout.status.replace(/_/g, ' ')}</Badge>
                     </td>
                   </tr>
                 ))}
@@ -340,26 +246,17 @@ export default function PayoutsPage() {
         )}
       </Card>
 
-      {/* Fee Structure Info */}
+      {/* How payouts work */}
       <Card className="bg-surfaceMuted">
-        <h3 className="font-semibold text-text">Fee Structure</h3>
-        <div className="mt-4 space-y-2 text-sm text-textMuted">
-          <div className="flex justify-between">
-            <span>Platform Fee</span>
-            <span className="font-medium">15%</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Processing Fee (Stripe)</span>
-            <span className="font-medium">2.9% + $0.30</span>
-          </div>
-          <div className="flex justify-between border-t pt-2">
-            <span className="font-medium text-text">Your Earnings</span>
-            <span className="font-medium text-success">~82%</span>
-          </div>
-        </div>
-        <p className="mt-4 text-xs text-textMuted">
-          Payouts are processed weekly on Mondays. Funds are held for 7 days before becoming available.
-        </p>
+        <h3 className="font-semibold text-text">How payouts work</h3>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-textMuted">
+          <li>
+            You keep your food sales minus the Ridendine service fee ({summary.breakdown.platformFeePercent}%).
+          </li>
+          <li>Sales tax, delivery fees and customer service fees are collected separately and are not deducted from you.</li>
+          <li>Tips go to the delivery driver.</li>
+          <li>Payouts run weekly on Mondays. Minimum early-payout request is {money(MIN_PAYOUT_CENTS, currency)}.</li>
+        </ul>
       </Card>
     </div>
   );

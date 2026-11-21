@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@ridendine/ui';
+import { PayoutSummaryCard } from '@/components/analytics/payout-summary-card';
+import type { PayoutSummary } from '@/lib/payout-summary';
 
 type Period = 'week' | 'month' | 'year';
 
@@ -29,6 +31,7 @@ interface AnalyticsPayload {
   hourlyOrders: Array<{ hour: number; count: number }>;
   dailyRevenue: Array<{ date: string; revenue: number }>;
   topItems: Array<{ name: string; count: number; revenue: number }>;
+  payoutSummary?: PayoutSummary | null;
 }
 
 function ChangeIndicator({ value }: { value: number | null }) {
@@ -186,6 +189,9 @@ export default function AnalyticsPage() {
           sub={`${(Number(data.cancellationRate) || 0).toFixed(1)}% cancel rate`}
         />
       </div>
+
+      {/* Payouts — period-independent: what's owed now and when it lands */}
+      <PayoutSummaryCard summary={data.payoutSummary} />
 
       {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">

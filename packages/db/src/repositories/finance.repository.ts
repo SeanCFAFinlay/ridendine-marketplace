@@ -698,3 +698,54 @@ export async function getPlatformAccount(
   if (error) throw error;
   return (data as Record<string, unknown> | null) ?? null;
 }
+
+// ==========================================
+// CHEF PAYOUT SUMMARY READ MODELS (chef-admin analytics)
+// ==========================================
+
+export interface ChefPayoutHistoryRow {
+  id: string;
+  /** Integer cents (chef_payouts.amount is written in cents by PayoutService). */
+  amount: number;
+  status: string;
+  period_start: string;
+  period_end: string;
+  paid_at: string | null;
+  created_at: string;
+}
+
+/** One chef's payout rows, newest first. */
+export async function listChefPayoutsForChef(
+  client: SupabaseClient,
+  chefId: string,
+  limit = 20
+): Promise<ChefPayoutHistoryRow[]> {
+  const { data, error } = await client
+    .from('chef_payouts')
+    .select('id, amount, status, period_start, period_end, paid_at, created_at')
+    .eq('chef_id', chefId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data ?? []) as unknown as ChefPayoutHistoryRow[];
+}
+
+/** Which of `orderIds` already have a ledger line of `entryType` (e.g. 'chef_payable'). */
+export async function listOrderIdsWithLedgerEntry(
+  client: SupabaseClient,
+  orderIds: string[],
+  entryType: string
+): Promise<string[]> {
+  if (orderIds.length === 0) return [];
+  const { data, error } = await client
+    .from('ledger_entries')
+    .select('order_id')
+    .eq('entry_type', entryType)
+    .in('order_id', orderIds as never[]);
+
+  if (error) throw error;
+  return ((data ?? []) as Array<{ order_id: string | null }>)
+    .map((r) => r.order_id)
+    .filter((id): id is string => Boolean(id));
+}

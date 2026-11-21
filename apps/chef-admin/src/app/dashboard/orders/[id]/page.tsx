@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { Badge, Card } from '@ridendine/ui';
-import { createServerClient } from '@ridendine/db';
+import { createAdminClient } from '@ridendine/db';
+import { getChefStorefrontContext } from '@/lib/chef-context';
 import { formatCurrency } from '@ridendine/utils';
 
 export const dynamic = 'force-dynamic';
@@ -76,30 +76,13 @@ function formatTime(value: string | null | undefined) {
 }
 
 async function getChefOrder(orderId: string): Promise<OrderDetail | null> {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: chefProfile } = await supabase
-    .from('chef_profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single();
-
-  if (!chefProfile) return null;
-
-  const { data: storefront } = await supabase
-    .from('chef_storefronts')
-    .select('id')
-    .eq('chef_id', chefProfile.id)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
+  // Resolve the storefront with the staff-aware helper, then read with the
+  // service-role client scoped to that storefront (see orders/page.tsx for why
+  // the user's RLS client is not usable for kitchen staff).
+  const { storefront } = await getChefStorefrontContext();
   if (!storefront) return null;
 
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('orders')
     .select(`
