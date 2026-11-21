@@ -17,6 +17,7 @@ import type { DeliveryEngine as MasterDeliveryEngine } from './delivery-engine';
 import type { OfferManagementService } from './offer-management.service';
 import type { DriverMatchingService, EligibleDriver } from './driver-matching.service';
 import { DRIVER_PAYOUT_PERCENT, BASE_DELIVERY_FEE } from '../constants';
+import { geocodeAddress } from '../services/geocoding.service';
 
 // ==========================================
 // TYPES
@@ -57,6 +58,56 @@ export class DispatchOrchestrator {
     private readonly driverMatching: DriverMatchingService
   ) {}
 
+  /**
+   * Kitchens are created with an address but no coordinates (there is no
+   * geocoding step at kitchen setup). Resolve them on first dispatch with the
+   * same geocoder customer addresses use, and persist so it happens once.
+   * Tries the full address, then postal code + city as a fallback.
+   */
+  private async ensureKitchenCoordinates(kitchen: {
+    id?: string;
+    address?: string | null;
+    address_line1?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postal_code?: string | null;
+    country?: string | null;
+    lat: number | null;
+    lng: number | null;
+  }): Promise<{ address: string; lat: number; lng: number }> {
+    const address =
+      kitchen.address ||
+      [kitchen.address_line1, kitchen.city, kitchen.state, kitchen.postal_code].filter(Boolean).join(', ');
+    if (isFiniteCoord(kitchen.lat, kitchen.lng)) {
+      return { address, lat: kitchen.lat as number, lng: kitchen.lng as number };
+    }
+
+    const country = kitchen.country || 'CA';
+    const candidates = [
+      address ? `${address}, ${country}` : null,
+      kitchen.postal_code ? `${kitchen.postal_code}, ${kitchen.city ?? ''} ${kitchen.state ?? ''}, ${country}` : null,
+    ].filter((c): c is string => Boolean(c));
+
+    for (const candidate of candidates) {
+      try {
+        const coords = await geocodeAddress(candidate);
+        if (coords) {
+          if (kitchen.id) {
+            const { error } = await this.client
+              .from('chef_kitchens')
+              .update({ lat: coords.latitude, lng: coords.longitude })
+              .eq('id', kitchen.id);
+            if (error) console.error('[dispatch] failed to persist kitchen coordinates', error.message);
+          }
+          return { address, lat: coords.latitude, lng: coords.longitude };
+        }
+      } catch (err) {
+        console.error('[dispatch] kitchen geocode failed', err instanceof Error ? err.message : err);
+      }
+    }
+    return { address, lat: NaN, lng: NaN };
+  }
+
   // ==========================================
   // REQUEST DISPATCH
   // ==========================================
@@ -73,7 +124,7 @@ export class DispatchOrchestrator {
           id,
           name,
           chef:chef_profiles (id),
-          kitchen:chef_kitchens (address, lat, lng)
+          kitchen:chef_kitchens (id, address, address_line1, city, state, postal_code, country, lat, lng)
         ),
         delivery_address:customer_addresses (
           address_line1,
@@ -102,11 +153,22 @@ export class DispatchOrchestrator {
       return { success: false, error: { code: 'ALREADY_EXISTS', message: 'Delivery already created for this order' } };
     }
 
-    const pickup = order.storefront?.kitchen;
+    const pickup = order.storefront?.kitchen ? await this.ensureKitchenCoordinates(order.storefront.kitchen) : null;
     const dropoff = order.delivery_address;
 
     if (!pickup || !dropoff) {
       return { success: false, error: { code: 'INVALID_ADDRESS', message: 'Missing pickup or dropoff address' } };
+    }
+    // Without coordinates the distance is NaN and no driver can ever be
+    // matched, so fail loudly instead of creating an unassignable delivery.
+    if (!isFiniteCoord(pickup.lat, pickup.lng)) {
+      return {
+        success: false,
+        error: { code: 'INVALID_ADDRESS', message: 'Kitchen location is missing — set the kitchen address so drivers can find it' },
+      };
+    }
+    if (!isFiniteCoord(dropoff.lat, dropoff.lng)) {
+      return { success: false, error: { code: 'INVALID_ADDRESS', message: 'Delivery address has no map location' } };
     }
 
     const distance = haversineKm(pickup.lat, pickup.lng, dropoff.lat, dropoff.lng);
@@ -494,6 +556,10 @@ function isUniqueViolation(error: unknown): boolean {
   const err = error as { code?: unknown; message?: unknown };
   if (err.code === '23505') return true;
   return typeof err.message === 'string' && err.message.toLowerCase().includes('duplicate key value');
+}
+
+function isFiniteCoord(lat: unknown, lng: unknown): boolean {
+  return typeof lat === 'number' && typeof lng === 'number' && Number.isFinite(lat) && Number.isFinite(lng);
 }
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {

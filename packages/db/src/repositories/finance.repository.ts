@@ -749,3 +749,92 @@ export async function listOrderIdsWithLedgerEntry(
     .map((r) => r.order_id)
     .filter((id): id is string => Boolean(id));
 }
+
+// ==========================================
+// CHEF STRIPE CONNECT ACCOUNT (direct deposit)
+// ==========================================
+
+export interface ChefPayoutAccountRow {
+  chef_id: string;
+  stripe_account_id: string | null;
+  stripe_account_status: string | null;
+  payout_enabled: boolean | null;
+  is_verified: boolean;
+}
+
+/** The chef's Stripe Connect payout account row, or null. */
+export async function getChefPayoutAccount(
+  client: SupabaseClient,
+  chefId: string
+): Promise<ChefPayoutAccountRow | null> {
+  const { data, error } = await client
+    .from('chef_payout_accounts')
+    .select('chef_id, stripe_account_id, stripe_account_status, payout_enabled, is_verified')
+    .eq('chef_id', chefId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as ChefPayoutAccountRow | null) ?? null;
+}
+
+/** Record a newly created Stripe Connect account for a chef. */
+export async function createChefPayoutAccount(
+  client: SupabaseClient,
+  chefId: string,
+  stripeAccountId: string
+): Promise<void> {
+  const { error } = await client.from('chef_payout_accounts').insert({
+    chef_id: chefId,
+    stripe_account_id: stripeAccountId,
+    stripe_account_status: 'pending',
+    payout_enabled: false,
+    is_verified: false,
+  } as never);
+  if (error) throw error;
+}
+
+export type StripeConnectStatus = 'pending' | 'active' | 'restricted';
+
+/** Map a Stripe Connect account's flags to our payout-account status. */
+export function stripeConnectStatus(account: {
+  payouts_enabled?: boolean | null;
+  details_submitted?: boolean | null;
+  requirements?: { disabled_reason?: string | null } | null;
+}): { status: StripeConnectStatus; payoutEnabled: boolean; isVerified: boolean } {
+  const payoutEnabled = account.payouts_enabled === true;
+  const status: StripeConnectStatus = payoutEnabled
+    ? 'active'
+    : account.requirements?.disabled_reason
+      ? 'restricted'
+      : 'pending';
+  return { status, payoutEnabled, isVerified: payoutEnabled && account.details_submitted === true };
+}
+
+/**
+ * Sync a Stripe Connect account's state onto chef_payout_accounts (by Stripe
+ * account id). Returns the number of rows updated (0 = unknown account).
+ */
+export async function syncChefPayoutAccountFromStripe(
+  client: SupabaseClient,
+  account: {
+    id: string;
+    payouts_enabled?: boolean | null;
+    details_submitted?: boolean | null;
+    requirements?: { disabled_reason?: string | null } | null;
+  }
+): Promise<number> {
+  const mapped = stripeConnectStatus(account);
+  const { data, error } = await client
+    .from('chef_payout_accounts')
+    .update({
+      stripe_account_status: mapped.status,
+      payout_enabled: mapped.payoutEnabled,
+      is_verified: mapped.isVerified,
+      updated_at: new Date().toISOString(),
+    } as never)
+    .eq('stripe_account_id', account.id)
+    .select('chef_id');
+
+  if (error) throw error;
+  return (data ?? []).length;
+}

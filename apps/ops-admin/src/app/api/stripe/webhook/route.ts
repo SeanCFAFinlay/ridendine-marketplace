@@ -7,7 +7,7 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import type Stripe from 'stripe';
-import { createAdminClient } from '@ridendine/db';
+import { createAdminClient, syncChefPayoutAccountFromStripe, type SupabaseClient } from '@ridendine/db';
 import {
   getStripeClient,
   claimStripeWebhookEventForProcessing,
@@ -59,6 +59,23 @@ export async function POST(request: Request): Promise<Response> {
   } catch (e) {
     console.error('[ops stripe webhook] signature failed', safeMsg(e));
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+  }
+
+  // Connect: a chef finished (or fell out of) Stripe onboarding. This is a pure
+  // state sync — replaying it is harmless — so it skips the idempotency claim.
+  // Requires the Stripe webhook endpoint to listen to events on CONNECTED accounts.
+  if (event.type === 'account.updated') {
+    try {
+      const account = event.data.object as Stripe.Account;
+      const updated = await syncChefPayoutAccountFromStripe(
+        createAdminClient() as unknown as SupabaseClient,
+        account
+      );
+      return NextResponse.json({ received: true, accountSynced: updated > 0 });
+    } catch (e) {
+      console.error('[ops stripe webhook] account.updated sync failed', safeMsg(e));
+      return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
+    }
   }
 
   if (!FINANCE_TYPES.has(event.type)) {
