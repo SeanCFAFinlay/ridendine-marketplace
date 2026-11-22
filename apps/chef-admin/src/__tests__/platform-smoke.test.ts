@@ -117,7 +117,7 @@ describe('chef-admin smoke wiring', () => {
     ]);
   });
 
-  it('kitchen-os tools are parked in the "Coming soon" group, not the primary nav', () => {
+  it('kitchen-os tools are parked in the "Add-ons" group, not the primary nav', () => {
     const primary = new Set(primaryNavSections.flatMap((s) => s.items.map((i) => i.href)));
     const parked = futureNavSection.items.map((i) => i.href);
     for (const href of [

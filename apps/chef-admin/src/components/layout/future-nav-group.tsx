@@ -5,7 +5,7 @@ import { cn } from '@ridendine/ui';
 import { futureNavSection, isFutureRoute } from '@/components/layout/nav-config';
 
 /**
- * Collapsed-by-default "Coming soon" tab holding the parked Kitchen OS tools.
+ * Collapsed-by-default "Add-ons" tab holding the parked Kitchen OS tools.
  * Opens automatically when the chef is already on one of those routes so the
  * active item is never hidden.
  */
@@ -51,7 +51,7 @@ export function FutureNavGroup({
       {open && (
         <div id="future-nav-items">
           <p className="px-3 pb-2 text-[11px] leading-snug text-textSubtle">
-            Advanced kitchen tools. Not needed to run your orders.
+            Optional kitchen tools in testing. Not needed to run your orders.
           </p>
           {renderItems(futureNavSection.items)}
         </div>

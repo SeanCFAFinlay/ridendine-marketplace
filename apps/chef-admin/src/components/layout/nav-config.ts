@@ -6,7 +6,7 @@
 // menu, storefront, hours, reviews, analytics and payouts. The Kitchen OS
 // surfaces (inventory, suppliers, production, labour, costing, P&L, recipes)
 // are NOT deleted — their routes still work — but they are parked behind the
-// collapsed "Coming soon" tab until they are ready for wider rollout.
+// collapsed "Add-ons" tab until they are ready for wider rollout.
 // ==========================================
 
 export type NavItem = { href: string; label: string; icon: string };
@@ -47,7 +47,7 @@ export const primaryNavSections: NavSection[] = [
 /** Advanced Kitchen OS tools, parked for a future rollout. */
 export const futureNavSection: NavSection = {
   key: 'future',
-  title: 'Coming soon',
+  title: 'Add-ons',
   items: [
       { href: '/dashboard/kitchen/board', label: 'KDS Board', icon: 'M4 5a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2zM14 11a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z' },
       { href: '/dashboard/inventory', label: 'Inventory', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
