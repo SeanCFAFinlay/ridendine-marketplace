@@ -4,6 +4,13 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { KITCHEN_NEXT_TRANSITION, KITCHEN_REJECT_TRANSITION } from '@ridendine/utils';
+import {
+  futureNavSection,
+  isFutureRoute,
+  navSectionsFor,
+  isNavItemActive,
+  primaryNavSections,
+} from '../components/layout/nav-config';
 
 function read(relativePath: string): string {
   return readFileSync(join(__dirname, '..', relativePath), 'utf8');
@@ -85,12 +92,57 @@ describe('chef-admin smoke wiring', () => {
 
     const page = read('app/dashboard/orders/page.tsx');
     expect(page).toContain('OrdersLedger');
-    expect(page).toContain('Order Ledger');
-    expect(page).toContain('Kitchen Command');
+    expect(page).toContain('Order History');
+    expect(page).toContain('Live Orders');
+  });
+
+  it('chef nav keeps the core order-management surfaces up front', () => {
+    const sidebar = read('components/layout/sidebar.tsx');
+    const header = read('components/layout/header.tsx');
+    for (const src of [sidebar, header]) {
+      expect(src).toContain('navSectionsFor');
+      expect(src).toContain('FutureNavGroup');
+    }
+    const hrefs = primaryNavSections.flatMap((s) => s.items.map((i) => i.href));
+    expect(hrefs).toEqual([
+      '/dashboard',
+      '/dashboard/kitchen',
+      '/dashboard/orders',
+      '/dashboard/menu',
+      '/dashboard/storefront',
+      '/dashboard/availability',
+      '/dashboard/reviews',
+      '/dashboard/analytics',
+      '/dashboard/payouts',
+      '/dashboard/settings',
+    ]);
+  });
+
+  it('kitchen-os tools are parked in the "Add-ons" group, not the primary nav', () => {
+    const primary = new Set(primaryNavSections.flatMap((s) => s.items.map((i) => i.href)));
+    const parked = futureNavSection.items.map((i) => i.href);
+    for (const href of [
+      '/dashboard/inventory',
+      '/dashboard/suppliers',
+      '/dashboard/production',
+      '/dashboard/labor',
+      '/dashboard/recipes',
+      '/dashboard/costs',
+      '/dashboard/kitchen/pnl',
+    ]) {
+      expect(parked).toContain(href);
+      expect(primary.has(href)).toBe(false);
+    }
+    expect(isFutureRoute('/dashboard/recipes/abc')).toBe(true);
+    expect(isFutureRoute('/dashboard/kitchen')).toBe(false);
+    // Live Orders must not light up on the KDS board sub-route.
+    expect(isNavItemActive('/dashboard/kitchen/board', '/dashboard/kitchen')).toBe(false);
+    expect(isNavItemActive('/dashboard/kitchen/board', '/dashboard/kitchen/board')).toBe(true);
+    expect(isNavItemActive('/dashboard/orders/123', '/dashboard/orders')).toBe(true);
   });
 
   it('sidebar includes business engine nav items', () => {
-    const src = read('components/layout/sidebar.tsx');
+    const src = read('components/layout/nav-config.ts');
     expect(src).toContain("href: '/dashboard/customers'");
     expect(src).toContain("label: 'Customers'");
     expect(src).toContain("href: '/dashboard/growth'");
@@ -106,14 +158,14 @@ describe('chef-admin smoke wiring', () => {
     expect(growth).toContain('Revenue Trend');
   });
 
-  it('sidebar includes kitchen command nav item', () => {
-    const src = read('components/layout/sidebar.tsx');
+  it('sidebar includes kitchen command nav item (as Live Orders)', () => {
+    const src = read('components/layout/nav-config.ts');
     expect(src).toContain("href: '/dashboard/kitchen'");
-    expect(src).toContain("label: 'Kitchen'");
+    expect(src).toContain("label: 'Live Orders'");
   });
 
   it('inventory page is wired to the inventory APIs with a nav item', () => {
-    const sidebar = read('components/layout/sidebar.tsx');
+    const sidebar = read('components/layout/nav-config.ts');
     expect(sidebar).toContain("href: '/dashboard/inventory'");
     expect(sidebar).toContain("label: 'Inventory'");
 
@@ -129,9 +181,9 @@ describe('chef-admin smoke wiring', () => {
   });
 
   it('costs page is wired to the costs overview API with a nav item', () => {
-    const sidebar = read('components/layout/sidebar.tsx');
+    const sidebar = read('components/layout/nav-config.ts');
     expect(sidebar).toContain("href: '/dashboard/costs'");
-    expect(sidebar).toContain("label: 'Costs'");
+    expect(sidebar).toContain("label: 'Food Costs'");
 
     const page = read('app/dashboard/costs/page.tsx');
     expect(page).toContain('/api/costs/overview');
@@ -141,7 +193,7 @@ describe('chef-admin smoke wiring', () => {
   });
 
   it('kitchen-os UIs (recipes, labour, production, suppliers) are wired with nav items', () => {
-    const sidebar = read('components/layout/sidebar.tsx');
+    const sidebar = read('components/layout/nav-config.ts');
     for (const [href, label] of [
       ['/dashboard/recipes', 'Recipes'],
       ['/dashboard/labor', 'Labour'],
@@ -193,5 +245,12 @@ describe('chef-admin smoke wiring', () => {
     expect(list).toContain('Sold Out');
     expect(createRoute).toContain('daily_limit');
     expect(updateRoute).toContain('sold_out_at');
+  });
+
+  it('hides Payouts from kitchen staff but shows it to the owner', () => {
+    const hrefs = (owner: boolean) => navSectionsFor(owner).flatMap((s) => s.items.map((i) => i.href));
+    expect(hrefs(true)).toContain('/dashboard/payouts');
+    expect(hrefs(false)).not.toContain('/dashboard/payouts');
+    expect(hrefs(false)).toEqual(expect.arrayContaining(['/dashboard/kitchen', '/dashboard/orders', '/dashboard/menu']));
   });
 });

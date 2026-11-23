@@ -27,8 +27,13 @@ function expectErr(r: { success: boolean; error?: { code: string; message?: stri
 // MODULE MOCKS (must be at top level)
 // ==========================================
 
-const { mockGetPlatform } = vi.hoisted(() => ({
+const { mockGetPlatform, mockGeocode } = vi.hoisted(() => ({
   mockGetPlatform: vi.fn(),
+  mockGeocode: vi.fn(),
+}));
+
+vi.mock('../services/geocoding.service', () => ({
+  geocodeAddress: (...args: unknown[]) => mockGeocode(...args),
 }));
 
 vi.mock('@ridendine/db', () => ({
@@ -317,6 +322,94 @@ describe('DispatchOrchestrator', () => {
       // The losing request must not re-trigger offers or SLA timers.
       expect(offerManagement.offerToNextDriver).not.toHaveBeenCalled();
       expect(sla.startTimer).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('requestDispatch — kitchen location', () => {
+    function setup(order: ReturnType<typeof makeOrder>) {
+      const delivery = makeDelivery();
+      const kitchenUpdate = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
+      const deliveryInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: delivery, error: null }) }),
+      });
+      const ctx = createOrchestrator((table) => {
+        if (table === 'orders') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: order, error: null }) }),
+            }),
+            update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+          };
+        }
+        if (table === 'deliveries') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: null, error: null }) }),
+            }),
+            insert: deliveryInsert,
+          };
+        }
+        if (table === 'chef_kitchens') return { update: kitchenUpdate };
+        return makeChain();
+      });
+      return { ...ctx, kitchenUpdate, deliveryInsert };
+    }
+
+    function orderWithKitchen(kitchen: Record<string, unknown>) {
+      const order = makeOrder();
+      (order.storefront as { kitchen: unknown }).kitchen = kitchen;
+      return order;
+    }
+
+    beforeEach(() => mockGeocode.mockReset());
+
+    it('geocodes and persists a kitchen that has no coordinates, then dispatches', async () => {
+      mockGeocode.mockResolvedValue({ latitude: 43.231, longitude: -79.765 });
+      const order = orderWithKitchen({
+        id: 'kitchen-1',
+        address: 'Pick up near Eastgate Square, Queenston Rd, Hamilton, ON L8G 2B4',
+        postal_code: 'L8G 2B4',
+        city: 'Hamilton',
+        state: 'ON',
+        country: 'CA',
+        lat: null,
+        lng: null,
+      });
+      const { orchestrator, kitchenUpdate, deliveryInsert, offerManagement } = setup(order);
+
+      const result = await orchestrator.requestDispatch(ORDER_ID, SYS_ACTOR);
+
+      expect(result.success).toBe(true);
+      expect(kitchenUpdate).toHaveBeenCalledWith({ lat: 43.231, lng: -79.765 });
+      expect(deliveryInsert.mock.calls[0]?.[0]).toMatchObject({ pickup_lat: 43.231, pickup_lng: -79.765 });
+      expect(offerManagement.offerToNextDriver).toHaveBeenCalled();
+    });
+
+    it('falls back to postal code when the full address does not geocode', async () => {
+      mockGeocode.mockResolvedValueOnce(null).mockResolvedValueOnce({ latitude: 43.23, longitude: -79.76 });
+      const order = orderWithKitchen({ id: 'k', address: 'Pick up near the mall', postal_code: 'L8G 2B4', city: 'Hamilton', state: 'ON', lat: null, lng: null });
+      const { orchestrator } = setup(order);
+
+      expect((await orchestrator.requestDispatch(ORDER_ID, SYS_ACTOR)).success).toBe(true);
+      expect(mockGeocode).toHaveBeenCalledTimes(2);
+      expect(mockGeocode.mock.calls[1]?.[0]).toContain('L8G 2B4');
+    });
+
+    it('refuses to create an unassignable delivery when the kitchen cannot be located', async () => {
+      mockGeocode.mockResolvedValue(null);
+      const order = orderWithKitchen({ id: 'k', address: 'To be updated', lat: null, lng: null });
+      const { orchestrator, deliveryInsert } = setup(order);
+
+      const err = expectErr(await orchestrator.requestDispatch(ORDER_ID, SYS_ACTOR));
+      expect(err.code).toBe('INVALID_ADDRESS');
+      expect(err.message).toMatch(/Kitchen location/);
+      expect(deliveryInsert).not.toHaveBeenCalled();
+    });
+
+    it('does not geocode when the kitchen already has coordinates', async () => {
+      const { orchestrator } = setup(makeOrder());
+      expect((await orchestrator.requestDispatch(ORDER_ID, SYS_ACTOR)).success).toBe(true);
+      expect(mockGeocode).not.toHaveBeenCalled();
     });
   });
 

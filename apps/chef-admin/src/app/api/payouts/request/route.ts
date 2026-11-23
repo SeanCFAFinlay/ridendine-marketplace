@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
 import { payoutRequestSchema } from '@ridendine/validation';
 import { getChefActorContext, getEngine } from '@/lib/engine';
+import { isKitchenOwner, OWNER_ONLY_MESSAGE } from '@/lib/chef-owner';
 
 export async function POST(request: Request) {
   try {
     const chefContext = await getChefActorContext();
     if (!chefContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!(await isKitchenOwner(chefContext))) {
+      return NextResponse.json({ error: OWNER_ONLY_MESSAGE }, { status: 403 });
     }
 
     const body = await request.json();

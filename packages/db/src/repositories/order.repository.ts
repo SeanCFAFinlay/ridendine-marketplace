@@ -885,3 +885,36 @@ export async function listOrderExportRows(
   if (error) throw error;
   return (data || []) as unknown as OrderExportRow[];
 }
+
+export interface OrderMoneyRow {
+  id: string;
+  created_at: string;
+  subtotal: number | null;
+  tax: number | null;
+  service_fee: number | null;
+  delivery_fee: number | null;
+  tip: number | null;
+}
+
+/**
+ * Money columns (DOLLAR floats) of a storefront's fulfilled orders created
+ * after `sinceIso` (or all time when null). Feeds the chef payout breakdown.
+ */
+export async function listFulfilledOrderMoneyForStorefront(
+  client: SupabaseClient,
+  storefrontId: string,
+  sinceIso: string | null
+): Promise<OrderMoneyRow[]> {
+  let query = client
+    .from('orders')
+    .select('id, created_at, subtotal, tax, service_fee, delivery_fee, tip')
+    .eq('storefront_id', storefrontId)
+    .in('status', ['delivered', 'completed'] as never[])
+    .order('created_at', { ascending: true })
+    .limit(2000);
+  if (sinceIso) query = query.gt('created_at', sinceIso);
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []) as unknown as OrderMoneyRow[];
+}

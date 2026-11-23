@@ -7,7 +7,7 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import type Stripe from 'stripe';
-import { createAdminClient } from '@ridendine/db';
+import { createAdminClient, syncChefPayoutAccountFromStripe, type SupabaseClient } from '@ridendine/db';
 import {
   getStripeClient,
   claimStripeWebhookEventForProcessing,
@@ -32,12 +32,32 @@ const FINANCE_TYPES = new Set([
   'payout.failed',
 ]);
 
-function webhookSecret(): string {
-  const s = process.env.STRIPE_WEBHOOK_SECRET_OPS?.trim() || process.env.STRIPE_WEBHOOK_SECRET?.trim();
-  if (!s) {
+/**
+ * Signing secrets this endpoint accepts. Stripe gives a "Connected accounts"
+ * endpoint (needed for account.updated) its own secret, separate from the
+ * platform endpoint, so both may point at this URL.
+ */
+function webhookSecrets(): string[] {
+  const primary = process.env.STRIPE_WEBHOOK_SECRET_OPS?.trim() || process.env.STRIPE_WEBHOOK_SECRET?.trim();
+  const connect = process.env.STRIPE_WEBHOOK_SECRET_CONNECT?.trim();
+  const secrets = [primary, connect].filter((s): s is string => Boolean(s));
+  if (secrets.length === 0) {
     throw new Error('STRIPE_WEBHOOK_SECRET_OPS or STRIPE_WEBHOOK_SECRET is required');
   }
-  return s;
+  return secrets;
+}
+
+function constructVerifiedEvent(body: string, sig: string): Stripe.Event {
+  const stripe = getStripeClient();
+  let lastError: unknown;
+  for (const secret of webhookSecrets()) {
+    try {
+      return stripe.webhooks.constructEvent(body, sig, secret);
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw lastError;
 }
 
 function safeMsg(err: unknown): string {
@@ -54,11 +74,27 @@ export async function POST(request: Request): Promise<Response> {
 
   let event: Stripe.Event;
   try {
-    const stripe = getStripeClient();
-    event = stripe.webhooks.constructEvent(body, sig, webhookSecret());
+    event = constructVerifiedEvent(body, sig);
   } catch (e) {
     console.error('[ops stripe webhook] signature failed', safeMsg(e));
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+  }
+
+  // Connect: a chef finished (or fell out of) Stripe onboarding. This is a pure
+  // state sync — replaying it is harmless — so it skips the idempotency claim.
+  // Requires the Stripe webhook endpoint to listen to events on CONNECTED accounts.
+  if (event.type === 'account.updated') {
+    try {
+      const account = event.data.object as Stripe.Account;
+      const updated = await syncChefPayoutAccountFromStripe(
+        createAdminClient() as unknown as SupabaseClient,
+        account
+      );
+      return NextResponse.json({ received: true, accountSynced: updated > 0 });
+    } catch (e) {
+      console.error('[ops stripe webhook] account.updated sync failed', safeMsg(e));
+      return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
+    }
   }
 
   if (!FINANCE_TYPES.has(event.type)) {

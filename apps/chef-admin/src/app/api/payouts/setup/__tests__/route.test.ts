@@ -1,24 +1,26 @@
 /**
  * @jest-environment node
  *
- * Task 4 — Chef Connect redirect fix: unit tests for baseUrl resolution.
- *
- * The route resolves baseUrl as:
- *   process.env.NEXT_PUBLIC_CHEF_ADMIN_URL || process.env.NEXT_PUBLIC_APP_URL
- * And returns 500 when neither is set.
+ * POST /api/payouts/setup — Stripe Connect onboarding.
+ *  - redirect base URL resolution (NEXT_PUBLIC_CHEF_ADMIN_URL → NEXT_PUBLIC_APP_URL → 500)
+ *  - the account row is persisted with the service client (no RLS INSERT policy)
+ *  - an existing account is reused + re-synced, never duplicated
+ *  - kitchen staff are refused (owner-only)
  */
 
 const mockGetChefActorContext = jest.fn();
 const mockGetStripeClient = jest.fn();
-const mockCreateServerClient = jest.fn();
-const mockCookies = jest.fn();
-
-jest.mock('next/headers', () => ({
-  cookies: () => mockCookies(),
-}));
+const mockGetChefPayoutAccount = jest.fn();
+const mockCreateChefPayoutAccount = jest.fn();
+const mockSyncChefPayoutAccountFromStripe = jest.fn();
+const mockGetChefById = jest.fn();
 
 jest.mock('@ridendine/db', () => ({
-  createServerClient: (...args: unknown[]) => mockCreateServerClient(...args),
+  createAdminClient: jest.fn(() => ({})),
+  getChefPayoutAccount: (...a: unknown[]) => mockGetChefPayoutAccount(...a),
+  createChefPayoutAccount: (...a: unknown[]) => mockCreateChefPayoutAccount(...a),
+  syncChefPayoutAccountFromStripe: (...a: unknown[]) => mockSyncChefPayoutAccountFromStripe(...a),
+  getChefById: (...a: unknown[]) => mockGetChefById(...a),
 }));
 
 jest.mock('@ridendine/engine', () => ({
@@ -31,48 +33,11 @@ jest.mock('@/lib/engine', () => ({
 
 import { POST } from '../route';
 
-function buildSupabaseMock(overrides?: {
-  user?: { id: string; email: string } | null;
-  chefProfile?: { id: string; display_name: string } | null;
-  existingAccount?: { stripe_account_id: string } | null;
-}) {
-  const user = overrides?.user ?? { id: 'user-1', email: 'chef@example.com' };
-  const chefProfile = overrides?.chefProfile ?? { id: 'chef-1', display_name: 'Alice Chef' };
-  const existingAccount = overrides?.existingAccount ?? { stripe_account_id: 'acct_existing' };
-
-  return {
-    auth: {
-      getUser: jest.fn().mockResolvedValue({ data: { user } }),
-    },
-    from: jest.fn((table: string) => {
-      if (table === 'chef_profiles') {
-        return {
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({ data: chefProfile, error: null }),
-            }),
-          }),
-        };
-      }
-      if (table === 'chef_payout_accounts') {
-        return {
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({ data: existingAccount, error: null }),
-            }),
-          }),
-          insert: jest.fn().mockResolvedValue({ error: null }),
-        };
-      }
-      return {};
-    }),
-  };
-}
-
-function buildStripeAccountLinkMock(url = 'https://connect.stripe.com/setup/c/acct') {
+function buildStripeMock(url = 'https://connect.stripe.com/setup/c/acct') {
   return {
     accounts: {
       create: jest.fn().mockResolvedValue({ id: 'acct_new' }),
+      retrieve: jest.fn().mockResolvedValue({ id: 'acct_existing', payouts_enabled: true, details_submitted: true }),
     },
     accountLinks: {
       create: jest.fn().mockResolvedValue({ url }),
@@ -80,7 +45,9 @@ function buildStripeAccountLinkMock(url = 'https://connect.stripe.com/setup/c/ac
   };
 }
 
-describe('POST /api/payouts/setup — baseUrl resolution', () => {
+describe('POST /api/payouts/setup', () => {
+  let stripe: ReturnType<typeof buildStripeMock>;
+
   beforeEach(() => {
     jest.clearAllMocks();
     delete process.env.NEXT_PUBLIC_CHEF_ADMIN_URL;
@@ -88,23 +55,39 @@ describe('POST /api/payouts/setup — baseUrl resolution', () => {
 
     mockGetChefActorContext.mockResolvedValue({
       chefId: 'chef-1',
+      storefrontId: 'store-1',
       actor: { userId: 'user-1', role: 'chef_user', entityId: 'chef-1' },
     });
-    mockCookies.mockReturnValue({});
-    mockCreateServerClient.mockReturnValue(buildSupabaseMock());
-    mockGetStripeClient.mockReturnValue(buildStripeAccountLinkMock());
+    mockGetChefPayoutAccount.mockResolvedValue({ chef_id: 'chef-1', stripe_account_id: 'acct_existing' });
+    mockGetChefById.mockResolvedValue({ id: 'chef-1', user_id: 'user-1', display_name: 'Alice Chef' });
+    stripe = buildStripeMock();
+    mockGetStripeClient.mockReturnValue(stripe);
+  });
+
+  it('rejects unauthenticated callers', async () => {
+    mockGetChefActorContext.mockResolvedValue(null);
+    const res = await POST();
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects kitchen staff (not the owner) before touching Stripe', async () => {
+    process.env.NEXT_PUBLIC_CHEF_ADMIN_URL = 'https://chef.ridendine.com';
+    mockGetChefActorContext.mockResolvedValue({
+      chefId: 'chef-1',
+      storefrontId: 'store-1',
+      actor: { userId: 'staff-user', role: 'chef_user', entityId: 'chef-1' },
+    });
+    const res = await POST();
+    expect(res.status).toBe(403);
+    expect(stripe.accounts.create).not.toHaveBeenCalled();
+    expect(stripe.accounts.retrieve).not.toHaveBeenCalled();
+    expect(stripe.accountLinks.create).not.toHaveBeenCalled();
   });
 
   it('uses NEXT_PUBLIC_CHEF_ADMIN_URL when set', async () => {
     process.env.NEXT_PUBLIC_CHEF_ADMIN_URL = 'https://chef.ridendine.com';
-
     const res = await POST();
-    const body = await res.json();
-
     expect(res.status).toBe(200);
-    expect(body.url).toBeDefined();
-
-    const stripe = mockGetStripeClient();
     expect(stripe.accountLinks.create).toHaveBeenCalledWith(
       expect.objectContaining({
         return_url: expect.stringContaining('https://chef.ridendine.com'),
@@ -115,27 +98,52 @@ describe('POST /api/payouts/setup — baseUrl resolution', () => {
 
   it('falls back to NEXT_PUBLIC_APP_URL when NEXT_PUBLIC_CHEF_ADMIN_URL is not set', async () => {
     process.env.NEXT_PUBLIC_APP_URL = 'https://app.ridendine.com';
-
     const res = await POST();
-    const body = await res.json();
-
     expect(res.status).toBe(200);
-    expect(body.url).toBeDefined();
-
-    const stripe = mockGetStripeClient();
     expect(stripe.accountLinks.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        return_url: expect.stringContaining('https://app.ridendine.com'),
-        refresh_url: expect.stringContaining('https://app.ridendine.com'),
-      })
+      expect.objectContaining({ return_url: expect.stringContaining('https://app.ridendine.com') })
     );
   });
 
   it('returns 500 when neither env var is set', async () => {
     const res = await POST();
     const body = await res.json();
-
     expect(res.status).toBe(500);
     expect(body.error).toMatch(/misconfiguration|NEXT_PUBLIC_CHEF_ADMIN_URL/i);
+    expect(stripe.accounts.create).not.toHaveBeenCalled();
+  });
+
+  it('creates and persists a Connect account (service client) on first setup', async () => {
+    process.env.NEXT_PUBLIC_CHEF_ADMIN_URL = 'https://chef.ridendine.com';
+    mockGetChefPayoutAccount.mockResolvedValue(null);
+
+    const res = await POST();
+
+    expect(res.status).toBe(200);
+    expect(stripe.accounts.create).toHaveBeenCalledTimes(1);
+    expect(stripe.accounts.create.mock.calls[0][1]).toEqual({ idempotencyKey: 'chef-connect-account:chef-1' });
+    expect(mockCreateChefPayoutAccount).toHaveBeenCalledWith({}, 'chef-1', 'acct_new');
+  });
+
+  it('reuses and re-syncs an existing account instead of creating another', async () => {
+    process.env.NEXT_PUBLIC_CHEF_ADMIN_URL = 'https://chef.ridendine.com';
+
+    const res = await POST();
+
+    expect(res.status).toBe(200);
+    expect(stripe.accounts.create).not.toHaveBeenCalled();
+    expect(stripe.accounts.retrieve).toHaveBeenCalledWith('acct_existing');
+    expect(mockSyncChefPayoutAccountFromStripe).toHaveBeenCalled();
+    expect(mockCreateChefPayoutAccount).not.toHaveBeenCalled();
+  });
+
+  it('returns 500 (not a silent success) when saving the account fails', async () => {
+    process.env.NEXT_PUBLIC_CHEF_ADMIN_URL = 'https://chef.ridendine.com';
+    mockGetChefPayoutAccount.mockResolvedValue(null);
+    mockCreateChefPayoutAccount.mockRejectedValue(new Error('insert denied'));
+
+    const res = await POST();
+    expect(res.status).toBe(500);
+    expect(stripe.accountLinks.create).not.toHaveBeenCalled();
   });
 });

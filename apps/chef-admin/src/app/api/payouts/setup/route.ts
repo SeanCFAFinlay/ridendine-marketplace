@@ -1,80 +1,38 @@
-import { cookies } from 'next/headers';
+// ==========================================
+// CHEF STRIPE CONNECT ONBOARDING (direct deposit)
+//
+// Creates (once) the chef's Stripe Express account and returns a Stripe-hosted
+// onboarding link where the chef enters identity + bank details. Ridendine
+// never sees or stores bank numbers — Stripe holds them.
+//
+// The account row is written with the service-role client after the chef
+// guard: chef_payout_accounts has no RLS INSERT policy, so the previous
+// user-client insert failed silently and a NEW Stripe account was created on
+// every click.
+// ==========================================
+
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@ridendine/db';
+import {
+  createAdminClient,
+  createChefPayoutAccount,
+  getChefById,
+  getChefPayoutAccount,
+  syncChefPayoutAccountFromStripe,
+  type SupabaseClient,
+} from '@ridendine/db';
 import { getStripeClient } from '@ridendine/engine';
 import { getChefActorContext } from '@/lib/engine';
+import { isKitchenOwner, OWNER_ONLY_MESSAGE } from '@/lib/chef-owner';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST() {
   try {
     const ctx = await getChefActorContext();
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Get chef profile
-    const { data: chefProfile } = await supabase
-      .from('chef_profiles')
-      .select('id, display_name')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!chefProfile) {
-      return NextResponse.json({ error: 'Chef profile not found' }, { status: 404 });
-    }
-
-    // Check for existing payout account
-    const { data: existingAccount } = await supabase
-      .from('chef_payout_accounts')
-      .select('stripe_account_id')
-      .eq('chef_id', chefProfile.id)
-      .single();
-
-    let accountId: string;
-
-    const stripe = getStripeClient();
-
-    if (existingAccount?.stripe_account_id) {
-      accountId = existingAccount.stripe_account_id;
-    } else {
-      // Create Stripe Connect account
-      const account = await stripe.accounts.create({
-        type: 'express',
-        country: 'CA',
-        email: user.email,
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
-        },
-        business_type: 'individual',
-        individual: {
-          first_name: chefProfile.display_name?.split(' ')[0] || 'Chef',
-          last_name: chefProfile.display_name?.split(' ').slice(1).join(' ') || '',
-          email: user.email,
-        },
-        business_profile: {
-          mcc: '5812', // Restaurants
-          name: `${chefProfile.display_name || 'Chef'} - RideNDine`,
-        },
-      });
-
-      accountId = account.id;
-
-      // Save to database
-      await supabase
-        .from('chef_payout_accounts')
-        .insert({
-          chef_id: chefProfile.id,
-          stripe_account_id: accountId,
-          stripe_account_status: 'pending',
-          payout_enabled: false,
-          is_verified: false,
-        });
+    // Staff must never attach their own bank to the owner's Stripe account.
+    if (!(await isKitchenOwner(ctx))) {
+      return NextResponse.json({ error: OWNER_ONLY_MESSAGE }, { status: 403 });
     }
 
     const chefPublicBase =
@@ -90,7 +48,42 @@ export async function POST() {
       );
     }
 
-    // Create account link for onboarding (must land on chef-admin origin, not customer web)
+    const admin = createAdminClient() as unknown as SupabaseClient;
+    const stripe = getStripeClient();
+    const existing = await getChefPayoutAccount(admin, ctx.chefId);
+
+    let accountId: string;
+    if (existing?.stripe_account_id) {
+      accountId = existing.stripe_account_id;
+      // Refresh our copy while we're here (covers a missed account.updated webhook).
+      const account = await stripe.accounts.retrieve(accountId);
+      await syncChefPayoutAccountFromStripe(admin, account);
+    } else {
+      const chef = await getChefById(admin, ctx.chefId);
+      const displayName = (chef?.display_name as string | null | undefined) ?? 'Chef';
+
+      const account = await stripe.accounts.create(
+        {
+          type: 'express',
+          country: 'CA',
+          capabilities: {
+            card_payments: { requested: true },
+            transfers: { requested: true },
+          },
+          business_profile: {
+            mcc: '5812', // Eating places & restaurants
+            name: `${displayName} - RideNDine`,
+          },
+          metadata: { chef_id: ctx.chefId, storefront_id: ctx.storefrontId },
+        },
+        // A double-click must not create two Stripe accounts.
+        { idempotencyKey: `chef-connect-account:${ctx.chefId}` }
+      );
+      accountId = account.id;
+      await createChefPayoutAccount(admin, ctx.chefId, accountId);
+    }
+
+    // Onboarding link must land back on the chef-admin origin, not the customer web.
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
       refresh_url: `${chefPublicBase}/dashboard/payouts?refresh=true`,
@@ -101,9 +94,6 @@ export async function POST() {
     return NextResponse.json({ url: accountLink.url });
   } catch (error) {
     console.error('Error setting up payout account:', error);
-    return NextResponse.json(
-      { error: 'Failed to setup payout account' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to setup payout account' }, { status: 500 });
   }
 }
