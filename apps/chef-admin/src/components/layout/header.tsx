@@ -9,9 +9,9 @@ import { BrandSwitcher } from '@/components/layout/brand-switcher';
 import { useKitchenScope } from '@/components/layout/kitchen-scope-provider';
 import { ChefAppQrModal } from '@/components/chef-app-qr-modal';
 import { FutureNavGroup } from '@/components/layout/future-nav-group';
-import { isNavItemActive, primaryNavSections, type NavItem } from '@/components/layout/nav-config';
+import { isNavItemActive, navSectionsFor, type NavItem } from '@/components/layout/nav-config';
 
-export function Header() {
+export function Header({ isOwner = false }: { isOwner?: boolean }) {
   const { user, signOut } = useAuthContext();
   const pathname = usePathname();
   const router = useRouter();
@@ -139,7 +139,7 @@ export function Header() {
 
             {/* Navigation Sections */}
             <nav className="flex-1 overflow-y-auto p-3" aria-label="Mobile primary navigation">
-              {primaryNavSections.map((section) => (
+              {navSectionsFor(isOwner).map((section) => (
                 <div key={section.key} className="mb-3">
                   {section.title && (
                     <div className="px-3 pb-1 pt-2">

@@ -7,6 +7,7 @@ import { KITCHEN_NEXT_TRANSITION, KITCHEN_REJECT_TRANSITION } from '@ridendine/u
 import {
   futureNavSection,
   isFutureRoute,
+  navSectionsFor,
   isNavItemActive,
   primaryNavSections,
 } from '../components/layout/nav-config';
@@ -99,7 +100,7 @@ describe('chef-admin smoke wiring', () => {
     const sidebar = read('components/layout/sidebar.tsx');
     const header = read('components/layout/header.tsx');
     for (const src of [sidebar, header]) {
-      expect(src).toContain('primaryNavSections');
+      expect(src).toContain('navSectionsFor');
       expect(src).toContain('FutureNavGroup');
     }
     const hrefs = primaryNavSections.flatMap((s) => s.items.map((i) => i.href));
@@ -244,5 +245,12 @@ describe('chef-admin smoke wiring', () => {
     expect(list).toContain('Sold Out');
     expect(createRoute).toContain('daily_limit');
     expect(updateRoute).toContain('sold_out_at');
+  });
+
+  it('hides Payouts from kitchen staff but shows it to the owner', () => {
+    const hrefs = (owner: boolean) => navSectionsFor(owner).flatMap((s) => s.items.map((i) => i.href));
+    expect(hrefs(true)).toContain('/dashboard/payouts');
+    expect(hrefs(false)).not.toContain('/dashboard/payouts');
+    expect(hrefs(false)).toEqual(expect.arrayContaining(['/dashboard/kitchen', '/dashboard/orders', '/dashboard/menu']));
   });
 });

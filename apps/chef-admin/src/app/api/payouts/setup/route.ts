@@ -22,6 +22,7 @@ import {
 } from '@ridendine/db';
 import { getStripeClient } from '@ridendine/engine';
 import { getChefActorContext } from '@/lib/engine';
+import { isKitchenOwner, OWNER_ONLY_MESSAGE } from '@/lib/chef-owner';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +30,10 @@ export async function POST() {
   try {
     const ctx = await getChefActorContext();
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Staff must never attach their own bank to the owner's Stripe account.
+    if (!(await isKitchenOwner(ctx))) {
+      return NextResponse.json({ error: OWNER_ONLY_MESSAGE }, { status: 403 });
+    }
 
     const chefPublicBase =
       process.env.NEXT_PUBLIC_CHEF_ADMIN_URL?.replace(/\/$/, '') ||

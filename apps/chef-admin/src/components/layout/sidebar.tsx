@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn, Logo } from '@ridendine/ui';
 import { useKitchenScope } from '@/components/layout/kitchen-scope-provider';
 import { FutureNavGroup } from '@/components/layout/future-nav-group';
-import { isNavItemActive, primaryNavSections, type NavItem } from '@/components/layout/nav-config';
+import { isNavItemActive, navSectionsFor, type NavItem } from '@/components/layout/nav-config';
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   return (
@@ -30,7 +30,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ isOwner = false }: { isOwner?: boolean }) {
   const pathname = usePathname();
   const scope = useKitchenScope();
   const activeBrand = scope?.brands.find((b) => b.id === scope.activeBrandId) ?? null;
@@ -55,7 +55,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-3" aria-label="Primary">
-        {primaryNavSections.map((section) => (
+        {navSectionsFor(isOwner).map((section) => (
           <div key={section.key} className="mb-2">
             {section.title && (
               <div className="px-3 pb-1 pt-2">

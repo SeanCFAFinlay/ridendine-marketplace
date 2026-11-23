@@ -5,6 +5,7 @@
  *  - redirect base URL resolution (NEXT_PUBLIC_CHEF_ADMIN_URL → NEXT_PUBLIC_APP_URL → 500)
  *  - the account row is persisted with the service client (no RLS INSERT policy)
  *  - an existing account is reused + re-synced, never duplicated
+ *  - kitchen staff are refused (owner-only)
  */
 
 const mockGetChefActorContext = jest.fn();
@@ -58,7 +59,7 @@ describe('POST /api/payouts/setup', () => {
       actor: { userId: 'user-1', role: 'chef_user', entityId: 'chef-1' },
     });
     mockGetChefPayoutAccount.mockResolvedValue({ chef_id: 'chef-1', stripe_account_id: 'acct_existing' });
-    mockGetChefById.mockResolvedValue({ id: 'chef-1', display_name: 'Alice Chef' });
+    mockGetChefById.mockResolvedValue({ id: 'chef-1', user_id: 'user-1', display_name: 'Alice Chef' });
     stripe = buildStripeMock();
     mockGetStripeClient.mockReturnValue(stripe);
   });
@@ -67,6 +68,20 @@ describe('POST /api/payouts/setup', () => {
     mockGetChefActorContext.mockResolvedValue(null);
     const res = await POST();
     expect(res.status).toBe(401);
+  });
+
+  it('rejects kitchen staff (not the owner) before touching Stripe', async () => {
+    process.env.NEXT_PUBLIC_CHEF_ADMIN_URL = 'https://chef.ridendine.com';
+    mockGetChefActorContext.mockResolvedValue({
+      chefId: 'chef-1',
+      storefrontId: 'store-1',
+      actor: { userId: 'staff-user', role: 'chef_user', entityId: 'chef-1' },
+    });
+    const res = await POST();
+    expect(res.status).toBe(403);
+    expect(stripe.accounts.create).not.toHaveBeenCalled();
+    expect(stripe.accounts.retrieve).not.toHaveBeenCalled();
+    expect(stripe.accountLinks.create).not.toHaveBeenCalled();
   });
 
   it('uses NEXT_PUBLIC_CHEF_ADMIN_URL when set', async () => {

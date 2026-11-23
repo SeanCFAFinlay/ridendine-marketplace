@@ -2,6 +2,7 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { KitchenScopeProvider } from '@/components/layout/kitchen-scope-provider';
 import { getKitchenScopeData } from '@/lib/kitchen-scope';
+import { getChefOwnerContext } from '@/lib/chef-owner';
 
 // NOTE: The redirect-based role check that briefly lived here (Phase C of
 // the 2026-05-13 stabilization pass) caused a redirect loop on chef.ridendine.ca:
@@ -23,13 +24,15 @@ export default async function DashboardLayout({
   // Ghost-kitchen scope for the shell (null for independent/onboarding chefs —
   // the shell then renders exactly as before). Never throws the layout.
   const scope = await getKitchenScopeData().catch(() => null);
+  // Owner-only nav (Payouts). Fails closed: staff view on any error.
+  const isOwner = await getChefOwnerContext().then((r) => r.isOwner).catch(() => false);
 
   return (
     <KitchenScopeProvider scope={scope}>
       <div className="flex min-h-screen overflow-x-hidden">
-        <Sidebar />
+        <Sidebar isOwner={isOwner} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <Header />
+          <Header isOwner={isOwner} />
           <main className="min-w-0 flex-1 overflow-x-hidden p-4 sm:p-6">{children}</main>
         </div>
       </div>

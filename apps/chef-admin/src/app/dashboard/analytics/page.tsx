@@ -32,6 +32,8 @@ interface AnalyticsPayload {
   dailyRevenue: Array<{ date: string; revenue: number }>;
   topItems: Array<{ name: string; count: number; revenue: number }>;
   payoutSummary?: PayoutSummary | null;
+  /** False for kitchen staff — payouts are owner-only. */
+  payoutAccess?: boolean;
 }
 
 function ChangeIndicator({ value }: { value: number | null }) {
@@ -191,7 +193,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Payouts — period-independent: what's owed now and when it lands */}
-      <PayoutSummaryCard summary={data.payoutSummary} />
+      {data.payoutAccess !== false && <PayoutSummaryCard summary={data.payoutSummary} />}
 
       {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">

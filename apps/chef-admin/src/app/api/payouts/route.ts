@@ -30,6 +30,7 @@ async function refreshConnectAccount(admin: SupabaseClient, chefId: string): Pro
   }
 }
 import { loadPayoutData } from '@/lib/payout-data';
+import { isKitchenOwner, OWNER_ONLY_MESSAGE } from '@/lib/chef-owner';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +39,9 @@ export async function GET() {
     const chefContext = await getChefActorContext();
     if (!chefContext) {
       return errorResponse('UNAUTHORIZED', 'Not authenticated', 401);
+    }
+    if (!(await isKitchenOwner(chefContext))) {
+      return errorResponse('FORBIDDEN', OWNER_ONLY_MESSAGE, 403);
     }
     const adminClient = createAdminClient();
     await refreshConnectAccount(adminClient as unknown as SupabaseClient, chefContext.chefId);
