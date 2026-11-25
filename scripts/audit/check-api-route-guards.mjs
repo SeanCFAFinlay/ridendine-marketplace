@@ -63,6 +63,8 @@ const PUBLIC_ALLOWLIST = [
   '/api/auth/logout',
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
+  // Launch list: people join before they have an account. Rate limited by IP.
+  '/api/launch-signup',
   '/api/health',
   '/api/webhooks/stripe',
   '/api/stripe/webhook',

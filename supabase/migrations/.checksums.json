@@ -61,5 +61,7 @@
   "00060_close_day_and_service.sql": "5f40f4dc3c8a6521f14a7d1c658f40d51e3b5426c3ede8249feda3d596ca7ba8",
   "00062_ghost_kitchen_kitchen_scope.sql": "fc4a57189920127621a4012fa8fa1509a6718201edeb79f3f41604ff08908868",
   "00063_partner_key_test_mode.sql": "052cb61195a58be88290a2622c8ff99f88d0ea9582a094f5ac0cba0a33ab74fe",
-  "00064_data_retention.sql": "3efc3f7bff65ce5a741c6348aec7e8a7ef00fe08a9db00a6c96c64a3da4f4b2c"
+  "00064_data_retention.sql": "3efc3f7bff65ce5a741c6348aec7e8a7ef00fe08a9db00a6c96c64a3da4f4b2c",
+  "00065_public_chef_availability_rls.sql": "9bfcccf5e46a9becada7e2c4fe16e93767d193d3a77130bcc29801613ebd1dec",
+  "00066_launch_signups.sql": "7def162ebd37814faf6e56808f23eac52bdf2a7154fa9e87aae58050faf373c2"
 }

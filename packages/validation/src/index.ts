@@ -18,3 +18,4 @@ export * from './schemas/common';
 export * from './schemas/ops';
 export * from './schemas/notifications';
 export * from './schemas/pagination';
+export * from './schemas/launch';

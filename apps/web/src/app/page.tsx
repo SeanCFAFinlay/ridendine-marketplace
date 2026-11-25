@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Button, Card, Logo } from '@ridendine/ui';
 import { Header } from '@/components/layout/header';
 import { FeaturedChefs } from '@/components/home/featured-chefs';
+import { LaunchSignupForm } from '@/components/home/launch-signup-form';
 import { ScrollRevealSection } from '@/components/home/scroll-reveal-section';
 import { CustomerMarketplaceHero } from '@/components/home/customer-marketplace-hero';
 import { createAdminClient } from '@ridendine/db';
@@ -67,6 +68,21 @@ export default async function HomePage() {
       </div>
 
       <CustomerMarketplaceHero activeChefs={activeChefs} liveMenuItems={liveMenuItems} />
+
+      {/* Launch list */}
+      <section id="notify" className="border-y border-border bg-surface py-12">
+        <div className="container">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="font-display text-3xl font-bold tracking-tight text-text sm:text-4xl">
+              Coming soon to Hamilton
+            </h2>
+            <p className="mb-6 mt-3 text-lg text-textMuted">
+              Leave your email and we&apos;ll tell you when ordering opens.
+            </p>
+            <LaunchSignupForm source="home" />
+          </div>
+        </div>
+      </section>
 
       {/* How It Works */}
       <section className="py-20 bg-surfaceSubtle">
