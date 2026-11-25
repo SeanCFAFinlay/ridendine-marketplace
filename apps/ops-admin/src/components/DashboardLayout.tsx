@@ -99,6 +99,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: '/dashboard/drivers', label: 'Drivers', Icon: Truck },
       { href: '/dashboard/compliance', label: 'Compliance', Icon: ShieldCheck },
       { href: '/dashboard/customers', label: 'Customers', Icon: Users },
+      { href: '/dashboard/launch-list', label: 'Launch List', Icon: Megaphone },
     ],
   },
   {
