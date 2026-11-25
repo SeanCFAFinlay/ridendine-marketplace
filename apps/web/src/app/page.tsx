@@ -59,11 +59,9 @@ export default async function HomePage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* Closed-beta test-mode banner */}
+      {/* Pre-launch banner */}
       <div className="bg-warningSoft border-b border-warning/20 px-4 py-2.5 text-center text-sm text-warning">
-        <span className="font-semibold">Closed Beta</span> — This is a test environment. To place a test order, use the demo card{' '}
-        <span className="rounded bg-surface/70 px-1.5 py-0.5 font-mono text-xs">4242 4242 4242 4242</span>{' '}
-        (any future expiry, any CVC). No real money will be charged.
+        <span className="font-semibold">Coming soon to Hamilton.</span> Ordering isn&apos;t open yet.
       </div>
 
       <CustomerMarketplaceHero activeChefs={activeChefs} liveMenuItems={liveMenuItems} />
